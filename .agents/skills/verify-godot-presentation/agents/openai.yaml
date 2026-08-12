@@ -1,0 +1,4 @@
+interface:
+  display_name: "Verify Godot Presentation"
+  short_description: "Build and verify sequencing-safe Godot UI"
+  default_prompt: "Use $verify-godot-presentation to implement and verify this Godot UI or animation change."

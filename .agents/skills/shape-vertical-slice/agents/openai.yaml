@@ -1,0 +1,4 @@
+interface:
+  display_name: "Shape Vertical Slice"
+  short_description: "Turn a game idea into a testable slice"
+  default_prompt: "Use $shape-vertical-slice to turn this game idea into the next testable vertical slice."

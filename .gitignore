@@ -1,0 +1,12 @@
+# Godot-generated state
+.godot/
+*.import
+
+# Local exports and test output
+export/
+test-reports/
+*.log
+
+# Operating-system and editor noise
+.DS_Store
+*~

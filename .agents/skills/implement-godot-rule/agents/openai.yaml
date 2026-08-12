@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement Godot Rule"
+  short_description: "Build deterministic game rules with TDD"
+  default_prompt: "Use $implement-godot-rule to implement this game-rule change with deterministic GUT coverage."
