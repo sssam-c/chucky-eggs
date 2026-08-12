@@ -44,7 +44,13 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 	disabled = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
-	tooltip_text = "Chicken egg: %d toughness remaining, worth 1 point." % _egg.toughness
+	var egg_name := String(_egg.kind).capitalize()
+	tooltip_text = "%s egg: %d toughness remaining, worth %d %s." % [
+		egg_name,
+		_egg.toughness,
+		_egg.points,
+		"point" if _egg.points == 1 else "points",
+	]
 	queue_redraw()
 
 
@@ -73,7 +79,16 @@ func current_egg() -> Dictionary:
 func egg_summary() -> String:
 	if _egg.is_empty():
 		return "EMPTY"
-	return "CHICKEN EGG TOUGHNESS %d 1 POINT" % _egg.toughness
+	return "%s EGG TOUGHNESS %d %d %s" % [
+		String(_egg.kind).to_upper(),
+		_egg.toughness,
+		_egg.points,
+		"POINT" if _egg.points == 1 else "POINTS",
+	]
+
+
+func egg_kind() -> String:
+	return _egg.get("kind", "")
 
 
 func impact_global_position() -> Vector2:

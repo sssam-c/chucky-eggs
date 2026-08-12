@@ -6,6 +6,7 @@ signal playback_finished
 signal _animation_step_released
 
 @onready var _impact_player: AudioStreamPlayer = $Audio/Impact
+@onready var _echo_player: AudioStreamPlayer = $Audio/Echo
 @onready var _hatch_player: AudioStreamPlayer = $Audio/Hatch
 @onready var _belt_player: AudioStreamPlayer = $Audio/Belt
 @onready var _loss_player: AudioStreamPlayer = $Audio/Loss
@@ -15,6 +16,7 @@ var _belt_slots: Array[Button] = []
 var _pipe_slots: Array[Button] = []
 var _keys: Array[Button] = []
 var _hammers: Array[Control] = []
+var _echo_trace: Control
 var _score_label: Label
 var _thwacks_label: Label
 var _drop_label: Label
@@ -29,6 +31,7 @@ var _waiting_for_step := false
 
 func _ready() -> void:
 	_impact_player.stream = CrunchAudio.impact()
+	_echo_player.stream = CrunchAudio.echo()
 	_hatch_player.stream = CrunchAudio.hatch()
 	_belt_player.stream = CrunchAudio.belt()
 	_loss_player.stream = CrunchAudio.loss()
@@ -40,6 +43,7 @@ func configure(
 	pipe_slots: Array[Button],
 	keys: Array[Button],
 	hammers: Array[Control],
+	echo_trace: Control,
 	score_label: Label,
 	thwacks_label: Label,
 	drop_label: Label
@@ -48,6 +52,7 @@ func configure(
 	_pipe_slots = pipe_slots
 	_keys = keys
 	_hammers = hammers
+	_echo_trace = echo_trace
 	_score_label = score_label
 	_thwacks_label = thwacks_label
 	_drop_label = drop_label
@@ -69,6 +74,8 @@ func play_events(events: Array[Dictionary]) -> bool:
 
 	_busy = false
 	_reset_mechanisms()
+	if is_instance_valid(_echo_trace):
+		_echo_trace.clear_connection()
 	playback_finished.emit()
 	return true
 
@@ -76,7 +83,7 @@ func play_events(events: Array[Dictionary]) -> bool:
 func cancel_playback() -> void:
 	_generation += 1
 	_busy = false
-	for player: AudioStreamPlayer in [_impact_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
+	for player: AudioStreamPlayer in [_impact_player, _echo_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
 		player.stop()
 	if _active_tween != null and _active_tween.is_valid():
 		_active_tween.kill()
@@ -87,7 +94,7 @@ func cancel_playback() -> void:
 func set_muted(muted: bool) -> void:
 	_muted = muted
 	if muted:
-		for player: AudioStreamPlayer in [_impact_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
+		for player: AudioStreamPlayer in [_impact_player, _echo_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
 			player.stop()
 
 
@@ -130,6 +137,8 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 
 func _present_damage(event: Dictionary, playback_generation: int) -> bool:
 	var slot: Button = _belt_slots[event.slot_index]
+	if event.get("cause", "spoon") == "cuckoo_echo":
+		return await _present_echo_damage(slot, event, playback_generation)
 	var key: Button = _keys[event.slot_index]
 	var hammer: Control = _hammers[event.slot_index]
 	if _reduced_motion:
@@ -168,9 +177,30 @@ func _present_damage(event: Dictionary, playback_generation: int) -> bool:
 	return await _run_tween(recovery, playback_generation)
 
 
+func _present_echo_damage(slot: Button, event: Dictionary, playback_generation: int) -> bool:
+	_play(_echo_player)
+	slot.apply_damage(event.remaining_toughness)
+	if _reduced_motion:
+		return true
+	var source_slot: Button = _belt_slots[event.source_slot_index]
+	_echo_trace.show_connection(source_slot.impact_global_position(), slot.impact_global_position())
+	var content: Control = slot.motion_content()
+	content.pivot_offset = content.size * 0.5
+	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pulse.tween_property(_echo_trace, "intensity", 1.0, 0.055)
+	pulse.parallel().tween_property(content, "modulate", Color(0.48, 1.0, 0.96, 1.0), 0.055)
+	pulse.parallel().tween_property(content, "scale", Vector2(1.09, 0.90), 0.055)
+	pulse.tween_property(_echo_trace, "intensity", 0.0, 0.12)
+	pulse.parallel().tween_property(content, "modulate", Color.WHITE, 0.12)
+	pulse.parallel().tween_property(content, "scale", Vector2.ONE, 0.12)
+	var completed := await _run_tween(pulse, playback_generation)
+	_echo_trace.clear_connection()
+	return completed
+
+
 func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	var slot: Button = _belt_slots[event.slot_index]
-	_score_label.text = "SCORE %d / 3" % event.score
+	_score_label.text = "SCORE %d / %d" % [event.score, event.get("target_score", 10)]
 	_play(_hatch_player)
 	if _reduced_motion:
 		slot.clear_visual()
@@ -283,6 +313,8 @@ func _clear_all_eggs() -> void:
 
 
 func _reset_mechanisms() -> void:
+	if is_instance_valid(_echo_trace):
+		_echo_trace.clear_connection()
 	for key: Button in _keys:
 		if is_instance_valid(key):
 			key.reset_pose()

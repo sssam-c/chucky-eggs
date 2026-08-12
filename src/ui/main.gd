@@ -17,6 +17,7 @@ const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 @onready var _reduced_motion_button: CheckButton = %ReducedMotion
 @onready var _belt: Control = %Belt
 @onready var _drop_label: Label = %Drop
+@onready var _echo_trace: Control = %EchoTrace
 @onready var _presenter: Node = %Presentation
 @onready var _belt_slots: Array[Button] = [%Slot1, %Slot2, %Slot3, %Slot4, %Slot5]
 @onready var _pipe_slots: Array[Button] = [%Next1, %Next2, %Next3]
@@ -35,7 +36,16 @@ func _ready() -> void:
 	_mute_button.toggled.connect(set_muted)
 	_reduced_motion_button.toggled.connect(set_reduced_motion)
 	_presenter.event_presented.connect(_on_presentation_event)
-	_presenter.configure(_belt_slots, _pipe_slots, _keys, _hammers, _score_label, _thwacks_label, _drop_label)
+	_presenter.configure(
+		_belt_slots,
+		_pipe_slots,
+		_keys,
+		_hammers,
+		_echo_trace,
+		_score_label,
+		_thwacks_label,
+		_drop_label
+	)
 	_render([], true)
 	_keys[0].grab_focus()
 
@@ -122,7 +132,7 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		_restart_button.grab_focus.call_deferred()
 
 	if fresh_day:
-		_feedback_label.text = "Twenty thwacks. Three points. Choose what deserves the spoon."
+		_feedback_label.text = "Ten points. Cuckoos copy damage from neighboring eggs."
 	else:
 		_feedback_label.text = _feedback_for(events)
 
@@ -142,10 +152,17 @@ func _feedback_for(events: Array[Dictionary]) -> String:
 			return "The final bell rings. Every unhatched egg is discarded."
 	for event: Dictionary in events:
 		if event.type == "egg_hatched":
-			return "Crack! A chicken hatched for %d point." % event.points_awarded
+			return "Crack! A %s hatched for %d %s." % [
+				String(event.get("kind", "egg")).capitalize(),
+				event.points_awarded,
+				"point" if event.points_awarded == 1 else "points",
+			]
 	for event: Dictionary in events:
 		if event.type == "egg_discarded":
 			return "An egg fell from the belt. The spoon cannot save them all."
+	for event: Dictionary in events:
+		if event.type == "egg_damaged" and event.get("cause", "") == "cuckoo_echo":
+			return "Echo crack! The Cuckoo copied another egg's damage."
 	for event: Dictionary in events:
 		if event.type == "egg_damaged":
 			return "Thwack! That egg has %d toughness left. The belt moved." % event.remaining_toughness

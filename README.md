@@ -1,8 +1,8 @@
 # Chucky Eggs
 
-A tactical conveyor game about choosing which eggs deserve the spoon. Every thwack damages one egg and moves every surviving egg closer to the drop.
+A tactical conveyor game about choosing which eggs deserve the spoon. Every thwack damages one egg, Cuckoos copy damage dealt to neighboring eggs, and every survivor moves closer to the drop.
 
-The first playable slice is a 20-thwack day. Chicken eggs take four thwacks to hatch and award one point; score three points before the final bell.
+The current playable slice is a 20-thwack day with a fixed Chicken and Cuckoo supply. Both take four damage to hatch: Chickens award 3 points, Cuckoos award 1, and every Cuckoo copies each point of damage dealt to an egg immediately ahead of or behind it. Score 10 points before the final bell.
 
 ## What is included
 

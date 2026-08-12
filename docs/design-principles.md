@@ -14,6 +14,14 @@ Show the state, cost, and likely consequence needed for a meaningful choice. Do 
 
 A game rule has one canonical owner. The domain resolves it and records ordered facts. UI and presentation explain those facts without recalculating them.
 
+## Damage batches stay legible
+
+When one action damages several eggs, apply and show the complete damage batch before resolving any hatch. Preserve conveyor order for simultaneous hatch effects so combinations remain predictable rather than depending on animation timing.
+
+## Conveyor relationships follow the route
+
+Terms such as ahead, behind, and adjacent refer to conveyor order rather than screen distance. If the belt later folds or loops, presentation must show the route clearly enough that these relationships remain predictable.
+
 ## Determinism makes iteration faster
 
 Seed randomness, inject time, and make state transitions replayable. A surprising playtest should be reproducible before it is tuned.

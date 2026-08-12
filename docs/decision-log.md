@@ -34,10 +34,30 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Reason:** A one-to-one bank of physical controls makes targeting immediate while preserving the pleasure of a large mechanical spoon. The piano-hammer motion gives anticipation, impact, and reset a clear causal chain without obscuring egg faces or requiring a cursor-sized tool.
 
+## D004 — Introduce Cuckoo collateral damage
+
+**Status:** accepted
+
+**Decision:** Add Cuckoo eggs to a fixed authored supply. Chicken eggs remain at 4 toughness but now award 3 points; Cuckoo eggs have 4 toughness and award 1 point. Whenever another egg receives damage, every Cuckoo receives the same amount once per damaged egg. Apply the entire direct-and-echo damage batch before resolving hatches in conveyor order. Echo damage cannot create further echoes. The current mixed-egg day target is 10 points.
+
+**Reason:** Cuckoos turn damage to valuable eggs into collateral progress, creating a reason to plan across the whole belt rather than evaluating only the chosen target. Their low value tests whether incidental scoring can be strategically useful without replacing the Chicken as the reliable baseline. Batch resolution also establishes deterministic semantics for future multi-position spoons.
+
+**Supersedes:** D002's chicken-only supply, 1-point Chicken value, and 3-point target. The five-slot teaching structure, 4-toughness Chicken, 20-thwack day, and three-egg preview remain.
+
+## D005 — Restrict Cuckoo echoes to adjacent eggs
+
+**Status:** accepted
+
+**Decision:** A Cuckoo copies damage only when the damaged egg is immediately ahead of or behind it in conveyor order. It continues to echo once per damaged adjacent egg, and echo damage remains non-recursive. Visual proximity does not make eggs adjacent.
+
+**Reason:** Global echo damage made Cuckoos too generous and required little positional planning. Adjacency creates short, visible opportunities that the player must cultivate while remaining unambiguous when the conveyor eventually folds into multiple rows.
+
+**Supersedes:** D004's global echo range. D004's egg values, damage batching, hatch order, authored supply, and 10-point target remain.
+
 <!--
 Copy for the next entry:
 
-## D004 — Short decision title
+## D006 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

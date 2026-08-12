@@ -4,9 +4,19 @@ extends RefCounted
 const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
 const STARTING_THWACKS := 20
-const TARGET_SCORE := 3
+const TARGET_SCORE := 10
 const CHICKEN_TOUGHNESS := 4
-const CHICKEN_POINTS := 1
+const CHICKEN_POINTS := 3
+const CUCKOO_TOUGHNESS := 4
+const CUCKOO_POINTS := 1
+const LAYING_PATTERN := [
+	"chicken",
+	"cuckoo",
+	"chicken",
+	"chicken",
+	"chicken",
+	"chicken",
+]
 
 var _slots: Array[Dictionary] = []
 var _pipe: Array[Dictionary] = []
@@ -14,14 +24,15 @@ var _remaining_thwacks := STARTING_THWACKS
 var _score := 0
 var _ended := false
 var _succeeded := false
+var _next_egg_index := 0
 
 
 func _init() -> void:
 	for slot_index in range(SLOT_COUNT):
 		_slots.append({})
-	_slots[0] = _new_chicken()
+	_slots[0] = _lay_next_egg()
 	for preview_index in range(PIPE_PREVIEW_COUNT):
-		_pipe.append(_new_chicken())
+		_pipe.append(_lay_next_egg())
 
 
 func snapshot() -> Dictionary:
@@ -45,7 +56,7 @@ func resolve_thwack(slot_index: int) -> Array[Dictionary]:
 		return [{"type": "thwack_rejected", "reason": "empty_slot"}]
 
 	var events: Array[Dictionary] = []
-	_damage_egg(slot_index, events)
+	_damage_eggs([slot_index], events)
 	_advance_conveyor(events)
 	_spend_thwack(events)
 
@@ -57,26 +68,54 @@ func resolve_thwack(slot_index: int) -> Array[Dictionary]:
 	return events
 
 
-func _damage_egg(slot_index: int, events: Array[Dictionary]) -> void:
-	_slots[slot_index].toughness -= 1
+func _damage_eggs(primary_slot_indices: Array[int], events: Array[Dictionary]) -> void:
+	# Apply the whole damage batch before resolving any hatch. This keeps a future
+	# multi-target spoon deterministic and prevents a hatch from erasing an echo.
+	for primary_slot_index: int in primary_slot_indices:
+		_apply_damage(primary_slot_index, "spoon", primary_slot_index, events)
+
+	for primary_slot_index: int in primary_slot_indices:
+		for slot_index in range(_slots.size()):
+			if absi(slot_index - primary_slot_index) != 1 or _slots[slot_index].is_empty():
+				continue
+			if _slots[slot_index].kind == "cuckoo":
+				_apply_damage(slot_index, "cuckoo_echo", primary_slot_index, events)
+
+	_resolve_hatches(events)
+
+
+func _apply_damage(
+	slot_index: int,
+	cause: String,
+	source_slot_index: int,
+	events: Array[Dictionary]
+) -> void:
+	_slots[slot_index].toughness = maxi(_slots[slot_index].toughness - 1, 0)
 	events.append({
 		"type": "egg_damaged",
 		"slot_index": slot_index,
+		"kind": _slots[slot_index].kind,
+		"cause": cause,
+		"source_slot_index": source_slot_index,
 		"remaining_toughness": _slots[slot_index].toughness,
 	})
 
-	if _slots[slot_index].toughness > 0:
-		return
 
-	var points: int = _slots[slot_index].points
-	_slots[slot_index] = {}
-	_score += points
-	events.append({
-		"type": "egg_hatched",
-		"slot_index": slot_index,
-		"points_awarded": points,
-		"score": _score,
-	})
+func _resolve_hatches(events: Array[Dictionary]) -> void:
+	for slot_index in range(_slots.size()):
+		if _slots[slot_index].is_empty() or _slots[slot_index].toughness > 0:
+			continue
+		var egg: Dictionary = _slots[slot_index]
+		_slots[slot_index] = {}
+		_score += egg.points
+		events.append({
+			"type": "egg_hatched",
+			"slot_index": slot_index,
+			"kind": egg.kind,
+			"points_awarded": egg.points,
+			"score": _score,
+			"target_score": TARGET_SCORE,
+		})
 
 
 func _advance_conveyor(events: Array[Dictionary]) -> void:
@@ -107,7 +146,7 @@ func _spend_thwack(events: Array[Dictionary]) -> void:
 
 func _refill_belt(events: Array[Dictionary]) -> void:
 	_slots[0] = _pipe.pop_front()
-	_pipe.append(_new_chicken())
+	_pipe.append(_lay_next_egg())
 	events.append({
 		"type": "egg_entered",
 		"slot_index": 0,
@@ -140,7 +179,19 @@ func _end_day(events: Array[Dictionary]) -> void:
 	})
 
 
-func _new_chicken() -> Dictionary:
+func _lay_next_egg() -> Dictionary:
+	var kind: String = LAYING_PATTERN[_next_egg_index % LAYING_PATTERN.size()]
+	_next_egg_index += 1
+	return _new_egg(kind)
+
+
+func _new_egg(kind: String) -> Dictionary:
+	if kind == "cuckoo":
+		return {
+			"kind": "cuckoo",
+			"toughness": CUCKOO_TOUGHNESS,
+			"points": CUCKOO_POINTS,
+		}
 	return {
 		"kind": "chicken",
 		"toughness": CHICKEN_TOUGHNESS,

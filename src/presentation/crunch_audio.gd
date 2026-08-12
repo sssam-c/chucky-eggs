@@ -15,6 +15,17 @@ static func impact() -> AudioStreamWAV:
 	)
 
 
+static func echo() -> AudioStreamWAV:
+	return _build_stream(0.20, 101, func(t: float, sample_index: int) -> float:
+		var sympathetic_ring := sin(TAU * 1180.0 * t) * exp(-15.0 * t) * 0.26
+		var glassy_second := sin(TAU * 1780.0 * t) * exp(-23.0 * t) * 0.15
+		var shell_tick := _noise(sample_index, 101) * exp(-32.0 * t) * 0.50
+		var chirp_time := maxf(t - 0.055, 0.0)
+		var chirp := sin(TAU * (1350.0 + chirp_time * 1700.0) * chirp_time) * _pulse(t, 0.055, 0.10) * 0.12
+		return (sympathetic_ring + glassy_second + shell_tick + chirp) * 0.72
+	)
+
+
 static func hatch() -> AudioStreamWAV:
 	return _build_stream(0.38, 23, func(t: float, sample_index: int) -> float:
 		var first_crack := _noise(sample_index, 23) * exp(-31.0 * t) * 0.72
