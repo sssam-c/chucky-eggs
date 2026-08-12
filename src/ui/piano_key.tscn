@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/ui/piano_key.gd" id="1_key"]
+
+[sub_resource type="StyleBoxEmpty" id="EmptyFocus"]
+
+[node name="PianoKey" type="Button"]
+custom_minimum_size = Vector2(170, 112)
+offset_right = 170.0
+offset_bottom = 112.0
+focus_mode = 1
+flat = true
+theme_override_styles/focus = SubResource("EmptyFocus")
+script = ExtResource("1_key")

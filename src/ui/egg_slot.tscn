@@ -1,0 +1,83 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/ui/egg_slot.gd" id="1_slot"]
+[ext_resource type="Script" path="res://src/ui/egg_visual.gd" id="2_visual"]
+
+[node name="EggSlot" type="Button"]
+custom_minimum_size = Vector2(170, 170)
+offset_right = 170.0
+offset_bottom = 170.0
+focus_mode = 0
+mouse_filter = 2
+flat = true
+script = ExtResource("1_slot")
+
+[node name="EggContent" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="EggVisual" type="Control" parent="EggContent"]
+unique_name_in_owner = true
+z_index = 1
+custom_minimum_size = Vector2(132, 148)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -66.0
+offset_top = -83.0
+offset_right = 66.0
+offset_bottom = 65.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_visual")
+
+[node name="Toughness" type="Label" parent="EggContent"]
+unique_name_in_owner = true
+z_index = 3
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -34.0
+offset_top = -27.0
+offset_right = 34.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.16, 0.07, 0.04, 1)
+theme_override_colors/font_shadow_color = Color(1, 0.88, 0.58, 0.75)
+theme_override_constants/shadow_outline_size = 2
+theme_override_font_sizes/font_size = 34
+text = "4"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Caption" type="Label" parent="EggContent"]
+unique_name_in_owner = true
+z_index = 4
+layout_mode = 1
+anchors_preset = 12
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -25.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.93, 0.66, 0.30, 1)
+theme_override_colors/font_shadow_color = Color(0.04, 0.03, 0.03, 1)
+theme_override_constants/shadow_outline_size = 2
+theme_override_font_sizes/font_size = 12
+text = "SLOT 1"
+horizontal_alignment = 1

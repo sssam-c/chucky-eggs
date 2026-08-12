@@ -1,6 +1,8 @@
-# Godot Game Design Starter
+# Chucky Eggs
 
-A small Godot 4 repository for taking a game from uncertain design ideas to tested vertical slices, with explicit boundaries between design truth, deterministic rules, application flow, and presentation.
+A tactical conveyor game about choosing which eggs deserve the spoon. Every thwack damages one egg and moves every surviving egg closer to the drop.
+
+The first playable slice is a 20-thwack day. Chicken eggs take four thwacks to hatch and award one point; score three points before the final bell.
 
 ## What is included
 
@@ -11,18 +13,6 @@ A small Godot 4 repository for taking a game from uncertain design ideas to test
 - Repository-local skills for shaping a vertical slice, implementing a deterministic rule, and verifying presentation work.
 - Living templates for rules, principles, decisions, slice scope, and playtest evidence.
 
-## Start a game
-
-1. Rename the project in `project.godot` and replace this README introduction.
-2. Write the smallest currently settled rules in `docs/game-rules.md`.
-3. Record why those rules were chosen in `docs/decision-log.md`.
-4. Define one playable learning goal in `docs/vertical-slices.md`.
-5. Implement deterministic behavior test-first in `src/domain/`.
-6. Connect it to Godot through `src/game/`, then build scenes in `src/ui/` and playback in `src/presentation/`.
-7. Record observed playtest evidence in `docs/playtest-log.md`.
-
-Do not fill every document before prototyping. Write only enough durable context to keep rules, hypotheses, and implementation scope from being confused.
-
 ## Run
 
 Open `project.godot` in Godot 4.7 or run:
@@ -30,6 +20,8 @@ Open `project.godot` in Godot 4.7 or run:
 ```sh
 godot --path .
 ```
+
+The five large foreground keys map directly to the five conveyor cups. Click the key in front of an occupied cup to depress it and fire that slot's rear-mounted spoon hammer onto the upright egg. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. The left pipe always shows the next three eggs; score, remaining thwacks, mute, and reduced-motion controls stay visible.
 
 ## Test
 

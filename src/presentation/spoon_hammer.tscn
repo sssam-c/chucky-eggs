@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/presentation/spoon_hammer.gd" id="1_hammer"]
+
+[node name="SpoonHammer" type="Control"]
+custom_minimum_size = Vector2(185, 250)
+offset_right = 185.0
+offset_bottom = 250.0
+mouse_filter = 2
+script = ExtResource("1_hammer")
