@@ -5,10 +5,12 @@ extends Control
 @export var circuit_color := Color("b6322c")
 @export_enum("diamond", "circle", "triangle") var circuit_symbol := "diamond"
 
-const PIVOT := Vector2(142.0, 216.0)
-const HANDLE_LENGTH := 148.0
-const IDLE_ANGLE := -PI * 0.5
-const CONTACT_ANGLE := -3.43
+const PIVOT := Vector2(142.0, 142.0)
+const HANDLE_LENGTH := 110.0
+# The bowl shares its egg slot's centre line both at rest and on contact.
+# Mirrored angles keep the mount just above the slot's right shoulder.
+const IDLE_ANGLE := -2.136
+const CONTACT_ANGLE := -4.147
 
 var strike_amount := 0.0:
 	set(value):
@@ -33,6 +35,14 @@ func pivot_global_position() -> Vector2:
 	return get_global_transform() * PIVOT
 
 
+func stored_bowl_global_position() -> Vector2:
+	return get_global_transform() * _bowl_position(IDLE_ANGLE)
+
+
+func contact_bowl_global_position() -> Vector2:
+	return get_global_transform() * _bowl_position(CONTACT_ANGLE)
+
+
 func is_idle_back_facing() -> bool:
 	return true
 
@@ -49,7 +59,7 @@ func _draw() -> void:
 		angle = IDLE_ANGLE + strike_amount * 0.8
 	var axis := Vector2.from_angle(angle)
 	var perpendicular := axis.orthogonal()
-	var head := PIVOT + axis * HANDLE_LENGTH
+	var head := _bowl_position(angle)
 
 	# Dark under-stroke makes the silhouette read against the workshop.
 	draw_line(PIVOT, head, Color("111215"), 15.0, true)
@@ -76,6 +86,10 @@ func _draw() -> void:
 	draw_circle(PIVOT - Vector2(3, 3), 6.0, Color("aaa49a"))
 	draw_circle(PIVOT, 4.0, Color("171719"))
 	_draw_circuit_symbol(PIVOT + Vector2(0, 42), circuit_color.lightened(0.28))
+
+
+func _bowl_position(angle: float) -> Vector2:
+	return PIVOT + Vector2.from_angle(angle) * HANDLE_LENGTH
 
 
 func _draw_circuit_symbol(center: Vector2, color: Color) -> void:

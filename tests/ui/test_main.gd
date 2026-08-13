@@ -35,6 +35,24 @@ func test_stage_has_three_circuit_controls_and_five_colour_matched_spoons() -> v
 	assert_eq(hammers.get_node("Hammer5").circuit_id, "pink")
 
 
+func test_each_spoon_bowl_aligns_with_its_egg_slot_at_rest_and_contact() -> void:
+	var main := _add_main()
+	var hammers := main.get_node("Content/Stage/HammerBank")
+	var slots := main.get_node("Content/Stage/Belt/Slots")
+
+	for slot_index in range(5):
+		var hammer = hammers.get_node("Hammer%d" % (slot_index + 1))
+		var slot: Control = slots.get_node("Slot%d" % (slot_index + 1))
+		var slot_center := slot.global_position + slot.size * 0.5
+		var stored_bowl: Vector2 = hammer.stored_bowl_global_position()
+		var contact_bowl: Vector2 = hammer.contact_bowl_global_position()
+
+		assert_almost_eq(stored_bowl.x, slot_center.x, 1.0)
+		assert_lt(stored_bowl.y, slot.global_position.y)
+		assert_almost_eq(contact_bowl.x, slot_center.x, 1.0)
+		assert_almost_eq(contact_bowl.y, slot_center.y, 1.0)
+
+
 func test_only_circuits_with_an_occupied_linked_slot_are_available() -> void:
 	var main := _add_main()
 	var red: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
