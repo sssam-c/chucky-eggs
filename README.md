@@ -21,7 +21,7 @@ Open `project.godot` in Godot 4.7 or run:
 godot --path .
 ```
 
-The five large foreground keys map directly to the five conveyor cups. Click the key in front of an occupied cup to depress it and fire that slot's rear-mounted spoon hammer onto the upright egg. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. The left pipe always shows the next three eggs; score, remaining thwacks, mute, and reduced-motion controls stay visible.
+The five large foreground keys map directly to the five conveyor cups. Click the key in front of an occupied cup to depress it and fire that slot's rear-mounted spoon hammer onto the upright egg. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; score, remaining thwacks, mute, and reduced-motion controls stay visible.
 
 ## Test
 

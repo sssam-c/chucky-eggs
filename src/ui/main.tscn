@@ -190,6 +190,30 @@ theme_override_font_sizes/font_size = 26
 text = "THWACKS 20"
 vertical_alignment = 1
 
+[node name="ShellLegendPlate" type="PanelContainer" parent="Content/Header"]
+layout_mode = 0
+offset_left = 446.0
+offset_right = 774.0
+offset_bottom = 66.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("HudPlate")
+
+[node name="ShellLegend" type="Label" parent="Content/Header"]
+layout_mode = 0
+offset_left = 454.0
+offset_top = 3.0
+offset_right = 766.0
+offset_bottom = 63.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.91, 0.80, 0.59, 1)
+theme_override_colors/font_shadow_color = Color(0.03, 0.02, 0.01, 1)
+theme_override_constants/line_spacing = 0
+theme_override_constants/shadow_outline_size = 2
+theme_override_font_sizes/font_size = 13
+text = "BRASS SEAL = HATCH SCORE\nRIPPLE = COPIES NEIGHBOUR DAMAGE\nBACK ARROW = RETREATS AFTER DIRECT HIT"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="Stage" type="Control" parent="Content"]
 layout_mode = 0
 offset_left = 22.0

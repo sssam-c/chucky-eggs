@@ -10,6 +10,7 @@ var press_amount := 0.0:
 		queue_redraw()
 
 var _available := false
+var _egg_description := ""
 
 
 func _ready() -> void:
@@ -23,8 +24,23 @@ func set_available(available: bool) -> void:
 	disabled = not available
 	mouse_filter = Control.MOUSE_FILTER_STOP if available else Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_ALL if available else Control.FOCUS_NONE
-	tooltip_text = "Thwack egg in slot %d" % (slot_index + 1) if available else "Slot %d is empty" % (slot_index + 1)
+	_refresh_description()
 	queue_redraw()
+
+
+func set_egg_description(description: String) -> void:
+	_egg_description = description
+	_refresh_description()
+
+
+func _refresh_description() -> void:
+	tooltip_text = ""
+	if _available:
+		accessibility_name = "Thwack slot %d" % (slot_index + 1)
+		accessibility_description = _egg_description
+	else:
+		accessibility_name = "Slot %d unavailable" % (slot_index + 1)
+		accessibility_description = ""
 
 
 func set_press_amount(amount: float) -> void:

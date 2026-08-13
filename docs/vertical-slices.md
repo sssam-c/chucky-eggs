@@ -37,6 +37,7 @@ Start with a three-hit Chicken on the belt and see both a blue-speckled Cuckoo a
 - Direct-hit-only surviving Plover swaps after hatches and before conveyor advance.
 - Distinct shell color and markings, name, value, tooltip, echo motion, echo audio, and a source-to-target adjacency trace for the Cuckoo.
 - Distinct olive shell, backward chevrons, tooltip, shuffle audio, and hop-and-shove motion for the Plover.
+- Shell-printed toughness, brass hatch-score seals, and integrated effect emblems on both belt eggs and the pipe preview, with a persistent legend and non-visual descriptions on the corresponding piano keys.
 - A 10-point success target and current score display.
 - Existing piano-key thwack, crunchy impact, conveyor, pipe, input barrier, mute, and reduced-motion presentation.
 
@@ -57,6 +58,6 @@ Start with a three-hit Chicken on the belt and see both a blue-speckled Cuckoo a
 ### Exit evidence
 
 - Domain tests prove the authored opening, values, target, three-hit Chicken hatch, Cuckoo batching, a surviving Plover's backward swap, the slot-1 boundary, hatch-before-retreat order, success, and failure.
-- UI tests prove both special eggs are identified in the preview, each special event precedes belt movement, input remains locked, and audio/reduced-motion paths remain valid.
+- UI tests prove both special eggs are identified in the preview, shell seals and emblems expose points and effects before an egg enters, actionable keys carry full accessibility descriptions without hover text, each special event precedes belt movement, input remains locked, and audio/reduced-motion paths remain valid.
 - A running-game capture at 1280×720 shows the Plover reading distinctly in the pipe and on the belt, then clearly hopping backward while the displaced egg is shoved forward before both follow the standard belt advance.
 - A short playtest asks: "When you hit the Plover, did you understand which egg paid for its retreat—and did that change your choice?"

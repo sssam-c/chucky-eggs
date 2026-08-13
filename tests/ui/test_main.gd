@@ -20,6 +20,60 @@ func test_main_renders_initial_day_state_and_accessibility_controls() -> void:
 	assert_not_null(main.get_node("Content/Accessibility/ReducedMotion"))
 
 
+func test_egg_shells_show_score_seals_and_effect_emblems_on_belt_and_in_pipe() -> void:
+	var main := _add_main()
+	var chicken = main.get_node("Content/Stage/Belt/Slots/Slot1")
+	var cuckoo = main.get_node("Content/Stage/Pipe/Preview/Next1")
+	var plover = main.get_node("Content/Stage/Pipe/Preview/Next3")
+
+	assert_eq(chicken.score_seal_value(), 3)
+	assert_eq(chicken.effect_emblem(), "")
+	assert_eq(cuckoo.score_seal_value(), 1)
+	assert_eq(cuckoo.effect_emblem(), "echo")
+	assert_eq(plover.score_seal_value(), 2)
+	assert_eq(plover.effect_emblem(), "retreat")
+
+
+func test_shell_legend_explains_point_and_effect_marks() -> void:
+	var main := _add_main()
+	var legend: Label = main.get_node("Content/Header/ShellLegend")
+
+	assert_true(legend.visible)
+	assert_string_contains(legend.text, "BRASS SEAL = HATCH SCORE")
+	assert_string_contains(legend.text, "RIPPLE = COPIES NEIGHBOUR DAMAGE")
+	assert_string_contains(legend.text, "BACK ARROW = RETREATS AFTER DIRECT HIT")
+
+
+func test_actionable_key_has_accessible_egg_description_without_hover_text() -> void:
+	var main := _add_main()
+	var first_key: Button = main.get_node("Content/Stage/KeyBank/Key1")
+
+	assert_eq(first_key.tooltip_text, "")
+	assert_eq(first_key.accessibility_name, "Thwack slot 1")
+	assert_string_contains(first_key.accessibility_description, "Chicken egg")
+	assert_string_contains(first_key.accessibility_description, "3 toughness remaining")
+	assert_string_contains(first_key.accessibility_description, "worth 3 points")
+	assert_string_contains(first_key.accessibility_description, "no extra effect")
+
+
+func test_shell_emblems_and_accessible_descriptions_follow_eggs_after_belt_movement() -> void:
+	var main := _add_main()
+	main.set_reduced_motion(true)
+
+	await _press_and_wait(main, "Slot1")
+
+	var first_slot = main.get_node("Content/Stage/Belt/Slots/Slot1")
+	var first_key: Button = main.get_node("Content/Stage/KeyBank/Key1")
+	var second_key: Button = main.get_node("Content/Stage/KeyBank/Key2")
+	assert_eq(first_slot.score_seal_value(), 1)
+	assert_eq(first_slot.effect_emblem(), "echo")
+	assert_eq(first_key.tooltip_text, "")
+	assert_string_contains(first_key.accessibility_description, "Cuckoo egg")
+	assert_string_contains(first_key.accessibility_description, "copies damage from an adjacent egg")
+	assert_string_contains(second_key.accessibility_description, "Chicken egg")
+	assert_string_contains(second_key.accessibility_description, "2 toughness remaining")
+
+
 func test_stage_has_one_fixed_key_and_rear_hammer_for_each_belt_slot() -> void:
 	var main := _add_main()
 	var slots := main.get_node("Content/Stage/Belt/Slots")

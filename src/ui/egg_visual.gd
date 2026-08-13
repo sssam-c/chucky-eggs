@@ -78,6 +78,100 @@ func _draw() -> void:
 			Vector2(0, 0), Vector2(-12, -9), Vector2(-14, -21),
 		])
 
+	# Keep decision-critical marks above shell decoration and accumulated cracks.
+	_draw_information_marks(center, radius_y)
+
+
+func score_seal_value() -> int:
+	if _egg.is_empty():
+		return 0
+	return int(_egg.get("points", 0))
+
+
+func effect_emblem() -> String:
+	if _egg.is_empty():
+		return ""
+	match String(_egg.get("kind", "chicken")):
+		"cuckoo":
+			return "echo"
+		"plover":
+			return "retreat"
+	return ""
+
+
+func _draw_information_marks(center: Vector2, radius_y: float) -> void:
+	var mark_scale := 0.72 if _preview else 1.0
+	_draw_score_seal(center + Vector2(0.0, -radius_y * 0.61), mark_scale)
+	var emblem_center := center + Vector2(0.0, radius_y * 0.48)
+	match effect_emblem():
+		"echo":
+			_draw_echo_emblem(emblem_center, mark_scale)
+		"retreat":
+			_draw_retreat_emblem(emblem_center, mark_scale)
+
+
+func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
+	var outer_radius := 15.0 * mark_scale
+	var seal_points := PackedVector2Array()
+	for point_index in range(20):
+		var angle := TAU * float(point_index) / 20.0 - PI * 0.5
+		var radius := outer_radius if point_index % 2 == 0 else outer_radius * 0.82
+		seal_points.append(center + Vector2(cos(angle), sin(angle)) * radius)
+	draw_colored_polygon(seal_points, Color("b66a2b"))
+	var outline := seal_points.duplicate()
+	outline.append(seal_points[0])
+	draw_polyline(outline, Color("4b2415"), 2.2 * mark_scale, true)
+	draw_circle(center, 10.5 * mark_scale, Color("f1bd55"))
+	draw_arc(center, 10.5 * mark_scale, 0.0, TAU, 20, Color("70401e"), 1.7 * mark_scale, true)
+	var font_size := 16 if not _preview else 11
+	var text_width := 24.0 * mark_scale
+	draw_string(
+		ThemeDB.fallback_font,
+		center + Vector2(-text_width * 0.5, 5.5 * mark_scale),
+		str(score_seal_value()),
+		HORIZONTAL_ALIGNMENT_CENTER,
+		text_width,
+		font_size,
+		Color("3a1b12")
+	)
+
+
+func _draw_echo_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := Color("143a3e")
+	var shine := Color(0.71, 0.96, 0.92, 0.72)
+	draw_circle(center, 2.8 * mark_scale, ink)
+	for radius in [7.0, 12.0]:
+		draw_arc(center, radius * mark_scale, -0.72, 0.72, 10, ink, 2.7 * mark_scale, true)
+		draw_arc(center, radius * mark_scale, PI - 0.72, PI + 0.72, 10, ink, 2.7 * mark_scale, true)
+	draw_arc(center, 7.0 * mark_scale, -0.58, 0.58, 8, shine, 1.0 * mark_scale, true)
+
+
+func _draw_retreat_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := Color("293714")
+	var line_width := 3.2 * mark_scale
+	draw_line(
+		center + Vector2(11.0, 0.0) * mark_scale,
+		center + Vector2(-8.0, 0.0) * mark_scale,
+		ink,
+		line_width,
+		true
+	)
+	draw_polyline(PackedVector2Array([
+		center + Vector2(-2.0, -7.0) * mark_scale,
+		center + Vector2(-10.0, 0.0) * mark_scale,
+		center + Vector2(-2.0, 7.0) * mark_scale,
+	]), ink, line_width, true)
+	draw_arc(
+		center + Vector2(5.0, -5.0) * mark_scale,
+		6.0 * mark_scale,
+		-1.55,
+		-0.05,
+		8,
+		Color(0.83, 0.95, 0.48, 0.72),
+		1.4 * mark_scale,
+		true
+	)
+
 
 func _draw_crack(origin: Vector2, offsets: Array[Vector2]) -> void:
 	var points := PackedVector2Array()

@@ -32,7 +32,9 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 		disabled = true
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		focus_mode = Control.FOCUS_NONE
-		tooltip_text = "No egg in this slot."
+		tooltip_text = ""
+		accessibility_name = "Empty slot"
+		accessibility_description = "No egg in this slot."
 		queue_redraw()
 		return
 
@@ -44,14 +46,9 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 	disabled = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
-	var egg_name := String(_egg.kind).capitalize()
-	tooltip_text = "%s egg: %d toughness remaining, worth %d %s.%s" % [
-		egg_name,
-		_egg.toughness,
-		_egg.points,
-		"point" if _egg.points == 1 else "points",
-		_effect_tooltip(String(_egg.kind)),
-	]
+	tooltip_text = ""
+	accessibility_name = "%s egg" % String(_egg.kind).capitalize()
+	accessibility_description = egg_description()
 	queue_redraw()
 
 
@@ -88,6 +85,26 @@ func egg_summary() -> String:
 	]
 
 
+func egg_description() -> String:
+	if _egg.is_empty():
+		return "No egg in this slot."
+	return "%s egg: %d toughness remaining, worth %d %s; %s." % [
+		String(_egg.kind).capitalize(),
+		_egg.toughness,
+		_egg.points,
+		"point" if _egg.points == 1 else "points",
+		_effect_description(String(_egg.kind)),
+	]
+
+
+func score_seal_value() -> int:
+	return _egg_visual.score_seal_value()
+
+
+func effect_emblem() -> String:
+	return _egg_visual.effect_emblem()
+
+
 func egg_kind() -> String:
 	return _egg.get("kind", "")
 
@@ -110,13 +127,13 @@ func reset_motion() -> void:
 	_content.z_index = 0
 
 
-func _effect_tooltip(kind: String) -> String:
+func _effect_description(kind: String) -> String:
 	match kind:
 		"cuckoo":
-			return " Copies damage from neighboring eggs."
+			return "copies damage from an adjacent egg"
 		"plover":
-			return " A direct hit makes it swap one slot toward the pipe if it survives."
-	return ""
+			return "a surviving direct hit swaps it one slot toward the pipe"
+	return "no extra effect"
 
 
 func _draw() -> void:

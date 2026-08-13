@@ -118,6 +118,7 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 			false,
 			false
 		)
+		_keys[slot_index].set_egg_description(_belt_slots[slot_index].egg_description())
 		_keys[slot_index].set_available(
 			not state.slots[slot_index].is_empty() and not state.ended and not _input_locked
 		)
