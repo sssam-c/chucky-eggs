@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://src/ui/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://src/presentation/spoon_hammer.tscn" id="6_hammer"]
 [ext_resource type="FontFile" path="res://addons/gut/fonts/AnonymousPro-Bold.ttf" id="7_font"]
 [ext_resource type="Script" path="res://src/presentation/echo_trace.gd" id="8_trace"]
+[ext_resource type="PackedScene" path="res://src/presentation/hatch_payoff.tscn" id="9_payoff"]
 
 [sub_resource type="Theme" id="MachineTheme"]
 default_font = ExtResource("7_font")
@@ -473,6 +474,9 @@ slot_indices = Array[int]([4])
 circuit_color = Color(0.81, 0.31, 0.55, 1)
 circuit_symbol = "triangle"
 
+[node name="HatchPayoff" parent="Content" instance=ExtResource("9_payoff")]
+unique_name_in_owner = true
+
 [node name="Feedback" type="Label" parent="Content"]
 unique_name_in_owner = true
 layout_mode = 0
@@ -543,6 +547,8 @@ script = ExtResource("3_presenter")
 [node name="Shuffle" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
 [node name="Hatch" type="AudioStreamPlayer" parent="Presentation/Audio"]
+
+[node name="Score" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
 [node name="Belt" type="AudioStreamPlayer" parent="Presentation/Audio"]
 

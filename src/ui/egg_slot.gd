@@ -113,6 +113,10 @@ func impact_global_position() -> Vector2:
 	return _egg_visual.global_position + Vector2(_egg_visual.size.x * 0.5, 18.0)
 
 
+func hatch_global_position() -> Vector2:
+	return _egg_visual.global_position + _egg_visual.size * Vector2(0.5, 0.51)
+
+
 func motion_content() -> Control:
 	return _content
 

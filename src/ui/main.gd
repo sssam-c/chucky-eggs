@@ -18,6 +18,7 @@ const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 @onready var _belt: Control = %Belt
 @onready var _drop_label: Label = %Drop
 @onready var _echo_trace: Control = %EchoTrace
+@onready var _hatch_payoff: Control = %HatchPayoff
 @onready var _presenter: Node = %Presentation
 @onready var _belt_slots: Array[Button] = [%Slot1, %Slot2, %Slot3, %Slot4, %Slot5]
 @onready var _pipe_slots: Array[Button] = [%Next1, %Next2, %Next3]
@@ -42,6 +43,7 @@ func _ready() -> void:
 		_circuit_buttons,
 		_hammers,
 		_echo_trace,
+		_hatch_payoff,
 		_score_label,
 		_thwacks_label,
 		_drop_label

@@ -4,12 +4,15 @@ extends Node
 signal event_presented(event_type: String)
 signal playback_finished
 signal hammer_fired(slot_index: int)
+signal hatch_payoff_started(slot_index: int, points_awarded: int)
+signal score_committed(points_awarded: int, score: int)
 signal _animation_step_released
 
 @onready var _impact_player: AudioStreamPlayer = $Audio/Impact
 @onready var _echo_player: AudioStreamPlayer = $Audio/Echo
 @onready var _shuffle_player: AudioStreamPlayer = $Audio/Shuffle
 @onready var _hatch_player: AudioStreamPlayer = $Audio/Hatch
+@onready var _score_player: AudioStreamPlayer = $Audio/Score
 @onready var _belt_player: AudioStreamPlayer = $Audio/Belt
 @onready var _loss_player: AudioStreamPlayer = $Audio/Loss
 @onready var _pipe_player: AudioStreamPlayer = $Audio/Pipe
@@ -19,6 +22,7 @@ var _pipe_slots: Array[Button] = []
 var _circuit_buttons: Array[Button] = []
 var _hammers: Array[Control] = []
 var _echo_trace: Control
+var _hatch_payoff: Control
 var _score_label: Label
 var _thwacks_label: Label
 var _drop_label: Label
@@ -36,6 +40,7 @@ func _ready() -> void:
 	_echo_player.stream = CrunchAudio.echo()
 	_shuffle_player.stream = CrunchAudio.shuffle()
 	_hatch_player.stream = CrunchAudio.hatch()
+	_score_player.stream = CrunchAudio.score()
 	_belt_player.stream = CrunchAudio.belt()
 	_loss_player.stream = CrunchAudio.loss()
 	_pipe_player.stream = CrunchAudio.pipe()
@@ -47,6 +52,7 @@ func configure(
 	circuit_buttons: Array[Button],
 	hammers: Array[Control],
 	echo_trace: Control,
+	hatch_payoff: Control,
 	score_label: Label,
 	thwacks_label: Label,
 	drop_label: Label
@@ -56,6 +62,7 @@ func configure(
 	_circuit_buttons = circuit_buttons
 	_hammers = hammers
 	_echo_trace = echo_trace
+	_hatch_payoff = hatch_payoff
 	_score_label = score_label
 	_thwacks_label = thwacks_label
 	_drop_label = drop_label
@@ -86,7 +93,7 @@ func play_events(events: Array[Dictionary]) -> bool:
 func cancel_playback() -> void:
 	_generation += 1
 	_busy = false
-	for player: AudioStreamPlayer in [_impact_player, _echo_player, _shuffle_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
+	for player: AudioStreamPlayer in [_impact_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
 		player.stop()
 	if _active_tween != null and _active_tween.is_valid():
 		_active_tween.kill()
@@ -97,7 +104,7 @@ func cancel_playback() -> void:
 func set_muted(muted: bool) -> void:
 	_muted = muted
 	if muted:
-		for player: AudioStreamPlayer in [_impact_player, _echo_player, _shuffle_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
+		for player: AudioStreamPlayer in [_impact_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
 			player.stop()
 
 
@@ -229,23 +236,62 @@ func _present_echo_damage(slot: Button, event: Dictionary, playback_generation: 
 
 func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	var slot: Button = _belt_slots[event.slot_index]
-	_score_label.text = "SCORE %d / %d" % [event.score, event.get("target_score", 10)]
+	var score_target := _score_label.global_position + _score_label.size * Vector2(0.72, 0.5)
+	_hatch_payoff.begin(
+		slot.hatch_global_position(),
+		score_target,
+		event.points_awarded,
+		String(event.get("kind", "chicken"))
+	)
+	hatch_payoff_started.emit(event.slot_index, event.points_awarded)
 	_play(_hatch_player)
 	if _reduced_motion:
 		slot.clear_visual()
+		_commit_score(event)
+		_hatch_payoff.reset_effect()
 		return true
 
 	var content: Control = slot.motion_content()
 	content.pivot_offset = content.size * 0.5
+	var anticipation := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	anticipation.tween_property(content, "scale", Vector2(0.88, 1.12), 0.075)
+	anticipation.parallel().tween_property(content, "rotation", -0.045, 0.075)
+	if not await _run_tween(anticipation, playback_generation):
+		return false
+
 	var burst := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	burst.tween_property(content, "scale", Vector2(1.42, 1.24), 0.12)
-	burst.parallel().tween_property(content, "rotation", 0.10, 0.12)
-	burst.tween_property(content, "scale", Vector2(0.2, 0.2), 0.10)
-	burst.parallel().tween_property(content, "modulate:a", 0.0, 0.10)
+	burst.tween_property(content, "scale", Vector2(1.52, 1.28), 0.13)
+	burst.parallel().tween_property(content, "rotation", 0.12, 0.13)
+	burst.parallel().tween_property(content, "modulate:a", 0.0, 0.13)
+	burst.parallel().tween_property(_hatch_payoff, "burst_progress", 0.66, 0.13)
 	if not await _run_tween(burst, playback_generation):
 		return false
 	slot.clear_visual()
+
+	var travel := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	travel.tween_property(_hatch_payoff, "travel_progress", 1.0, 0.30)
+	travel.parallel().tween_property(_hatch_payoff, "burst_progress", 1.0, 0.30)
+	if not await _run_tween(travel, playback_generation):
+		return false
+
+	_commit_score(event)
+	_score_label.pivot_offset = _score_label.size * 0.5
+	var arrival := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	arrival.tween_property(_hatch_payoff, "arrival_progress", 1.0, 0.20)
+	arrival.parallel().tween_property(_score_label, "scale", Vector2(1.28, 1.28), 0.075)
+	arrival.parallel().tween_property(_score_label, "modulate", Color(1.0, 0.88, 0.32, 1.0), 0.075)
+	arrival.tween_property(_score_label, "scale", Vector2.ONE, 0.125)
+	arrival.parallel().tween_property(_score_label, "modulate", Color.WHITE, 0.125)
+	if not await _run_tween(arrival, playback_generation):
+		return false
+	_hatch_payoff.reset_effect()
 	return true
+
+
+func _commit_score(event: Dictionary) -> void:
+	_score_label.text = "SCORE %d / %d" % [event.score, event.get("target_score", 10)]
+	_play(_score_player)
+	score_committed.emit(event.points_awarded, event.score)
 
 
 func _present_swap(event: Dictionary, playback_generation: int) -> bool:
@@ -377,6 +423,11 @@ func _clear_all_eggs() -> void:
 func _reset_mechanisms() -> void:
 	if is_instance_valid(_echo_trace):
 		_echo_trace.clear_connection()
+	if is_instance_valid(_hatch_payoff):
+		_hatch_payoff.reset_effect()
+	if is_instance_valid(_score_label):
+		_score_label.scale = Vector2.ONE
+		_score_label.modulate = Color.WHITE
 	for circuit_button: Button in _circuit_buttons:
 		if is_instance_valid(circuit_button):
 			circuit_button.reset_pose()

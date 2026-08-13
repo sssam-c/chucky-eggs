@@ -2,7 +2,52 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — Alternating spoon circuits
+## Active slice — Hatch payoff
+
+### Question
+
+Does carrying each resolved point visibly from an exploding egg into the score display make hatching feel like the turn's payoff?
+
+### Settled rules preserved
+
+- Egg toughness, point values, hatch order, circuit damage, conveyor movement, and the 10-point target remain unchanged.
+- The resolver-authored `egg_hatched` event remains the sole source of the awarded points and resulting score.
+- Input stays locked until the complete ordered event sequence has been presented, and restart cancels presentation without committing stale visuals.
+- Reduced motion still communicates both the hatch and the score change without requiring travel animation.
+
+### Hypothesis
+
+A brief compression and shell burst will make the hatch itself feel more forceful. Holding the old score until a large `+N` token reaches the score plate, then landing the new total with a distinct chime and counter punch, will connect the egg's printed value to the reward more clearly than changing the counter before the egg disappears.
+
+### Player-visible path
+
+Damage the opening Chicken until it reaches zero toughness. The egg compresses, bursts into shell and yolk debris, and releases its resolved `+3`. The token arcs from the emptied cup to the score plate; only on arrival does the counter change from 0 to 3 and punch forward with a separate reward sound. The conveyor then continues through the resolver-authored events. Replay with a 1-point Cuckoo or 2-point Plover to confirm the payoff reflects the event rather than the egg type's presentation.
+
+### In scope
+
+- One reusable presentation overlay for deterministic shell fragments, yolk sparks, an expanding impact ring, and a non-colour `+N` token.
+- Delayed score-label commitment until the token reaches the existing score plate.
+- A distinct short score-arrival sound layered after the existing hatch crack.
+- Exactly-once hatch playback, reduced-motion behavior, mute behavior, and restart cancellation.
+
+### Implementation conveniences
+
+- Use authored deterministic fragment directions rather than a particle simulation or physics bodies.
+- Reuse the existing egg artwork, score label, presenter barrier, procedural audio system, and resolver event fields.
+
+### Outside this slice
+
+- Scoring balance, combo multipliers, streaks, screen shake, controller rumble, camera work, new egg art, and egg-specific hatch creatures.
+- Changes to damage, hatch ordering, point values, target score, or the end-of-day result.
+
+### Exit evidence
+
+- UI tests prove hatch presentation receives the resolver-authored point value, the old score remains visible when the burst starts, the counter commits exactly once before `egg_hatched` presentation completes, reduced motion commits immediately, and restart clears an interrupted payoff.
+- The reusable overlay exposes the current `+N` text and returns to an inactive clean state after completion or cancellation.
+- A running-game check at 1280×720 inspects the opening Chicken at compression, full burst, point travel, and score arrival.
+- A short playtest asks: "When the egg burst, did the points feel as though they came out of that egg—and did the score landing feel worth watching?"
+
+## Completed slice — Alternating spoon circuits
 
 ### Question
 

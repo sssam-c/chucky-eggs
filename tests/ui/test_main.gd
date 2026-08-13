@@ -147,6 +147,68 @@ func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() ->
 	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 3 / 10")
 
 
+func test_hatch_burst_carries_resolved_points_into_the_score_before_event_completion() -> void:
+	var main := _add_main()
+	main.set_reduced_motion(true)
+	await _press_and_wait(main, "RedCircuit")
+	await _press_and_wait(main, "BlueCircuit")
+	main.set_reduced_motion(false)
+	var presenter := main.get_node("Presentation")
+	var payoff := main.get_node("Content/HatchPayoff")
+	var milestones: Array[String] = []
+	var score_when_burst_started := [""]
+	var point_text_when_burst_started := [""]
+	presenter.hatch_payoff_started.connect(
+		func(_slot_index: int, _points_awarded: int) -> void:
+			score_when_burst_started[0] = main.get_node("Content/Header/Score").text
+			point_text_when_burst_started[0] = payoff.point_text()
+			milestones.append("burst")
+	)
+	presenter.score_committed.connect(
+		func(points_awarded: int, score: int) -> void:
+			milestones.append("score:%d:%d" % [points_awarded, score])
+	)
+	main.presentation_event.connect(
+		func(event_type: String) -> void:
+			if event_type == "egg_hatched":
+				milestones.append("event")
+	)
+
+	await _press_and_wait(main, "RedCircuit")
+
+	assert_eq(score_when_burst_started[0], "SCORE 0 / 10")
+	assert_eq(point_text_when_burst_started[0], "+3")
+	assert_gte(payoff.fragment_count(), 12)
+	assert_eq(milestones, ["burst", "score:3:3", "event"])
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 3 / 10")
+	assert_false(payoff.is_active())
+
+
+func test_restart_clears_an_interrupted_hatch_payoff_without_committing_score() -> void:
+	var main := _add_main()
+	main.set_reduced_motion(true)
+	await _press_and_wait(main, "RedCircuit")
+	await _press_and_wait(main, "BlueCircuit")
+	main.set_reduced_motion(false)
+	var presenter := main.get_node("Presentation")
+	var payoff := main.get_node("Content/HatchPayoff")
+	var committed_scores: Array[int] = []
+	presenter.score_committed.connect(
+		func(_points_awarded: int, score: int) -> void: committed_scores.append(score)
+	)
+
+	main.get_node("Content/Stage/CircuitBank/RedCircuit").pressed.emit()
+	await presenter.hatch_payoff_started
+	assert_true(payoff.is_active())
+	main.restart_day()
+	await get_tree().process_frame
+
+	assert_false(payoff.is_active())
+	assert_eq(payoff.point_text(), "")
+	assert_eq(committed_scores, [])
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 10")
+
+
 func test_pink_presents_slot_five_plover_rescue_before_belt_movement() -> void:
 	var main := _add_main()
 	main.set_reduced_motion(true)
@@ -198,7 +260,7 @@ func test_crunch_audio_streams_are_present_and_non_empty() -> void:
 	var main := _add_main()
 	var audio_root: Node = main.get_node("Presentation/Audio")
 
-	for player_name in ["Impact", "Echo", "Shuffle", "Hatch", "Belt", "Loss", "Pipe"]:
+	for player_name in ["Impact", "Echo", "Shuffle", "Hatch", "Score", "Belt", "Loss", "Pipe"]:
 		var player: AudioStreamPlayer = audio_root.get_node(player_name)
 		assert_not_null(player.stream, "%s has a stream" % player_name)
 		assert_gt(player.stream.data.size(), 1000, "%s stream contains PCM data" % player_name)

@@ -49,6 +49,19 @@ static func hatch() -> AudioStreamWAV:
 	)
 
 
+static func score() -> AudioStreamWAV:
+	return _build_stream(0.34, 173, func(t: float, sample_index: int) -> float:
+		var coin := _noise(sample_index, 173) * exp(-52.0 * t) * 0.20
+		var first := sin(TAU * 880.0 * t) * exp(-14.0 * t) * 0.24
+		var second_time := maxf(t - 0.065, 0.0)
+		var second := sin(TAU * 1174.0 * second_time) * _pulse(t, 0.065, 0.20) * 0.25
+		var third_time := maxf(t - 0.125, 0.0)
+		var third := sin(TAU * 1568.0 * third_time) * _pulse(t, 0.125, 0.20) * 0.22
+		var body := sin(TAU * 220.0 * t) * exp(-18.0 * t) * 0.15
+		return (coin + first + second + third + body) * 0.78
+	)
+
+
 static func belt() -> AudioStreamWAV:
 	return _build_stream(0.20, 37, func(t: float, sample_index: int) -> float:
 		var motor := sin(TAU * 72.0 * t) * exp(-9.0 * t) * 0.28
