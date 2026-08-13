@@ -338,7 +338,7 @@ offset_bottom = 270.0
 slot_index = 4
 circuit_id = "pink"
 circuit_color = Color(0.81, 0.31, 0.55, 1)
-circuit_symbol = "triangle"
+circuit_symbol = "spark"
 
 [node name="Belt" type="Control" parent="Content/Stage"]
 unique_name_in_owner = true
@@ -472,7 +472,7 @@ offset_bottom = 528.0
 circuit_id = "pink"
 slot_indices = Array[int]([4])
 circuit_color = Color(0.81, 0.31, 0.55, 1)
-circuit_symbol = "triangle"
+circuit_symbol = "spark"
 
 [node name="HatchPayoff" parent="Content" instance=ExtResource("9_payoff")]
 unique_name_in_owner = true

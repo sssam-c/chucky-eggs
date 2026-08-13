@@ -5,7 +5,7 @@ signal circuit_requested(circuit_id: String)
 @export var circuit_id := "red"
 @export var slot_indices: Array[int] = []
 @export var circuit_color := Color("b6322c")
-@export_enum("diamond", "circle", "triangle") var circuit_symbol := "diamond"
+@export_enum("diamond", "circle", "spark") var circuit_symbol := "diamond"
 
 var press_amount := 0.0:
 	set(value):
@@ -123,9 +123,13 @@ func _draw_symbol(center: Vector2, color: Color) -> void:
 	match circuit_symbol:
 		"circle":
 			draw_arc(center, 8.0, 0.0, TAU, 20, color, 3.0, true)
-		"triangle":
+		"spark":
 			var points := PackedVector2Array([
-				center + Vector2(0, -9), center + Vector2(9, 7), center + Vector2(-9, 7), center + Vector2(0, -9),
+				center + Vector2(0, -11), center + Vector2(3, -3),
+				center + Vector2(11, 0), center + Vector2(3, 3),
+				center + Vector2(0, 11), center + Vector2(-3, 3),
+				center + Vector2(-11, 0), center + Vector2(-3, -3),
+				center + Vector2(0, -11),
 			])
 			draw_polyline(points, color, 3.0, true)
 		_:

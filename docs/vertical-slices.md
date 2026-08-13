@@ -76,7 +76,7 @@ Begin with only Red available and watch both Red spoons fire even though the slo
 - Simultaneous direct damage to every occupied linked slot and visibly wasted empty strikes.
 - Per-damaged-egg Cuckoo echoes from the pre-retreat positions.
 - Conveyor-ordered retreat of every surviving directly struck Plover.
-- Three durable, keyboard-focusable Red, Blue, and Pink controls with non-colour symbols and connected-spoon descriptions.
+- Three durable, keyboard-focusable Red, Blue, and Pink controls with non-colour symbols and connected-spoon descriptions. Pink uses a four-point spark as its non-colour identifier.
 - Five colour- and symbol-matched spoons that animate together from the resolver-authored circuit event.
 - Existing egg information, pipe, score, result, audio, reduced-motion, cancellation, and input-barrier behavior.
 

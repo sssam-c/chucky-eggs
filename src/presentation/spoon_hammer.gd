@@ -3,7 +3,7 @@ extends Control
 @export var slot_index := -1
 @export var circuit_id := "red"
 @export var circuit_color := Color("b6322c")
-@export_enum("diamond", "circle", "triangle") var circuit_symbol := "diamond"
+@export_enum("diamond", "circle", "spark") var circuit_symbol := "diamond"
 
 const PIVOT := Vector2(142.0, 142.0)
 const HANDLE_LENGTH := 110.0
@@ -96,9 +96,13 @@ func _draw_circuit_symbol(center: Vector2, color: Color) -> void:
 	match circuit_symbol:
 		"circle":
 			draw_arc(center, 7.0, 0.0, TAU, 18, color, 3.0, true)
-		"triangle":
+		"spark":
 			draw_polyline(PackedVector2Array([
-				center + Vector2(0, -8), center + Vector2(8, 7), center + Vector2(-8, 7), center + Vector2(0, -8),
+				center + Vector2(0, -10), center + Vector2(3, -3),
+				center + Vector2(10, 0), center + Vector2(3, 3),
+				center + Vector2(0, 10), center + Vector2(-3, 3),
+				center + Vector2(-10, 0), center + Vector2(-3, -3),
+				center + Vector2(0, -10),
 			]), color, 3.0, true)
 		_:
 			draw_polyline(PackedVector2Array([

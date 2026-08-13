@@ -27,12 +27,13 @@ func test_stage_has_three_circuit_controls_and_five_colour_matched_spoons() -> v
 	assert_eq(circuits.get_node("BlueCircuit").slot_indices, [1, 3])
 	assert_eq(circuits.get_node("BlueCircuit").circuit_symbol, "circle")
 	assert_eq(circuits.get_node("PinkCircuit").slot_indices, [4])
-	assert_eq(circuits.get_node("PinkCircuit").circuit_symbol, "triangle")
+	assert_eq(circuits.get_node("PinkCircuit").circuit_symbol, "spark")
 	assert_eq(hammers.get_node("Hammer1").circuit_id, "red")
 	assert_eq(hammers.get_node("Hammer2").circuit_id, "blue")
 	assert_eq(hammers.get_node("Hammer3").circuit_id, "red")
 	assert_eq(hammers.get_node("Hammer4").circuit_id, "blue")
 	assert_eq(hammers.get_node("Hammer5").circuit_id, "pink")
+	assert_eq(hammers.get_node("Hammer5").circuit_symbol, "spark")
 
 
 func test_each_spoon_bowl_aligns_with_its_egg_slot_at_rest_and_contact() -> void:
@@ -68,12 +69,14 @@ func test_only_circuits_with_an_occupied_linked_slot_are_available() -> void:
 func test_circuit_controls_have_no_hover_text_and_describe_connections_accessibly() -> void:
 	var main := _add_main()
 	var red: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
+	var pink: Button = main.get_node("Content/Stage/CircuitBank/PinkCircuit")
 
 	assert_eq(red.tooltip_text, "")
 	assert_eq(red.accessibility_name, "Red diamond circuit")
 	assert_string_contains(red.accessibility_description, "slots 1 and 3")
 	assert_string_contains(red.accessibility_description, "Slot 1: Chicken egg")
 	assert_string_contains(red.accessibility_description, "Slot 3: empty")
+	assert_eq(pink.accessibility_name, "Pink spark circuit")
 
 
 func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
