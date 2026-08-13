@@ -72,10 +72,20 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D006's 4-toughness Plover value only.
 
+## D008 — Make Chickens a faster baseline reward
+
+**Status:** accepted
+
+**Decision:** Reduce Chicken toughness from 4 to 3. Its 3-point value remains unchanged; the day still lasts 20 thwacks and requires 10 points.
+
+**Reason:** Four-hit Chickens consumed too much of the opening day's action budget once Cuckoo adjacency and Plover displacement were added. Three-hit Chickens produce the satisfying hatch payoff more often and let three reliable hatches reach 9 points in 9 direct hits, leaving room to experiment while still requiring a special-egg contribution for the final point.
+
+**Supersedes:** D004's 4-toughness Chicken value. D004's 3-point Chicken value remains.
+
 <!--
 Copy for the next entry:
 
-## D008 — Short decision title
+## D009 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

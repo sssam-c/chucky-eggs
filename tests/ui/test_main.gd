@@ -6,7 +6,7 @@ func test_main_renders_initial_day_state_and_accessibility_controls() -> void:
 
 	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 10")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
-	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 4")
+	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "EMPTY")
 	assert_eq(main.get_node("Content/Stage/Pipe/Preview").get_child_count(), 3)
 	assert_string_contains(main.get_node("Content/Stage/Pipe/Preview/Next1").egg_summary(), "CUCKOO")
@@ -121,7 +121,6 @@ func test_plover_swap_is_presented_before_the_belt_advances() -> void:
 		"egg_damaged",
 		"eggs_swapped",
 		"conveyor_advanced",
-		"egg_discarded",
 		"thwack_spent",
 		"egg_entered",
 	])
@@ -140,7 +139,7 @@ func test_restart_cancels_active_playback_without_stale_day_state() -> void:
 
 	assert_false(main.is_input_locked())
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
-	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 4")
+	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_eq(completion_count, 0)
 
 
@@ -166,15 +165,15 @@ func test_crunch_audio_streams_are_present_and_non_empty() -> void:
 		assert_gt(player.stream.data.size(), 1000, "%s stream contains PCM data" % player_name)
 
 
-func test_four_targeted_presses_hatch_and_score() -> void:
+func test_three_targeted_presses_hatch_and_score() -> void:
 	var main := _add_main()
 	main.set_reduced_motion(true)
 
-	for slot_name in ["Slot1", "Slot2", "Slot3", "Slot4"]:
+	for slot_name in ["Slot1", "Slot2", "Slot3"]:
 		await _press_and_wait(main, slot_name)
 
 	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 3 / 10")
-	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 16")
+	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 17")
 	assert_string_contains(main.get_node("Content/Feedback").text, "hatched")
 
 

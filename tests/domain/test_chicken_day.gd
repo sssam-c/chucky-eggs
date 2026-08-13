@@ -13,7 +13,8 @@ func test_day_starts_with_an_authored_chicken_cuckoo_and_plover_queue() -> void:
 	assert_false(state.ended)
 	assert_eq(state.slots.size(), 5)
 	assert_eq(state.slots[0].kind, "chicken")
-	assert_eq(state.slots[0].toughness, 4)
+	assert_eq(state.slots[0].toughness, 3)
+	assert_eq(state.slots[0].max_toughness, 3)
 	assert_eq(state.slots[0].points, 3)
 	assert_true(state.slots[1].is_empty())
 	assert_eq(state.pipe.size(), 3)
@@ -42,7 +43,7 @@ func test_thwack_damages_the_target_then_advances_and_refills_once() -> void:
 	assert_eq(state.remaining_thwacks, 19)
 	assert_eq(state.slots[0].kind, "cuckoo")
 	assert_eq(state.slots[0].toughness, 4)
-	assert_eq(state.slots[1].toughness, 3)
+	assert_eq(state.slots[1].toughness, 2)
 	assert_eq(state.pipe.size(), 3)
 
 
@@ -68,7 +69,7 @@ func test_cuckoo_echoes_once_when_another_egg_is_damaged() -> void:
 	assert_eq(state.slots[1].kind, "cuckoo")
 	assert_eq(state.slots[1].toughness, 3)
 	assert_eq(state.slots[2].kind, "chicken")
-	assert_eq(state.slots[2].toughness, 2)
+	assert_eq(state.slots[2].toughness, 1)
 
 
 func test_cuckoo_does_not_echo_damage_from_a_non_adjacent_egg() -> void:
@@ -93,11 +94,9 @@ func test_cuckoo_does_not_echo_damage_from_a_non_adjacent_egg() -> void:
 func test_damage_batch_completes_before_hatches_resolve_in_conveyor_order() -> void:
 	var day = ChickenDay.new()
 
-	day.resolve_thwack(0)
-	day.resolve_thwack(0)
-	day.resolve_thwack(2)
-	day.resolve_thwack(3)
-	var events: Array[Dictionary] = day.resolve_thwack(4)
+	for slot_index in [0, 0, 0, 1]:
+		day.resolve_thwack(slot_index)
+	var events: Array[Dictionary] = day.resolve_thwack(2)
 	var state: Dictionary = day.snapshot()
 
 	assert_eq(_event_types(events), [
@@ -106,13 +105,14 @@ func test_damage_batch_completes_before_hatches_resolve_in_conveyor_order() -> v
 		"egg_hatched",
 		"egg_hatched",
 		"conveyor_advanced",
+		"egg_discarded",
 		"thwack_spent",
 		"egg_entered",
 	])
 	assert_eq(events[0].cause, "spoon")
 	assert_eq(events[1].cause, "cuckoo_echo")
-	assert_eq(events[2].kind, "cuckoo")
-	assert_eq(events[3].kind, "chicken")
+	assert_eq(events[2].kind, "chicken")
+	assert_eq(events[3].kind, "cuckoo")
 	assert_eq(state.score, 4)
 	assert_eq(state.remaining_thwacks, 15)
 	assert_true(state.slots[4].is_empty())
@@ -129,7 +129,6 @@ func test_surviving_plover_swaps_backward_before_the_conveyor_advances() -> void
 		"egg_damaged",
 		"eggs_swapped",
 		"conveyor_advanced",
-		"egg_discarded",
 		"thwack_spent",
 		"egg_entered",
 	])
@@ -183,7 +182,7 @@ func test_unhatched_egg_is_discarded_after_slot_five() -> void:
 			var discarded := events.filter(func(event: Dictionary) -> bool: return event.type == "egg_discarded")
 			assert_eq(discarded.size(), 1)
 			assert_eq(discarded[0].reason, "belt_end")
-			assert_eq(discarded[0].remaining_toughness, 3)
+			assert_eq(discarded[0].remaining_toughness, 2)
 
 
 func test_empty_slot_request_is_rejected_without_spending_time() -> void:
@@ -230,7 +229,7 @@ func test_day_fails_below_ten_points() -> void:
 
 func test_day_succeeds_at_ten_or_more_points() -> void:
 	var day = ChickenDay.new()
-	var winning_slots := [0, 1, 2, 0, 4, 2, 3, 4, 0, 1, 2, 0, 4, 2, 3, 4, 0, 1, 2, 3]
+	var winning_slots := [0, 1, 2, 1, 2, 3, 2, 3, 4, 4, 4, 3, 4, 3, 4, 4, 4, 3, 4, 3]
 
 	for slot_index: int in winning_slots:
 		var events: Array[Dictionary] = day.resolve_thwack(slot_index)

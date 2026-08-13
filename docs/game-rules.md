@@ -21,7 +21,7 @@ Inspect the five conveyor slots, the next three eggs in the pipe, the score, and
 
 - The conveyor has five ordered slots. Slot 1 receives eggs and slot 5 is beside the drop.
 - The day begins with one chicken egg in slot 1 and a fixed authored sequence of Chicken, Cuckoo, and Plover eggs in the pipe.
-- A Chicken egg has 4 toughness and is worth 3 points when hatched.
+- A Chicken egg has 3 toughness and is worth 3 points when hatched.
 - A Cuckoo egg has 4 toughness and is worth 1 point when hatched.
 - A Plover egg has 6 toughness and is worth 2 points when hatched.
 - The pipe is continuously supplied from the same repeating authored sequence, always shows the next three eggs, and drops one into slot 1 after each non-final thwack.
