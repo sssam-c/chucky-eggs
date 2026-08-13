@@ -17,11 +17,14 @@ Choose which eggs deserve the spoon while every thwack carries the whole conveyo
 
 Inspect the five conveyor slots, the next three eggs in the pipe, the score, and the visible thwack countdown. Choose a spoon circuit, balancing the eggs it can damage against how close every egg is to the end.
 
+After a successful day, inspect three distinct producer offers and add exactly one to the flock. Its complete daily yield joins the next day's newly shuffled pool. A failed day awards no producer and is retried with the same flock and shuffle.
+
 ## Setup and state
 
 - The conveyor has five ordered slots. Slot 1 receives eggs and slot 5 is beside the drop.
 - The starting flock has five Chicken producers, three Cuckoo producers, and two Plover producers.
 - Each Chicken producer lays two eggs per day. Each Cuckoo and Plover producer lays one, producing a daily pool of 15 eggs.
+- A Spoonbill producer also lays one egg per day.
 - Shuffle the complete daily pool once, load its first egg into slot 1, and place the rest in the finite hopper. Do not reshuffle during the day.
 - A Chicken egg has 3 toughness and is worth 3 points when hatched.
 - A Cuckoo egg has 4 toughness and is worth 1 point when hatched.
@@ -29,6 +32,8 @@ Inspect the five conveyor slots, the next three eggs in the pipe, the score, and
 - A Spoonbill egg has 5 toughness, is worth 4 points when hatched, and takes 2 damage from a direct Pink strike instead of 1.
 - The pipe shows up to the next three hopper eggs. After each non-final thwack, the next hopper egg drops into slot 1 if one remains.
 - Egg toughness, current score, remaining thwacks, and the number of eggs left in the hopper are always visible.
+- Producer offers identify the animal with a portrait, show its daily yield, preview every egg it lays, and state those eggs' toughness, points, and effect before selection.
+- Before each later day begins, the complete flock and every producer's yield are shown loading the new daily egg pool into the hopper.
 
 ## Actions and resolution
 
@@ -68,3 +73,4 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 - **Discarded:** Removed without hatching or awarding points.
 - **Producer:** A persistent flock member that lays its stated number of fresh eggs into the daily pool.
 - **Hopper:** The finite shuffled sequence of eggs that have not yet entered the conveyor.
+- **Producer offer:** One of three distinct Chicken, Cuckoo, Plover, or Spoonbill producers offered after a successful day. Exactly one must be added before the next day.

@@ -3,6 +3,8 @@ extends Control
 signal playback_started
 signal presentation_event(event_type: String)
 signal playback_completed
+signal production_loading_started(producer_count: int, egg_count: int)
+signal production_loading_completed
 
 const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 
@@ -10,8 +12,12 @@ const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 @onready var _thwacks_label: Label = %Thwacks
 @onready var _feedback_label: Label = %Feedback
 @onready var _result_overlay: Control = %ResultOverlay
+@onready var _result_card: PanelContainer = $ResultOverlay/Card
 @onready var _result_label: Label = %Result
 @onready var _result_score_label: Label = %ResultScore
+@onready var _result_summary_label: Label = %Summary
+@onready var _flock_summary_label: Label = %FlockSummary
+@onready var _reward_choices_container: HBoxContainer = %RewardChoices
 @onready var _restart_button: Button = %Restart
 @onready var _mute_button: CheckButton = %Mute
 @onready var _reduced_motion_button: CheckButton = %ReducedMotion
@@ -20,11 +26,13 @@ const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 @onready var _echo_trace: Control = %EchoTrace
 @onready var _hatch_payoff: Control = %HatchPayoff
 @onready var _presenter: Node = %Presentation
+@onready var _production_loader: Control = %ProductionLoader
 @onready var _hopper_count_label: Label = %HopperCount
 @onready var _belt_slots: Array[Button] = [%Slot1, %Slot2, %Slot3, %Slot4, %Slot5]
 @onready var _pipe_slots: Array[Button] = [%Next1, %Next2, %Next3]
 @onready var _circuit_buttons: Array[Button] = [%RedCircuit, %BlueCircuit, %PinkCircuit]
 @onready var _hammers: Array[Control] = [%Hammer1, %Hammer2, %Hammer3, %Hammer4, %Hammer5]
+@onready var _producer_choice_buttons: Array[Button] = [%Choice1, %Choice2, %Choice3]
 
 var _session = ChickenDaySession.new()
 var _input_locked := false
@@ -34,10 +42,18 @@ var _request_generation := 0
 func _ready() -> void:
 	for circuit_button: Button in _circuit_buttons:
 		circuit_button.connect("circuit_requested", _on_circuit_requested)
+	for choice_index in range(_producer_choice_buttons.size()):
+		_producer_choice_buttons[choice_index].pressed.connect(
+			_on_producer_choice_pressed.bind(choice_index)
+		)
 	_restart_button.pressed.connect(_on_restart_pressed)
 	_mute_button.toggled.connect(set_muted)
 	_reduced_motion_button.toggled.connect(set_reduced_motion)
 	_presenter.event_presented.connect(_on_presentation_event)
+	_production_loader.loading_started.connect(
+		func(producer_count: int, egg_count: int) -> void:
+			production_loading_started.emit(producer_count, egg_count)
+	)
 	_presenter.configure(
 		_belt_slots,
 		_pipe_slots,
@@ -79,9 +95,43 @@ func _on_restart_pressed() -> void:
 	restart_day()
 
 
+func _on_producer_choice_pressed(choice_index: int) -> void:
+	if _input_locked:
+		return
+	var state: Dictionary = _session.state()
+	if state.phase != "reward" or choice_index >= state.reward_choices.size():
+		return
+	var selected: Dictionary = state.reward_choices[choice_index]
+	var events: Array[Dictionary] = _session.select_producer(selected.kind)
+	if events.is_empty() or events[0].type == "producer_selection_rejected":
+		return
+	var day_started_event := _event_of_type(events, "day_started")
+	if day_started_event.is_empty():
+		return
+
+	_input_locked = true
+	_request_generation += 1
+	var request_generation := _request_generation
+	_set_circuit_interaction(false)
+	_result_overlay.visible = false
+	var completed: bool = await _production_loader.begin(
+		day_started_event.production,
+		day_started_event.day_number,
+		day_started_event.daily_egg_count,
+		is_reduced_motion()
+	)
+	if not completed or request_generation != _request_generation:
+		return
+
+	_input_locked = false
+	_render(events, true)
+	production_loading_completed.emit()
+
+
 func restart_day() -> void:
 	_request_generation += 1
 	_presenter.cancel_playback()
+	_production_loader.cancel()
 	_input_locked = false
 	_session.restart()
 	_render([], true)
@@ -91,6 +141,7 @@ func restart_day() -> void:
 func replace_session(session) -> void:
 	_request_generation += 1
 	_presenter.cancel_playback()
+	_production_loader.cancel()
 	_input_locked = false
 	_session = session
 	_render([], true)
@@ -147,12 +198,34 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 
 	_result_overlay.visible = state.ended
 	if state.ended:
-		_result_label.text = "DAY COMPLETE" if state.succeeded else "DAY FAILED"
+		var choosing_producer: bool = state.phase == "reward"
+		_result_label.text = "CHOOSE A PRODUCER" if choosing_producer else "DAY FAILED"
 		_result_score_label.text = "%d / %d POINTS" % [state.score, state.target_score]
-		_restart_button.grab_focus.call_deferred()
+		_flock_summary_label.text = "FLOCK %d PRODUCERS  •  DAILY OUTPUT %d EGGS" % [
+			state.producers.size(), state.daily_egg_count,
+		]
+		_reward_choices_container.visible = choosing_producer
+		_restart_button.visible = not choosing_producer
+		if choosing_producer:
+			_result_card.offset_left = -500.0
+			_result_card.offset_top = -230.0
+			_result_card.offset_right = 500.0
+			_result_card.offset_bottom = 230.0
+			_result_summary_label.text = "Success! Add one producer. Its full daily yield joins tomorrow's shuffled hopper."
+			for choice_index in range(_producer_choice_buttons.size()):
+				_producer_choice_buttons[choice_index].render_choice(state.reward_choices[choice_index])
+			_producer_choice_buttons[0].grab_focus.call_deferred()
+		else:
+			_result_card.offset_left = -240.0
+			_result_card.offset_top = -170.0
+			_result_card.offset_right = 240.0
+			_result_card.offset_bottom = 170.0
+			_result_summary_label.text = "No producer joins the flock. Retry this day with the same flock and shuffle."
+			_restart_button.text = "RETRY DAY %d" % state.day_number
+			_restart_button.grab_focus.call_deferred()
 
 	if fresh_day:
-		_feedback_label.text = "RED 1+3  •  BLUE 2+4  •  PINK 5 — EMPTY STRIKES ARE WASTED"
+		_feedback_label.text = "DAY %d  •  RED 1+3  •  BLUE 2+4  •  PINK 5 — EMPTY STRIKES ARE WASTED" % state.day_number
 	else:
 		_feedback_label.text = _feedback_for(events)
 
@@ -167,6 +240,13 @@ func _set_circuit_interaction(enabled: bool) -> void:
 
 func _on_presentation_event(event_type: String) -> void:
 	presentation_event.emit(event_type)
+
+
+func _event_of_type(events: Array[Dictionary], event_type: String) -> Dictionary:
+	for event: Dictionary in events:
+		if event.type == event_type:
+			return event
+	return {}
 
 
 func _feedback_for(events: Array[Dictionary]) -> String:

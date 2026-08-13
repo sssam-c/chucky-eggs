@@ -254,31 +254,24 @@ func _end_day(events: Array[Dictionary]) -> void:
 
 
 func _new_egg(kind: String) -> Dictionary:
-	if kind == "cuckoo":
-		return {
-			"kind": "cuckoo",
-			"toughness": CUCKOO_TOUGHNESS,
-			"max_toughness": CUCKOO_TOUGHNESS,
-			"points": CUCKOO_POINTS,
-		}
-	if kind == "plover":
-		return {
-			"kind": "plover",
-			"toughness": PLOVER_TOUGHNESS,
-			"max_toughness": PLOVER_TOUGHNESS,
-			"points": PLOVER_POINTS,
-		}
-	if kind == "spoonbill":
-		return {
-			"kind": "spoonbill",
-			"toughness": SPOONBILL_TOUGHNESS,
-			"max_toughness": SPOONBILL_TOUGHNESS,
-			"points": SPOONBILL_POINTS,
-		}
-	assert(kind == "chicken", "Unknown egg kind: %s" % kind)
+	var definition := egg_definition(kind)
+	assert(not definition.is_empty(), "Unknown egg kind: %s" % kind)
 	return {
-		"kind": "chicken",
-		"toughness": CHICKEN_TOUGHNESS,
-		"max_toughness": CHICKEN_TOUGHNESS,
-		"points": CHICKEN_POINTS,
+		"kind": definition.kind,
+		"toughness": definition.toughness,
+		"max_toughness": definition.toughness,
+		"points": definition.points,
 	}
+
+
+static func egg_definition(kind: String) -> Dictionary:
+	match kind:
+		"chicken":
+			return {"kind": kind, "toughness": CHICKEN_TOUGHNESS, "points": CHICKEN_POINTS, "effect": "none"}
+		"cuckoo":
+			return {"kind": kind, "toughness": CUCKOO_TOUGHNESS, "points": CUCKOO_POINTS, "effect": "adjacent_echo"}
+		"plover":
+			return {"kind": kind, "toughness": PLOVER_TOUGHNESS, "points": PLOVER_POINTS, "effect": "retreat"}
+		"spoonbill":
+			return {"kind": kind, "toughness": SPOONBILL_TOUGHNESS, "points": SPOONBILL_POINTS, "effect": "pink_weakness"}
+	return {}

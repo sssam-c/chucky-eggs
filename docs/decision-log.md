@@ -120,10 +120,26 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D007's 2-point Plover value only.
 
+## D013 — Add one producer after each successful day
+
+**Status:** accepted
+
+**Decision:** After a successful day, offer three distinct producers drawn from the established Chicken, Cuckoo, Plover, and Spoonbill species. Show each producer's daily yield and egg properties, and require the player to add exactly one before beginning the next day. Chicken producers add two eggs to every subsequent daily pool; the other established producers add one. A failed day offers no producer and retries with the same flock and shuffle.
+
+**Reason:** Mandatory growth turns every success into a build decision while preserving the dilution pressure that gives future removal and machine-capacity upgrades value. Three legible choices provide agency without exposing the full catalogue, and success-only rewards preserve the meaning of the daily target.
+
+## D014 — Show animals producing the next hopper
+
+**Status:** accepted
+
+**Decision:** Identify every producer offer with a species portrait, its full daily yield, and a visual preview of every egg it contributes. After the player adds a producer and before the next day becomes playable, show the complete flock loading its resolver-authored daily output into the hopper. Keep input locked until that presentation completes, and allow cancellation or replacement to prevent stale next-day presentation.
+
+**Reason:** Yield is part of a producer's strategic identity, and text alone undersells how strongly a two-egg Chicken changes the pool. Repeating the bird-to-egg relationship during hopper loading makes flock composition, dilution, and the origin of the shuffled daily pool immediately visible without moving production ownership into animation.
+
 <!--
 Copy for the next entry:
 
-## D013 — Short decision title
+## D015 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

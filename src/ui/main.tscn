@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://src/ui/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
@@ -9,6 +9,8 @@
 [ext_resource type="FontFile" path="res://addons/gut/fonts/AnonymousPro-Bold.ttf" id="7_font"]
 [ext_resource type="Script" path="res://src/presentation/echo_trace.gd" id="8_trace"]
 [ext_resource type="PackedScene" path="res://src/presentation/hatch_payoff.tscn" id="9_payoff"]
+[ext_resource type="PackedScene" path="res://src/ui/producer_choice_button.tscn" id="10_choice"]
+[ext_resource type="PackedScene" path="res://src/presentation/production_loader.tscn" id="11_loader"]
 
 [sub_resource type="Theme" id="MachineTheme"]
 default_font = ExtResource("7_font")
@@ -576,6 +578,7 @@ script = ExtResource("3_presenter")
 [node name="ResultOverlay" type="Control" parent="."]
 unique_name_in_owner = true
 visible = false
+z_index = 100
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -629,12 +632,39 @@ text = "3 / 3 POINTS"
 horizontal_alignment = 1
 
 [node name="Summary" type="Label" parent="ResultOverlay/Card/Content"]
+unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.30, 0.21, 0.14, 1)
 theme_override_font_sizes/font_size = 16
 text = "The remaining eggs were discarded when the bell rang."
 horizontal_alignment = 1
 autowrap_mode = 2
+
+[node name="FlockSummary" type="Label" parent="ResultOverlay/Card/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.24, 0.12, 0.07, 1)
+theme_override_font_sizes/font_size = 17
+text = "FLOCK 10 PRODUCERS  •  DAILY OUTPUT 15 EGGS"
+horizontal_alignment = 1
+
+[node name="RewardChoices" type="HBoxContainer" parent="ResultOverlay/Card/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 18
+alignment = 1
+
+[node name="Choice1" parent="ResultOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Choice2" parent="ResultOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Choice3" parent="ResultOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="Restart" type="Button" parent="ResultOverlay/Card/Content"]
 unique_name_in_owner = true
@@ -648,3 +678,6 @@ theme_override_styles/hover = SubResource("RestartHover")
 theme_override_styles/pressed = SubResource("RestartNormal")
 theme_override_styles/focus = SubResource("RestartHover")
 text = "PLAY ANOTHER DAY"
+
+[node name="ProductionLoader" parent="." instance=ExtResource("11_loader")]
+unique_name_in_owner = true

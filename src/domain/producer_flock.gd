@@ -1,6 +1,7 @@
 class_name ProducerFlock
 extends RefCounted
 
+const PRODUCER_KINDS: Array[String] = ["chicken", "cuckoo", "plover", "spoonbill"]
 const STARTING_PRODUCERS: Array[Dictionary] = [
 	{"kind": "chicken", "daily_yield": 2},
 	{"kind": "chicken", "daily_yield": 2},
@@ -34,3 +35,20 @@ func lay_daily_egg_kinds() -> Array[String]:
 		for egg_index in range(int(producer.daily_yield)):
 			egg_kinds.append(String(producer.kind))
 	return egg_kinds
+
+
+func add_producer(kind: String) -> Dictionary:
+	var producer := producer_for_kind(kind)
+	if producer.is_empty():
+		return {}
+	_producers.append(producer)
+	return producer.duplicate(true)
+
+
+static func producer_for_kind(kind: String) -> Dictionary:
+	if kind not in PRODUCER_KINDS:
+		return {}
+	return {
+		"kind": kind,
+		"daily_yield": 2 if kind == "chicken" else 1,
+	}

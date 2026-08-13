@@ -1,6 +1,23 @@
 extends GutTest
 
 const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
+const ProducerFlock = preload("res://src/domain/producer_flock.gd")
+
+const SUCCESSFUL_DAY_EGGS: Array[String] = [
+	"chicken", "cuckoo", "chicken", "spoonbill",
+	"cuckoo", "plover", "chicken", "chicken",
+	"chicken", "cuckoo", "chicken", "spoonbill",
+	"cuckoo", "plover", "chicken", "chicken",
+	"chicken", "cuckoo", "chicken", "spoonbill",
+	"cuckoo", "plover", "chicken", "chicken",
+]
+
+
+class IdentityShuffler:
+	extends RefCounted
+
+	func shuffle_strings(values: Array[String]) -> Array[String]:
+		return values.duplicate()
 
 
 func test_session_builds_a_fifteen_egg_day_from_the_starting_flock() -> void:
@@ -43,3 +60,117 @@ func test_restart_replaces_the_day_with_initial_state() -> void:
 
 	assert_eq(session.state().remaining_thwacks, 20)
 	assert_eq(session.state().slots[0].toughness, 3)
+
+
+func test_success_opens_three_distinct_deterministic_producer_choices() -> void:
+	var session = _successful_day_session()
+
+	_complete_successful_day(session)
+	var state: Dictionary = session.state()
+	var offered_kinds: Array = state.reward_choices.map(
+		func(choice: Dictionary) -> String: return choice.kind
+	)
+
+	assert_eq(state.phase, "reward")
+	assert_eq(state.day_number, 1)
+	assert_eq(state.reward_choices.size(), 3)
+	assert_eq(offered_kinds.duplicate().reduce(
+		func(unique: Array, kind: String) -> Array:
+			if kind not in unique:
+				unique.append(kind)
+			return unique,
+		[]
+	).size(), 3)
+	assert_true(offered_kinds.all(func(kind: String) -> bool:
+		return kind in ["chicken", "cuckoo", "plover", "spoonbill"]
+	))
+
+
+func test_selecting_an_offered_producer_starts_day_two_with_its_yield() -> void:
+	var session = _successful_day_session()
+	_complete_successful_day(session)
+	var before: Dictionary = session.state()
+	var selected: Dictionary = before.reward_choices[0]
+
+	var events: Array[Dictionary] = session.select_producer(selected.kind)
+	var after: Dictionary = session.state()
+
+	assert_eq(events.map(func(event: Dictionary) -> String: return event.type), [
+		"producer_added", "day_started",
+	])
+	assert_eq(events[1].production.size(), after.producers.size())
+	assert_eq(events[1].production.reduce(
+		func(total: int, producer: Dictionary) -> int: return total + producer.daily_yield,
+		0
+	), after.daily_egg_count)
+	assert_true(events[1].production.all(func(producer: Dictionary) -> bool:
+		return producer.has_all(["kind", "daily_yield", "toughness", "points", "effect"])
+	))
+	assert_eq(after.phase, "day")
+	assert_eq(after.day_number, 2)
+	assert_eq(after.producers.size(), before.producers.size() + 1)
+	assert_eq(after.daily_egg_count, before.daily_egg_count + selected.daily_yield)
+	assert_true(after.reward_choices.is_empty())
+
+
+func test_unoffered_producer_cannot_be_selected() -> void:
+	var session = _successful_day_session()
+	_complete_successful_day(session)
+	var before: Dictionary = session.state()
+	var unoffered_kind := ""
+	for kind in ["chicken", "cuckoo", "plover", "spoonbill"]:
+		if not before.reward_choices.any(
+			func(choice: Dictionary) -> bool: return choice.kind == kind
+		):
+			unoffered_kind = kind
+
+	var events: Array[Dictionary] = session.select_producer(unoffered_kind)
+
+	assert_eq(events, [{"type": "producer_selection_rejected", "reason": "not_offered"}])
+	assert_eq(session.state(), before)
+
+
+func test_restart_cannot_bypass_the_mandatory_success_choice() -> void:
+	var session = _successful_day_session()
+	_complete_successful_day(session)
+	var before: Dictionary = session.state()
+
+	session.restart()
+
+	assert_eq(session.state(), before)
+
+
+func test_failure_offers_no_producer_and_retry_replays_the_same_day() -> void:
+	var flock = ProducerFlock.new([{"kind": "chicken", "daily_yield": 1}])
+	var session = ChickenDaySession.new(7, flock, IdentityShuffler.new())
+	var opening: Dictionary = session.state()
+
+	for circuit_id in ["red", "blue", "red"]:
+		session.submit_circuit(circuit_id)
+	assert_eq(session.state().phase, "failed")
+	assert_true(session.state().reward_choices.is_empty())
+
+	session.restart()
+
+	assert_eq(session.state().phase, "day")
+	assert_eq(session.state().day_number, 1)
+	assert_eq(session.state().producers, opening.producers)
+	assert_eq(session.state().slots, opening.slots)
+	assert_eq(session.state().pipe, opening.pipe)
+
+
+func _successful_day_session():
+	var producers: Array[Dictionary] = []
+	for kind: String in SUCCESSFUL_DAY_EGGS:
+		producers.append({"kind": kind, "daily_yield": 1})
+	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new())
+
+
+func _complete_successful_day(session) -> void:
+	var circuit_plan := [
+		"red", "blue", "red", "blue", "red", "blue", "red", "pink", "red", "blue",
+		"red", "blue", "red", "blue", "red", "pink", "red", "blue", "red", "blue",
+	]
+	for circuit_id in circuit_plan:
+		session.submit_circuit(circuit_id)
+	assert_true(session.state().succeeded)

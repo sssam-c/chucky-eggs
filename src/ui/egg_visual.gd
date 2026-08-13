@@ -104,6 +104,10 @@ func effect_emblem() -> String:
 	return ""
 
 
+func egg_kind() -> String:
+	return String(_egg.get("kind", ""))
+
+
 func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 	var mark_scale := 0.72 if _preview else 1.0
 	_draw_score_seal(center + Vector2(0.0, -radius_y * 0.61), mark_scale)

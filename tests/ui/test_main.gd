@@ -319,16 +319,116 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	assert_true(result_panel.visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY FAILED")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 17")
+	assert_false(main.get_node("ResultOverlay/Card/Content/RewardChoices").visible)
+	assert_true(main.get_node("ResultOverlay/Card/Content/Restart").visible)
+	assert_eq(main.get_node("ResultOverlay/Card/Content/Restart").text, "RETRY DAY 1")
 
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 	assert_false(result_panel.visible)
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
 
 
+func test_success_opens_three_legible_producer_choices_instead_of_retry() -> void:
+	var main := _add_authored_main()
+	main.set_reduced_motion(true)
+
+	await _complete_successful_day(main)
+
+	var choices: HBoxContainer = main.get_node("ResultOverlay/Card/Content/RewardChoices")
+	var offered_kinds: Array[String] = []
+	for choice in choices.get_children():
+		offered_kinds.append(choice.producer_kind)
+		assert_eq(choice.portrait_kind(), choice.producer_kind)
+		assert_eq(choice.preview_egg_kind(), choice.producer_kind)
+		assert_eq(choice.preview_egg_count(), choice.daily_yield)
+		assert_string_contains(choice.card_text(), "EGG")
+		assert_string_contains(choice.card_text(), "TOUGHNESS")
+		assert_string_contains(choice.card_text(), "POINT")
+		assert_eq(choice.tooltip_text, "")
+	assert_true(main.get_node("ResultOverlay").visible)
+	assert_gt(main.get_node("ResultOverlay").z_index, main.get_node("Content").z_index)
+	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "CHOOSE A PRODUCER")
+	assert_true(choices.visible)
+	assert_eq(choices.get_child_count(), 3)
+	assert_eq(offered_kinds.duplicate().reduce(
+		func(unique: Array, kind: String) -> Array:
+			if kind not in unique:
+				unique.append(kind)
+			return unique,
+		[]
+	).size(), 3)
+	assert_false(main.get_node("ResultOverlay/Card/Content/Restart").visible)
+	assert_eq(main.get_node("ResultOverlay/Card/Content/FlockSummary").text, "FLOCK 24 PRODUCERS  •  DAILY OUTPUT 24 EGGS")
+	await get_tree().process_frame
+	assert_true(choices.get_child(0).has_focus())
+
+
+func test_selecting_a_producer_starts_day_two_with_its_full_yield() -> void:
+	var main := _add_authored_main()
+	main.set_reduced_motion(true)
+	await _complete_successful_day(main)
+	var first_choice = main.get_node("ResultOverlay/Card/Content/RewardChoices/Choice1")
+	var expected_hopper_count: int = 23 + first_choice.daily_yield
+	var loading_facts: Array[Vector2i] = []
+	main.production_loading_started.connect(
+		func(producer_count: int, egg_count: int) -> void:
+			loading_facts.append(Vector2i(producer_count, egg_count))
+	)
+
+	first_choice.pressed.emit()
+	await main.production_loading_completed
+	await get_tree().process_frame
+
+	assert_eq(loading_facts, [Vector2i(25, 24 + first_choice.daily_yield)])
+	assert_false(main.get_node("ResultOverlay").visible)
+	assert_false(main.get_node("ProductionLoader").visible)
+	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER %d" % expected_hopper_count)
+	assert_string_contains(main.get_node("Content/Feedback").text, "DAY 2")
+	assert_false(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().is_empty())
+
+
+func test_replacing_the_session_cancels_an_active_production_loading_sequence() -> void:
+	var main := _add_authored_main()
+	main.set_reduced_motion(true)
+	await _complete_successful_day(main)
+	main.set_reduced_motion(false)
+	var completion_count := [0]
+	var started_count := [0]
+	main.production_loading_completed.connect(func() -> void: completion_count[0] += 1)
+	main.production_loading_started.connect(
+		func(_producer_count: int, _egg_count: int) -> void: started_count[0] += 1
+	)
+
+	main.get_node("ResultOverlay/Card/Content/RewardChoices/Choice1").pressed.emit()
+	await get_tree().process_frame
+	assert_eq(started_count[0], 1)
+	assert_true(main.is_input_locked())
+	assert_true(main.get_node("ProductionLoader").is_active())
+
+	main.replace_session(ChickenDaySession.new())
+	await get_tree().create_timer(0.25).timeout
+
+	assert_false(main.get_node("ProductionLoader").is_active())
+	assert_false(main.get_node("ProductionLoader").visible)
+	assert_false(main.is_input_locked())
+	assert_eq(completion_count[0], 0)
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 10")
+
+
 func _press_and_wait(main: Control, circuit_name: String) -> void:
 	main.get_node("Content/Stage/CircuitBank/%s" % circuit_name).pressed.emit()
 	await main.playback_completed
 	await get_tree().process_frame
+
+
+func _complete_successful_day(main: Control) -> void:
+	for circuit_name in [
+		"RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
+		"BlueCircuit", "RedCircuit", "PinkCircuit", "RedCircuit", "BlueCircuit",
+		"RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
+		"PinkCircuit", "RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit",
+	]:
+		await _press_and_wait(main, circuit_name)
 
 
 func _add_main() -> Control:

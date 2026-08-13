@@ -10,6 +10,10 @@ Prototype the smallest interaction that can answer a design question. Add conten
 
 Show the state, cost, and likely consequence needed for a meaningful choice. Do not conceal essential rules behind animation, flavor text, or uninspectable randomness.
 
+Flock additions must show both the egg's gameplay properties and the producer's full daily yield. A frequent producer changes shuffle odds more than a rare one, so presenting only egg strength would hide part of the choice.
+
+Use the transition between days to demonstrate where the next hopper comes from. Showing each owned animal beside the eggs it contributes makes flock growth, dilution, and daily output physical consequences rather than spreadsheet facts.
+
 ## Rules resolve once
 
 A game rule has one canonical owner. The domain resolves it and records ordered facts. UI and presentation explain those facts without recalculating them.

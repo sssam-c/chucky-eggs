@@ -25,6 +25,26 @@ func test_each_starting_producer_exposes_its_daily_yield() -> void:
 		assert_eq(producer.daily_yield, 2 if producer.kind == "chicken" else 1)
 
 
+func test_adding_a_producer_expands_the_roster_and_daily_output() -> void:
+	var flock = ProducerFlock.new()
+	var original_daily_output := flock.lay_daily_egg_kinds().size()
+
+	var added: Dictionary = flock.add_producer("spoonbill")
+
+	assert_eq(added, {"kind": "spoonbill", "daily_yield": 1})
+	assert_eq(flock.snapshot().size(), 11)
+	assert_eq(flock.lay_daily_egg_kinds().size(), original_daily_output + 1)
+	assert_eq(flock.lay_daily_egg_kinds().count("spoonbill"), 1)
+
+
+func test_chicken_addition_contributes_its_two_egg_yield() -> void:
+	var flock = ProducerFlock.new([])
+
+	flock.add_producer("chicken")
+
+	assert_eq(flock.lay_daily_egg_kinds(), ["chicken", "chicken"])
+
+
 func _count_kind(producers: Array[Dictionary], kind: String) -> int:
 	return producers.filter(
 		func(producer: Dictionary) -> bool: return producer.kind == kind

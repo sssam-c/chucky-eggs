@@ -2,7 +2,56 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — Shuffled producer hopper
+## Active slice — Producer draft
+
+### Question
+
+Does choosing one of three legible producer additions create a build decision whose consequences are understandable and felt in the next shuffled day?
+
+### Settled rules preserved
+
+- All conveyor, circuit, egg, hopper, scoring, and day-ending rules remain unchanged.
+- A successful day offers three distinct Chicken, Cuckoo, Plover, or Spoonbill producers and requires exactly one selection.
+- Chicken producers contribute two eggs per day; Cuckoo, Plover, and Spoonbill producers contribute one.
+- A failed day offers no producer and retries the same day with the same flock and shuffle.
+
+### Hypothesis
+
+Showing each animal, its yield, and literal previews of every egg it lays will make dilution visible enough for the player to distinguish volume from concentration. Watching the complete flock load its resolver-authored output into the hopper should connect the strategic draft to the following tactical day.
+
+### Player-visible path
+
+Complete Day 1 successfully and reach a draft showing three illustrated producer cards. Compare each animal, its egg behaviour, and the number and appearance of the eggs it adds per day. Choose one, then watch the complete expanded flock lay its eggs into the hopper before Day 2 appears with the flock larger by one producer and the hopper larger by that producer's yield. Fail a day to confirm that no draft appears and retry preserves the same flock and opening shuffle.
+
+### In scope
+
+- Deterministic, distinct three-producer offers from the four established species.
+- Session-owned day, reward, and failed phases; offered-choice validation; persistent flock growth; and a new seeded shuffle for the next numbered day.
+- A durable keyboard-focusable producer-choice control showing a species portrait, literal yield-sized egg preview, toughness, points, and effect without hover text.
+- A cancellable production-loading barrier that renders every resolver-authored producer and yield, animates egg waves into the hopper, supports reduced motion, and only then reveals Day 2.
+- Success draft, flock/output summary, mandatory selection, Day 2 setup, and failure retry presentation.
+
+### Implementation conveniences
+
+- Derive reward and day seeds deterministically from the run's initial seed and day number.
+- Reuse the existing result overlay for both the success draft and failed-day retry.
+- Keep the established four species equally available; rarity is not implied by this prototype.
+
+### Outside this slice
+
+- Producer removal, skipping, rerolls, rarity, currency, shops, and reward weighting.
+- Thwack upgrades, longer belts, additional hoppers, hopper choice, and other machine upgrades.
+- Run completion, escalating targets, persistence outside the current session, and loss of the overall run.
+- Final balance of yields, producer offers, and the growing daily pool.
+
+### Exit evidence
+
+- Domain and session tests prove producer yields, three distinct deterministic offers, rejection of unoffered choices, mandatory success progression, Day 2 flock/output growth, and unchanged failure retry.
+- UI tests prove all three cards expose matching animal portraits and yield-sized egg previews without hover text, first-choice keyboard focus, no retry bypass on success, failure-only retry, complete production facts, cancellation safety, and the selected yield appearing in the next hopper.
+- A 1280×720 running-game check inspects the complete illustrated draft, keyboard traversal, flock-loading scene, hopper count, and Day 2 opening without clipping or stale result state.
+- A short playtest asks: "Could you tell which animal laid each egg, and did watching the hopper load clarify how your choice changed Day 2?"
+
+## Completed slice — Shuffled producer hopper
 
 ### Question
 
