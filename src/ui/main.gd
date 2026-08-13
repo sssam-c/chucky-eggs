@@ -21,7 +21,7 @@ const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 @onready var _presenter: Node = %Presentation
 @onready var _belt_slots: Array[Button] = [%Slot1, %Slot2, %Slot3, %Slot4, %Slot5]
 @onready var _pipe_slots: Array[Button] = [%Next1, %Next2, %Next3]
-@onready var _keys: Array[Button] = [%Key1, %Key2, %Key3, %Key4, %Key5]
+@onready var _circuit_buttons: Array[Button] = [%RedCircuit, %BlueCircuit, %PinkCircuit]
 @onready var _hammers: Array[Control] = [%Hammer1, %Hammer2, %Hammer3, %Hammer4, %Hammer5]
 
 var _session = ChickenDaySession.new()
@@ -30,8 +30,8 @@ var _request_generation := 0
 
 
 func _ready() -> void:
-	for key: Button in _keys:
-		key.connect("thwack_requested", _on_thwack_requested)
+	for circuit_button: Button in _circuit_buttons:
+		circuit_button.connect("circuit_requested", _on_circuit_requested)
 	_restart_button.pressed.connect(_on_restart_pressed)
 	_mute_button.toggled.connect(set_muted)
 	_reduced_motion_button.toggled.connect(set_reduced_motion)
@@ -39,7 +39,7 @@ func _ready() -> void:
 	_presenter.configure(
 		_belt_slots,
 		_pipe_slots,
-		_keys,
+		_circuit_buttons,
 		_hammers,
 		_echo_trace,
 		_score_label,
@@ -47,21 +47,21 @@ func _ready() -> void:
 		_drop_label
 	)
 	_render([], true)
-	_keys[0].grab_focus()
+	_circuit_buttons[0].grab_focus()
 
 
-func _on_thwack_requested(slot_index: int) -> void:
+func _on_circuit_requested(circuit_id: String) -> void:
 	if _input_locked:
 		return
 
-	var events: Array[Dictionary] = _session.submit_thwack(slot_index)
+	var events: Array[Dictionary] = _session.submit_circuit(circuit_id)
 	if events.is_empty() or events[0].type == "thwack_rejected":
 		return
 
 	_input_locked = true
 	_request_generation += 1
 	var request_generation := _request_generation
-	_set_slot_interaction(false)
+	_set_circuit_interaction(false)
 	playback_started.emit()
 	var completed: bool = await _presenter.play_events(events)
 	if not completed or request_generation != _request_generation:
@@ -82,7 +82,7 @@ func restart_day() -> void:
 	_input_locked = false
 	_session.restart()
 	_render([], true)
-	_keys[0].grab_focus()
+	_circuit_buttons[0].grab_focus()
 
 
 func set_muted(muted: bool) -> void:
@@ -118,13 +118,19 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 			false,
 			false
 		)
-		_keys[slot_index].set_egg_description(_belt_slots[slot_index].egg_description())
-		_keys[slot_index].set_available(
-			not state.slots[slot_index].is_empty() and not state.ended and not _input_locked
-		)
 	for preview_index in range(_pipe_slots.size()):
 		var egg: Dictionary = state.pipe[preview_index] if preview_index < state.pipe.size() else {}
 		_pipe_slots[preview_index].render_egg(egg, false, true)
+
+	for circuit_button: Button in _circuit_buttons:
+		var descriptions: Array[String] = []
+		var has_egg := false
+		for slot_index: int in circuit_button.slot_indices:
+			var egg: Dictionary = state.slots[slot_index]
+			has_egg = has_egg or not egg.is_empty()
+			descriptions.append("empty" if egg.is_empty() else _belt_slots[slot_index].egg_description())
+		circuit_button.set_target_descriptions(descriptions)
+		circuit_button.set_available(has_egg and not state.ended and not _input_locked)
 
 	_result_overlay.visible = state.ended
 	if state.ended:
@@ -133,14 +139,17 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		_restart_button.grab_focus.call_deferred()
 
 	if fresh_day:
-		_feedback_label.text = "Ten points. Cuckoos echo. Plovers retreat when struck."
+		_feedback_label.text = "RED 1+3  •  BLUE 2+4  •  PINK 5 — EMPTY STRIKES ARE WASTED"
 	else:
 		_feedback_label.text = _feedback_for(events)
 
 
-func _set_slot_interaction(enabled: bool) -> void:
-	for slot_index in range(_keys.size()):
-		_keys[slot_index].set_available(enabled and not _belt_slots[slot_index].current_egg().is_empty())
+func _set_circuit_interaction(enabled: bool) -> void:
+	for circuit_button: Button in _circuit_buttons:
+		var has_egg := false
+		for slot_index: int in circuit_button.slot_indices:
+			has_egg = has_egg or not _belt_slots[slot_index].current_egg().is_empty()
+		circuit_button.set_available(enabled and has_egg)
 
 
 func _on_presentation_event(event_type: String) -> void:
@@ -169,5 +178,5 @@ func _feedback_for(events: Array[Dictionary]) -> String:
 			return "Echo crack! The Cuckoo copied another egg's damage."
 	for event: Dictionary in events:
 		if event.type == "egg_damaged":
-			return "Thwack! That egg has %d toughness left. The belt moved." % event.remaining_toughness
+			return "Thwack! The circuit landed. The belt moved."
 	return "Choose an egg on the belt."

@@ -9,17 +9,17 @@ func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 	exposed_state.remaining_thwacks = 2
 	exposed_state.slots[0].toughness = 1
 
-	var events: Array[Dictionary] = session.submit_thwack(0)
+	var events: Array[Dictionary] = session.submit_circuit("red")
 	var actual_state: Dictionary = session.state()
 
-	assert_eq(events[0].type, "egg_damaged")
+	assert_eq(events[0].type, "circuit_fired")
 	assert_eq(actual_state.remaining_thwacks, 19)
 	assert_eq(actual_state.slots[1].toughness, 2)
 
 
 func test_restart_replaces_the_day_with_initial_state() -> void:
 	var session = ChickenDaySession.new()
-	session.submit_thwack(0)
+	session.submit_circuit("red")
 
 	session.restart()
 

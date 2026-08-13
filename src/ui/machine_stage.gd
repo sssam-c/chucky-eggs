@@ -35,13 +35,14 @@ func _draw() -> void:
 		draw_circle(Vector2(15, brace_y), 4.0, Color("c17831"))
 		draw_circle(Vector2(127, brace_y), 4.0, Color("c17831"))
 
-	# Rear mechanism rail and copper linkages.
+	# Rear mechanism rail and colour-coded circuit linkages.
 	draw_rect(Rect2(174, 257, 1035, 24), Color("17191b"), true)
 	draw_rect(Rect2(174, 257, 1035, 24), Color("704224"), false, 4.0)
+	var circuit_colors := [Color("c43b36"), Color("287cbd"), Color("c43b36"), Color("287cbd"), Color("cf4f8b")]
 	for station in range(5):
 		var center_x := 282.0 + station * 190.0
 		draw_line(Vector2(center_x + 62, 268), Vector2(center_x, 457), Color("4e2416"), 13.0, true)
-		draw_line(Vector2(center_x + 62, 268), Vector2(center_x, 457), Color("c76b2e"), 5.0, true)
+		draw_line(Vector2(center_x + 62, 268), Vector2(center_x, 457), circuit_colors[station], 5.0, true)
 		draw_circle(Vector2(center_x + 62, 268), 8.0, Color("d6873c"))
 
 	# Conveyor body, upper tray, rollers, and drop mouth.
@@ -55,13 +56,15 @@ func _draw() -> void:
 	draw_rect(Rect2(1199, 323, 35, 116), Color("070809"), true)
 	draw_line(Vector2(1215, 335), Vector2(1232, 425), Color("b35628"), 4.0)
 
-	# Foreground key rails.
+	# Foreground three-circuit console rails.
 	draw_rect(Rect2(166, 430, 1050, 104), Color("0b0b0d"), true)
 	draw_line(Vector2(168, 432), Vector2(1214, 432), Color("9f5529"), 4.0)
-	for station in range(6):
-		var rail_x := 173.0 + station * 190.0
+	for rail_x in [188.0, 508.0, 828.0, 1148.0]:
 		draw_rect(Rect2(rail_x, 438, 14, 94), Color("2b2b2c"), true)
 		draw_line(Vector2(rail_x + 3, 441), Vector2(rail_x + 3, 528), Color("754126"), 3.0)
+	draw_line(Vector2(215, 438), Vector2(485, 438), Color("c43b36"), 4.0)
+	draw_line(Vector2(535, 438), Vector2(805, 438), Color("287cbd"), 4.0)
+	draw_line(Vector2(855, 438), Vector2(1125, 438), Color("cf4f8b"), 4.0)
 
 
 func _draw_pipe(from: Vector2, to: Vector2, width: float) -> void:

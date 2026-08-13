@@ -1,10 +1,10 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" path="res://src/ui/piano_key.gd" id="1_key"]
+[ext_resource type="Script" path="res://src/ui/spoon_circuit_button.gd" id="1_key"]
 
 [sub_resource type="StyleBoxEmpty" id="EmptyFocus"]
 
-[node name="PianoKey" type="Button"]
+[node name="SpoonCircuitButton" type="Button"]
 custom_minimum_size = Vector2(170, 112)
 offset_right = 170.0
 offset_bottom = 112.0

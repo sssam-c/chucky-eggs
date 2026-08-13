@@ -1,6 +1,9 @@
 extends Control
 
 @export var slot_index := -1
+@export var circuit_id := "red"
+@export var circuit_color := Color("b6322c")
+@export_enum("diamond", "circle", "triangle") var circuit_symbol := "diamond"
 
 const PIVOT := Vector2(142.0, 216.0)
 const HANDLE_LENGTH := 148.0
@@ -68,7 +71,22 @@ func _draw() -> void:
 	draw_line(head - axis * 14.0, head + axis * 15.0, Color(0.90, 0.88, 0.81, 0.30), 3.0, true)
 
 	draw_circle(PIVOT, 25.0, Color("111316"))
-	draw_circle(PIVOT, 20.0, Color("a85329"))
+	draw_circle(PIVOT, 20.0, circuit_color.darkened(0.08))
 	draw_circle(PIVOT, 13.0, Color("55575a"))
 	draw_circle(PIVOT - Vector2(3, 3), 6.0, Color("aaa49a"))
 	draw_circle(PIVOT, 4.0, Color("171719"))
+	_draw_circuit_symbol(PIVOT + Vector2(0, 42), circuit_color.lightened(0.28))
+
+
+func _draw_circuit_symbol(center: Vector2, color: Color) -> void:
+	match circuit_symbol:
+		"circle":
+			draw_arc(center, 7.0, 0.0, TAU, 18, color, 3.0, true)
+		"triangle":
+			draw_polyline(PackedVector2Array([
+				center + Vector2(0, -8), center + Vector2(8, 7), center + Vector2(-8, 7), center + Vector2(0, -8),
+			]), color, 3.0, true)
+		_:
+			draw_polyline(PackedVector2Array([
+				center + Vector2(0, -8), center + Vector2(8, 0), center + Vector2(0, 8), center + Vector2(-8, 0), center + Vector2(0, -8),
+			]), color, 3.0, true)

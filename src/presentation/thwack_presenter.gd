@@ -3,6 +3,7 @@ extends Node
 
 signal event_presented(event_type: String)
 signal playback_finished
+signal hammer_fired(slot_index: int)
 signal _animation_step_released
 
 @onready var _impact_player: AudioStreamPlayer = $Audio/Impact
@@ -15,7 +16,7 @@ signal _animation_step_released
 
 var _belt_slots: Array[Button] = []
 var _pipe_slots: Array[Button] = []
-var _keys: Array[Button] = []
+var _circuit_buttons: Array[Button] = []
 var _hammers: Array[Control] = []
 var _echo_trace: Control
 var _score_label: Label
@@ -43,7 +44,7 @@ func _ready() -> void:
 func configure(
 	belt_slots: Array[Button],
 	pipe_slots: Array[Button],
-	keys: Array[Button],
+	circuit_buttons: Array[Button],
 	hammers: Array[Control],
 	echo_trace: Control,
 	score_label: Label,
@@ -52,7 +53,7 @@ func configure(
 ) -> void:
 	_belt_slots = belt_slots
 	_pipe_slots = pipe_slots
-	_keys = keys
+	_circuit_buttons = circuit_buttons
 	_hammers = hammers
 	_echo_trace = echo_trace
 	_score_label = score_label
@@ -118,6 +119,8 @@ func is_busy() -> bool:
 
 func _present_event(event: Dictionary, playback_generation: int) -> bool:
 	match event.type:
+		"circuit_fired":
+			return await _present_circuit(event, playback_generation)
 		"egg_damaged":
 			return await _present_damage(event, playback_generation)
 		"egg_hatched":
@@ -143,42 +146,64 @@ func _present_damage(event: Dictionary, playback_generation: int) -> bool:
 	var slot: Button = _belt_slots[event.slot_index]
 	if event.get("cause", "spoon") == "cuckoo_echo":
 		return await _present_echo_damage(slot, event, playback_generation)
-	var key: Button = _keys[event.slot_index]
-	var hammer: Control = _hammers[event.slot_index]
+	_play(_impact_player)
+	slot.apply_damage(event.remaining_toughness)
 	if _reduced_motion:
-		key.set_press_amount(1.0)
-		hammer.set_strike_amount(1.0)
-		_play(_impact_player)
-		slot.apply_damage(event.remaining_toughness)
-		key.reset_pose()
-		hammer.reset_pose()
+		return true
+	var content: Control = slot.motion_content()
+	content.pivot_offset = content.size * 0.5
+	var impact := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	impact.tween_property(content, "scale", Vector2(1.10, 0.84), 0.045)
+	impact.parallel().tween_property(content, "rotation", -0.03, 0.045)
+	impact.tween_property(content, "scale", Vector2.ONE, 0.09)
+	impact.parallel().tween_property(content, "rotation", 0.0, 0.09)
+	return await _run_tween(impact, playback_generation)
+
+
+func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
+	var circuit_button := _circuit_button(String(event.circuit_id))
+	if circuit_button == null:
+		return false
+	var fired_hammers: Array[Control] = []
+	for slot_index: int in event.slot_indices:
+		fired_hammers.append(_hammers[slot_index])
+		hammer_fired.emit(slot_index)
+
+	if _reduced_motion:
+		circuit_button.set_press_amount(1.0)
+		for hammer: Control in fired_hammers:
+			hammer.set_strike_amount(1.0)
+		circuit_button.reset_pose()
+		for hammer: Control in fired_hammers:
+			hammer.reset_pose()
 		return true
 
 	var anticipation := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	anticipation.tween_property(key, "press_amount", 0.38, 0.055)
-	anticipation.parallel().tween_property(hammer, "strike_amount", -0.10, 0.055)
+	anticipation.tween_property(circuit_button, "press_amount", 0.38, 0.055)
+	for hammer: Control in fired_hammers:
+		anticipation.parallel().tween_property(hammer, "strike_amount", -0.10, 0.055)
 	if not await _run_tween(anticipation, playback_generation):
 		return false
 
 	var strike := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	strike.tween_property(key, "press_amount", 1.0, 0.075)
-	strike.parallel().tween_property(hammer, "strike_amount", 1.0, 0.075)
+	strike.tween_property(circuit_button, "press_amount", 1.0, 0.075)
+	for hammer: Control in fired_hammers:
+		strike.parallel().tween_property(hammer, "strike_amount", 1.0, 0.075)
 	if not await _run_tween(strike, playback_generation):
 		return false
 
-	_play(_impact_player)
-	slot.apply_damage(event.remaining_toughness)
-	var content: Control = slot.motion_content()
-	content.pivot_offset = content.size * 0.5
 	var recovery := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	recovery.tween_property(hammer, "strike_amount", 0.86, 0.045)
-	recovery.parallel().tween_property(content, "scale", Vector2(1.12, 0.82), 0.045)
-	recovery.parallel().tween_property(content, "rotation", -0.035, 0.045)
-	recovery.tween_property(hammer, "strike_amount", 0.0, 0.135)
-	recovery.parallel().tween_property(key, "press_amount", 0.0, 0.135)
-	recovery.parallel().tween_property(content, "scale", Vector2.ONE, 0.105)
-	recovery.parallel().tween_property(content, "rotation", 0.0, 0.105)
+	recovery.tween_property(circuit_button, "press_amount", 0.0, 0.14)
+	for hammer: Control in fired_hammers:
+		recovery.parallel().tween_property(hammer, "strike_amount", 0.0, 0.14)
 	return await _run_tween(recovery, playback_generation)
+
+
+func _circuit_button(circuit_id: String) -> Button:
+	for circuit_button: Button in _circuit_buttons:
+		if circuit_button.circuit_id == circuit_id:
+			return circuit_button
+	return null
 
 
 func _present_echo_damage(slot: Button, event: Dictionary, playback_generation: int) -> bool:
@@ -340,22 +365,21 @@ func _present_day_discard(playback_generation: int) -> bool:
 func _render_belt(slots: Array) -> void:
 	for slot_index in range(_belt_slots.size()):
 		_belt_slots[slot_index].render_egg(slots[slot_index], false, false)
-		_keys[slot_index].set_available(not slots[slot_index].is_empty())
 
 
 func _clear_all_eggs() -> void:
 	for slot: Button in _belt_slots + _pipe_slots:
 		slot.clear_visual()
-	for key: Button in _keys:
-		key.set_available(false)
+	for circuit_button: Button in _circuit_buttons:
+		circuit_button.set_available(false)
 
 
 func _reset_mechanisms() -> void:
 	if is_instance_valid(_echo_trace):
 		_echo_trace.clear_connection()
-	for key: Button in _keys:
-		if is_instance_valid(key):
-			key.reset_pose()
+	for circuit_button: Button in _circuit_buttons:
+		if is_instance_valid(circuit_button):
+			circuit_button.reset_pose()
 	for hammer: Control in _hammers:
 		if is_instance_valid(hammer):
 			hammer.reset_pose()

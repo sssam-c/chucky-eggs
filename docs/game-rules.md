@@ -15,7 +15,7 @@ Choose which eggs deserve the spoon while every thwack carries the whole conveyo
 
 ## Player loop
 
-Inspect the five conveyor slots, the next three eggs in the pipe, the score, and the visible thwack countdown. Choose any egg on the conveyor to thwack, balancing its remaining toughness against how close every egg is to the end.
+Inspect the five conveyor slots, the next three eggs in the pipe, the score, and the visible thwack countdown. Choose a spoon circuit, balancing the eggs it can damage against how close every egg is to the end.
 
 ## Setup and state
 
@@ -29,13 +29,21 @@ Inspect the five conveyor slots, the next three eggs in the pipe, the score, and
 
 ## Actions and resolution
 
-Each turn, the player must thwack any one egg currently on the conveyor. Resolve the thwack in this order:
+Each turn, the player must activate one available spoon circuit:
 
-1. Reduce the chosen egg's toughness by 1.
-2. Reduce the toughness of every Cuckoo immediately ahead of or behind that damaged egg by 1.
+- Red fires the spoons over slots 1 and 3.
+- Blue fires the spoons over slots 2 and 4.
+- Pink fires the spoon over slot 5.
+- Each fired spoon deals 1 damage to the egg beneath it. A spoon over an empty slot still fires but its damage is wasted.
+- A circuit is available when at least one of its spoons is over an egg.
+
+Resolve the thwack in this order:
+
+1. Fire every spoon in the chosen circuit and reduce the toughness of every egg beneath those spoons by 1 as one simultaneous direct-damage batch.
+2. For each directly damaged egg, reduce the toughness of every Cuckoo immediately ahead of or behind it by 1.
 3. Apply the entire damage batch before resolving hatches. Cuckoo echo damage does not create further echoes.
 4. Hatch every egg that reached 0 toughness in conveyor order, remove it, and gain its points.
-5. If the directly thwacked egg is a surviving Plover outside slot 1, swap it with the contents of the slot immediately behind it, toward the pipe.
+5. In conveyor order, each surviving directly struck Plover outside slot 1 swaps with the contents of the slot immediately behind it, toward the pipe.
 6. Advance every surviving conveyor egg one slot.
 7. Discard any egg that moves past slot 5 without scoring.
 8. Spend one of the day's 20 thwacks.
@@ -46,9 +54,10 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 ## Exceptions and glossary
 
 - **Thwack:** The player's single action for a turn and the unit of day time.
+- **Spoon circuit:** A fixed group of one or more colour-matched spoons that always fire together.
 - **Toughness:** The number of further thwacks an egg needs before it hatches.
 - **Adjacent:** Immediately ahead of or behind an egg in conveyor order. Visual proximity does not create adjacency.
 - **Behind:** One slot closer to the pipe in conveyor order.
 - **Echo damage:** Damage copied by a Cuckoo when an adjacent egg receives damage. Each damaged adjacent egg creates one echo on that Cuckoo; echo damage never echoes again.
-- **Plover retreat:** A surviving Plover directly struck outside slot 1 swaps with the egg or empty space immediately behind it. Cuckoo echoes use the positions from before this swap. The normal conveyor advance still follows.
+- **Plover retreat:** A surviving Plover directly struck by a circuit outside slot 1 swaps with the egg or empty space immediately behind it. Cuckoo echoes use the positions from before any retreat. The normal conveyor advance still follows.
 - **Discarded:** Removed without hatching or awarding points.

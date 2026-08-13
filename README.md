@@ -1,6 +1,6 @@
 # Chucky Eggs
 
-A tactical conveyor game about choosing which eggs deserve the spoon. Every thwack damages one egg, Cuckoos copy damage dealt to neighboring eggs, Plovers retreat by shoving other eggs forward, and every survivor moves closer to the drop.
+A tactical conveyor game about choosing which eggs deserve the spoon. Every thwack fires a fixed coloured spoon circuit, Cuckoos copy damage dealt to neighboring eggs, Plovers retreat by shoving other eggs forward, and every survivor moves closer to the drop.
 
 The current playable slice is a 20-thwack day with a fixed Chicken, Cuckoo, and Plover supply. Three-hit Chickens award 3 points; four-hit Cuckoos award 1 while copying damage from neighboring eggs. Two-point Plovers take six damage and swap one slot toward the pipe when directly struck and left alive. Score 10 points before the final bell.
 
@@ -21,7 +21,7 @@ Open `project.godot` in Godot 4.7 or run:
 godot --path .
 ```
 
-The five large foreground keys map directly to the five conveyor cups. Click the key in front of an occupied cup to depress it and fire that slot's rear-mounted spoon hammer onto the upright egg. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; score, remaining thwacks, mute, and reduced-motion controls stay visible.
+Three large foreground controls fire fixed spoon circuits: Red strikes slots 1 and 3, Blue strikes slots 2 and 4, and Pink strikes slot 5. Every connected spoon fires, so an empty position wastes that strike. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; score, remaining thwacks, mute, and reduced-motion controls stay visible.
 
 ## Test
 

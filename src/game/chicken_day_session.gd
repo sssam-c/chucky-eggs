@@ -10,8 +10,8 @@ func state() -> Dictionary:
 	return _day.snapshot()
 
 
-func submit_thwack(slot_index: int) -> Array[Dictionary]:
-	return _day.resolve_thwack(slot_index)
+func submit_circuit(circuit_id: String) -> Array[Dictionary]:
+	return _day.resolve_circuit(circuit_id)
 
 
 func restart() -> void:

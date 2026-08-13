@@ -82,10 +82,20 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D004's 4-toughness Chicken value. D004's 3-point Chicken value remains.
 
+## D009 — Replace direct targeting with three spoon circuits
+
+**Status:** accepted
+
+**Decision:** Replace the five one-slot controls with three fixed colour-coded spoon circuits. Red fires slots 1 and 3, Blue fires slots 2 and 4, and Pink fires slot 5. Every fired spoon deals 1 damage. All spoons in a chosen circuit fire together, including spoons over empty slots; a circuit is available when at least one linked slot contains an egg. Direct damage resolves as one batch before Cuckoo echoes, hatches, surviving directly struck Plover retreats, and the standard conveyor advance.
+
+**Reason:** Circuit choice makes conveyor position the object of every decision. Red and Blue offer efficient distributed damage that couples alternating belt positions, while Pink sacrifices efficiency for one precise final chance beside the drop. Fixed coloured relationships preserve the machine's physical causality and create intentional wasted strikes, Cuckoo sandwich opportunities, and Plover rescues without adding another action type.
+
+**Supersedes:** D001's free choice of any individual egg and D003's one-key-to-one-spoon control mapping. The five fixed conveyor slots, five spatially paired spoons, one-thwack conveyor advance, and all current egg rules remain.
+
 <!--
 Copy for the next entry:
 
-## D009 — Short decision title
+## D010 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

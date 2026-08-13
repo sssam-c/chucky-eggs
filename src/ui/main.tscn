@@ -4,7 +4,7 @@
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
 [ext_resource type="Script" path="res://src/presentation/thwack_presenter.gd" id="3_presenter"]
 [ext_resource type="Script" path="res://src/ui/machine_stage.gd" id="4_stage"]
-[ext_resource type="PackedScene" path="res://src/ui/piano_key.tscn" id="5_key"]
+[ext_resource type="PackedScene" path="res://src/ui/spoon_circuit_button.tscn" id="5_key"]
 [ext_resource type="PackedScene" path="res://src/presentation/spoon_hammer.tscn" id="6_hammer"]
 [ext_resource type="FontFile" path="res://addons/gut/fonts/AnonymousPro-Bold.ttf" id="7_font"]
 [ext_resource type="Script" path="res://src/presentation/echo_trace.gd" id="8_trace"]
@@ -287,6 +287,9 @@ offset_top = 20.0
 offset_right = 470.0
 offset_bottom = 270.0
 slot_index = 0
+circuit_id = "red"
+circuit_color = Color(0.77, 0.23, 0.21, 1)
+circuit_symbol = "diamond"
 
 [node name="Hammer2" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
@@ -296,6 +299,9 @@ offset_top = 20.0
 offset_right = 660.0
 offset_bottom = 270.0
 slot_index = 1
+circuit_id = "blue"
+circuit_color = Color(0.16, 0.49, 0.74, 1)
+circuit_symbol = "circle"
 
 [node name="Hammer3" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
@@ -305,6 +311,9 @@ offset_top = 20.0
 offset_right = 850.0
 offset_bottom = 270.0
 slot_index = 2
+circuit_id = "red"
+circuit_color = Color(0.77, 0.23, 0.21, 1)
+circuit_symbol = "diamond"
 
 [node name="Hammer4" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
@@ -314,6 +323,9 @@ offset_top = 20.0
 offset_right = 1040.0
 offset_bottom = 270.0
 slot_index = 3
+circuit_id = "blue"
+circuit_color = Color(0.16, 0.49, 0.74, 1)
+circuit_symbol = "circle"
 
 [node name="Hammer5" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
@@ -323,6 +335,9 @@ offset_top = 20.0
 offset_right = 1230.0
 offset_bottom = 270.0
 slot_index = 4
+circuit_id = "pink"
+circuit_color = Color(0.81, 0.31, 0.55, 1)
+circuit_symbol = "triangle"
 
 [node name="Belt" type="Control" parent="Content/Stage"]
 unique_name_in_owner = true
@@ -414,7 +429,7 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("8_trace")
 
-[node name="KeyBank" type="Control" parent="Content/Stage"]
+[node name="CircuitBank" type="Control" parent="Content/Stage"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -422,50 +437,41 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Key1" parent="Content/Stage/KeyBank" instance=ExtResource("5_key")]
+[node name="RedCircuit" parent="Content/Stage/CircuitBank" instance=ExtResource("5_key")]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 200.0
+offset_left = 210.0
 offset_top = 416.0
-offset_right = 370.0
+offset_right = 490.0
 offset_bottom = 528.0
-slot_index = 0
+circuit_id = "red"
+slot_indices = Array[int]([0, 2])
+circuit_color = Color(0.77, 0.23, 0.21, 1)
+circuit_symbol = "diamond"
 
-[node name="Key2" parent="Content/Stage/KeyBank" instance=ExtResource("5_key")]
+[node name="BlueCircuit" parent="Content/Stage/CircuitBank" instance=ExtResource("5_key")]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 390.0
+offset_left = 530.0
 offset_top = 416.0
-offset_right = 560.0
+offset_right = 810.0
 offset_bottom = 528.0
-slot_index = 1
+circuit_id = "blue"
+slot_indices = Array[int]([1, 3])
+circuit_color = Color(0.16, 0.49, 0.74, 1)
+circuit_symbol = "circle"
 
-[node name="Key3" parent="Content/Stage/KeyBank" instance=ExtResource("5_key")]
+[node name="PinkCircuit" parent="Content/Stage/CircuitBank" instance=ExtResource("5_key")]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 580.0
-offset_top = 416.0
-offset_right = 750.0
-offset_bottom = 528.0
-slot_index = 2
-
-[node name="Key4" parent="Content/Stage/KeyBank" instance=ExtResource("5_key")]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 770.0
-offset_top = 416.0
-offset_right = 940.0
-offset_bottom = 528.0
-slot_index = 3
-
-[node name="Key5" parent="Content/Stage/KeyBank" instance=ExtResource("5_key")]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 960.0
+offset_left = 850.0
 offset_top = 416.0
 offset_right = 1130.0
 offset_bottom = 528.0
-slot_index = 4
+circuit_id = "pink"
+slot_indices = Array[int]([4])
+circuit_color = Color(0.81, 0.31, 0.55, 1)
+circuit_symbol = "triangle"
 
 [node name="Feedback" type="Label" parent="Content"]
 unique_name_in_owner = true
@@ -478,7 +484,7 @@ theme_override_colors/font_color = Color(0.92, 0.76, 0.48, 1)
 theme_override_colors/font_shadow_color = Color(0.04, 0.02, 0.01, 1)
 theme_override_constants/shadow_outline_size = 3
 theme_override_font_sizes/font_size = 17
-text = "Ten points. Cuckoos echo. Plovers retreat when struck."
+text = "RED 1+3  •  BLUE 2+4  •  PINK 5 — EMPTY STRIKES ARE WASTED"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -490,7 +496,7 @@ offset_right = 980.0
 offset_bottom = 678.0
 theme_override_colors/font_color = Color(0.48, 0.48, 0.46, 1)
 theme_override_font_sizes/font_size = 13
-text = "CLICK A KEY  •  OR USE TAB / SHIFT+TAB AND ENTER"
+text = "CLICK A CIRCUIT  •  OR USE TAB / SHIFT+TAB AND ENTER"
 horizontal_alignment = 1
 
 [node name="Accessibility" type="HBoxContainer" parent="Content"]

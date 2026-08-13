@@ -53,7 +53,7 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 
 
 func set_interaction_enabled(enabled: bool) -> void:
-	# The foreground piano key owns interaction; the cup is presentation only.
+	# The foreground circuit controls own interaction; the cup is presentation only.
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
 

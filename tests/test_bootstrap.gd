@@ -12,5 +12,5 @@ func test_main_scene_can_be_instantiated() -> void:
 	assert_not_null(main.get_node_or_null("Content/Stage/Belt/Slots/Slot1"))
 	assert_not_null(main.get_node_or_null("Content/Stage/Pipe/Preview/Next1"))
 	assert_not_null(main.get_node_or_null("Content/Stage/HammerBank/Hammer1"))
-	assert_not_null(main.get_node_or_null("Content/Stage/KeyBank/Key1"))
+	assert_not_null(main.get_node_or_null("Content/Stage/CircuitBank/RedCircuit"))
 	assert_not_null(main.get_node_or_null("Presentation"))

@@ -18,6 +18,10 @@ A game rule has one canonical owner. The domain resolves it and records ordered 
 
 When one action damages several eggs, apply and show the complete damage batch before resolving any hatch. Preserve conveyor order for simultaneous hatch effects so combinations remain predictable rather than depending on animation timing.
 
+## Circuits turn position into the choice
+
+The player chooses a fixed spoon circuit rather than an isolated target. Red alternates across slots 1 and 3, Blue across slots 2 and 4, and Pink offers a less efficient but precise final chance in slot 5. Show every connected spoon before commitment and let empty strikes remain visibly wasted.
+
 ## Conveyor relationships follow the route
 
 Terms such as ahead, behind, and adjacent refer to conveyor order rather than screen distance. If the belt later folds or loops, presentation must show the route clearly enough that these relationships remain predictable.

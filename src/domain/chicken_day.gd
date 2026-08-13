@@ -11,6 +11,11 @@ const CUCKOO_TOUGHNESS := 4
 const CUCKOO_POINTS := 1
 const PLOVER_TOUGHNESS := 6
 const PLOVER_POINTS := 2
+const CIRCUITS := [
+	{"id": "red", "slot_indices": [0, 2]},
+	{"id": "blue", "slot_indices": [1, 3]},
+	{"id": "pink", "slot_indices": [4]},
+]
 const LAYING_PATTERN := [
 	"chicken",
 	"cuckoo",
@@ -41,6 +46,7 @@ func snapshot() -> Dictionary:
 	return {
 		"slots": _slots.duplicate(true),
 		"pipe": _pipe.duplicate(true),
+		"circuits": CIRCUITS.duplicate(true),
 		"remaining_thwacks": _remaining_thwacks,
 		"score": _score,
 		"target_score": TARGET_SCORE,
@@ -49,17 +55,30 @@ func snapshot() -> Dictionary:
 	}
 
 
-func resolve_thwack(slot_index: int) -> Array[Dictionary]:
+func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 	if _ended:
 		return [{"type": "thwack_rejected", "reason": "day_ended"}]
-	if slot_index < 0 or slot_index >= SLOT_COUNT:
-		return [{"type": "thwack_rejected", "reason": "invalid_slot"}]
-	if _slots[slot_index].is_empty():
-		return [{"type": "thwack_rejected", "reason": "empty_slot"}]
+	var circuit := _circuit(circuit_id)
+	if circuit.is_empty():
+		return [{"type": "thwack_rejected", "reason": "invalid_circuit"}]
 
-	var events: Array[Dictionary] = []
-	_damage_eggs([slot_index], events)
-	_retreat_surviving_plover(slot_index, events)
+	var circuit_slot_indices: Array[int] = []
+	var occupied_slot_indices: Array[int] = []
+	for slot_index: int in circuit.slot_indices:
+		circuit_slot_indices.append(slot_index)
+		if not _slots[slot_index].is_empty():
+			occupied_slot_indices.append(slot_index)
+	if occupied_slot_indices.is_empty():
+		return [{"type": "thwack_rejected", "reason": "empty_circuit"}]
+
+	var events: Array[Dictionary] = [{
+		"type": "circuit_fired",
+		"circuit_id": circuit_id,
+		"slot_indices": circuit_slot_indices,
+		"occupied_slot_indices": occupied_slot_indices,
+	}]
+	_damage_eggs(occupied_slot_indices, events)
+	_retreat_surviving_plovers(occupied_slot_indices, events)
 	_advance_conveyor(events)
 	_spend_thwack(events)
 
@@ -71,9 +90,16 @@ func resolve_thwack(slot_index: int) -> Array[Dictionary]:
 	return events
 
 
+func _circuit(circuit_id: String) -> Dictionary:
+	for circuit: Dictionary in CIRCUITS:
+		if circuit.id == circuit_id:
+			return circuit
+	return {}
+
+
 func _damage_eggs(primary_slot_indices: Array[int], events: Array[Dictionary]) -> void:
-	# Apply the whole damage batch before resolving any hatch. This keeps a future
-	# multi-target spoon deterministic and prevents a hatch from erasing an echo.
+	# Apply the whole direct-and-echo batch before resolving any hatch. Empty
+	# linked slots have already been omitted while their spoons still visibly fire.
 	for primary_slot_index: int in primary_slot_indices:
 		_apply_damage(primary_slot_index, "spoon", primary_slot_index, events)
 
@@ -121,23 +147,24 @@ func _resolve_hatches(events: Array[Dictionary]) -> void:
 		})
 
 
-func _retreat_surviving_plover(slot_index: int, events: Array[Dictionary]) -> void:
-	if slot_index == 0 or _slots[slot_index].is_empty():
-		return
-	if _slots[slot_index].kind != "plover":
-		return
+func _retreat_surviving_plovers(slot_indices: Array[int], events: Array[Dictionary]) -> void:
+	for slot_index: int in slot_indices:
+		if slot_index == 0 or _slots[slot_index].is_empty():
+			continue
+		if _slots[slot_index].kind != "plover":
+			continue
 
-	var destination_slot_index := slot_index - 1
-	var plover: Dictionary = _slots[slot_index]
-	_slots[slot_index] = _slots[destination_slot_index]
-	_slots[destination_slot_index] = plover
-	events.append({
-		"type": "eggs_swapped",
-		"kind": "plover",
-		"from_slot_index": slot_index,
-		"to_slot_index": destination_slot_index,
-		"slots": _slots.duplicate(true),
-	})
+		var destination_slot_index := slot_index - 1
+		var plover: Dictionary = _slots[slot_index]
+		_slots[slot_index] = _slots[destination_slot_index]
+		_slots[destination_slot_index] = plover
+		events.append({
+			"type": "eggs_swapped",
+			"kind": "plover",
+			"from_slot_index": slot_index,
+			"to_slot_index": destination_slot_index,
+			"slots": _slots.duplicate(true),
+		})
 
 
 func _advance_conveyor(events: Array[Dictionary]) -> void:
