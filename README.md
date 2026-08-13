@@ -2,7 +2,7 @@
 
 A tactical conveyor game about choosing which eggs deserve the spoon. Every thwack fires a fixed coloured spoon circuit, Cuckoos copy damage dealt to neighboring eggs, Plovers retreat by shoving other eggs forward, and every survivor moves closer to the drop.
 
-The current playable slice is a 20-thwack day with a fixed Chicken, Cuckoo, Plover, and Spoonbill supply. Three-hit Chickens award 3 points; four-hit Cuckoos award 1 while copying damage from neighboring eggs. Two-point Plovers take six damage and swap one slot toward the pipe when directly struck and left alive. Five-hit Spoonbills award 4 points and take double direct damage from Pink. Score 10 points before the final bell.
+The current playable slice is a multi-day, 20-thwack producer-flock run. Three-hit Chickens award 3 points; four-hit Cuckoos award 1 while copying damage from neighboring eggs. Four-point Plovers take six damage and swap one slot toward the pipe when directly struck and left alive. Five-hit Spoonbills award 4 points and take double direct damage from Pink. Day 1 requires 15 points; Day 2 and later days currently require 20. A day ends as soon as a resolved thwack reaches its target, then banks £1 for each unused thwack as persistent run cash.
 
 ## What is included
 

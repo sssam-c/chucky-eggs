@@ -8,16 +8,18 @@ Choose which eggs deserve the spoon while every thwack carries the whole conveyo
 
 ## Objective and end states
 
-- A day lasts at most 20 thwacks and can end earlier when no eggs remain in either the hopper or conveyor.
-- Hatch eggs to score at least 10 points by the end of the day.
-- The day succeeds at 10 or more points and fails below 10 points.
-- After the twentieth thwack resolves, all eggs left on the conveyor or in the hopper are discarded without scoring.
+- A day lasts at most 20 thwacks and ends immediately after a resolved thwack meets the score target. It can also end earlier when no eggs remain in either the hopper or conveyor.
+- Hatch eggs to meet the current day's target: 15 points on Day 1 and 20 points on each later day.
+- A day succeeds at or above its target and fails below it.
+- When a successful day ends, gain £1 for each unused thwack remaining after the target-reaching thwack is spent. Add it to the run's persistent cash balance.
+- A failed day awards no cash.
+- Whenever a day ends, all eggs left on the conveyor or in the hopper are discarded without scoring.
 
 ## Player loop
 
 Inspect the five conveyor slots, the next three eggs in the pipe, the score, and the visible thwack countdown. Choose a spoon circuit, balancing the eggs it can damage against how close every egg is to the end.
 
-After a successful day, inspect three distinct producer offers and add exactly one to the flock. Its complete daily yield joins the next day's newly shuffled pool. A failed day awards no producer and is retried with the same flock and shuffle.
+After a successful day, bank the unused-thwack payout, inspect three distinct producer offers, and add exactly one to the flock. Its complete daily yield joins the next day's newly shuffled pool. A failed day awards no cash or producer and is retried with the same flock and shuffle.
 
 ## Setup and state
 
@@ -31,8 +33,9 @@ After a successful day, inspect three distinct producer offers and add exactly o
 - A Plover egg has 6 toughness and is worth 4 points when hatched.
 - A Spoonbill egg has 5 toughness, is worth 4 points when hatched, and takes 2 damage from a direct Pink strike instead of 1.
 - The pipe shows up to the next three hopper eggs. After each non-final thwack, the next hopper egg drops into slot 1 if one remains.
-- Egg toughness, current score, remaining thwacks, and the number of eggs left in the hopper are always visible.
+- Egg toughness, current score, cash balance, remaining thwacks, and the number of eggs left in the hopper are always visible.
 - Producer offers identify the animal with a portrait, show its daily yield, preview every egg it lays, and state those eggs' toughness, points, and effect before selection.
+- A producer draft shows the next day's target before selection.
 - Before each later day begins, the complete flock and every producer's yield are shown loading the new daily egg pool into the hopper.
 
 ## Actions and resolution
@@ -55,8 +58,9 @@ Resolve the thwack in this order:
 6. Advance every surviving conveyor egg one slot.
 7. Discard any egg that moves past slot 5 without scoring.
 8. Spend one of the day's 20 thwacks.
-9. If thwacks remain, drop the next hopper egg into slot 1 if one remains and refill the visible pipe preview.
-10. End the day if no eggs remain in either the hopper or conveyor. Otherwise, continue until the twentieth thwack.
+9. If the score now meets or exceeds the target, end the day immediately, discard every remaining egg without scoring, and bank £1 for each unused thwack.
+10. Otherwise, if thwacks remain, drop the next hopper egg into slot 1 if one remains and refill the visible pipe preview.
+11. End the day as a failure if no eggs remain in either the hopper or conveyor. Otherwise, continue until the twentieth thwack.
 
 Hatching an egg never prevents the conveyor from advancing. Partially damaged eggs retain their remaining toughness until they hatch or are discarded.
 
@@ -74,3 +78,4 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 - **Producer:** A persistent flock member that lays its stated number of fresh eggs into the daily pool.
 - **Hopper:** The finite shuffled sequence of eggs that have not yet entered the conveyor.
 - **Producer offer:** One of three distinct Chicken, Cuckoo, Plover, or Spoonbill producers offered after a successful day. Exactly one must be added before the next day.
+- **Cash:** Persistent whole-pound currency held for the current run. The current slice earns cash but does not yet spend it.

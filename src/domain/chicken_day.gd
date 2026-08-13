@@ -4,7 +4,7 @@ extends RefCounted
 const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
 const STARTING_THWACKS := 20
-const TARGET_SCORE := 10
+const DEFAULT_TARGET_SCORE := 15
 const CHICKEN_TOUGHNESS := 3
 const CHICKEN_POINTS := 3
 const CUCKOO_TOUGHNESS := 4
@@ -25,10 +25,13 @@ var _score := 0
 var _ended := false
 var _succeeded := false
 var _daily_egg_count := 0
+var _target_score: int
 
 
-func _init(daily_egg_kinds: Array[String]) -> void:
+func _init(daily_egg_kinds: Array[String], target_score := DEFAULT_TARGET_SCORE) -> void:
 	assert(not daily_egg_kinds.is_empty(), "A day needs at least one laid egg.")
+	assert(target_score > 0, "A day needs a positive target score.")
+	_target_score = target_score
 	for slot_index in range(SLOT_COUNT):
 		_slots.append({})
 	for kind: String in daily_egg_kinds:
@@ -46,7 +49,7 @@ func snapshot() -> Dictionary:
 		"circuits": CIRCUITS.duplicate(true),
 		"remaining_thwacks": _remaining_thwacks,
 		"score": _score,
-		"target_score": TARGET_SCORE,
+		"target_score": _target_score,
 		"ended": _ended,
 		"succeeded": _succeeded,
 	}
@@ -79,7 +82,7 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 	_advance_conveyor(events)
 	_spend_thwack(events)
 
-	if _remaining_thwacks == 0:
+	if _remaining_thwacks == 0 or _score >= _target_score:
 		_end_day(events)
 	else:
 		_refill_belt(events)
@@ -163,7 +166,7 @@ func _resolve_hatches(events: Array[Dictionary]) -> void:
 			"kind": egg.kind,
 			"points_awarded": egg.points,
 			"score": _score,
-			"target_score": TARGET_SCORE,
+			"target_score": _target_score,
 		})
 
 
@@ -240,7 +243,7 @@ func _end_day(events: Array[Dictionary]) -> void:
 		_slots[slot_index] = {}
 	_hopper.clear()
 	_ended = true
-	_succeeded = _score >= TARGET_SCORE
+	_succeeded = _score >= _target_score
 	events.append({
 		"type": "day_remainder_discarded",
 		"discarded_count": discarded_count,
@@ -248,7 +251,8 @@ func _end_day(events: Array[Dictionary]) -> void:
 	events.append({
 		"type": "day_ended",
 		"score": _score,
-		"target_score": TARGET_SCORE,
+		"target_score": _target_score,
+		"remaining_thwacks": _remaining_thwacks,
 		"succeeded": _succeeded,
 	})
 

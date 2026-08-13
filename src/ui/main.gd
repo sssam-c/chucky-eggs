@@ -9,12 +9,14 @@ signal production_loading_completed
 const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 
 @onready var _score_label: Label = %Score
+@onready var _cash_label: Label = %Cash
 @onready var _thwacks_label: Label = %Thwacks
 @onready var _feedback_label: Label = %Feedback
 @onready var _result_overlay: Control = %ResultOverlay
 @onready var _result_card: PanelContainer = $ResultOverlay/Card
 @onready var _result_label: Label = %Result
 @onready var _result_score_label: Label = %ResultScore
+@onready var _cash_payout_label: Label = %CashPayout
 @onready var _result_summary_label: Label = %Summary
 @onready var _flock_summary_label: Label = %FlockSummary
 @onready var _reward_choices_container: HBoxContainer = %RewardChoices
@@ -173,6 +175,8 @@ func is_input_locked() -> bool:
 func _render(events: Array[Dictionary], fresh_day := false) -> void:
 	var state: Dictionary = _session.state()
 	_score_label.text = "SCORE %d / %d" % [state.score, state.target_score]
+	_cash_label.text = "CASH £%d" % state.cash
+	_cash_label.accessibility_name = "Cash balance £%d" % state.cash
 	_thwacks_label.text = "THWACKS %d" % state.remaining_thwacks
 	_hopper_count_label.text = "HOPPER %d" % state.hopper_egg_count
 
@@ -201,6 +205,15 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		var choosing_producer: bool = state.phase == "reward"
 		_result_label.text = "CHOOSE A PRODUCER" if choosing_producer else "DAY FAILED"
 		_result_score_label.text = "%d / %d POINTS" % [state.score, state.target_score]
+		_cash_payout_label.text = (
+			"£%d BANKED FROM %d UNUSED THWACKS  •  BALANCE £%d" % [
+				state.last_cash_awarded,
+				state.last_cash_awarded,
+				state.cash,
+			]
+			if choosing_producer
+			else "NO CASH EARNED  •  BALANCE £%d" % state.cash
+		)
 		_flock_summary_label.text = "FLOCK %d PRODUCERS  •  DAILY OUTPUT %d EGGS" % [
 			state.producers.size(), state.daily_egg_count,
 		]
@@ -208,18 +221,21 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		_restart_button.visible = not choosing_producer
 		if choosing_producer:
 			_result_card.offset_left = -500.0
-			_result_card.offset_top = -230.0
+			_result_card.offset_top = -250.0
 			_result_card.offset_right = 500.0
-			_result_card.offset_bottom = 230.0
-			_result_summary_label.text = "Success! Add one producer. Its full daily yield joins tomorrow's shuffled hopper."
+			_result_card.offset_bottom = 250.0
+			_result_summary_label.text = "DAY %d TARGET: %d POINTS  •  Add one producer. Its full daily yield joins tomorrow's shuffled hopper." % [
+				state.day_number + 1,
+				state.next_day_target_score,
+			]
 			for choice_index in range(_producer_choice_buttons.size()):
 				_producer_choice_buttons[choice_index].render_choice(state.reward_choices[choice_index])
 			_producer_choice_buttons[0].grab_focus.call_deferred()
 		else:
 			_result_card.offset_left = -240.0
-			_result_card.offset_top = -170.0
+			_result_card.offset_top = -190.0
 			_result_card.offset_right = 240.0
-			_result_card.offset_bottom = 170.0
+			_result_card.offset_bottom = 190.0
 			_result_summary_label.text = "No producer joins the flock. Retry this day with the same flock and shuffle."
 			_restart_button.text = "RETRY DAY %d" % state.day_number
 			_restart_button.grab_focus.call_deferred()

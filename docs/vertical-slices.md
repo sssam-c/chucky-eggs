@@ -2,54 +2,107 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — Producer draft
+## Active slice — Unused-thwack payout
 
 ### Question
 
-Does choosing one of three legible producer additions create a build decision whose consequences are understandable and felt in the next shuffled day?
+Does automatically converting the thwacks left when the target is reached into visible persistent cash make speed-to-target valuable enough to support a future shop economy?
 
 ### Settled rules preserved
 
-- All conveyor, circuit, egg, hopper, scoring, and day-ending rules remain unchanged.
+- The target-reaching thwack resolves completely and is spent, then the day ends before another egg enters the conveyor.
+- Day 1 requires 15 points, and Day 2 and each later day currently require 20.
+- A successful day awards £1 per remaining thwack; a failed day awards no cash.
+- Banked cash persists through producer selection, later days, and failed-day retry.
+- The established success draft and failure retry rules remain unchanged.
+
+### Hypothesis
+
+A small, explicit payout will give efficient scoring a consequence beyond the current day's result. Ending immediately at the target, showing the remaining thwacks convert into cash, and keeping the balance visible should make the reward feel like saved capacity rather than an arbitrary stipend and create anticipation for later shops.
+
+### Player-visible path
+
+Start Day 1 with £0 visible. Meet the 15-point target while eggs and thwacks remain. After the scoring thwack finishes, see the day end immediately and each unused thwack banked at £1 before choosing a producer. Begin Day 2 with the balance preserved. Fail a replayable day to confirm that it awards nothing and does not erase previously banked cash.
+
+### In scope
+
+- Session-owned persistent whole-pound cash and the most recent successful payout.
+- Resolver-owned target completion after the full scoring thwack, with no refill before its day-end facts.
+- Resolver-authored remaining thwacks on day completion followed by an explicit, exactly-once cash-awarded fact from the run session.
+- A permanently visible cash balance and success/failure payout summary.
+- Success-only payout, no failed-day farming, and balance preservation across progression and retry.
+
+### Implementation conveniences
+
+- Use the pound sign and whole numbers; denominations and localisation are not implied by this prototype.
+- Reuse the existing end-of-day playback barrier and result overlay without adding a coin animation.
+
+### Outside this slice
+
+- Shops, prices, producer removal, machine upgrades, purchases, refunds, and insufficient-funds handling.
+- Bonus income, interest, debt, score conversion, streaks, or alternative cash sources.
+- Manual cash-out or continuing to play after the target has been reached.
+- Final payout rate or economy pacing.
+
+### Exit evidence
+
+- Domain and session tests prove the target-reaching thwack is spent before immediate completion, no refill follows it, success awards exactly £1 per remainder once, failure awards nothing, and cash persists into Day 2 and through retry.
+- UI tests prove the balance starts at £0, updates from resolver/session facts after playback, remains accessible without colour, and success and failure overlays explain the payout.
+- A 1280×720 running-game check inspects the header at £0 and a £9 deterministic success payout without title, overlay, or producer-card clipping.
+- A short playtest asks: "Did the cash make you care about finishing with spare thwacks, and did the payout feel large enough to anticipate spending?"
+
+## Completed slice — Producer draft under rising targets
+
+### Question
+
+Does choosing one of three legible producer additions create an understandable build decision that helps the player answer Day 2's higher target?
+
+### Settled rules preserved
+
+- Day 1 requires 15 points; Day 2 and each later day currently require 20 points within the same 20-thwack limit.
+- All conveyor, circuit, egg, hopper, scoring-resolution, and day-ending rules remain unchanged.
 - A successful day offers three distinct Chicken, Cuckoo, Plover, or Spoonbill producers and requires exactly one selection.
 - Chicken producers contribute two eggs per day; Cuckoo, Plover, and Spoonbill producers contribute one.
 - A failed day offers no producer and retries the same day with the same flock and shuffle.
 
 ### Hypothesis
 
-Showing each animal, its yield, and literal previews of every egg it lays will make dilution visible enough for the player to distinguish volume from concentration. Watching the complete flock load its resolver-authored output into the hopper should connect the strategic draft to the following tactical day.
+Showing each animal, its yield, and literal previews of every egg it lays will make dilution visible enough for the player to distinguish volume from concentration. Showing the 20-point Day 2 target before commitment should give that comparison a concrete purpose, while watching the complete flock load its resolver-authored output should connect the strategic draft to the following tactical day.
 
 ### Player-visible path
 
-Complete Day 1 successfully and reach a draft showing three illustrated producer cards. Compare each animal, its egg behaviour, and the number and appearance of the eggs it adds per day. Choose one, then watch the complete expanded flock lay its eggs into the hopper before Day 2 appears with the flock larger by one producer and the hopper larger by that producer's yield. Fail a day to confirm that no draft appears and retry preserves the same flock and opening shuffle.
+Score at least 15 points on Day 1 and reach a draft showing three illustrated producer cards alongside Day 2's 20-point target. Compare each animal, its egg behaviour, and the number and appearance of the eggs it adds per day. Choose one, then watch the complete expanded flock lay its eggs into the hopper before Day 2 appears with the flock larger by one producer, the hopper larger by that producer's yield, and the score plate demanding 20. Fail a day to confirm that no draft appears and retry preserves the same target, flock, and opening shuffle.
 
 ### In scope
 
 - Deterministic, distinct three-producer offers from the four established species.
+- Resolver-owned targets of 15 for Day 1 and 20 for Day 2 and later, including target-preserving retry and explicit next-target facts.
 - Session-owned day, reward, and failed phases; offered-choice validation; persistent flock growth; and a new seeded shuffle for the next numbered day.
 - A durable keyboard-focusable producer-choice control showing a species portrait, literal yield-sized egg preview, toughness, points, and effect without hover text.
 - A cancellable production-loading barrier that renders every resolver-authored producer and yield, animates egg waves into the hopper, supports reduced motion, and only then reveals Day 2.
 - Success draft, flock/output summary, mandatory selection, Day 2 setup, and failure retry presentation.
+- The next day's target shown before producer commitment and the current target rendered from resolver-authored state and events.
 
 ### Implementation conveniences
 
 - Derive reward and day seeds deterministically from the run's initial seed and day number.
 - Reuse the existing result overlay for both the success draft and failed-day retry.
 - Keep the established four species equally available; rarity is not implied by this prototype.
+- Hold Day 3 and later at 20 points until a broader run curve is deliberately designed.
 
 ### Outside this slice
 
 - Producer removal, skipping, rerolls, rarity, currency, shops, and reward weighting.
 - Thwack upgrades, longer belts, additional hoppers, hopper choice, and other machine upgrades.
-- Run completion, escalating targets, persistence outside the current session, and loss of the overall run.
-- Final balance of yields, producer offers, and the growing daily pool.
+- Run completion, further target escalation, persistence outside the current session, and loss of the overall run.
+- Final balance of targets, yields, producer offers, and the growing daily pool.
 
 ### Exit evidence
 
-- Domain and session tests prove producer yields, three distinct deterministic offers, rejection of unoffered choices, mandatory success progression, Day 2 flock/output growth, and unchanged failure retry.
-- UI tests prove all three cards expose matching animal portraits and yield-sized egg previews without hover text, first-choice keyboard focus, no retry bypass on success, failure-only retry, complete production facts, cancellation safety, and the selected yield appearing in the next hopper.
+- Domain and session tests prove the 15/20 target schedule, target-authored success and failure, target-preserving retry, producer yields, three distinct deterministic offers, rejection of unoffered choices, mandatory success progression, and Day 2 flock/output growth.
+- UI tests prove the next target appears before selection, all three cards expose matching animal portraits and yield-sized egg previews without hover text, first-choice keyboard focus, no retry bypass on success, failure-only retry, complete production facts, cancellation safety, and the selected yield and 20-point target appearing on Day 2.
 - A 1280×720 running-game check inspects the complete illustrated draft, keyboard traversal, flock-loading scene, hopper count, and Day 2 opening without clipping or stale result state.
-- A short playtest asks: "Could you tell which animal laid each egg, and did watching the hopper load clarify how your choice changed Day 2?"
+- A short playtest asks before selection, "Which producer best prepares you for 20, and why?" After Day 2, ask, "Where did your chosen producer change a circuit decision, if anywhere?"
 
 ## Completed slice — Shuffled producer hopper
 

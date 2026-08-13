@@ -294,7 +294,7 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 
 
 func _commit_score(event: Dictionary) -> void:
-	_score_label.text = "SCORE %d / %d" % [event.score, event.get("target_score", 10)]
+	_score_label.text = "SCORE %d / %d" % [event.score, event.get("target_score", 15)]
 	_play(_score_player)
 	score_committed.emit(event.points_awarded, event.score)
 

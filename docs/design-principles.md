@@ -12,6 +12,8 @@ Show the state, cost, and likely consequence needed for a meaningful choice. Do 
 
 Flock additions must show both the egg's gameplay properties and the producer's full daily yield. A frequent producer changes shuffle odds more than a rare one, so presenting only egg strength would hide part of the choice.
 
+Show the next day's target on the producer draft. The player should evaluate flock growth against the demand it must answer rather than discovering that demand after committing.
+
 Use the transition between days to demonstrate where the next hopper comes from. Showing each owned animal beside the eggs it contributes makes flock growth, dilution, and daily output physical consequences rather than spreadsheet facts.
 
 ## Rules resolve once
@@ -37,6 +39,10 @@ Position-changing effects must expose their source, destination, and ordering re
 ## Determinism makes iteration faster
 
 Seed randomness, inject time, and make state transitions replayable. A surprising playtest should be reproducible before it is tuned.
+
+## Efficiency becomes future agency
+
+End the day automatically once a fully resolved thwack meets the target, then convert every unused thwack into cash. This makes speed-to-target valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
 
 ## Physicality follows causality
 

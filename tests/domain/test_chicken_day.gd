@@ -39,6 +39,7 @@ func test_day_ends_when_the_finite_pool_and_conveyor_are_empty() -> void:
 	assert_eq(_event_types(final_events).slice(-3), [
 		"thwack_spent", "day_remainder_discarded", "day_ended",
 	])
+	assert_eq(final_events[-1].remaining_thwacks, 17)
 
 
 func test_day_exposes_the_three_fixed_spoon_circuits() -> void:
@@ -251,34 +252,51 @@ func test_twentieth_valid_circuit_ends_day_and_rejects_further_requests() -> voi
 	assert_eq(rejected[0].reason, "day_ended")
 
 
-func test_day_can_still_succeed_at_ten_or_more_points() -> void:
-	var day = _new_authored_day()
+func test_day_succeeds_at_fifteen_or_more_points() -> void:
+	var chicken_pool: Array[String] = []
+	chicken_pool.resize(24)
+	chicken_pool.fill("chicken")
+	var day = ChickenDay.new(chicken_pool)
 	var circuit_plan := [
-		"red", "blue", "red", "blue", "red", "blue", "red", "pink", "red", "blue",
-		"red", "blue", "red", "blue", "red", "pink", "red", "blue", "red", "blue",
+		"red", "red", "red", "blue", "red", "red", "red", "blue", "blue", "pink", "pink",
 	]
+	var final_events: Array[Dictionary] = []
 
 	for circuit_id in circuit_plan:
-		var events: Array[Dictionary] = day.resolve_circuit(circuit_id)
-		assert_ne(events[0].type, "thwack_rejected")
+		final_events = day.resolve_circuit(circuit_id)
+		assert_ne(final_events[0].type, "thwack_rejected")
 
 	assert_true(day.snapshot().ended)
 	assert_true(day.snapshot().succeeded)
-	assert_gte(day.snapshot().score, 10)
+	assert_eq(day.snapshot().target_score, 15)
+	assert_gte(day.snapshot().score, 15)
+	assert_eq(day.snapshot().remaining_thwacks, 9)
+	assert_eq(_event_types(final_events).slice(-3), [
+		"thwack_spent", "day_remainder_discarded", "day_ended",
+	])
+	assert_false(_event_types(final_events).has("egg_entered"))
+	assert_gt(final_events[-2].discarded_count, 0)
 
 
-func test_day_fails_below_ten_points() -> void:
+func test_day_fails_below_its_target() -> void:
 	var spoonbill_pool: Array[String] = []
 	spoonbill_pool.resize(24)
 	spoonbill_pool.fill("spoonbill")
-	var day = ChickenDay.new(spoonbill_pool)
+	var day = ChickenDay.new(spoonbill_pool, 20)
+	var final_events: Array[Dictionary] = []
 
 	for turn in range(20):
-		day.resolve_circuit("red")
+		final_events = day.resolve_circuit("red")
 
 	assert_true(day.snapshot().ended)
 	assert_false(day.snapshot().succeeded)
-	assert_lt(day.snapshot().score, 10)
+	assert_eq(day.snapshot().target_score, 20)
+	assert_lt(day.snapshot().score, 20)
+	var day_ended: Dictionary = final_events.filter(
+		func(event: Dictionary) -> bool: return event.type == "day_ended"
+	)[0]
+	assert_eq(day_ended.target_score, 20)
+	assert_eq(day_ended.remaining_thwacks, 0)
 
 
 func _event_types(events: Array[Dictionary]) -> Array[String]:

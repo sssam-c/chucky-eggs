@@ -136,10 +136,38 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Reason:** Yield is part of a producer's strategic identity, and text alone undersells how strongly a two-egg Chicken changes the pool. Repeating the bird-to-egg relationship during hopper loading makes flock composition, dilution, and the origin of the shuffled daily pool immediately visible without moving production ownership into animation.
 
+## D015 — Set a 15-to-20 target step
+
+**Status:** accepted
+
+**Decision:** Day 1 requires 15 points. Day 2 and each later day currently require 20 points. The producer draft shows the next day's target before the player selects an addition. A failed later day retries with the same target, flock, and shuffle.
+
+**Reason:** Fifteen points makes the opening day demand a deliberate set of hatches rather than granting progression after a minimal score. Raising the next day to 20 gives the mandatory producer addition an immediate problem to solve, while showing that target before selection keeps the build decision informed. Holding later days at 20 bounds this first pressure test without pretending that a complete difficulty curve has been designed.
+
+**Supersedes:** D004 and D008's 10-point target. Their egg values, toughness changes, and other rules remain.
+
+## D016 — Bank unused thwacks as cash
+
+**Status:** accepted
+
+**Decision:** After a successful day ends through the established twentieth-thwack or egg-exhaustion rules, award £1 for each remaining thwack and add it to a persistent run cash balance. A failed day awards no cash, and retry preserves the previously banked balance. Do not add an early cash-out action.
+
+**Reason:** Unused thwacks turn efficient hatching and deliberate discarding into future purchasing power. Success-only banking prevents failed-day farming, while preserving the natural end condition avoids making immediate cash-out the dominant action once the score target is met. The first implementation exposes earning and balance only; shop prices, removal, and upgrades need separate evidence.
+
+## D017 — End the day when its target is met
+
+**Status:** accepted
+
+**Decision:** After a thwack's damage, hatches, retreats, conveyor advance, and thwack spend resolve, end the day immediately if the score meets or exceeds its target. Discard every remaining egg without scoring, award £1 for each then-unused thwack, and proceed to the established producer draft. A day that exhausts its twentieth thwack or all available eggs below target still fails and awards no cash.
+
+**Reason:** Cash is intended to reward how few thwacks the player needs to satisfy the day's demand. Automatic completion makes the remainder an exact speed-to-target reward, removes purposeless play after success is assured, and avoids adding a dominant manual cash-out action. Finishing the scoring thwack before checking the target preserves the established causal order and makes the payout unambiguous.
+
+**Supersedes:** D016's requirement that a successful day continue until twentieth-thwack or egg exhaustion. D016's £1 rate, persistent balance, success-only award, and lack of a manual cash-out action remain.
+
 <!--
 Copy for the next entry:
 
-## D015 — Short decision title
+## D018 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

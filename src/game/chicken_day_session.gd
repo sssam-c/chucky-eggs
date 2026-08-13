@@ -6,6 +6,8 @@ const ProducerFlock = preload("res://src/domain/producer_flock.gd")
 const SeededShuffler = preload("res://src/core/seeded_shuffler.gd")
 const DEFAULT_DAY_SEED := 20260813
 const REWARD_SEED_STEP := 1009
+const DAY_ONE_TARGET := 15
+const LATER_DAY_TARGET := 20
 
 var _day
 var _flock
@@ -14,6 +16,8 @@ var _shuffler
 var _day_number := 1
 var _phase := "day"
 var _reward_choices: Array[Dictionary] = []
+var _cash := 0
+var _last_cash_awarded := 0
 
 
 func _init(day_seed := DEFAULT_DAY_SEED, flock = null, shuffler = null) -> void:
@@ -27,8 +31,11 @@ func state() -> Dictionary:
 	var current_state: Dictionary = _day.snapshot()
 	current_state["producers"] = _flock.snapshot()
 	current_state["day_number"] = _day_number
+	current_state["next_day_target_score"] = _target_for_day(_day_number + 1)
 	current_state["phase"] = _phase
 	current_state["reward_choices"] = _reward_choices.duplicate(true)
+	current_state["cash"] = _cash
+	current_state["last_cash_awarded"] = _last_cash_awarded
 	return current_state
 
 
@@ -36,14 +43,25 @@ func submit_circuit(circuit_id: String) -> Array[Dictionary]:
 	if _phase != "day":
 		return [{"type": "thwack_rejected", "reason": "wrong_phase"}]
 	var events: Array[Dictionary] = _day.resolve_circuit(circuit_id)
+	var ended_event: Dictionary = {}
 	for event: Dictionary in events:
 		if event.type != "day_ended":
 			continue
+		ended_event = event
 		if event.succeeded:
 			_phase = "reward"
 			_reward_choices = _create_reward_choices()
 		else:
 			_phase = "failed"
+	if not ended_event.is_empty() and ended_event.succeeded:
+		_last_cash_awarded = int(ended_event.remaining_thwacks)
+		_cash += _last_cash_awarded
+		events.append({
+			"type": "cash_awarded",
+			"amount": _last_cash_awarded,
+			"cash_total": _cash,
+			"remaining_thwacks": int(ended_event.remaining_thwacks),
+		})
 	return events
 
 
@@ -74,6 +92,7 @@ func select_producer(kind: String) -> Array[Dictionary]:
 	events.append({
 		"type": "day_started",
 		"day_number": _day_number,
+		"target_score": _day.snapshot().target_score,
 		"daily_egg_count": daily_egg_count,
 		"production": _production_snapshot(),
 	})
@@ -83,11 +102,16 @@ func select_producer(kind: String) -> Array[Dictionary]:
 func _start_day() -> void:
 	_phase = "day"
 	_reward_choices.clear()
+	_last_cash_awarded = 0
 	var laid_eggs: Array[String] = _flock.lay_daily_egg_kinds()
 	var current_day_seed: int = _day_seed + _day_number - 1
 	var day_shuffler = _shuffler if _shuffler != null else SeededShuffler.new(current_day_seed)
 	var shuffled_eggs: Array[String] = day_shuffler.shuffle_strings(laid_eggs)
-	_day = ChickenDay.new(shuffled_eggs)
+	_day = ChickenDay.new(shuffled_eggs, _target_for_day(_day_number))
+
+
+func _target_for_day(day_number: int) -> int:
+	return DAY_ONE_TARGET if day_number == 1 else LATER_DAY_TARGET
 
 
 func _create_reward_choices() -> Array[Dictionary]:
