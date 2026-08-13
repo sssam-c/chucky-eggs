@@ -8,10 +8,10 @@ Choose which eggs deserve the spoon while every thwack carries the whole conveyo
 
 ## Objective and end states
 
-- A day lasts exactly 20 thwacks.
+- A day lasts at most 20 thwacks and can end earlier when no eggs remain in either the hopper or conveyor.
 - Hatch eggs to score at least 10 points by the end of the day.
 - The day succeeds at 10 or more points and fails below 10 points.
-- After the twentieth thwack resolves, all eggs left on the conveyor or in the pipe are discarded without scoring.
+- After the twentieth thwack resolves, all eggs left on the conveyor or in the hopper are discarded without scoring.
 
 ## Player loop
 
@@ -20,13 +20,15 @@ Inspect the five conveyor slots, the next three eggs in the pipe, the score, and
 ## Setup and state
 
 - The conveyor has five ordered slots. Slot 1 receives eggs and slot 5 is beside the drop.
-- The day begins with one chicken egg in slot 1 and a fixed authored sequence of Chicken, Cuckoo, Plover, and Spoonbill eggs in the pipe.
+- The starting flock has five Chicken producers, three Cuckoo producers, and two Plover producers.
+- Each Chicken producer lays two eggs per day. Each Cuckoo and Plover producer lays one, producing a daily pool of 15 eggs.
+- Shuffle the complete daily pool once, load its first egg into slot 1, and place the rest in the finite hopper. Do not reshuffle during the day.
 - A Chicken egg has 3 toughness and is worth 3 points when hatched.
 - A Cuckoo egg has 4 toughness and is worth 1 point when hatched.
-- A Plover egg has 6 toughness and is worth 2 points when hatched.
+- A Plover egg has 6 toughness and is worth 4 points when hatched.
 - A Spoonbill egg has 5 toughness, is worth 4 points when hatched, and takes 2 damage from a direct Pink strike instead of 1.
-- The pipe is continuously supplied from the same repeating authored sequence, always shows the next three eggs, and drops one into slot 1 after each non-final thwack.
-- Egg toughness, current score, and remaining thwacks are always visible.
+- The pipe shows up to the next three hopper eggs. After each non-final thwack, the next hopper egg drops into slot 1 if one remains.
+- Egg toughness, current score, remaining thwacks, and the number of eggs left in the hopper are always visible.
 
 ## Actions and resolution
 
@@ -48,7 +50,8 @@ Resolve the thwack in this order:
 6. Advance every surviving conveyor egg one slot.
 7. Discard any egg that moves past slot 5 without scoring.
 8. Spend one of the day's 20 thwacks.
-9. If the day continues, drop the next pipe egg into slot 1 and refill the visible pipe preview.
+9. If thwacks remain, drop the next hopper egg into slot 1 if one remains and refill the visible pipe preview.
+10. End the day if no eggs remain in either the hopper or conveyor. Otherwise, continue until the twentieth thwack.
 
 Hatching an egg never prevents the conveyor from advancing. Partially damaged eggs retain their remaining toughness until they hatch or are discarded.
 
@@ -63,3 +66,5 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 - **Spark weakness:** The four-point spark on a Spoonbill matches Pink's circuit symbol. A direct Pink strike deals 2 damage to it; Red, Blue, and echo damage still deal their normal amounts.
 - **Plover retreat:** A surviving Plover directly struck by a circuit outside slot 1 swaps with the egg or empty space immediately behind it. Cuckoo echoes use the positions from before any retreat. The normal conveyor advance still follows.
 - **Discarded:** Removed without hatching or awarding points.
+- **Producer:** A persistent flock member that lays its stated number of fresh eggs into the daily pool.
+- **Hopper:** The finite shuffled sequence of eggs that have not yet entered the conveyor.

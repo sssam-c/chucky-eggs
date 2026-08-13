@@ -20,6 +20,7 @@ const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 @onready var _echo_trace: Control = %EchoTrace
 @onready var _hatch_payoff: Control = %HatchPayoff
 @onready var _presenter: Node = %Presentation
+@onready var _hopper_count_label: Label = %HopperCount
 @onready var _belt_slots: Array[Button] = [%Slot1, %Slot2, %Slot3, %Slot4, %Slot5]
 @onready var _pipe_slots: Array[Button] = [%Next1, %Next2, %Next3]
 @onready var _circuit_buttons: Array[Button] = [%RedCircuit, %BlueCircuit, %PinkCircuit]
@@ -87,6 +88,15 @@ func restart_day() -> void:
 	_circuit_buttons[0].grab_focus()
 
 
+func replace_session(session) -> void:
+	_request_generation += 1
+	_presenter.cancel_playback()
+	_input_locked = false
+	_session = session
+	_render([], true)
+	_circuit_buttons[0].grab_focus()
+
+
 func set_muted(muted: bool) -> void:
 	_presenter.set_muted(muted)
 	_mute_button.set_pressed_no_signal(muted)
@@ -113,6 +123,7 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 	var state: Dictionary = _session.state()
 	_score_label.text = "SCORE %d / %d" % [state.score, state.target_score]
 	_thwacks_label.text = "THWACKS %d" % state.remaining_thwacks
+	_hopper_count_label.text = "HOPPER %d" % state.hopper_egg_count
 
 	for slot_index in range(_belt_slots.size()):
 		_belt_slots[slot_index].render_egg(

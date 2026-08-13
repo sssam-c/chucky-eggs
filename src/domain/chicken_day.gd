@@ -10,7 +10,7 @@ const CHICKEN_POINTS := 3
 const CUCKOO_TOUGHNESS := 4
 const CUCKOO_POINTS := 1
 const PLOVER_TOUGHNESS := 6
-const PLOVER_POINTS := 2
+const PLOVER_POINTS := 4
 const SPOONBILL_TOUGHNESS := 5
 const SPOONBILL_POINTS := 4
 const CIRCUITS := [
@@ -18,38 +18,31 @@ const CIRCUITS := [
 	{"id": "blue", "slot_indices": [1, 3]},
 	{"id": "pink", "slot_indices": [4]},
 ]
-const LAYING_PATTERN := [
-	"chicken",
-	"cuckoo",
-	"chicken",
-	"spoonbill",
-	"cuckoo",
-	"plover",
-	"chicken",
-	"chicken",
-]
-
 var _slots: Array[Dictionary] = []
-var _pipe: Array[Dictionary] = []
+var _hopper: Array[Dictionary] = []
 var _remaining_thwacks := STARTING_THWACKS
 var _score := 0
 var _ended := false
 var _succeeded := false
-var _next_egg_index := 0
+var _daily_egg_count := 0
 
 
-func _init() -> void:
+func _init(daily_egg_kinds: Array[String]) -> void:
+	assert(not daily_egg_kinds.is_empty(), "A day needs at least one laid egg.")
 	for slot_index in range(SLOT_COUNT):
 		_slots.append({})
-	_slots[0] = _lay_next_egg()
-	for preview_index in range(PIPE_PREVIEW_COUNT):
-		_pipe.append(_lay_next_egg())
+	for kind: String in daily_egg_kinds:
+		_hopper.append(_new_egg(kind))
+	_daily_egg_count = _hopper.size()
+	_slots[0] = _hopper.pop_front()
 
 
 func snapshot() -> Dictionary:
 	return {
 		"slots": _slots.duplicate(true),
-		"pipe": _pipe.duplicate(true),
+		"pipe": _hopper.slice(0, PIPE_PREVIEW_COUNT).duplicate(true),
+		"hopper_egg_count": _hopper.size(),
+		"daily_egg_count": _daily_egg_count,
 		"circuits": CIRCUITS.duplicate(true),
 		"remaining_thwacks": _remaining_thwacks,
 		"score": _score,
@@ -90,6 +83,8 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		_end_day(events)
 	else:
 		_refill_belt(events)
+		if _hopper.is_empty() and _conveyor_is_empty():
+			_end_day(events)
 
 	return events
 
@@ -219,14 +214,19 @@ func _spend_thwack(events: Array[Dictionary]) -> void:
 
 
 func _refill_belt(events: Array[Dictionary]) -> void:
-	_slots[0] = _pipe.pop_front()
-	_pipe.append(_lay_next_egg())
+	if _hopper.is_empty():
+		return
+	_slots[0] = _hopper.pop_front()
 	events.append({
 		"type": "egg_entered",
 		"slot_index": 0,
 		"egg": _slots[0].duplicate(true),
-		"pipe": _pipe.duplicate(true),
+		"pipe": _hopper.slice(0, PIPE_PREVIEW_COUNT).duplicate(true),
 	})
+
+
+func _conveyor_is_empty() -> bool:
+	return _slots.all(func(egg: Dictionary) -> bool: return egg.is_empty())
 
 
 func _end_day(events: Array[Dictionary]) -> void:
@@ -234,11 +234,11 @@ func _end_day(events: Array[Dictionary]) -> void:
 	for egg: Dictionary in _slots:
 		if not egg.is_empty():
 			discarded_count += 1
-	discarded_count += _pipe.size()
+	discarded_count += _hopper.size()
 
 	for slot_index in range(SLOT_COUNT):
 		_slots[slot_index] = {}
-	_pipe.clear()
+	_hopper.clear()
 	_ended = true
 	_succeeded = _score >= TARGET_SCORE
 	events.append({
@@ -251,12 +251,6 @@ func _end_day(events: Array[Dictionary]) -> void:
 		"target_score": TARGET_SCORE,
 		"succeeded": _succeeded,
 	})
-
-
-func _lay_next_egg() -> Dictionary:
-	var kind: String = LAYING_PATTERN[_next_egg_index % LAYING_PATTERN.size()]
-	_next_egg_index += 1
-	return _new_egg(kind)
 
 
 func _new_egg(kind: String) -> Dictionary:
@@ -281,6 +275,7 @@ func _new_egg(kind: String) -> Dictionary:
 			"max_toughness": SPOONBILL_TOUGHNESS,
 			"points": SPOONBILL_POINTS,
 		}
+	assert(kind == "chicken", "Unknown egg kind: %s" % kind)
 	return {
 		"kind": "chicken",
 		"toughness": CHICKEN_TOUGHNESS,

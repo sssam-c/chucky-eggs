@@ -1,10 +1,48 @@
 extends GutTest
 
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
+const AUTHORED_PATTERN: Array[String] = [
+	"chicken", "cuckoo", "chicken", "spoonbill",
+	"cuckoo", "plover", "chicken", "chicken",
+]
+
+
+func test_plover_is_a_four_point_high_commitment_egg() -> void:
+	assert_eq(ChickenDay.PLOVER_TOUGHNESS, 6)
+	assert_eq(ChickenDay.PLOVER_POINTS, 4)
+
+
+func test_finite_daily_pool_exposes_only_the_next_three_eggs() -> void:
+	var state: Dictionary = ChickenDay.new([
+		"chicken", "cuckoo", "plover", "chicken", "cuckoo",
+	]).snapshot()
+
+	assert_eq(state.slots[0].kind, "chicken")
+	assert_eq(state.pipe.map(func(egg: Dictionary) -> String: return egg.kind), [
+		"cuckoo", "plover", "chicken",
+	])
+	assert_eq(state.hopper_egg_count, 4)
+
+
+func test_day_ends_when_the_finite_pool_and_conveyor_are_empty() -> void:
+	var day = ChickenDay.new(["chicken"])
+	var final_events: Array[Dictionary] = []
+
+	for circuit_id in ["red", "blue", "red"]:
+		final_events = day.resolve_circuit(circuit_id)
+
+	var state: Dictionary = day.snapshot()
+	assert_true(state.ended)
+	assert_eq(state.remaining_thwacks, 17)
+	assert_true(state.pipe.is_empty())
+	assert_true(state.slots.all(func(egg: Dictionary) -> bool: return egg.is_empty()))
+	assert_eq(_event_types(final_events).slice(-3), [
+		"thwack_spent", "day_remainder_discarded", "day_ended",
+	])
 
 
 func test_day_exposes_the_three_fixed_spoon_circuits() -> void:
-	var state: Dictionary = ChickenDay.new().snapshot()
+	var state: Dictionary = _new_authored_day().snapshot()
 
 	assert_eq(state.circuits, [
 		{"id": "red", "slot_indices": [0, 2]},
@@ -21,7 +59,7 @@ func test_day_exposes_the_three_fixed_spoon_circuits() -> void:
 
 
 func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 
 	var events: Array[Dictionary] = day.resolve_circuit("red")
 	var state: Dictionary = day.snapshot()
@@ -44,7 +82,7 @@ func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
 
 
 func test_circuit_is_rejected_only_when_all_of_its_slots_are_empty() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	var before: Dictionary = day.snapshot()
 
 	var events: Array[Dictionary] = day.resolve_circuit("blue")
@@ -55,7 +93,7 @@ func test_circuit_is_rejected_only_when_all_of_its_slots_are_empty() -> void:
 
 
 func test_unknown_circuit_is_rejected_without_spending_time() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	var before: Dictionary = day.snapshot()
 
 	var events: Array[Dictionary] = day.resolve_circuit("green")
@@ -66,7 +104,7 @@ func test_unknown_circuit_is_rejected_without_spending_time() -> void:
 
 
 func test_red_damages_both_occupied_slots_before_a_cuckoo_between_them_echoes_twice() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	day.resolve_circuit("red")
 	day.resolve_circuit("blue")
 
@@ -94,7 +132,7 @@ func test_red_damages_both_occupied_slots_before_a_cuckoo_between_them_echoes_tw
 
 
 func test_complete_paired_damage_batch_precedes_conveyor_ordered_hatches() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	day.resolve_circuit("red")
 	day.resolve_circuit("blue")
 	var events: Array[Dictionary] = day.resolve_circuit("red")
@@ -114,7 +152,7 @@ func test_complete_paired_damage_batch_precedes_conveyor_ordered_hatches() -> vo
 
 
 func test_pink_deals_two_damage_to_a_spoonbill_in_slot_five() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	for circuit_id in ["red", "blue", "red", "red", "blue", "red", "pink"]:
 		day.resolve_circuit(circuit_id)
 	assert_eq(day.snapshot().slots[4].kind, "spoonbill")
@@ -140,7 +178,7 @@ func test_pink_deals_two_damage_to_a_spoonbill_in_slot_five() -> void:
 
 
 func test_cuckoo_copies_the_full_two_damage_from_a_pink_struck_spoonbill() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	for circuit_id in ["red", "blue", "red", "red", "blue", "red", "pink"]:
 		day.resolve_circuit(circuit_id)
 	assert_eq(day.snapshot().slots[3].kind, "cuckoo")
@@ -161,7 +199,7 @@ func test_cuckoo_copies_the_full_two_damage_from_a_pink_struck_spoonbill() -> vo
 
 
 func test_pink_still_rescues_a_surviving_plover_once() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	for turn in range(7):
 		day.resolve_circuit("red")
 	day.resolve_circuit("blue")
@@ -183,7 +221,7 @@ func test_pink_still_rescues_a_surviving_plover_once() -> void:
 
 
 func test_unhatched_egg_is_discarded_after_slot_five() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	var final_events: Array[Dictionary] = []
 
 	for turn in range(5):
@@ -198,7 +236,7 @@ func test_unhatched_egg_is_discarded_after_slot_five() -> void:
 
 
 func test_twentieth_valid_circuit_ends_day_and_rejects_further_requests() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 
 	for turn in range(20):
 		var events: Array[Dictionary] = day.resolve_circuit("red")
@@ -214,7 +252,7 @@ func test_twentieth_valid_circuit_ends_day_and_rejects_further_requests() -> voi
 
 
 func test_day_can_still_succeed_at_ten_or_more_points() -> void:
-	var day = ChickenDay.new()
+	var day = _new_authored_day()
 	var circuit_plan := [
 		"red", "blue", "red", "blue", "red", "blue", "red", "pink", "red", "blue",
 		"red", "blue", "red", "blue", "red", "pink", "red", "blue", "red", "blue",
@@ -230,7 +268,10 @@ func test_day_can_still_succeed_at_ten_or_more_points() -> void:
 
 
 func test_day_fails_below_ten_points() -> void:
-	var day = ChickenDay.new()
+	var spoonbill_pool: Array[String] = []
+	spoonbill_pool.resize(24)
+	spoonbill_pool.fill("spoonbill")
+	var day = ChickenDay.new(spoonbill_pool)
 
 	for turn in range(20):
 		day.resolve_circuit("red")
@@ -245,3 +286,10 @@ func _event_types(events: Array[Dictionary]) -> Array[String]:
 	for event: Dictionary in events:
 		types.append(event.type)
 	return types
+
+
+func _new_authored_day():
+	var daily_eggs: Array[String] = []
+	for egg_index in range(24):
+		daily_eggs.append(AUTHORED_PATTERN[egg_index % AUTHORED_PATTERN.size()])
+	return ChickenDay.new(daily_eggs)

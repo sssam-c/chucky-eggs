@@ -100,10 +100,30 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Reason:** Pink normally trades the two distributed strikes of Red or Blue for one precise final-slot strike. Spoonbill makes that precision proactively valuable without making Pink universally stronger: the player must preserve and prepare a high-value egg until slot 5, where Pink can deliver two concentrated damage. Five toughness allows one earlier circuit opportunity to be spent elsewhere, while the full Cuckoo echo creates a visible high-payoff slot-4/slot-5 pairing.
 
+## D011 — Generate a finite daily pool from producers
+
+**Status:** accepted
+
+**Decision:** The starting flock contains five Chicken producers that each lay two eggs per day, three Cuckoo producers that each lay one, and two Plover producers that each lay one. Shuffle those 15 fresh eggs once at the beginning of the day, load the first onto the conveyor, and use the remainder as a finite hopper with a three-egg preview. Do not reshuffle. A day ends after its twentieth thwack or earlier when both hopper and conveyor are empty.
+
+**Reason:** Producer yield lets flock composition express both egg quality and frequency. A finite shuffled pool makes additions capable of diluting complementary combinations, giving future removal, thwack, belt, and hopper upgrades a shared strategic purpose. Ending on exhaustion avoids empty mandatory actions when the initial pool clears before the thwack cap.
+
+**Supersedes:** D004's fixed authored supply and D010's inclusion of Spoonbill in that authored opening supply. All established egg behavior, Spoonbill behavior, circuit rules, and the 20-thwack maximum remain.
+
+## D012 — Raise the Plover payoff
+
+**Status:** accepted
+
+**Decision:** Increase the Plover's hatch value from 2 points to 4. Its 6 toughness and retreat behavior remain unchanged.
+
+**Reason:** The Plover demands sustained circuit commitment while repeatedly displacing neighbouring eggs. Four points makes completing that difficult positional problem feel like a prize without exceeding the Spoonbill's special-egg payoff.
+
+**Supersedes:** D007's 2-point Plover value only.
+
 <!--
 Copy for the next entry:
 
-## D010 — Short decision title
+## D013 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

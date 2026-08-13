@@ -1,22 +1,49 @@
 extends GutTest
 
+const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
+const ProducerFlock = preload("res://src/domain/producer_flock.gd")
+const AUTHORED_DAILY_EGGS: Array[String] = [
+	"chicken", "cuckoo", "chicken", "spoonbill",
+	"cuckoo", "plover", "chicken", "chicken",
+	"chicken", "cuckoo", "chicken", "spoonbill",
+	"cuckoo", "plover", "chicken", "chicken",
+	"chicken", "cuckoo", "chicken", "spoonbill",
+	"cuckoo", "plover", "chicken", "chicken",
+]
+
+
+class IdentityShuffler:
+	extends RefCounted
+
+	func shuffle_strings(values: Array[String]) -> Array[String]:
+		return values.duplicate()
+
 
 func test_main_renders_initial_day_and_shell_information() -> void:
 	var main := _add_main()
 
 	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 10")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
+	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER 14")
+	assert_false(
+		main.get_node("Content/Header/Thwacks").get_global_rect().intersects(
+			main.get_node("Content/Header/HopperCount").get_global_rect()
+		)
+	)
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_eq(main.get_node("Content/Stage/Pipe/Preview").get_child_count(), 3)
-	assert_eq(main.get_node("Content/Stage/Pipe/Preview/Next1").effect_emblem(), "echo")
-	assert_eq(main.get_node("Content/Stage/Pipe/Preview/Next3").egg_kind(), "spoonbill")
-	assert_eq(main.get_node("Content/Stage/Pipe/Preview/Next3").effect_emblem(), "spark")
-	assert_string_contains(
-		main.get_node("Content/Stage/Pipe/Preview/Next3").egg_description(),
-		"takes 2 damage from Pink"
-	)
+	for preview in main.get_node("Content/Stage/Pipe/Preview").get_children():
+		assert_true(preview.egg_kind() in ["chicken", "cuckoo", "plover"])
 	assert_not_null(main.get_node("Content/Accessibility/Mute"))
 	assert_not_null(main.get_node("Content/Accessibility/ReducedMotion"))
+
+
+func test_plover_shell_information_shows_the_four_point_payoff() -> void:
+	var main := _add_main_for_ordered_eggs(["plover"])
+	var summary: String = main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary()
+
+	assert_string_contains(summary, "TOUGHNESS 6")
+	assert_string_contains(summary, "4 POINTS")
 
 
 func test_stage_has_three_circuit_controls_and_five_colour_matched_spoons() -> void:
@@ -96,6 +123,7 @@ func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
 
 	assert_eq(fired_slots, [0, 2])
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 19")
+	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER 13")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 2")
 
 
@@ -134,7 +162,7 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 
 
 func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() -> void:
-	var main := _add_main()
+	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _press_and_wait(main, "RedCircuit")
 	await _press_and_wait(main, "BlueCircuit")
@@ -156,7 +184,7 @@ func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() ->
 
 
 func test_hatch_burst_carries_resolved_points_into_the_score_before_event_completion() -> void:
-	var main := _add_main()
+	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _press_and_wait(main, "RedCircuit")
 	await _press_and_wait(main, "BlueCircuit")
@@ -193,7 +221,7 @@ func test_hatch_burst_carries_resolved_points_into_the_score_before_event_comple
 
 
 func test_restart_clears_an_interrupted_hatch_payoff_without_committing_score() -> void:
-	var main := _add_main()
+	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _press_and_wait(main, "RedCircuit")
 	await _press_and_wait(main, "BlueCircuit")
@@ -218,7 +246,7 @@ func test_restart_clears_an_interrupted_hatch_payoff_without_committing_score() 
 
 
 func test_pink_spoonbill_combo_presents_double_damage_and_both_score_payoffs() -> void:
-	var main := _add_main()
+	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	for circuit_name in [
 		"RedCircuit", "BlueCircuit", "RedCircuit", "RedCircuit",
@@ -280,17 +308,17 @@ func test_crunch_audio_streams_are_present_and_non_empty() -> void:
 		assert_gt(player.stream.data.size(), 1000, "%s stream contains PCM data" % player_name)
 
 
-func test_day_result_appears_after_twenty_valid_circuit_thwacks() -> void:
-	var main := _add_main()
+func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
+	var main := _add_main_for_ordered_eggs(["chicken"])
 	main.set_reduced_motion(true)
 
-	for turn in range(20):
-		await _press_and_wait(main, "RedCircuit")
+	for circuit_name in ["RedCircuit", "BlueCircuit", "RedCircuit"]:
+		await _press_and_wait(main, circuit_name)
 
 	var result_panel: Control = main.get_node("ResultOverlay")
 	assert_true(result_panel.visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY FAILED")
-	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 0")
+	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 17")
 
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 	assert_false(result_panel.visible)
@@ -307,4 +335,22 @@ func _add_main() -> Control:
 	var packed_scene := load("res://src/ui/main.tscn") as PackedScene
 	var main := packed_scene.instantiate() as Control
 	add_child_autofree(main)
+	return main
+
+
+func _add_authored_main() -> Control:
+	return _add_main_for_ordered_eggs(AUTHORED_DAILY_EGGS)
+
+
+func _add_main_for_ordered_eggs(egg_kinds: Array[String]) -> Control:
+	var producers: Array[Dictionary] = []
+	for kind: String in egg_kinds:
+		producers.append({"kind": kind, "daily_yield": 1})
+	var session = ChickenDaySession.new(
+		0,
+		ProducerFlock.new(producers),
+		IdentityShuffler.new()
+	)
+	var main := _add_main()
+	main.replace_session(session)
 	return main

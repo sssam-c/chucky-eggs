@@ -2,7 +2,55 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — Spoonbill spark weakness
+## Active slice — Shuffled producer hopper
+
+### Question
+
+Does a finite shuffled pool of producer-laid eggs preserve short-term tactical legibility while making flock composition a meaningful foundation for future builds?
+
+### Settled rules preserved
+
+- The conveyor, circuits, egg behavior, damage ordering, 10-point target, and 20-thwack maximum remain unchanged.
+- The starting flock has five two-yield Chicken producers, three one-yield Cuckoo producers, and two one-yield Plover producers, creating 15 eggs per day.
+- The daily pool is shuffled once, previews its next three eggs, never reshuffles, and ends the day early when both hopper and conveyor are empty.
+- Plovers retain 6 toughness and retreat behavior but now award 4 points.
+
+### Hypothesis
+
+A finite randomized pool will make each preview tactically useful without turning the whole day into an authored spatial puzzle. Showing only the next three eggs preserves local planning, while the known producer roster gives future additions and removals predictable effects on build concentration.
+
+### Player-visible path
+
+Begin with one shuffled starting-flock egg on the conveyor and three more visible in the pipe. Choose circuits using the familiar preview and conveyor information while the hopper supplies at most one fresh egg per thwack. Continue until the twentieth thwack or until the finite pool and conveyor are empty, then restart to replay the same seed while the shuffle and exhaustion rules are verified.
+
+### In scope
+
+- A persistent-domain representation of the 10 starting producers and their daily yields.
+- Seeded once-per-day shuffling, a finite hopper, a three-egg preview, and resolver-owned exhaustion ending.
+- Four-point Plover state, hatch events, shell information, and score payoff.
+- Deterministic setup seams that keep established Cuckoo, Plover, and Spoonbill interaction tests independent from the production opening pool.
+
+### Implementation conveniences
+
+- Use one fixed seed for the standalone restartable prototype so a reported sequence can be replayed exactly.
+- Preserve the existing `pipe` presentation field as the visible view of the first three hopper eggs.
+
+### Outside this slice
+
+- Adding a producer after each day, choosing between producer rewards, removal, persistence across multiple days, and campaign failure.
+- Thwack upgrades, longer belts, additional hoppers, hopper choice, and other machine upgrades.
+- Adding Spoonbill producers to the starting flock or implementing later reward pools and rarity.
+- Final tuning of producer yields, target score, flock composition, or Plover value.
+
+### Exit evidence
+
+- Domain tests prove starting producer counts and yields, the exact 15-egg composition, finite preview behavior, early exhaustion, the 20-thwack cap, and the Plover's 4-point value.
+- Core and session tests prove equal seeds reproduce equal shuffles without changing pool contents and restart through the canonical request pathway.
+- UI tests prove shuffled starting-flock eggs render, the remaining hopper count updates, Plover information shows 4 points, exhaustion shows the result, and deterministic injected sessions preserve established resolver-event playback.
+- A running-game check at 1280×720 follows the preview until it shrinks, confirms no replacement eggs appear, and observes either exhaustion or the thwack cap ending the day.
+- A short playtest asks: "Did the shuffled preview give enough information to make plans, and did knowing the flock composition make the order feel strategically fair?"
+
+## Completed slice — Spoonbill spark weakness
 
 ### Question
 
