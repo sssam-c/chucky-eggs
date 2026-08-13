@@ -26,6 +26,17 @@ static func echo() -> AudioStreamWAV:
 	)
 
 
+static func shuffle() -> AudioStreamWAV:
+	return _build_stream(0.24, 131, func(t: float, sample_index: int) -> float:
+		var chirp := sin(TAU * (1160.0 + t * 2100.0) * t) * _pulse(t, 0.0, 0.10) * 0.20
+		var scrape := _noise(sample_index, 131) * _pulse(t, 0.045, 0.12) * 0.18
+		var first_knock := sin(TAU * 178.0 * t) * exp(-26.0 * t) * 0.30
+		var landing_time := maxf(t - 0.145, 0.0)
+		var landing := sin(TAU * 132.0 * landing_time) * _pulse(t, 0.145, 0.085) * 0.42
+		return (chirp + scrape + first_knock + landing) * 0.72
+	)
+
+
 static func hatch() -> AudioStreamWAV:
 	return _build_stream(0.38, 23, func(t: float, sample_index: int) -> float:
 		var first_crack := _noise(sample_index, 23) * exp(-31.0 * t) * 0.72

@@ -11,6 +11,9 @@ func test_main_renders_initial_day_state_and_accessibility_controls() -> void:
 	assert_eq(main.get_node("Content/Stage/Pipe/Preview").get_child_count(), 3)
 	assert_string_contains(main.get_node("Content/Stage/Pipe/Preview/Next1").egg_summary(), "CUCKOO")
 	assert_string_contains(main.get_node("Content/Stage/Pipe/Preview/Next1").egg_summary(), "1 POINT")
+	assert_string_contains(main.get_node("Content/Stage/Pipe/Preview/Next3").egg_summary(), "PLOVER")
+	assert_string_contains(main.get_node("Content/Stage/Pipe/Preview/Next3").egg_summary(), "2 POINTS")
+	assert_string_contains(main.get_node("Content/Stage/Pipe/Preview/Next3").egg_summary(), "TOUGHNESS 6")
 	var echo_trace: Control = main.get_node("Content/Stage/EchoTrace")
 	assert_false(echo_trace.visible)
 	assert_not_null(main.get_node("Content/Accessibility/Mute"))
@@ -102,6 +105,30 @@ func test_cuckoo_echo_damage_is_presented_before_the_belt_advances() -> void:
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 3")
 
 
+func test_plover_swap_is_presented_before_the_belt_advances() -> void:
+	var main := _add_main()
+	main.set_reduced_motion(true)
+	await _press_and_wait(main, "Slot1")
+	await _press_and_wait(main, "Slot2")
+	await _press_and_wait(main, "Slot1")
+	await _press_and_wait(main, "Slot4")
+	var presented: Array[String] = []
+	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
+
+	await _press_and_wait(main, "Slot2")
+
+	assert_eq(presented, [
+		"egg_damaged",
+		"eggs_swapped",
+		"conveyor_advanced",
+		"egg_discarded",
+		"thwack_spent",
+		"egg_entered",
+	])
+	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "PLOVER")
+	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 5")
+
+
 func test_restart_cancels_active_playback_without_stale_day_state() -> void:
 	var main := _add_main()
 	var completion_count := 0
@@ -133,7 +160,7 @@ func test_crunch_audio_streams_are_present_and_non_empty() -> void:
 	var main := _add_main()
 	var audio_root: Node = main.get_node("Presentation/Audio")
 
-	for player_name in ["Impact", "Echo", "Hatch", "Belt", "Loss", "Pipe"]:
+	for player_name in ["Impact", "Echo", "Shuffle", "Hatch", "Belt", "Loss", "Pipe"]:
 		var player: AudioStreamPlayer = audio_root.get_node(player_name)
 		assert_not_null(player.stream, "%s has a stream" % player_name)
 		assert_gt(player.stream.data.size(), 1000, "%s stream contains PCM data" % player_name)

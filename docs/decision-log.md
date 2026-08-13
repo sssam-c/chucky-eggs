@@ -54,10 +54,28 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D004's global echo range. D004's egg values, damage batching, hatch order, authored supply, and 10-point target remain.
 
+## D006 — Let Plover eggs retreat through the belt
+
+**Status:** accepted
+
+**Decision:** Add 4-toughness Plover eggs worth 2 points to the authored supply. When a directly thwacked Plover survives the complete damage and hatch resolution, it swaps with the contents of the slot immediately behind it, toward the pipe. A Plover in slot 1 cannot retreat. Cuckoo adjacency resolves before the swap, and the standard conveyor advance still follows it.
+
+**Reason:** The Plover lets a player spend damage to preserve one egg's conveyor position only by accelerating another egg toward the drop. This turns belt position itself into a manipulable cost, creates and breaks future Cuckoo pairings, and deepens sacrifice without adding another player control.
+
+## D007 — Make the Plover a longer commitment
+
+**Status:** accepted
+
+**Decision:** Increase Plover toughness from 4 to 6. Its 2-point value and retreat behavior remain unchanged.
+
+**Reason:** Retreating lets a Plover preserve its conveyor position repeatedly, so a higher toughness makes that positional privilege demand a sustained commitment and more displaced eggs rather than making it an easy secondary hatch.
+
+**Supersedes:** D006's 4-toughness Plover value only.
+
 <!--
 Copy for the next entry:
 
-## D006 — Short decision title
+## D008 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

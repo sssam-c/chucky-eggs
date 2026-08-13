@@ -22,6 +22,8 @@ When one action damages several eggs, apply and show the complete damage batch b
 
 Terms such as ahead, behind, and adjacent refer to conveyor order rather than screen distance. If the belt later folds or loops, presentation must show the route clearly enough that these relationships remain predictable.
 
+Position-changing effects must expose their source, destination, and ordering relative to the standard conveyor advance. Their animation explains a resolver-authored move; it never chooses which eggs move.
+
 ## Determinism makes iteration faster
 
 Seed randomness, inject time, and make state transitions replayable. A surprising playtest should be reproducible before it is tuned.

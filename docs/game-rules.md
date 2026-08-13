@@ -20,9 +20,10 @@ Inspect the five conveyor slots, the next three eggs in the pipe, the score, and
 ## Setup and state
 
 - The conveyor has five ordered slots. Slot 1 receives eggs and slot 5 is beside the drop.
-- The day begins with one chicken egg in slot 1 and a fixed authored sequence of Chicken and Cuckoo eggs in the pipe.
+- The day begins with one chicken egg in slot 1 and a fixed authored sequence of Chicken, Cuckoo, and Plover eggs in the pipe.
 - A Chicken egg has 4 toughness and is worth 3 points when hatched.
 - A Cuckoo egg has 4 toughness and is worth 1 point when hatched.
+- A Plover egg has 6 toughness and is worth 2 points when hatched.
 - The pipe is continuously supplied from the same repeating authored sequence, always shows the next three eggs, and drops one into slot 1 after each non-final thwack.
 - Egg toughness, current score, and remaining thwacks are always visible.
 
@@ -34,10 +35,11 @@ Each turn, the player must thwack any one egg currently on the conveyor. Resolve
 2. Reduce the toughness of every Cuckoo immediately ahead of or behind that damaged egg by 1.
 3. Apply the entire damage batch before resolving hatches. Cuckoo echo damage does not create further echoes.
 4. Hatch every egg that reached 0 toughness in conveyor order, remove it, and gain its points.
-5. Advance every surviving conveyor egg one slot.
-6. Discard any egg that moves past slot 5 without scoring.
-7. Spend one of the day's 20 thwacks.
-8. If the day continues, drop the next pipe egg into slot 1 and refill the visible pipe preview.
+5. If the directly thwacked egg is a surviving Plover outside slot 1, swap it with the contents of the slot immediately behind it, toward the pipe.
+6. Advance every surviving conveyor egg one slot.
+7. Discard any egg that moves past slot 5 without scoring.
+8. Spend one of the day's 20 thwacks.
+9. If the day continues, drop the next pipe egg into slot 1 and refill the visible pipe preview.
 
 Hatching an egg never prevents the conveyor from advancing. Partially damaged eggs retain their remaining toughness until they hatch or are discarded.
 
@@ -46,5 +48,7 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 - **Thwack:** The player's single action for a turn and the unit of day time.
 - **Toughness:** The number of further thwacks an egg needs before it hatches.
 - **Adjacent:** Immediately ahead of or behind an egg in conveyor order. Visual proximity does not create adjacency.
+- **Behind:** One slot closer to the pipe in conveyor order.
 - **Echo damage:** Damage copied by a Cuckoo when an adjacent egg receives damage. Each damaged adjacent egg creates one echo on that Cuckoo; echo damage never echoes again.
+- **Plover retreat:** A surviving Plover directly struck outside slot 1 swaps with the egg or empty space immediately behind it. Cuckoo echoes use the positions from before this swap. The normal conveyor advance still follows.
 - **Discarded:** Removed without hatching or awarding points.

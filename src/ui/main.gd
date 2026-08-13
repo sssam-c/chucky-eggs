@@ -132,7 +132,7 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		_restart_button.grab_focus.call_deferred()
 
 	if fresh_day:
-		_feedback_label.text = "Ten points. Cuckoos copy damage from neighboring eggs."
+		_feedback_label.text = "Ten points. Cuckoos echo. Plovers retreat when struck."
 	else:
 		_feedback_label.text = _feedback_for(events)
 
@@ -157,6 +157,9 @@ func _feedback_for(events: Array[Dictionary]) -> String:
 				event.points_awarded,
 				"point" if event.points_awarded == 1 else "points",
 			]
+	for event: Dictionary in events:
+		if event.type == "eggs_swapped":
+			return "Scuttle! The Plover swapped one slot toward the pipe."
 	for event: Dictionary in events:
 		if event.type == "egg_discarded":
 			return "An egg fell from the belt. The spoon cannot save them all."

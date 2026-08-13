@@ -9,11 +9,13 @@ const CHICKEN_TOUGHNESS := 4
 const CHICKEN_POINTS := 3
 const CUCKOO_TOUGHNESS := 4
 const CUCKOO_POINTS := 1
+const PLOVER_TOUGHNESS := 6
+const PLOVER_POINTS := 2
 const LAYING_PATTERN := [
 	"chicken",
 	"cuckoo",
 	"chicken",
-	"chicken",
+	"plover",
 	"chicken",
 	"chicken",
 ]
@@ -57,6 +59,7 @@ func resolve_thwack(slot_index: int) -> Array[Dictionary]:
 
 	var events: Array[Dictionary] = []
 	_damage_eggs([slot_index], events)
+	_retreat_surviving_plover(slot_index, events)
 	_advance_conveyor(events)
 	_spend_thwack(events)
 
@@ -116,6 +119,25 @@ func _resolve_hatches(events: Array[Dictionary]) -> void:
 			"score": _score,
 			"target_score": TARGET_SCORE,
 		})
+
+
+func _retreat_surviving_plover(slot_index: int, events: Array[Dictionary]) -> void:
+	if slot_index == 0 or _slots[slot_index].is_empty():
+		return
+	if _slots[slot_index].kind != "plover":
+		return
+
+	var destination_slot_index := slot_index - 1
+	var plover: Dictionary = _slots[slot_index]
+	_slots[slot_index] = _slots[destination_slot_index]
+	_slots[destination_slot_index] = plover
+	events.append({
+		"type": "eggs_swapped",
+		"kind": "plover",
+		"from_slot_index": slot_index,
+		"to_slot_index": destination_slot_index,
+		"slots": _slots.duplicate(true),
+	})
 
 
 func _advance_conveyor(events: Array[Dictionary]) -> void:
@@ -190,10 +212,19 @@ func _new_egg(kind: String) -> Dictionary:
 		return {
 			"kind": "cuckoo",
 			"toughness": CUCKOO_TOUGHNESS,
+			"max_toughness": CUCKOO_TOUGHNESS,
 			"points": CUCKOO_POINTS,
+		}
+	if kind == "plover":
+		return {
+			"kind": "plover",
+			"toughness": PLOVER_TOUGHNESS,
+			"max_toughness": PLOVER_TOUGHNESS,
+			"points": PLOVER_POINTS,
 		}
 	return {
 		"kind": "chicken",
 		"toughness": CHICKEN_TOUGHNESS,
+		"max_toughness": CHICKEN_TOUGHNESS,
 		"points": CHICKEN_POINTS,
 	}

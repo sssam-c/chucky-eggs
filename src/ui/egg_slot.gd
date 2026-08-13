@@ -45,11 +45,12 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
 	var egg_name := String(_egg.kind).capitalize()
-	tooltip_text = "%s egg: %d toughness remaining, worth %d %s." % [
+	tooltip_text = "%s egg: %d toughness remaining, worth %d %s.%s" % [
 		egg_name,
 		_egg.toughness,
 		_egg.points,
 		"point" if _egg.points == 1 else "points",
+		_effect_tooltip(String(_egg.kind)),
 	]
 	queue_redraw()
 
@@ -106,6 +107,16 @@ func reset_motion() -> void:
 	_content.rotation = 0.0
 	_content.scale = Vector2.ONE
 	_content.modulate = Color.WHITE
+	_content.z_index = 0
+
+
+func _effect_tooltip(kind: String) -> String:
+	match kind:
+		"cuckoo":
+			return " Copies damage from neighboring eggs."
+		"plover":
+			return " A direct hit makes it swap one slot toward the pipe if it survives."
+	return ""
 
 
 func _draw() -> void:

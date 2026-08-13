@@ -7,6 +7,7 @@ signal _animation_step_released
 
 @onready var _impact_player: AudioStreamPlayer = $Audio/Impact
 @onready var _echo_player: AudioStreamPlayer = $Audio/Echo
+@onready var _shuffle_player: AudioStreamPlayer = $Audio/Shuffle
 @onready var _hatch_player: AudioStreamPlayer = $Audio/Hatch
 @onready var _belt_player: AudioStreamPlayer = $Audio/Belt
 @onready var _loss_player: AudioStreamPlayer = $Audio/Loss
@@ -32,6 +33,7 @@ var _waiting_for_step := false
 func _ready() -> void:
 	_impact_player.stream = CrunchAudio.impact()
 	_echo_player.stream = CrunchAudio.echo()
+	_shuffle_player.stream = CrunchAudio.shuffle()
 	_hatch_player.stream = CrunchAudio.hatch()
 	_belt_player.stream = CrunchAudio.belt()
 	_loss_player.stream = CrunchAudio.loss()
@@ -83,7 +85,7 @@ func play_events(events: Array[Dictionary]) -> bool:
 func cancel_playback() -> void:
 	_generation += 1
 	_busy = false
-	for player: AudioStreamPlayer in [_impact_player, _echo_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
+	for player: AudioStreamPlayer in [_impact_player, _echo_player, _shuffle_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
 		player.stop()
 	if _active_tween != null and _active_tween.is_valid():
 		_active_tween.kill()
@@ -94,7 +96,7 @@ func cancel_playback() -> void:
 func set_muted(muted: bool) -> void:
 	_muted = muted
 	if muted:
-		for player: AudioStreamPlayer in [_impact_player, _echo_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
+		for player: AudioStreamPlayer in [_impact_player, _echo_player, _shuffle_player, _hatch_player, _belt_player, _loss_player, _pipe_player]:
 			player.stop()
 
 
@@ -120,6 +122,8 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_damage(event, playback_generation)
 		"egg_hatched":
 			return await _present_hatch(event, playback_generation)
+		"eggs_swapped":
+			return await _present_swap(event, playback_generation)
 		"conveyor_advanced":
 			return await _present_conveyor(event, playback_generation)
 		"egg_discarded":
@@ -216,6 +220,40 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	if not await _run_tween(burst, playback_generation):
 		return false
 	slot.clear_visual()
+	return true
+
+
+func _present_swap(event: Dictionary, playback_generation: int) -> bool:
+	_play(_shuffle_player)
+	if _reduced_motion:
+		_render_belt(event.slots)
+		return true
+
+	var from_slot: Button = _belt_slots[event.from_slot_index]
+	var to_slot: Button = _belt_slots[event.to_slot_index]
+	var plover_content: Control = from_slot.motion_content()
+	var displaced_content: Control = to_slot.motion_content()
+	var has_displaced_egg: bool = not to_slot.current_egg().is_empty()
+	var stride: float = from_slot.global_position.x - to_slot.global_position.x
+	plover_content.z_index = 4
+	plover_content.pivot_offset = plover_content.size * 0.5
+	displaced_content.z_index = 2
+	displaced_content.pivot_offset = displaced_content.size * 0.5
+
+	var shuffle := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	shuffle.tween_property(plover_content, "position", Vector2(-stride * 0.48, -30.0), 0.10)
+	shuffle.parallel().tween_property(plover_content, "rotation", -0.10, 0.10)
+	if has_displaced_egg:
+		shuffle.parallel().tween_property(displaced_content, "position", Vector2(stride * 0.52, 9.0), 0.10)
+		shuffle.parallel().tween_property(displaced_content, "rotation", 0.08, 0.10)
+	shuffle.tween_property(plover_content, "position", Vector2(-stride, 0.0), 0.11).set_trans(Tween.TRANS_BACK)
+	shuffle.parallel().tween_property(plover_content, "rotation", 0.0, 0.11)
+	if has_displaced_egg:
+		shuffle.parallel().tween_property(displaced_content, "position", Vector2(stride, 0.0), 0.11)
+		shuffle.parallel().tween_property(displaced_content, "rotation", 0.0, 0.11)
+	if not await _run_tween(shuffle, playback_generation):
+		return false
+	_render_belt(event.slots)
 	return true
 
 
@@ -321,6 +359,9 @@ func _reset_mechanisms() -> void:
 	for hammer: Control in _hammers:
 		if is_instance_valid(hammer):
 			hammer.reset_pose()
+	for slot: Button in _belt_slots:
+		if is_instance_valid(slot):
+			slot.reset_motion()
 
 
 func _play(player: AudioStreamPlayer) -> void:

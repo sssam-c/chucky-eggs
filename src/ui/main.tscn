@@ -454,7 +454,7 @@ theme_override_colors/font_color = Color(0.92, 0.76, 0.48, 1)
 theme_override_colors/font_shadow_color = Color(0.04, 0.02, 0.01, 1)
 theme_override_constants/shadow_outline_size = 3
 theme_override_font_sizes/font_size = 17
-text = "Ten points. Cuckoos copy damage from neighboring eggs."
+text = "Ten points. Cuckoos echo. Plovers retreat when struck."
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -509,6 +509,8 @@ script = ExtResource("3_presenter")
 [node name="Impact" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
 [node name="Echo" type="AudioStreamPlayer" parent="Presentation/Audio"]
+
+[node name="Shuffle" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
 [node name="Hatch" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
