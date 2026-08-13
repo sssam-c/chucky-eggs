@@ -22,6 +22,8 @@ When one action damages several eggs, apply and show the complete damage batch b
 
 The player chooses a fixed spoon circuit rather than an isolated target. Red alternates across slots 1 and 3, Blue across slots 2 and 4, and Pink offers a less efficient but precise final chance in slot 5. Show every connected spoon before commitment and let empty strikes remain visibly wasted.
 
+Circuit-specific weaknesses should create a positional objective, not a universally superior button. Spoonbill rewards planning toward Pink's slot 5, where its concentrated double damage can equal Red or Blue's total output while giving up their distribution across two eggs.
+
 ## Conveyor relationships follow the route
 
 Terms such as ahead, behind, and adjacent refer to conveyor order rather than screen distance. If the belt later folds or loops, presentation must show the route clearly enough that these relationships remain predictable.

@@ -36,20 +36,23 @@ func _draw() -> void:
 	var kind := String(_egg.get("kind", "chicken"))
 	var is_cuckoo := kind == "cuckoo"
 	var is_plover := kind == "plover"
-	var shell_color := Color("79aeb2") if is_cuckoo else Color("b8c66e") if is_plover else Color("e6bd7a")
-	var outline_color := Color("183c43") if is_cuckoo else Color("354421") if is_plover else Color("572719")
+	var is_spoonbill := kind == "spoonbill"
+	var shell_color := Color("79aeb2") if is_cuckoo else Color("b8c66e") if is_plover else Color("c9a6c8") if is_spoonbill else Color("e6bd7a")
+	var outline_color := Color("183c43") if is_cuckoo else Color("354421") if is_plover else Color("4d2949") if is_spoonbill else Color("572719")
 	draw_colored_polygon(shell_points, shell_color)
 	var outline := shell_points.duplicate()
 	outline.append(shell_points[0])
 	draw_polyline(outline, outline_color, 4.0, true)
-	var highlight := Color(0.76, 1.0, 0.96, 0.54) if is_cuckoo else Color(0.92, 1.0, 0.63, 0.54) if is_plover else Color(1.0, 0.91, 0.68, 0.58)
+	var highlight := Color(0.76, 1.0, 0.96, 0.54) if is_cuckoo else Color(0.92, 1.0, 0.63, 0.54) if is_plover else Color(1.0, 0.88, 0.98, 0.58) if is_spoonbill else Color(1.0, 0.91, 0.68, 0.58)
 	draw_circle(center + Vector2(-radius_x * 0.28, -radius_y * 0.30), radius_x * 0.15, highlight)
-	draw_arc(center, radius_x * 0.78, 0.25, 2.35, 20, Color(0.70, 1.0, 0.96, 0.34) if is_cuckoo else Color(0.91, 1.0, 0.55, 0.30) if is_plover else Color(1.0, 0.88, 0.52, 0.34), 3.0, true)
-	draw_arc(center + Vector2(6, 6), radius_x * 0.70, 2.5, 4.7, 18, Color(0.02, 0.18, 0.21, 0.28) if is_cuckoo else Color(0.16, 0.23, 0.05, 0.30) if is_plover else Color(0.32, 0.12, 0.06, 0.22), 3.0, true)
+	draw_arc(center, radius_x * 0.78, 0.25, 2.35, 20, Color(0.70, 1.0, 0.96, 0.34) if is_cuckoo else Color(0.91, 1.0, 0.55, 0.30) if is_plover else Color(1.0, 0.72, 0.93, 0.34) if is_spoonbill else Color(1.0, 0.88, 0.52, 0.34), 3.0, true)
+	draw_arc(center + Vector2(6, 6), radius_x * 0.70, 2.5, 4.7, 18, Color(0.02, 0.18, 0.21, 0.28) if is_cuckoo else Color(0.16, 0.23, 0.05, 0.30) if is_plover else Color(0.25, 0.08, 0.24, 0.28) if is_spoonbill else Color(0.32, 0.12, 0.06, 0.22), 3.0, true)
 	if is_cuckoo:
 		_draw_cuckoo_marks(center, radius_x, radius_y)
 	elif is_plover:
 		_draw_plover_marks(center, radius_x, radius_y)
+	elif is_spoonbill:
+		_draw_spoonbill_marks(center, radius_x, radius_y)
 
 	var toughness: int = _egg.get("toughness", 4)
 	var max_toughness: int = _egg.get("max_toughness", 4)
@@ -96,6 +99,8 @@ func effect_emblem() -> String:
 			return "echo"
 		"plover":
 			return "retreat"
+		"spoonbill":
+			return "spark"
 	return ""
 
 
@@ -108,6 +113,8 @@ func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 			_draw_echo_emblem(emblem_center, mark_scale)
 		"retreat":
 			_draw_retreat_emblem(emblem_center, mark_scale)
+		"spark":
+			_draw_spark_emblem(emblem_center, mark_scale)
 
 
 func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
@@ -173,6 +180,25 @@ func _draw_retreat_emblem(center: Vector2, mark_scale: float) -> void:
 	)
 
 
+func _draw_spark_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := Color("5a2053")
+	var glow := Color(1.0, 0.66, 0.91, 0.78)
+	var points := PackedVector2Array([
+		center + Vector2(0, -13) * mark_scale,
+		center + Vector2(3, -3) * mark_scale,
+		center + Vector2(13, 0) * mark_scale,
+		center + Vector2(3, 3) * mark_scale,
+		center + Vector2(0, 13) * mark_scale,
+		center + Vector2(-3, 3) * mark_scale,
+		center + Vector2(-13, 0) * mark_scale,
+		center + Vector2(-3, -3) * mark_scale,
+		center + Vector2(0, -13) * mark_scale,
+	])
+	draw_colored_polygon(points, glow)
+	draw_polyline(points, ink, 2.5 * mark_scale, true)
+	draw_circle(center, 2.5 * mark_scale, Color("fff0cf"))
+
+
 func _draw_crack(origin: Vector2, offsets: Array[Vector2]) -> void:
 	var points := PackedVector2Array()
 	for offset: Vector2 in offsets:
@@ -197,3 +223,10 @@ func _draw_plover_marks(center: Vector2, radius_x: float, radius_y: float) -> vo
 			point,
 			point + Vector2(radius_x * 0.26, radius_y * 0.09),
 		]), mark_color, 4.0, true)
+
+
+func _draw_spoonbill_marks(center: Vector2, radius_x: float, radius_y: float) -> void:
+	var mark_color := Color(0.35, 0.12, 0.32, 0.54)
+	for vertical_offset in [-0.18, 0.08, 0.34]:
+		var line_center := center + Vector2(0.0, radius_y * vertical_offset)
+		draw_arc(line_center, radius_x * 0.48, 0.20, PI - 0.20, 14, mark_color, 3.0, true)

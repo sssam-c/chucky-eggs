@@ -137,6 +137,8 @@ func _effect_description(kind: String) -> String:
 			return "copies damage from an adjacent egg"
 		"plover":
 			return "a surviving direct hit swaps it one slot toward the pipe"
+		"spoonbill":
+			return "its spark weakness takes 2 damage from Pink's direct strike"
 	return "no extra effect"
 
 

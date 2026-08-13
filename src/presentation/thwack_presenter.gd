@@ -157,13 +157,17 @@ func _present_damage(event: Dictionary, playback_generation: int) -> bool:
 	slot.apply_damage(event.remaining_toughness)
 	if _reduced_motion:
 		return true
+	var damage_amount: int = event.get("damage_amount", 1)
 	var content: Control = slot.motion_content()
 	content.pivot_offset = content.size * 0.5
 	var impact := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	impact.tween_property(content, "scale", Vector2(1.10, 0.84), 0.045)
-	impact.parallel().tween_property(content, "rotation", -0.03, 0.045)
+	impact.tween_property(content, "scale", Vector2(1.20, 0.72) if damage_amount > 1 else Vector2(1.10, 0.84), 0.055 if damage_amount > 1 else 0.045)
+	impact.parallel().tween_property(content, "rotation", -0.06 if damage_amount > 1 else -0.03, 0.055 if damage_amount > 1 else 0.045)
+	if damage_amount > 1:
+		impact.parallel().tween_property(content, "modulate", Color(1.0, 0.54, 0.88, 1.0), 0.055)
 	impact.tween_property(content, "scale", Vector2.ONE, 0.09)
 	impact.parallel().tween_property(content, "rotation", 0.0, 0.09)
+	impact.parallel().tween_property(content, "modulate", Color.WHITE, 0.09)
 	return await _run_tween(impact, playback_generation)
 
 
@@ -221,11 +225,12 @@ func _present_echo_damage(slot: Button, event: Dictionary, playback_generation: 
 	var source_slot: Button = _belt_slots[event.source_slot_index]
 	_echo_trace.show_connection(source_slot.impact_global_position(), slot.impact_global_position())
 	var content: Control = slot.motion_content()
+	var damage_amount: int = event.get("damage_amount", 1)
 	content.pivot_offset = content.size * 0.5
 	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	pulse.tween_property(_echo_trace, "intensity", 1.0, 0.055)
 	pulse.parallel().tween_property(content, "modulate", Color(0.48, 1.0, 0.96, 1.0), 0.055)
-	pulse.parallel().tween_property(content, "scale", Vector2(1.09, 0.90), 0.055)
+	pulse.parallel().tween_property(content, "scale", Vector2(1.17, 0.82) if damage_amount > 1 else Vector2(1.09, 0.90), 0.055)
 	pulse.tween_property(_echo_trace, "intensity", 0.0, 0.12)
 	pulse.parallel().tween_property(content, "modulate", Color.WHITE, 0.12)
 	pulse.parallel().tween_property(content, "scale", Vector2.ONE, 0.12)

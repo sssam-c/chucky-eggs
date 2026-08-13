@@ -11,6 +11,8 @@ const CUCKOO_TOUGHNESS := 4
 const CUCKOO_POINTS := 1
 const PLOVER_TOUGHNESS := 6
 const PLOVER_POINTS := 2
+const SPOONBILL_TOUGHNESS := 5
+const SPOONBILL_POINTS := 4
 const CIRCUITS := [
 	{"id": "red", "slot_indices": [0, 2]},
 	{"id": "blue", "slot_indices": [1, 3]},
@@ -20,6 +22,8 @@ const LAYING_PATTERN := [
 	"chicken",
 	"cuckoo",
 	"chicken",
+	"spoonbill",
+	"cuckoo",
 	"plover",
 	"chicken",
 	"chicken",
@@ -77,7 +81,7 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		"slot_indices": circuit_slot_indices,
 		"occupied_slot_indices": occupied_slot_indices,
 	}]
-	_damage_eggs(occupied_slot_indices, events)
+	_damage_eggs(occupied_slot_indices, circuit_id, events)
 	_retreat_surviving_plovers(occupied_slot_indices, events)
 	_advance_conveyor(events)
 	_spend_thwack(events)
@@ -97,37 +101,58 @@ func _circuit(circuit_id: String) -> Dictionary:
 	return {}
 
 
-func _damage_eggs(primary_slot_indices: Array[int], events: Array[Dictionary]) -> void:
+func _damage_eggs(
+	primary_slot_indices: Array[int],
+	circuit_id: String,
+	events: Array[Dictionary]
+) -> void:
 	# Apply the whole direct-and-echo batch before resolving any hatch. Empty
 	# linked slots have already been omitted while their spoons still visibly fire.
+	var direct_damage_by_slot := {}
 	for primary_slot_index: int in primary_slot_indices:
-		_apply_damage(primary_slot_index, "spoon", primary_slot_index, events)
+		var damage_amount := _direct_damage_amount(circuit_id, primary_slot_index)
+		direct_damage_by_slot[primary_slot_index] = damage_amount
+		_apply_damage(primary_slot_index, damage_amount, "spoon", primary_slot_index, events)
 
 	for primary_slot_index: int in primary_slot_indices:
 		for slot_index in range(_slots.size()):
 			if absi(slot_index - primary_slot_index) != 1 or _slots[slot_index].is_empty():
 				continue
 			if _slots[slot_index].kind == "cuckoo":
-				_apply_damage(slot_index, "cuckoo_echo", primary_slot_index, events)
+				_apply_damage(
+					slot_index,
+					direct_damage_by_slot[primary_slot_index],
+					"cuckoo_echo",
+					primary_slot_index,
+					events
+				)
 
 	_resolve_hatches(events)
 
 
 func _apply_damage(
 	slot_index: int,
+	damage_amount: int,
 	cause: String,
 	source_slot_index: int,
 	events: Array[Dictionary]
 ) -> void:
-	_slots[slot_index].toughness = maxi(_slots[slot_index].toughness - 1, 0)
+	_slots[slot_index].toughness = maxi(_slots[slot_index].toughness - damage_amount, 0)
 	events.append({
 		"type": "egg_damaged",
 		"slot_index": slot_index,
 		"kind": _slots[slot_index].kind,
 		"cause": cause,
 		"source_slot_index": source_slot_index,
+		"damage_amount": damage_amount,
 		"remaining_toughness": _slots[slot_index].toughness,
 	})
+
+
+func _direct_damage_amount(circuit_id: String, slot_index: int) -> int:
+	if circuit_id == "pink" and _slots[slot_index].kind == "spoonbill":
+		return 2
+	return 1
 
 
 func _resolve_hatches(events: Array[Dictionary]) -> void:
@@ -248,6 +273,13 @@ func _new_egg(kind: String) -> Dictionary:
 			"toughness": PLOVER_TOUGHNESS,
 			"max_toughness": PLOVER_TOUGHNESS,
 			"points": PLOVER_POINTS,
+		}
+	if kind == "spoonbill":
+		return {
+			"kind": "spoonbill",
+			"toughness": SPOONBILL_TOUGHNESS,
+			"max_toughness": SPOONBILL_TOUGHNESS,
+			"points": SPOONBILL_POINTS,
 		}
 	return {
 		"kind": "chicken",

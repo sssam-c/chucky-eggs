@@ -2,7 +2,52 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — Hatch payoff
+## Active slice — Spoonbill spark weakness
+
+### Question
+
+Does preparing a Spoonbill for Pink in slot 5 make Pink a proactive strategic choice rather than only an emergency rescue?
+
+### Settled rules preserved
+
+- Red fires slots 1 and 3, Blue fires slots 2 and 4, and Pink fires slot 5; every thwack still advances the conveyor and spends one of the day's 20 actions.
+- A Spoonbill has 5 toughness, awards 4 points, and takes 2 direct damage from Pink. Other direct and echo damage against it remains normal.
+- A Cuckoo adjacent to a Pink-struck Spoonbill copies the full resolver-authored 2 damage; the complete damage batch still precedes conveyor-ordered hatches.
+- The 10-point target, existing egg rules, hatch payoff, input barrier, and cancellation behavior remain unchanged.
+
+### Hypothesis
+
+The Spoonbill's visible spark weakness will turn slot 5 into a planned destination. Because Pink's two concentrated damage equals the total output of Red or Blue but cannot be distributed, the best circuit remains situational. Five toughness lets a player deliberately skip one earlier opportunity and spend it on another egg before cashing the Spoonbill out with Pink.
+
+### Player-visible path
+
+See a 5-toughness, 4-point Spoonbill with a four-point spark in the initial pipe preview. Damage it on selected Red and Blue positions while allowing one circuit opportunity to serve another egg. When it reaches slot 5 beside a Cuckoo in slot 4, activate Pink: the Spoonbill takes 2 direct damage, the Cuckoo copies 2, and both can burst and score in conveyor order. Replay and choose whether the high-value pairing justified foregoing a distributed circuit elsewhere.
+
+### In scope
+
+- Deterministic Spoonbill stats, authored supply placement, Pink double damage, and full adjacent Cuckoo echo.
+- Resolver-authored `damage_amount` on every damage fact.
+- A distinct Spoonbill shell palette, four-point spark emblem, readable preview, accessible description, and stronger feedback for a 2-damage strike.
+- Existing hatch burst and score travel using the Spoonbill's resolved 4-point value.
+
+### Implementation conveniences
+
+- Place Spoonbill in the initial three-egg preview and follow it with a Cuckoo so the first day exposes the intended slot-4/slot-5 experiment.
+- Reuse the current egg renderer, event presenter, circuit symbols, and deterministic authored supply.
+
+### Outside this slice
+
+- Further circuit weaknesses, resistances, random supply, balance changes to other eggs, target-score tuning, progression, and upgrades.
+- Special Spoonbill hatch behavior beyond its value and Pink weakness.
+
+### Exit evidence
+
+- Domain tests prove Spoonbill stats, Pink's 2 direct damage, normal damage from other sources, full 2-damage Cuckoo echo, batch order, hatch value, and day completion.
+- UI tests prove the initial preview exposes the spark weakness without colour alone and the Pink payoff presents the resolver-authored results once.
+- A running-game check at 1280×720 follows the first Spoonbill from preview to a Pink strike in slot 5 beside a Cuckoo.
+- A short playtest asks: "Did seeing the Spoonbill change which circuits you chose before it reached Pink—and was the slot-5 payoff worth what you gave up?"
+
+## Completed slice — Hatch payoff
 
 ### Question
 

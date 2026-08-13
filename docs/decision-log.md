@@ -92,6 +92,14 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D001's free choice of any individual egg and D003's one-key-to-one-spoon control mapping. The five fixed conveyor slots, five spatially paired spoons, one-thwack conveyor advance, and all current egg rules remain.
 
+## D010 — Give Pink a Spoonbill specialty
+
+**Status:** accepted
+
+**Decision:** Add Spoonbill eggs to the authored supply. A Spoonbill has 5 toughness, awards 4 points, and takes 2 direct damage from Pink instead of 1. Its shell carries the same four-point spark used by Pink's control and slot-5 spoon. If an adjacent Cuckoo copies that Pink strike, it copies the full 2 damage. Red, Blue, and echo damage against a Spoonbill retain their normal amounts.
+
+**Reason:** Pink normally trades the two distributed strikes of Red or Blue for one precise final-slot strike. Spoonbill makes that precision proactively valuable without making Pink universally stronger: the player must preserve and prepare a high-value egg until slot 5, where Pink can deliver two concentrated damage. Five toughness allows one earlier circuit opportunity to be spent elsewhere, while the full Cuckoo echo creates a visible high-payoff slot-4/slot-5 pairing.
+
 <!--
 Copy for the next entry:
 

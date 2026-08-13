@@ -162,6 +162,14 @@ func _feedback_for(events: Array[Dictionary]) -> String:
 	for event: Dictionary in events:
 		if event.type == "day_ended":
 			return "The final bell rings. Every unhatched egg is discarded."
+	var hatch_events := events.filter(
+		func(event: Dictionary) -> bool: return event.type == "egg_hatched"
+	)
+	if hatch_events.size() > 1:
+		var points_awarded := 0
+		for event: Dictionary in hatch_events:
+			points_awarded += event.points_awarded
+		return "Crack! %d eggs hatched for %d points." % [hatch_events.size(), points_awarded]
 	for event: Dictionary in events:
 		if event.type == "egg_hatched":
 			return "Crack! A %s hatched for %d %s." % [
@@ -175,6 +183,9 @@ func _feedback_for(events: Array[Dictionary]) -> String:
 	for event: Dictionary in events:
 		if event.type == "egg_discarded":
 			return "An egg fell from the belt. The spoon cannot save them all."
+	for event: Dictionary in events:
+		if event.type == "egg_damaged" and event.get("damage_amount", 1) > 1:
+			return "Spark crack! Pink dealt 2 damage to the Spoonbill."
 	for event: Dictionary in events:
 		if event.type == "egg_damaged" and event.get("cause", "") == "cuckoo_echo":
 			return "Echo crack! The Cuckoo copied another egg's damage."

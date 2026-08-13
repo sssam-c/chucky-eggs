@@ -211,7 +211,7 @@ theme_override_colors/font_shadow_color = Color(0.03, 0.02, 0.01, 1)
 theme_override_constants/line_spacing = 0
 theme_override_constants/shadow_outline_size = 2
 theme_override_font_sizes/font_size = 13
-text = "BRASS SEAL = HATCH SCORE\nRIPPLE = COPIES NEIGHBOUR DAMAGE\nBACK ARROW = RETREATS AFTER DIRECT HIT"
+text = "BRASS SEAL = HATCH SCORE\nRIPPLE = COPIES NEIGHBOUR DAMAGE\nBACK ARROW = RETREATS AFTER DIRECT HIT\nSPARK = PINK DEALS 2 TO SPOONBILL"
 horizontal_alignment = 1
 vertical_alignment = 1
 

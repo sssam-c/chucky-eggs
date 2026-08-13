@@ -100,6 +100,9 @@ func _set_shell_palette(kind: String) -> void:
 		"plover":
 			_shell_color = Color("b8c66e")
 			_outline_color = Color("354421")
+		"spoonbill":
+			_shell_color = Color("c9a6c8")
+			_outline_color = Color("4d2949")
 		_:
 			_shell_color = Color("e6bd7a")
 			_outline_color = Color("572719")

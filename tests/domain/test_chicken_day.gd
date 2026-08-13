@@ -14,8 +14,10 @@ func test_day_exposes_the_three_fixed_spoon_circuits() -> void:
 	assert_eq(state.slots[0].kind, "chicken")
 	assert_eq(state.slots[0].toughness, 3)
 	assert_eq(state.pipe.map(func(egg: Dictionary) -> String: return egg.kind), [
-		"cuckoo", "chicken", "plover",
+		"cuckoo", "chicken", "spoonbill",
 	])
+	assert_eq(state.pipe[2].toughness, 5)
+	assert_eq(state.pipe[2].points, 4)
 
 
 func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
@@ -35,6 +37,7 @@ func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
 	assert_eq(events[0].slot_indices, [0, 2])
 	assert_eq(events[0].occupied_slot_indices, [0])
 	assert_eq(events[1].slot_index, 0)
+	assert_eq(events[1].damage_amount, 1)
 	assert_eq(state.remaining_thwacks, 19)
 	assert_eq(state.slots[1].kind, "chicken")
 	assert_eq(state.slots[1].toughness, 2)
@@ -110,25 +113,73 @@ func test_complete_paired_damage_batch_precedes_conveyor_ordered_hatches() -> vo
 	assert_eq(hatches[0].kind, "chicken")
 
 
-func test_pink_strikes_slot_five_and_rescues_a_surviving_plover_once() -> void:
+func test_pink_deals_two_damage_to_a_spoonbill_in_slot_five() -> void:
 	var day = ChickenDay.new()
-	for circuit_id in ["red", "blue", "red", "blue", "red", "blue", "red"]:
+	for circuit_id in ["red", "blue", "red", "red", "blue", "red", "pink"]:
 		day.resolve_circuit(circuit_id)
+	assert_eq(day.snapshot().slots[4].kind, "spoonbill")
+	assert_eq(day.snapshot().slots[4].toughness, 2)
+
+	var events: Array[Dictionary] = day.resolve_circuit("pink")
+	var damage_events := events.filter(
+		func(event: Dictionary) -> bool: return event.type == "egg_damaged"
+	)
+	var hatches := events.filter(
+		func(event: Dictionary) -> bool: return event.type == "egg_hatched"
+	)
+
+	assert_eq(events[0].slot_indices, [4])
+	assert_eq(damage_events[0].slot_index, 4)
+	assert_eq(damage_events[0].kind, "spoonbill")
+	assert_eq(damage_events[0].cause, "spoon")
+	assert_eq(damage_events[0].damage_amount, 2)
+	assert_eq(damage_events[0].remaining_toughness, 0)
+	assert_true(hatches.any(func(event: Dictionary) -> bool:
+		return event.kind == "spoonbill" and event.points_awarded == 4
+	))
+
+
+func test_cuckoo_copies_the_full_two_damage_from_a_pink_struck_spoonbill() -> void:
+	var day = ChickenDay.new()
+	for circuit_id in ["red", "blue", "red", "red", "blue", "red", "pink"]:
+		day.resolve_circuit(circuit_id)
+	assert_eq(day.snapshot().slots[3].kind, "cuckoo")
+	assert_eq(day.snapshot().slots[4].kind, "spoonbill")
+
+	var events: Array[Dictionary] = day.resolve_circuit("pink")
+	var damage_events := events.filter(
+		func(event: Dictionary) -> bool: return event.type == "egg_damaged"
+	)
+
+	assert_eq(damage_events.map(func(event: Dictionary) -> String: return event.kind), [
+		"spoonbill", "cuckoo",
+	])
+	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.damage_amount), [2, 2])
+	assert_eq(damage_events[1].cause, "cuckoo_echo")
+	assert_eq(damage_events[1].source_slot_index, 4)
+	assert_eq(damage_events[1].remaining_toughness, 0)
+
+
+func test_pink_still_rescues_a_surviving_plover_once() -> void:
+	var day = ChickenDay.new()
+	for turn in range(7):
+		day.resolve_circuit("red")
+	day.resolve_circuit("blue")
+	day.resolve_circuit("red")
 	assert_eq(day.snapshot().slots[4].kind, "plover")
+	assert_eq(day.snapshot().slots[4].toughness, 5)
 
 	var events: Array[Dictionary] = day.resolve_circuit("pink")
 	var state: Dictionary = day.snapshot()
+	var swaps := events.filter(
+		func(event: Dictionary) -> bool: return event.type == "eggs_swapped"
+	)
 
-	assert_eq(_event_types(events).slice(0, 4), [
-		"circuit_fired", "egg_damaged", "eggs_swapped", "conveyor_advanced",
-	])
-	assert_eq(events[0].slot_indices, [4])
-	assert_eq(events[1].slot_index, 4)
-	assert_eq(events[1].remaining_toughness, 5)
-	assert_eq(events[2].from_slot_index, 4)
-	assert_eq(events[2].to_slot_index, 3)
+	assert_eq(swaps.size(), 1)
+	assert_eq(swaps[0].from_slot_index, 4)
+	assert_eq(swaps[0].to_slot_index, 3)
 	assert_eq(state.slots[4].kind, "plover")
-	assert_eq(state.slots[4].toughness, 5)
+	assert_eq(state.slots[4].toughness, 4)
 
 
 func test_unhatched_egg_is_discarded_after_slot_five() -> void:

@@ -9,7 +9,12 @@ func test_main_renders_initial_day_and_shell_information() -> void:
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_eq(main.get_node("Content/Stage/Pipe/Preview").get_child_count(), 3)
 	assert_eq(main.get_node("Content/Stage/Pipe/Preview/Next1").effect_emblem(), "echo")
-	assert_eq(main.get_node("Content/Stage/Pipe/Preview/Next3").effect_emblem(), "retreat")
+	assert_eq(main.get_node("Content/Stage/Pipe/Preview/Next3").egg_kind(), "spoonbill")
+	assert_eq(main.get_node("Content/Stage/Pipe/Preview/Next3").effect_emblem(), "spark")
+	assert_string_contains(
+		main.get_node("Content/Stage/Pipe/Preview/Next3").egg_description(),
+		"takes 2 damage from Pink"
+	)
 	assert_not_null(main.get_node("Content/Accessibility/Mute"))
 	assert_not_null(main.get_node("Content/Accessibility/ReducedMotion"))
 
@@ -212,24 +217,30 @@ func test_restart_clears_an_interrupted_hatch_payoff_without_committing_score() 
 	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 10")
 
 
-func test_pink_presents_slot_five_plover_rescue_before_belt_movement() -> void:
+func test_pink_spoonbill_combo_presents_double_damage_and_both_score_payoffs() -> void:
 	var main := _add_main()
 	main.set_reduced_motion(true)
 	for circuit_name in [
-		"RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit",
-		"RedCircuit", "BlueCircuit", "RedCircuit",
+		"RedCircuit", "BlueCircuit", "RedCircuit", "RedCircuit",
+		"BlueCircuit", "RedCircuit", "PinkCircuit",
 	]:
 		await _press_and_wait(main, circuit_name)
 	var presented: Array[String] = []
+	var points_landed: Array[int] = []
 	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
+	main.get_node("Presentation").score_committed.connect(
+		func(points_awarded: int, _score: int) -> void: points_landed.append(points_awarded)
+	)
 
 	await _press_and_wait(main, "PinkCircuit")
 
-	assert_eq(presented.slice(0, 4), [
-		"circuit_fired", "egg_damaged", "eggs_swapped", "conveyor_advanced",
+	assert_eq(presented.slice(0, 6), [
+		"circuit_fired", "egg_damaged", "egg_damaged",
+		"egg_hatched", "egg_hatched", "conveyor_advanced",
 	])
-	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot5").egg_summary(), "PLOVER")
-	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot5").egg_summary(), "TOUGHNESS 5")
+	assert_eq(points_landed, [1, 4])
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 9 / 10")
+	assert_eq(main.get_node("Content/Feedback").text, "Crack! 2 eggs hatched for 5 points.")
 
 
 func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
