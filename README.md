@@ -21,7 +21,17 @@ Open `project.godot` in Godot 4.7 or run:
 godot --path .
 ```
 
-Foreground levers fire fixed spoon controls. The starting line uses three circuits: Red 1+3, Blue 2+4, and Pink 5. The Day 3 refit replaces them with five independent paired-column levers: Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, and Pink 5+6. Each hairpin lever drives one upright linked tower whose two bowls strike the aligned upper and lower eggs simultaneously. The tight right-hand bend carries eggs but is not itself a bay. Every connected position fires, so an empty position wastes that strike. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; score, cash, remaining thwacks, mute, and reduced-motion controls stay visible.
+Foreground levers fire fixed spoon controls. The starting line uses three circuits: Red 1+3, Blue 2+4, and Pink 5. The Day 3 refit replaces them with five independent paired-column levers: Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, and Pink 5+6. Each hairpin lever drives one wall-hinged double-bowled spoon whose bowls strike the aligned upper and lower eggs simultaneously. The tight right-hand bend carries eggs but is not itself a bay. Every connected position fires, so an empty position wastes that strike. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; score, cash, remaining thwacks, mute, and reduced-motion controls stay visible.
+
+### Development start
+
+In a debug run, press `F3` at any time to replace the current run with a fresh Day 3 session. Restart then remains on Day 3. To launch there directly from the command line, pass the user argument after `--`:
+
+```sh
+godot --path . -- --dev-day=3
+```
+
+The shortcut and launch argument are ignored by release builds.
 
 ## Test
 

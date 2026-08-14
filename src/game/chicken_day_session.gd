@@ -22,10 +22,21 @@ var _last_cash_awarded := 0
 var _machine_slot_count := ChickenDay.BASE_SLOT_COUNT
 
 
-func _init(day_seed := DEFAULT_DAY_SEED, flock = null, shuffler = null) -> void:
+func _init(
+	day_seed := DEFAULT_DAY_SEED,
+	flock = null,
+	shuffler = null,
+	initial_day_number := 1
+) -> void:
 	_day_seed = day_seed
 	_flock = flock if flock != null else ProducerFlock.new()
 	_shuffler = shuffler
+	_day_number = maxi(int(initial_day_number), 1)
+	_machine_slot_count = (
+		ChickenDay.HAIRPIN_SLOT_COUNT
+		if _day_number >= HAIRPIN_REFIT_DAY
+		else ChickenDay.BASE_SLOT_COUNT
+	)
 	_start_day()
 
 

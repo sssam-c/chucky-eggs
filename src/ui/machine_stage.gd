@@ -52,16 +52,12 @@ func _draw() -> void:
 
 
 func _draw_straight_machine() -> void:
-	# A restrained rear rail anchors the five wall hinges. Circuit identity now
-	# lives on each hinge and lever, leaving the upright spoon silhouette clear.
-	draw_rect(Rect2(174, 257, 1035, 24), Color("17191b"), true)
-	draw_rect(Rect2(174, 257, 1035, 24), Color("704224"), false, 4.0)
-
-	# One continuous left-to-right conveyor, with direction marks between bays.
+	# One continuous left-to-right conveyor. Four marks between the five bays
+	# communicate flow without creating a second row of visual targets.
 	draw_rect(Rect2(166, 314, 1050, 111), Color("171719"), true)
 	draw_rect(Rect2(166, 314, 1050, 111), Color("6d4026"), false, 5.0)
 	draw_line(Vector2(171, 326), Vector2(1209, 326), Color("ad6532"), 3.0)
-	for arrow_x in [188.0, 380.0, 570.0, 760.0, 950.0, 1140.0]:
+	for arrow_x in [380.0, 570.0, 760.0, 950.0]:
 		_draw_route_arrow(Vector2(arrow_x, 339.0), Vector2.RIGHT)
 	_draw_rollers(196, 1200, 391)
 	draw_rect(Rect2(1199, 323, 35, 116), Color("070809"), true)
@@ -104,18 +100,18 @@ func _draw_hairpin_machine() -> void:
 		_draw_route_arrow(Vector2(arrow_x, 408), Vector2.LEFT)
 	_draw_route_arrow(Vector2(1080, 325), Vector2.DOWN)
 
-	# Five independent conduits sit directly beneath their paired spoon towers.
+	# Five independent conduits sit directly beneath their wall-hinged spoons.
 	# There is no shared bus after the refit: one lever owns one screen column.
 	draw_line(Vector2(185, 435), Vector2(1075, 435), Color("090a0b"), 13.0, true)
-	var tower_colors := [
+	var spoon_colors := [
 		Color("c43b36"), Color("287cbd"), Color("69a645"),
 		Color("8f59b8"), Color("cf4f8b"),
 	]
-	for tower_index in range(5):
-		var center_x := 321.0 + 190.0 * tower_index
-		draw_line(Vector2(center_x - 62.0, 435), Vector2(center_x + 62.0, 435), tower_colors[tower_index], 5.0, true)
+	for spoon_index in range(5):
+		var center_x := 251.0 + 190.0 * spoon_index
+		draw_line(Vector2(center_x - 62.0, 435), Vector2(center_x + 62.0, 435), spoon_colors[spoon_index], 5.0, true)
 		draw_circle(Vector2(center_x, 435), 7.0, Color("111316"))
-		draw_circle(Vector2(center_x, 435), 4.0, tower_colors[tower_index].lightened(0.2))
+		draw_circle(Vector2(center_x, 435), 4.0, spoon_colors[spoon_index].lightened(0.2))
 
 	# The lower return exits at the left edge beside slot 10.
 	draw_rect(Rect2(142, 327, 30, 95), Color("070809"), true)

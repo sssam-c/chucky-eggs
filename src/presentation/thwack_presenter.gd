@@ -10,6 +10,7 @@ signal _animation_step_released
 
 @onready var _lever_player: AudioStreamPlayer = $Audio/Lever
 @onready var _impact_player: AudioStreamPlayer = $Audio/Impact
+@onready var _double_clink_player: AudioStreamPlayer = $Audio/DoubleClink
 @onready var _echo_player: AudioStreamPlayer = $Audio/Echo
 @onready var _shuffle_player: AudioStreamPlayer = $Audio/Shuffle
 @onready var _hatch_player: AudioStreamPlayer = $Audio/Hatch
@@ -42,6 +43,7 @@ var _held_hammers: Array[Control] = []
 func _ready() -> void:
 	_lever_player.stream = CrunchAudio.lever()
 	_impact_player.stream = CrunchAudio.impact()
+	_double_clink_player.stream = CrunchAudio.double_clink()
 	_echo_player.stream = CrunchAudio.echo()
 	_shuffle_player.stream = CrunchAudio.shuffle()
 	_hatch_player.stream = CrunchAudio.hatch()
@@ -114,7 +116,7 @@ func play_events(events: Array[Dictionary]) -> bool:
 func cancel_playback() -> void:
 	_generation += 1
 	_busy = false
-	for player: AudioStreamPlayer in [_lever_player, _impact_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
+	for player: AudioStreamPlayer in [_lever_player, _impact_player, _double_clink_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
 		player.stop()
 	if _active_tween != null and _active_tween.is_valid():
 		_active_tween.kill()
@@ -125,7 +127,7 @@ func cancel_playback() -> void:
 func set_muted(muted: bool) -> void:
 	_muted = muted
 	if muted:
-		for player: AudioStreamPlayer in [_lever_player, _impact_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
+		for player: AudioStreamPlayer in [_lever_player, _impact_player, _double_clink_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
 			player.stop()
 
 
@@ -207,9 +209,10 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 		fired_hammers.append(_hammers[hammer_index])
 		hammer_fired.emit(hammer_index)
 	var holds_through_damage := fired_hammers.any(func(hammer: Control) -> bool:
-		return hammer.has_method("is_paired_carriage") and hammer.is_paired_carriage()
+		return hammer.has_method("is_double_bowled_spoon") and hammer.is_double_bowled_spoon()
 	)
 	if holds_through_damage:
+		_play(_double_clink_player)
 		_held_circuit_button = circuit_button
 		_held_hammers.assign(fired_hammers)
 
@@ -230,10 +233,24 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 	if not await _run_tween(anticipation, playback_generation):
 		return false
 
-	var strike := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	strike.tween_property(circuit_button, "press_amount", 1.0, 0.075)
+	# The authored double-spoon strip needs enough screen refreshes to expose its
+	# complete silhouettes. Its poses already contain the acceleration, so play
+	# them linearly while retaining the quicker eased strike for early-day spoons.
+	var strike_duration := 0.14 if holds_through_damage else 0.075
+	var strike := create_tween()
+	strike.tween_property(circuit_button, "press_amount", 1.0, strike_duration).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN)
 	for hammer: Control in fired_hammers:
-		strike.parallel().tween_property(hammer, "strike_amount", 1.0, 0.075)
+		var hammer_strike := strike.parallel().tween_property(
+			hammer,
+			"strike_amount",
+			1.0,
+			strike_duration
+		)
+		hammer_strike.set_trans(
+			Tween.TRANS_LINEAR if holds_through_damage else Tween.TRANS_QUAD
+		).set_ease(Tween.EASE_IN)
 	if not await _run_tween(strike, playback_generation):
 		return false
 	if holds_through_damage:

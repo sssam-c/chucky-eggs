@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="DoubleSpoonFrame" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/presentation/double_spoon_frame.gd" id="1_frame"]
+
+[resource]
+script = ExtResource("1_frame")
+near_offset = Vector2(0, -50)
+far_offset = Vector2(0, -130)
+near_radii = Vector2(24, 34)
+far_radii = Vector2(24, 34)
+near_collar_direction = Vector2(0, 1)
+far_collar_direction = Vector2(0, 1)

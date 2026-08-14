@@ -122,11 +122,11 @@ func egg_kind() -> String:
 
 
 func impact_global_position() -> Vector2:
-	return _egg_visual.global_position + Vector2(_egg_visual.size.x * 0.5, 18.0)
+	return _egg_visual.get_global_transform() * Vector2(_egg_visual.size.x * 0.5, 18.0)
 
 
 func hatch_global_position() -> Vector2:
-	return _egg_visual.global_position + _egg_visual.size * Vector2(0.5, 0.51)
+	return _egg_visual.get_global_transform() * (_egg_visual.size * Vector2(0.5, 0.51))
 
 
 func motion_content() -> Control:
@@ -159,10 +159,9 @@ func _draw() -> void:
 		return
 	var center := Vector2(size.x * 0.5, size.y - 30.0)
 	if _bare_belt_mode:
+		# A soft contact shadow is enough to seat an egg on the continuous belt.
+		# Per-bay rails and end caps made the line read as separate machines.
 		_draw_oval(center + Vector2(0, 4), Vector2(55, 12), Color(0.0, 0.0, 0.0, 0.34))
-		draw_line(center + Vector2(-48, 0), center + Vector2(48, 0), Color("a65d31"), 3.0)
-		draw_circle(center + Vector2(-48, 0), 3.0, Color("d18b45"))
-		draw_circle(center + Vector2(48, 0), 3.0, Color("d18b45"))
 		return
 	_draw_oval(center + Vector2(0, 6), Vector2(63, 24), Color(0.0, 0.0, 0.0, 0.48))
 	_draw_oval(center, Vector2(61, 22), Color("19191b"))

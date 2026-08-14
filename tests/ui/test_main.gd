@@ -44,6 +44,30 @@ func test_main_renders_initial_day_and_shell_information() -> void:
 	assert_not_null(main.get_node("Content/Accessibility/ReducedMotion"))
 
 
+func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
+	var main := _add_main()
+
+	assert_true(InputMap.has_action("dev_start_day_3"))
+	assert_true(main.start_dev_day(3))
+
+	assert_true(main.is_dev_mode())
+	assert_eq(main.dev_day_number(), 3)
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 20")
+	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
+	assert_eq(main.get_node("Content/Stage/Belt/Slots").get_children().filter(
+		func(slot: Control) -> bool: return slot.visible
+	).size(), 10)
+	assert_eq(main.get_node("Content/Stage/CircuitBank").get_children().filter(
+		func(control: Control) -> bool: return control.visible
+	).size(), 5)
+	assert_string_contains(main.get_node("Content/Feedback").text, "DEV MODE  •  DAY 3")
+
+	main.restart_day()
+
+	assert_eq(main.dev_day_number(), 3)
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 20")
+
+
 func test_plover_shell_information_shows_the_four_point_payoff() -> void:
 	var main := _add_main_for_ordered_eggs(["plover"])
 	var slot = main.get_node("Content/Stage/Belt/Slots/Slot1")
@@ -117,10 +141,12 @@ func test_early_line_spoons_are_wall_pinned_behind_eggs_and_tip_bowl_first() -> 
 		assert_almost_eq(hinge.x, impact.x, 1.0)
 		assert_lt(stored_bowl.y, hinge.y)
 		assert_lt(hinge.y, impact.y)
+		assert_lte(impact.y - hinge.y, 18.0)
 		assert_almost_eq(contact_bowl.x, impact.x, 1.0)
 		assert_almost_eq(contact_bowl.y, impact.y, 1.0)
 		assert_lt(hammer.stored_bowl_screen_size().x, hammer.stored_bowl_screen_size().y)
 		assert_gt(hammer.contact_bowl_screen_size().x, hammer.contact_bowl_screen_size().y * 3.0)
+		assert_gte(hammer.contact_bowl_screen_size().y, 26.0)
 
 		hammer.set_strike_amount(1.0)
 		assert_gt(hammer.z_index, main.get_node("Content/Stage/Belt").z_index)
@@ -360,7 +386,7 @@ func test_crunch_audio_streams_are_present_and_non_empty() -> void:
 	var main := _add_main()
 	var audio_root: Node = main.get_node("Presentation/Audio")
 
-	for player_name in ["Lever", "Impact", "Echo", "Shuffle", "Hatch", "Score", "Belt", "Loss", "Pipe"]:
+	for player_name in ["Lever", "Impact", "DoubleClink", "Echo", "Shuffle", "Hatch", "Score", "Belt", "Loss", "Pipe"]:
 		var player: AudioStreamPlayer = audio_root.get_node(player_name)
 		assert_not_null(player.stream, "%s has a stream" % player_name)
 		assert_gt(player.stream.data.size(), 1000, "%s stream contains PCM data" % player_name)
@@ -500,7 +526,7 @@ func test_selecting_a_producer_opens_workshop_then_continue_starts_day_two() -> 
 		)
 
 
-func test_day_three_refit_builds_five_independent_paired_spoon_towers() -> void:
+func test_day_three_refit_builds_five_independent_double_bowled_wall_spoons() -> void:
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _complete_successful_day(main)
@@ -516,7 +542,7 @@ func test_day_three_refit_builds_five_independent_paired_spoon_towers() -> void:
 	assert_true(main.get_node("WorkshopOverlay").visible)
 	assert_string_contains(
 		main.get_node("WorkshopOverlay/Card/Content/ExtensionPlate/Offer/WorkshopStatus").text,
-		"FIVE PAIRED LEVERS"
+		"FIVE DOUBLE-BOWLED SPOONS"
 	)
 	assert_eq(
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").text,
@@ -563,57 +589,93 @@ func test_day_three_refit_builds_five_independent_paired_spoon_towers() -> void:
 	var lower_edge := hairpin_slots[9].position.y + hairpin_slots[9].size.y * hairpin_slots[9].scale.y
 	for circuit_button: Button in circuits.get_children():
 		assert_gt(circuit_button.position.y, lower_edge)
-	var tower_lever_names := [
+	var column_lever_names := [
 		"RedCircuit", "BlueCircuit", "GreenCircuit", "PurpleCircuit", "PinkCircuit",
 	]
 	for hammer_index in range(5):
 		var hammer: Control = main.get_node(
 			"Content/Stage/HammerBank/Hammer%d" % (hammer_index + 1)
 		)
-		var lever: Control = circuits.get_node(tower_lever_names[hammer_index])
+		var lever: Control = circuits.get_node(column_lever_names[hammer_index])
 		var top_slot: Control = hairpin_slots[hammer_index]
 		var bottom_slot: Control = hairpin_slots[9 - hammer_index]
-		var top_center: Vector2 = top_slot.get_global_transform() * (top_slot.size * 0.5)
-		var bottom_center: Vector2 = bottom_slot.get_global_transform() * (bottom_slot.size * 0.5)
+		var top_crown: Vector2 = top_slot.impact_global_position()
+		var bottom_crown: Vector2 = bottom_slot.impact_global_position()
 		var contact_points: Array[Vector2] = hammer.contact_points_global()
 		var stored_points: Array[Vector2] = hammer.stored_bowl_global_positions()
-		assert_true(hammer.is_paired_carriage())
+		assert_true(hammer.is_double_bowled_spoon())
+		assert_true(hammer.has_continuous_handle())
+		assert_true(hammer.uses_authored_double_spoon_frames())
+		assert_eq(hammer.double_spoon_frame_count(), 9)
 		assert_eq(contact_points.size(), 2)
 		assert_eq(stored_points.size(), 2)
-		assert_almost_eq(contact_points[0].x, top_center.x, 1.0)
-		assert_almost_eq(contact_points[0].y, top_center.y, 1.0)
-		assert_almost_eq(contact_points[1].x, bottom_center.x, 1.0)
-		assert_almost_eq(contact_points[1].y, bottom_center.y, 1.0)
-		var idle_spine: Vector2 = hammer.spine_global_position()
-		var lever_conduit_x := lever.global_position.x + lever.size.x * 0.5
-		assert_almost_eq(idle_spine.x, lever_conduit_x, 1.0)
-		assert_gt(stored_points[0].x, idle_spine.x + 45.0)
-		assert_gt(stored_points[1].x, idle_spine.x + 45.0)
+		assert_almost_eq(contact_points[0].x, top_crown.x, 1.0)
+		assert_almost_eq(contact_points[0].y, top_crown.y, 1.0)
+		assert_almost_eq(contact_points[1].x, bottom_crown.x, 1.0)
+		assert_almost_eq(contact_points[1].y, bottom_crown.y, 1.0)
+		var hinge: Vector2 = hammer.pivot_global_position()
+		var lever_conduit_x := (lever.get_global_transform() * (lever.size * 0.5)).x
+		assert_almost_eq(hinge.x, lever_conduit_x, 1.0)
+		assert_almost_eq(hinge.x, top_crown.x, 1.0)
+		assert_almost_eq(stored_points[0].x, hinge.x, 1.0)
+		assert_almost_eq(stored_points[1].x, hinge.x, 1.0)
+		assert_lt(stored_points[1].y, stored_points[0].y)
+		assert_lt(stored_points[0].y, hinge.y)
+		hammer.set_strike_amount(0.50)
+		assert_eq(hammer.double_spoon_frame_index(), 4)
+		var halfway_points: Array[Vector2] = hammer.current_bowl_global_positions()
+		var halfway_visuals: Array[Dictionary] = hammer.bowl_visuals()
+		assert_almost_eq(halfway_points[0].x, hinge.x, 1.0)
+		assert_almost_eq(halfway_points[1].x, hinge.x, 1.0)
+		assert_lt(halfway_points[0].distance_to(halfway_points[1]), 2.0)
+		assert_false(halfway_visuals[0].get("tracked_far_bowl", false))
+		assert_true(halfway_visuals[1].get("tracked_far_bowl", false))
+		assert_true(halfway_visuals[0].get("draw_neck", false))
+		assert_true(halfway_visuals[1].get("draw_neck", false))
+		assert_gt(
+			halfway_visuals[1].radii.length(),
+			halfway_visuals[0].radii.length() * 1.15
+		)
+		hammer.set_strike_amount(0.70)
+		assert_eq(hammer.double_spoon_frame_index(), 6)
+		assert_true(hammer.is_foreground_handle_visible())
+		var falling_bowl: Dictionary = hammer.bowl_visuals()[0]
+		assert_gt(falling_bowl.tipped_amount, 0.50)
+		assert_lt(falling_bowl.radii.x / falling_bowl.radii.y, 2.0)
+		var falling_points: Array[Vector2] = hammer.current_bowl_global_positions()
+		assert_almost_eq(falling_points[0].x, hinge.x, 1.0)
+		assert_almost_eq(falling_points[1].x, hinge.x, 1.0)
 		hammer.set_strike_amount(1.0)
+		assert_eq(hammer.double_spoon_frame_index(), 8)
 		var thrown_points: Array[Vector2] = hammer.current_bowl_global_positions()
-		assert_gt(hammer.z_index, 0)
-		assert_almost_eq(hammer.spine_global_position().x, idle_spine.x, 1.0)
-		assert_almost_eq(thrown_points[0].x, top_center.x, 1.0)
-		assert_almost_eq(thrown_points[0].y, top_center.y, 1.0)
-		assert_almost_eq(thrown_points[1].x, bottom_center.x, 1.0)
-		assert_almost_eq(thrown_points[1].y, bottom_center.y, 1.0)
+		var contact_visuals: Array[Dictionary] = hammer.bowl_visuals()
+		assert_eq(hammer.z_index, 0)
+		assert_gt(hammer.bowl_foreground_z_index(), main.get_node("Content/Stage/Belt").z_index)
+		assert_false(hammer.is_foreground_handle_visible())
+		assert_almost_eq(hammer.pivot_global_position().x, hinge.x, 1.0)
+		assert_almost_eq(thrown_points[0].x, top_crown.x, 1.0)
+		assert_almost_eq(thrown_points[0].y, top_crown.y, 1.0)
+		assert_almost_eq(thrown_points[1].x, bottom_crown.x, 1.0)
+		assert_almost_eq(thrown_points[1].y, bottom_crown.y, 1.0)
+		assert_gt(contact_visuals[1].radii.x, contact_visuals[0].radii.x * 1.25)
 		hammer.reset_pose()
 		assert_eq(hammer.z_index, 0)
+		assert_eq(hammer.bowl_foreground_z_index(), 0)
 
 	var fired_spoons: Array[int] = []
-	var paired_strike_amounts_during_damage: Array[float] = []
+	var double_bowl_strike_amounts_during_damage: Array[float] = []
 	main.get_node("Presentation").hammer_fired.connect(
 		func(spoon_index: int) -> void: fired_spoons.append(spoon_index)
 	)
 	main.presentation_event.connect(func(event_type: String) -> void:
 		if event_type == "egg_damaged":
-			paired_strike_amounts_during_damage.append(
+			double_bowl_strike_amounts_during_damage.append(
 				main.get_node("Content/Stage/HammerBank/Hammer1").strike_amount
 			)
 	)
 	await _press_and_wait(main, "RedCircuit")
 	assert_eq(fired_spoons, [0])
-	assert_eq(paired_strike_amounts_during_damage, [1.0])
+	assert_eq(double_bowl_strike_amounts_during_damage, [1.0])
 	assert_eq(main.get_node("Content/Stage/HammerBank/Hammer1").strike_amount, 0.0)
 	assert_false(main.is_input_locked())
 

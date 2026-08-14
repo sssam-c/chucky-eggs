@@ -26,7 +26,7 @@ After a successful day, bank the unused-thwack payout, inspect three distinct pr
 - Days 1 and 2 use five ordered conveyor slots. Slot 1 receives eggs and slot 5 begins beside the drop.
 - Before Day 3, every run receives an automatic, free factory refit. It is a progression milestone rather than a shop purchase and remains installed for later days.
 - The refitted conveyor has ten ordered slots in a tight screen-width hairpin. Slots 1–5 travel left-to-right across the upper run, the untargetable bend carries eggs downward, and slots 6–10 return right-to-left underneath. The drop is beside slot 10.
-- The hairpin has five independent upright spoon towers, one per screen column. Each tower has one rigid spine and two linked bowls that simultaneously strike its aligned upper and lower bays. Eggs sit directly on the two touching conveyor runs; the bend contains no egg bay.
+- The hairpin has five independent wall-hinged double-bowled spoons, one per screen column. Each is one rigid utensil with two bowls fixed at different distances along a continuous handle; tipping it toward the player makes the two convex undersides strike its aligned upper and lower bays. Eggs sit directly on the two touching conveyor runs; the bend contains no egg bay.
 - The starting flock has five Chicken producers, three Cuckoo producers, and two Plover producers.
 - Each Chicken producer lays two eggs per day. Each Cuckoo and Plover producer lays one, producing a daily pool of 15 eggs.
 - A Spoonbill producer also lays one egg per day.
@@ -70,7 +70,7 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 
 - **Thwack:** The player's single action for a turn and the unit of day time.
 - **Spoon circuit:** A fixed group of one or more colour-matched spoons that always fire together.
-- **Paired spoon tower:** One Day 3 control with two bowls fixed to the same upright mechanism. Pulling its lever strikes the two aligned hairpin bays simultaneously.
+- **Double-bowled spoon:** One Day 3 utensil with two bowls fixed at different distances along the same wall-hinged handle. Pulling its lever strikes the two aligned hairpin bays as one simultaneous direct-damage batch.
 - **Toughness:** The number of further thwacks an egg needs before it hatches.
 - **Adjacent:** Immediately ahead of or behind an egg in conveyor order. Visual proximity does not create adjacency.
 - **Behind:** One slot closer to the pipe in conveyor order.

@@ -46,6 +46,27 @@ func test_equal_day_seeds_replay_the_same_visible_shuffle() -> void:
 	assert_eq(first.pipe, second.pipe)
 
 
+func test_session_can_initialize_canonical_day_three_for_dev_tools() -> void:
+	var session = ChickenDaySession.new(42, null, IdentityShuffler.new(), 3)
+	var state: Dictionary = session.state()
+
+	assert_eq(state.phase, "day")
+	assert_eq(state.day_number, 3)
+	assert_eq(state.target_score, 20)
+	assert_eq(state.machine_slot_count, 10)
+	assert_eq(state.slots.size(), 10)
+	assert_true(state.machine_refit_complete)
+	assert_false(state.machine_refit_due)
+	assert_eq(state.remaining_thwacks, 20)
+
+	session.submit_circuit("red")
+	session.restart()
+
+	assert_eq(session.state().day_number, 3)
+	assert_eq(session.state().machine_slot_count, 10)
+	assert_eq(session.state().remaining_thwacks, 20)
+
+
 func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 	var session = ChickenDaySession.new()
 	var exposed_state: Dictionary = session.state()

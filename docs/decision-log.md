@@ -234,10 +234,20 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D022's 4/4/2 hairpin circuit map and single-spoon-per-column presentation, and D023's extending-spoon presentation. D009's three starting-line circuits, D023's literal screen-left Plover rule, the Day 3 refit timing, the ten-bay route, Pink's Spoonbill weakness, and all unrelated resolution rules remain.
 
+## D025 — Replace paired towers with double-bowled wall spoons
+
+**Status:** accepted
+
+**Decision:** Keep the five independent Day 3 column levers and their 1+10, 2+9, 3+8, 4+7, and 5+6 mappings. Replace each paired tower with one familiar spoon pinned to the wall at its handle base. Two bowls sit at different distances along the same continuous rigid handle. At rest both face the player above the aligned eggs; on a thwack the utensil pivots outward and the convex undersides contact the upper and lower egg crowns. The farther bowl clinks a fraction before the nearer bowl as presentational depth feedback, while both hits remain one simultaneous direct-damage batch. The complete utensil is one future positional tool socket.
+
+**Reason:** The paired towers made both contact points literal but introduced a new gantry-and-side-arm language that looked less forceful and less like the established spoons. A double-bowled version preserves the familiar base hinge, bowl-first throw, and direct lever alignment while solving the two-row contact problem. A short sequence of authored whole-utensil poses keeps the shared shaft visibly joined to both bowls throughout the fall, avoiding the gaps and shape drift produced by independently interpolated parts. The utensil foreshortens straight toward the player: the bowls briefly overlap edge-on, while perspective scale, draw order, and a brass collar keep the original far bowl trackable as it becomes the larger lower/front impact bowl. The bowls retain their upright proportions until late in the throw, and egg occlusion returns the shaft behind them for the final contact pose. Treating the slight clink offset as feedback preserves the fun of a two-stage impact without making animation timing a hidden rule.
+
+**Supersedes:** D024's paired carriage and tower presentation only. D024's five independent levers, column mappings, two-target ceiling, simultaneous damage batch, Day 3 timing, and future whole-column tool sockets remain.
+
 <!--
 Copy for the next entry:
 
-## D025 — Short decision title
+## D026 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

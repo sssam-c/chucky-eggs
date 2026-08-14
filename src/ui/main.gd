@@ -53,6 +53,7 @@ const ChickenDay = preload("res://src/domain/chicken_day.gd")
 var _session = ChickenDaySession.new()
 var _input_locked := false
 var _request_generation := 0
+var _dev_day_number := 0
 
 
 func _ready() -> void:
@@ -82,8 +83,20 @@ func _ready() -> void:
 		_thwacks_label,
 		_drop_label
 	)
-	_render([], true)
-	_circuit_buttons[0].grab_focus()
+	var requested_dev_day := _requested_dev_day()
+	if requested_dev_day > 0 and OS.is_debug_build():
+		_start_dev_day(requested_dev_day)
+	else:
+		_render([], true)
+		_circuit_buttons[0].grab_focus()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not OS.is_debug_build():
+		return
+	if event.is_action_pressed("dev_start_day_3", false):
+		start_dev_day(3)
+		get_viewport().set_input_as_handled()
 
 
 func _on_circuit_requested(circuit_id: String) -> void:
@@ -166,13 +179,43 @@ func restart_day() -> void:
 
 
 func replace_session(session) -> void:
+	_replace_session(session, 0)
+
+
+func start_dev_day(day_number := 3) -> bool:
+	if not OS.is_debug_build() or day_number < 1:
+		return false
+	_start_dev_day(day_number)
+	return true
+
+
+func is_dev_mode() -> bool:
+	return _dev_day_number > 0
+
+
+func dev_day_number() -> int:
+	return _dev_day_number
+
+
+func _start_dev_day(day_number: int) -> void:
+	var session = ChickenDaySession.new(
+		ChickenDaySession.DEFAULT_DAY_SEED,
+		null,
+		null,
+		day_number
+	)
+	_replace_session(session, day_number)
+
+
+func _replace_session(session, dev_day_number: int) -> void:
 	_request_generation += 1
 	_presenter.cancel_playback()
 	_production_loader.cancel()
 	_input_locked = false
 	_session = session
+	_dev_day_number = dev_day_number
 	_render([], true)
-	_circuit_buttons[0].grab_focus()
+	_focus_first_available_lever()
 
 
 func set_muted(muted: bool) -> void:
@@ -277,13 +320,13 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		if state.machine_refit_due:
 			_workshop_summary_label.text = "The growing flock has outgrown the first line. Every factory refits before Day 3."
 			_workshop_config_title.text = "TEN-BAY HAIRPIN REFIT"
-			_workshop_config_detail.text = "Five independent spoon towers each strike one aligned pair; the tight bend carries eggs but is not a bay."
-			_workshop_status_label.text = "FIVE PAIRED LEVERS  •  TWO TARGETS EACH"
+			_workshop_config_detail.text = "Five wall-hinged spoons gain a second bowl, striking both eggs in their aligned column."
+			_workshop_status_label.text = "FIVE DOUBLE-BOWLED SPOONS  •  TWO TARGETS EACH"
 			_continue_workshop_button.text = "REFIT & START DAY 3"
 		elif state.machine_refit_complete:
 			_workshop_summary_label.text = "The hairpin line is cleared for tomorrow's flock."
 			_workshop_config_title.text = "TEN-BAY HAIRPIN"
-			_workshop_config_detail.text = "Each lever drives one linked two-bowl tower; the right-hand bend is transport only."
+			_workshop_config_detail.text = "Each lever tips one double-bowled spoon; the right-hand bend is transport only."
 			_workshop_status_label.text = "1+10  •  2+9  •  3+8  •  4+7  •  5+6"
 		else:
 			_workshop_summary_label.text = "The five-bay line is cleared for tomorrow's flock."
@@ -293,7 +336,8 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		_continue_workshop_button.grab_focus.call_deferred()
 
 	if fresh_day:
-		_feedback_label.text = "DAY %d  •  %s — EMPTY STRIKES ARE WASTED" % [
+		_feedback_label.text = "%sDAY %d  •  %s — EMPTY STRIKES ARE WASTED" % [
+			"DEV MODE  •  " if is_dev_mode() else "",
 			state.day_number,
 			_circuit_summary(state.circuits),
 		]
@@ -317,6 +361,14 @@ func _focus_first_available_lever() -> void:
 		if circuit_button.visible and not circuit_button.disabled:
 			circuit_button.grab_focus()
 			return
+
+
+func _requested_dev_day() -> int:
+	for argument: String in OS.get_cmdline_user_args():
+		if not argument.begins_with("--dev-day="):
+			continue
+		return maxi(argument.trim_prefix("--dev-day=").to_int(), 0)
+	return 0
 
 
 func _configure_machine(slot_count: int, circuits: Array) -> void:
@@ -343,16 +395,14 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 		_hammers[hammer_index].visible = true
 		_hammers[hammer_index].scale = Vector2.ONE
 		_hammers[hammer_index].set_bowl_scale(1.0)
-		_hammers[hammer_index].clear_paired_carriage()
+		_hammers[hammer_index].clear_double_bowled_spoon()
 		if hairpin:
 			_hammers[hammer_index].position = Vector2.ZERO
 			_hammers[hammer_index].size = Vector2(1280.0, 560.0)
 			var top_slot: Control = _belt_slots[hammer_index]
 			var bottom_slot: Control = _belt_slots[9 - hammer_index]
-			var top_target_global := top_slot.get_global_transform() * (top_slot.size * 0.5)
-			var bottom_target_global := (
-				bottom_slot.get_global_transform() * (bottom_slot.size * 0.5)
-			)
+			var top_target_global: Vector2 = top_slot.impact_global_position()
+			var bottom_target_global: Vector2 = bottom_slot.impact_global_position()
 			var top_target_local: Vector2 = (
 				_hammers[hammer_index].get_global_transform().affine_inverse()
 				* top_target_global
@@ -361,7 +411,7 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 				_hammers[hammer_index].get_global_transform().affine_inverse()
 				* bottom_target_global
 			)
-			_hammers[hammer_index].configure_paired_carriage(
+			_hammers[hammer_index].configure_double_bowled_spoon(
 				top_target_local,
 				bottom_target_local
 			)
@@ -401,8 +451,10 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 	)
 	if hairpin:
 		for button_index in range(_circuit_buttons.size()):
-			_circuit_buttons[button_index].position = Vector2(236.3 + 190.0 * button_index, 440.0)
-			_circuit_buttons[button_index].size = Vector2(150.0, 88.0)
+			var slot: Control = _belt_slots[button_index]
+			var column_center_x := slot.position.x + slot.size.x * slot.scale.x * 0.5
+			_circuit_buttons[button_index].position = Vector2(column_center_x - 85.0, 440.0)
+			_circuit_buttons[button_index].size = Vector2(170.0, 112.0)
 		_drop_label.position = Vector2(115.0, 365.0)
 	else:
 		var base_buttons: Array[Button] = [%RedCircuit, %BlueCircuit, %PinkCircuit]

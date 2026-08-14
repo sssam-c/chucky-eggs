@@ -661,6 +661,8 @@ script = ExtResource("3_presenter")
 
 [node name="Impact" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
+[node name="DoubleClink" type="AudioStreamPlayer" parent="Presentation/Audio"]
+
 [node name="Echo" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
 [node name="Shuffle" type="AudioStreamPlayer" parent="Presentation/Audio"]
