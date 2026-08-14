@@ -2,7 +2,62 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — Unused-thwack payout
+## Active slice — Universal Day 3 hairpin
+
+### Question
+
+Does a mandatory ten-bay hairpin with five independent paired spoon towers make Day 3 feel like meaningful factory growth while keeping route direction and target ownership understandable at a glance?
+
+### Settled rules preserved
+
+- The starting machine has five slots and the established Red 1+3, Blue 2+4, Pink 5 circuits.
+- Cash is earned only from unused thwacks after meeting a day's target.
+- A successful day still requires one producer choice, and the complete flock still visibly loads the next hopper before play resumes.
+- Egg damage, effects, hatch order, conveyor advance, target completion, and presentation barriers remain resolver-owned.
+- Cuckoo adjacency and conveyor motion follow route order; Plover's left retreat is an explicit screen-space effect.
+
+### Hypothesis
+
+Folding the conveyor into two touching five-bay runs before Day 3 should turn flock growth into a visible factory milestone without forcing the player to evaluate foundational topology as a shop upgrade. Replacing the three shared circuits with five independent paired towers should make each lever's two targets physically obvious, retain the starting line's maximum two direct hits per thwack, and create five future engine-building sockets. Literal screen-left Plover retreats may remain intuitive across both rows if route arrows clearly distinguish them from normal belt travel.
+
+### Player-visible path
+
+Complete Days 1 and 2 on the five-bay line. After the Day 2 producer choice, see the workshop announce a free mandatory refit. Start Day 3 and read the route as 1→5 across the top, through a tight target-free bend, then 6→10 returning left to the drop. Pull Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, or Pink 5+6. Watch one upright tower throw both linked bowls together. Strike surviving Plovers on both rows and compare their screen-left retreat with the belt's subsequent route movement.
+
+### In scope
+
+- A session-owned, exactly-once mandatory refit when Day 3 starts, with explicit resolved slot-count and circuit facts and no cash cost.
+- The established workshop phase between producer selection and next-day flock loading.
+- Persistent five- or ten-slot day construction with resolver-authored control maps.
+- Ten saved-scene bays arranged into touching upper and lower runs, joined by an untargetable right-hand bend and ending at a left-side drop.
+- Five upright linked spoon towers mapped by aligned screen columns to ten logical strike positions, with one rigid spine and two simultaneous bowls per tower and no buckets or bend targets.
+- Five independent hairpin levers and conduits replacing the starting machine's three shared circuit controls.
+- Resolver-owned screen-left Plover destinations for both top and bottom rows, including no retreat from slots 1 and 10.
+- Route-vector presentation for rightward, downward, and leftward conveyor movement and Plover swaps without moving rule ownership out of the resolver.
+- Ten-slot damage, adjacency, movement, discard, input locking, accessibility, and presentation playback through existing owners.
+
+### Implementation conveniences
+
+- The refit occurs immediately on the Day 3 transition without a dedicated construction animation.
+- Day 3 retains the current 20-point later-day target; hairpin-specific difficulty tuning waits for playtest evidence.
+- The upper and lower conveyor casings touch as a compact double-decker machine. Five colour-and-symbol levers sit directly beneath their towers, eggs sit directly on the belt, and each linked carriage visibly contacts both eggs in its paired column.
+
+### Outside this slice
+
+- Further conveyor shapes, branches, additional extensions, or later machine milestones.
+- New spoon types, movable spoons, circuit rewiring, or upgraded damage.
+- Producer removal, shop stock, refunds, resale, discounts, or persistence outside the run.
+- Final prices, target scaling, upgrade rarity, and economy pacing.
+
+### Exit evidence
+
+- Domain tests prove the exact five-slot circuit and ten-slot paired-column maps, full Plover screen-left topology, damage order, adjacency, movement, and discard.
+- Session tests prove Days 1–2 remain at five slots, the workshop reports the due refit, Day 3 installs it exactly once for free, and resolved refit facts precede the new day.
+- UI tests prove all ten saved bays form two aligned rows, exactly five linked tower assemblies and five levers exist, every tower exposes two aligned contact points while its stored bowls clear the eggs, every hairpin bay uses the bare-belt presentation, accessibility exposes all five paired mappings, a hairpin Red press fires its one physical tower once, and input unlocks after playback.
+- A 1280×720 running-game render verifies the continuous hairpin, visible right/down/left route arrows, target-free bend, below-machine controls, left drop, and lack of overlap with the persistent HUD. A 1024×576 window check verifies the project's reference-canvas scaling path without clipping.
+- A short playtest asks: “Could you predict where each egg would move, see each spoon reach both rows, and tell where a Plover would retreat on either row?”
+
+## Completed slice — Unused-thwack payout
 
 ### Question
 

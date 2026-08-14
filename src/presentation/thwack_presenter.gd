@@ -8,6 +8,7 @@ signal hatch_payoff_started(slot_index: int, points_awarded: int)
 signal score_committed(points_awarded: int, score: int)
 signal _animation_step_released
 
+@onready var _lever_player: AudioStreamPlayer = $Audio/Lever
 @onready var _impact_player: AudioStreamPlayer = $Audio/Impact
 @onready var _echo_player: AudioStreamPlayer = $Audio/Echo
 @onready var _shuffle_player: AudioStreamPlayer = $Audio/Shuffle
@@ -21,6 +22,7 @@ var _belt_slots: Array[Button] = []
 var _pipe_slots: Array[Button] = []
 var _circuit_buttons: Array[Button] = []
 var _hammers: Array[Control] = []
+var _slot_hammer_indices: Array[int] = []
 var _echo_trace: Control
 var _hatch_payoff: Control
 var _score_label: Label
@@ -33,9 +35,12 @@ var _reduced_motion := false
 var _active_tween: Tween
 var _active_step_id := 0
 var _waiting_for_step := false
+var _held_circuit_button: Button
+var _held_hammers: Array[Control] = []
 
 
 func _ready() -> void:
+	_lever_player.stream = CrunchAudio.lever()
 	_impact_player.stream = CrunchAudio.impact()
 	_echo_player.stream = CrunchAudio.echo()
 	_shuffle_player.stream = CrunchAudio.shuffle()
@@ -68,19 +73,35 @@ func configure(
 	_drop_label = drop_label
 
 
+func set_slot_hammer_indices(indices: Array) -> void:
+	_slot_hammer_indices.assign(indices)
+
+
 func play_events(events: Array[Dictionary]) -> bool:
 	_generation += 1
 	var playback_generation := _generation
 	_busy = true
 	await get_tree().process_frame
 
-	for event: Dictionary in events:
+	for event_index in range(events.size()):
+		var event: Dictionary = events[event_index]
 		if playback_generation != _generation:
 			return false
 		var completed := await _present_event(event, playback_generation)
 		if not completed or playback_generation != _generation:
 			return false
 		event_presented.emit(event.type)
+		if _is_direct_spoon_damage(event):
+			var next_is_direct_damage := (
+				event_index + 1 < events.size()
+				and _is_direct_spoon_damage(events[event_index + 1])
+			)
+			if not next_is_direct_damage:
+				if not await _recover_held_mechanism(playback_generation):
+					return false
+
+	if not await _recover_held_mechanism(playback_generation):
+		return false
 
 	_busy = false
 	_reset_mechanisms()
@@ -93,7 +114,7 @@ func play_events(events: Array[Dictionary]) -> bool:
 func cancel_playback() -> void:
 	_generation += 1
 	_busy = false
-	for player: AudioStreamPlayer in [_impact_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
+	for player: AudioStreamPlayer in [_lever_player, _impact_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
 		player.stop()
 	if _active_tween != null and _active_tween.is_valid():
 		_active_tween.kill()
@@ -104,7 +125,7 @@ func cancel_playback() -> void:
 func set_muted(muted: bool) -> void:
 	_muted = muted
 	if muted:
-		for player: AudioStreamPlayer in [_impact_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
+		for player: AudioStreamPlayer in [_lever_player, _impact_player, _echo_player, _shuffle_player, _hatch_player, _score_player, _belt_player, _loss_player, _pipe_player]:
 			player.stop()
 
 
@@ -175,18 +196,31 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 	var circuit_button := _circuit_button(String(event.circuit_id))
 	if circuit_button == null:
 		return false
+	_play(_lever_player)
 	var fired_hammers: Array[Control] = []
+	var fired_hammer_indices: Array[int] = []
 	for slot_index: int in event.slot_indices:
-		fired_hammers.append(_hammers[slot_index])
-		hammer_fired.emit(slot_index)
+		var hammer_index := _slot_hammer_indices[slot_index]
+		if hammer_index in fired_hammer_indices:
+			continue
+		fired_hammer_indices.append(hammer_index)
+		fired_hammers.append(_hammers[hammer_index])
+		hammer_fired.emit(hammer_index)
+	var holds_through_damage := fired_hammers.any(func(hammer: Control) -> bool:
+		return hammer.has_method("is_paired_carriage") and hammer.is_paired_carriage()
+	)
+	if holds_through_damage:
+		_held_circuit_button = circuit_button
+		_held_hammers.assign(fired_hammers)
 
 	if _reduced_motion:
 		circuit_button.set_press_amount(1.0)
 		for hammer: Control in fired_hammers:
 			hammer.set_strike_amount(1.0)
-		circuit_button.reset_pose()
-		for hammer: Control in fired_hammers:
-			hammer.reset_pose()
+		if not holds_through_damage:
+			circuit_button.reset_pose()
+			for hammer: Control in fired_hammers:
+				hammer.reset_pose()
 		return true
 
 	var anticipation := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -202,6 +236,40 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 		strike.parallel().tween_property(hammer, "strike_amount", 1.0, 0.075)
 	if not await _run_tween(strike, playback_generation):
 		return false
+	if holds_through_damage:
+		return true
+
+	var recovery := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	recovery.tween_property(circuit_button, "press_amount", 0.0, 0.14)
+	for hammer: Control in fired_hammers:
+		recovery.parallel().tween_property(hammer, "strike_amount", 0.0, 0.14)
+	return await _run_tween(recovery, playback_generation)
+
+
+func _is_direct_spoon_damage(event: Dictionary) -> bool:
+	return (
+		String(event.get("type", "")) == "egg_damaged"
+		and String(event.get("cause", "spoon")) == "spoon"
+	)
+
+
+func _recover_held_mechanism(playback_generation: int) -> bool:
+	if not is_instance_valid(_held_circuit_button):
+		_held_circuit_button = null
+		_held_hammers.clear()
+		return true
+	var circuit_button := _held_circuit_button
+	var fired_hammers: Array[Control] = []
+	for hammer: Control in _held_hammers:
+		if is_instance_valid(hammer):
+			fired_hammers.append(hammer)
+	_held_circuit_button = null
+	_held_hammers.clear()
+	if _reduced_motion:
+		circuit_button.reset_pose()
+		for hammer: Control in fired_hammers:
+			hammer.reset_pose()
+		return true
 
 	var recovery := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	recovery.tween_property(circuit_button, "press_amount", 0.0, 0.14)
@@ -310,22 +378,25 @@ func _present_swap(event: Dictionary, playback_generation: int) -> bool:
 	var plover_content: Control = from_slot.motion_content()
 	var displaced_content: Control = to_slot.motion_content()
 	var has_displaced_egg: bool = not to_slot.current_egg().is_empty()
-	var stride: float = from_slot.global_position.x - to_slot.global_position.x
+	var route_step: Vector2 = to_slot.global_position - from_slot.global_position
+	var sidestep: Vector2 = route_step.normalized().orthogonal() * 30.0
+	var plover_origin := plover_content.position
+	var displaced_origin := displaced_content.position
 	plover_content.z_index = 4
 	plover_content.pivot_offset = plover_content.size * 0.5
 	displaced_content.z_index = 2
 	displaced_content.pivot_offset = displaced_content.size * 0.5
 
 	var shuffle := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	shuffle.tween_property(plover_content, "position", Vector2(-stride * 0.48, -30.0), 0.10)
+	shuffle.tween_property(plover_content, "position", plover_origin + route_step * 0.48 + sidestep, 0.10)
 	shuffle.parallel().tween_property(plover_content, "rotation", -0.10, 0.10)
 	if has_displaced_egg:
-		shuffle.parallel().tween_property(displaced_content, "position", Vector2(stride * 0.52, 9.0), 0.10)
+		shuffle.parallel().tween_property(displaced_content, "position", displaced_origin - route_step * 0.52 - sidestep * 0.3, 0.10)
 		shuffle.parallel().tween_property(displaced_content, "rotation", 0.08, 0.10)
-	shuffle.tween_property(plover_content, "position", Vector2(-stride, 0.0), 0.11).set_trans(Tween.TRANS_BACK)
+	shuffle.tween_property(plover_content, "position", plover_origin + route_step, 0.11).set_trans(Tween.TRANS_BACK)
 	shuffle.parallel().tween_property(plover_content, "rotation", 0.0, 0.11)
 	if has_displaced_egg:
-		shuffle.parallel().tween_property(displaced_content, "position", Vector2(stride, 0.0), 0.11)
+		shuffle.parallel().tween_property(displaced_content, "position", displaced_origin - route_step, 0.11)
 		shuffle.parallel().tween_property(displaced_content, "rotation", 0.0, 0.11)
 	if not await _run_tween(shuffle, playback_generation):
 		return false
@@ -339,19 +410,25 @@ func _present_conveyor(event: Dictionary, playback_generation: int) -> bool:
 		_render_belt(event.slots)
 		return true
 
-	var stride := _belt_slots[1].global_position.x - _belt_slots[0].global_position.x
 	var move := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 	var has_motion := false
-	for slot_index in range(_belt_slots.size()):
+	var active_slot_count: int = mini(event.slots.size(), _belt_slots.size())
+	for slot_index in range(active_slot_count):
 		var slot: Button = _belt_slots[slot_index]
 		if slot.current_egg().is_empty():
 			continue
 		has_motion = true
 		var content: Control = slot.motion_content()
-		var target := content.position + Vector2(stride, 52.0 if slot_index == _belt_slots.size() - 1 else 0.0)
+		var route_step := (
+			_belt_slots[slot_index + 1].global_position - slot.global_position
+			if slot_index < active_slot_count - 1
+			else _drop_label.global_position + _drop_label.size * 0.5
+				- (slot.global_position + slot.size * 0.5) + Vector2(0.0, 55.0)
+		)
+		var target := content.position + route_step
 		move.parallel().tween_property(content, "position", target, 0.17)
-		if slot_index == _belt_slots.size() - 1:
-			move.parallel().tween_property(content, "rotation", 0.14, 0.17)
+		if slot_index == active_slot_count - 1:
+			move.parallel().tween_property(content, "rotation", 0.14 if route_step.x >= 0.0 else -0.14, 0.17)
 			move.parallel().tween_property(content, "modulate:a", 0.35, 0.17)
 	if has_motion and not await _run_tween(move, playback_generation):
 		return false
@@ -415,7 +492,8 @@ func _present_day_discard(playback_generation: int) -> bool:
 
 func _render_belt(slots: Array) -> void:
 	for slot_index in range(_belt_slots.size()):
-		_belt_slots[slot_index].render_egg(slots[slot_index], false, false)
+		var egg: Dictionary = slots[slot_index] if slot_index < slots.size() else {}
+		_belt_slots[slot_index].render_egg(egg, false, false)
 
 
 func _clear_all_eggs() -> void:
@@ -426,6 +504,8 @@ func _clear_all_eggs() -> void:
 
 
 func _reset_mechanisms() -> void:
+	_held_circuit_button = null
+	_held_hammers.clear()
 	if is_instance_valid(_echo_trace):
 		_echo_trace.clear_connection()
 	if is_instance_valid(_hatch_payoff):

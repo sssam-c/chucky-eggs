@@ -1,7 +1,8 @@
 class_name ChickenDay
 extends RefCounted
 
-const SLOT_COUNT := 5
+const BASE_SLOT_COUNT := 5
+const HAIRPIN_SLOT_COUNT := 10
 const PIPE_PREVIEW_COUNT := 3
 const STARTING_THWACKS := 20
 const DEFAULT_TARGET_SCORE := 15
@@ -13,11 +14,6 @@ const PLOVER_TOUGHNESS := 6
 const PLOVER_POINTS := 4
 const SPOONBILL_TOUGHNESS := 5
 const SPOONBILL_POINTS := 4
-const CIRCUITS := [
-	{"id": "red", "slot_indices": [0, 2]},
-	{"id": "blue", "slot_indices": [1, 3]},
-	{"id": "pink", "slot_indices": [4]},
-]
 var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
 var _remaining_thwacks := STARTING_THWACKS
@@ -26,13 +22,20 @@ var _ended := false
 var _succeeded := false
 var _daily_egg_count := 0
 var _target_score: int
+var _circuits: Array[Dictionary] = []
 
 
-func _init(daily_egg_kinds: Array[String], target_score := DEFAULT_TARGET_SCORE) -> void:
+func _init(
+	daily_egg_kinds: Array[String],
+	target_score := DEFAULT_TARGET_SCORE,
+	slot_count := BASE_SLOT_COUNT
+) -> void:
 	assert(not daily_egg_kinds.is_empty(), "A day needs at least one laid egg.")
 	assert(target_score > 0, "A day needs a positive target score.")
+	assert(slot_count in [BASE_SLOT_COUNT, HAIRPIN_SLOT_COUNT], "Unsupported conveyor size.")
 	_target_score = target_score
-	for slot_index in range(SLOT_COUNT):
+	_circuits = circuits_for_slot_count(slot_count)
+	for slot_index in range(slot_count):
 		_slots.append({})
 	for kind: String in daily_egg_kinds:
 		_hopper.append(_new_egg(kind))
@@ -46,7 +49,8 @@ func snapshot() -> Dictionary:
 		"pipe": _hopper.slice(0, PIPE_PREVIEW_COUNT).duplicate(true),
 		"hopper_egg_count": _hopper.size(),
 		"daily_egg_count": _daily_egg_count,
-		"circuits": CIRCUITS.duplicate(true),
+		"circuits": _circuits.duplicate(true),
+		"slot_count": _slots.size(),
 		"remaining_thwacks": _remaining_thwacks,
 		"score": _score,
 		"target_score": _target_score,
@@ -78,7 +82,7 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		"occupied_slot_indices": occupied_slot_indices,
 	}]
 	_damage_eggs(occupied_slot_indices, circuit_id, events)
-	_retreat_surviving_plovers(occupied_slot_indices, events)
+	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 	_advance_conveyor(events)
 	_spend_thwack(events)
 
@@ -93,7 +97,7 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 
 
 func _circuit(circuit_id: String) -> Dictionary:
-	for circuit: Dictionary in CIRCUITS:
+	for circuit: Dictionary in _circuits:
 		if circuit.id == circuit_id:
 			return circuit
 	return {}
@@ -170,14 +174,16 @@ func _resolve_hatches(events: Array[Dictionary]) -> void:
 		})
 
 
-func _retreat_surviving_plovers(slot_indices: Array[int], events: Array[Dictionary]) -> void:
+func _retreat_surviving_plovers_left(slot_indices: Array[int], events: Array[Dictionary]) -> void:
 	for slot_index: int in slot_indices:
-		if slot_index == 0 or _slots[slot_index].is_empty():
+		if _slots[slot_index].is_empty():
 			continue
 		if _slots[slot_index].kind != "plover":
 			continue
 
-		var destination_slot_index := slot_index - 1
+		var destination_slot_index := screen_left_destination(slot_index, _slots.size())
+		if destination_slot_index < 0:
+			continue
 		var plover: Dictionary = _slots[slot_index]
 		_slots[slot_index] = _slots[destination_slot_index]
 		_slots[destination_slot_index] = plover
@@ -186,13 +192,25 @@ func _retreat_surviving_plovers(slot_indices: Array[int], events: Array[Dictiona
 			"kind": "plover",
 			"from_slot_index": slot_index,
 			"to_slot_index": destination_slot_index,
+			"direction": "screen_left",
 			"slots": _slots.duplicate(true),
 		})
 
 
+static func screen_left_destination(slot_index: int, slot_count: int) -> int:
+	if slot_count == BASE_SLOT_COUNT:
+		return slot_index - 1 if slot_index > 0 else -1
+	assert(slot_count == HAIRPIN_SLOT_COUNT, "Unsupported conveyor size.")
+	if slot_index in range(1, 5):
+		return slot_index - 1
+	if slot_index in range(5, 9):
+		return slot_index + 1
+	return -1
+
+
 func _advance_conveyor(events: Array[Dictionary]) -> void:
-	var fallen_egg: Dictionary = _slots[SLOT_COUNT - 1]
-	for slot_index in range(SLOT_COUNT - 1, 0, -1):
+	var fallen_egg: Dictionary = _slots[-1]
+	for slot_index in range(_slots.size() - 1, 0, -1):
 		_slots[slot_index] = _slots[slot_index - 1]
 	_slots[0] = {}
 	events.append({
@@ -239,7 +257,7 @@ func _end_day(events: Array[Dictionary]) -> void:
 			discarded_count += 1
 	discarded_count += _hopper.size()
 
-	for slot_index in range(SLOT_COUNT):
+	for slot_index in range(_slots.size()):
 		_slots[slot_index] = {}
 	_hopper.clear()
 	_ended = true
@@ -255,6 +273,23 @@ func _end_day(events: Array[Dictionary]) -> void:
 		"remaining_thwacks": _remaining_thwacks,
 		"succeeded": _succeeded,
 	})
+
+
+static func circuits_for_slot_count(slot_count: int) -> Array[Dictionary]:
+	if slot_count == BASE_SLOT_COUNT:
+		return [
+			{"id": "red", "slot_indices": [0, 2]},
+			{"id": "blue", "slot_indices": [1, 3]},
+			{"id": "pink", "slot_indices": [4]},
+		]
+	assert(slot_count == HAIRPIN_SLOT_COUNT, "Unsupported conveyor size.")
+	return [
+		{"id": "red", "slot_indices": [0, 9]},
+		{"id": "blue", "slot_indices": [1, 8]},
+		{"id": "green", "slot_indices": [2, 7]},
+		{"id": "purple", "slot_indices": [3, 6]},
+		{"id": "pink", "slot_indices": [4, 5]},
+	]
 
 
 func _new_egg(kind: String) -> Dictionary:
@@ -275,7 +310,7 @@ static func egg_definition(kind: String) -> Dictionary:
 		"cuckoo":
 			return {"kind": kind, "toughness": CUCKOO_TOUGHNESS, "points": CUCKOO_POINTS, "effect": "adjacent_echo"}
 		"plover":
-			return {"kind": kind, "toughness": PLOVER_TOUGHNESS, "points": PLOVER_POINTS, "effect": "retreat"}
+			return {"kind": kind, "toughness": PLOVER_TOUGHNESS, "points": PLOVER_POINTS, "effect": "screen_left"}
 		"spoonbill":
 			return {"kind": kind, "toughness": SPOONBILL_TOUGHNESS, "points": SPOONBILL_POINTS, "effect": "pink_weakness"}
 	return {}

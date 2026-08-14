@@ -7,6 +7,7 @@ signal production_loading_started(producer_count: int, egg_count: int)
 signal production_loading_completed
 
 const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
+const ChickenDay = preload("res://src/domain/chicken_day.gd")
 
 @onready var _score_label: Label = %Score
 @onready var _cash_label: Label = %Cash
@@ -21,18 +22,31 @@ const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 @onready var _flock_summary_label: Label = %FlockSummary
 @onready var _reward_choices_container: HBoxContainer = %RewardChoices
 @onready var _restart_button: Button = %Restart
+@onready var _workshop_overlay: Control = %WorkshopOverlay
+@onready var _workshop_balance_label: Label = %WorkshopBalance
+@onready var _workshop_summary_label: Label = %WorkshopSummary
+@onready var _workshop_status_label: Label = %WorkshopStatus
+@onready var _workshop_config_title: Label = $WorkshopOverlay/Card/Content/ExtensionPlate/Offer/ExtensionTitle
+@onready var _workshop_config_detail: Label = $WorkshopOverlay/Card/Content/ExtensionPlate/Offer/ExtensionDetail
+@onready var _continue_workshop_button: Button = %ContinueWorkshop
 @onready var _mute_button: CheckButton = %Mute
 @onready var _reduced_motion_button: CheckButton = %ReducedMotion
 @onready var _belt: Control = %Belt
+@onready var _machine_stage: Control = $Content/Stage/Workshop
 @onready var _drop_label: Label = %Drop
 @onready var _echo_trace: Control = %EchoTrace
 @onready var _hatch_payoff: Control = %HatchPayoff
 @onready var _presenter: Node = %Presentation
 @onready var _production_loader: Control = %ProductionLoader
 @onready var _hopper_count_label: Label = %HopperCount
-@onready var _belt_slots: Array[Button] = [%Slot1, %Slot2, %Slot3, %Slot4, %Slot5]
+@onready var _belt_slots: Array[Button] = [
+	%Slot1, %Slot2, %Slot3, %Slot4, %Slot5, %Slot6,
+	%Slot7, %Slot8, %Slot9, %Slot10,
+]
 @onready var _pipe_slots: Array[Button] = [%Next1, %Next2, %Next3]
-@onready var _circuit_buttons: Array[Button] = [%RedCircuit, %BlueCircuit, %PinkCircuit]
+@onready var _circuit_buttons: Array[Button] = [
+	%RedCircuit, %BlueCircuit, %GreenCircuit, %PurpleCircuit, %PinkCircuit,
+]
 @onready var _hammers: Array[Control] = [%Hammer1, %Hammer2, %Hammer3, %Hammer4, %Hammer5]
 @onready var _producer_choice_buttons: Array[Button] = [%Choice1, %Choice2, %Choice3]
 
@@ -49,6 +63,7 @@ func _ready() -> void:
 			_on_producer_choice_pressed.bind(choice_index)
 		)
 	_restart_button.pressed.connect(_on_restart_pressed)
+	_continue_workshop_button.pressed.connect(_on_continue_workshop_pressed)
 	_mute_button.toggled.connect(set_muted)
 	_reduced_motion_button.toggled.connect(set_reduced_motion)
 	_presenter.event_presented.connect(_on_presentation_event)
@@ -107,6 +122,15 @@ func _on_producer_choice_pressed(choice_index: int) -> void:
 	var events: Array[Dictionary] = _session.select_producer(selected.kind)
 	if events.is_empty() or events[0].type == "producer_selection_rejected":
 		return
+	_render(events)
+
+
+func _on_continue_workshop_pressed() -> void:
+	if _input_locked:
+		return
+	var events: Array[Dictionary] = _session.continue_from_workshop()
+	if events.is_empty() or events[0].type == "workshop_continue_rejected":
+		return
 	var day_started_event := _event_of_type(events, "day_started")
 	if day_started_event.is_empty():
 		return
@@ -115,7 +139,7 @@ func _on_producer_choice_pressed(choice_index: int) -> void:
 	_request_generation += 1
 	var request_generation := _request_generation
 	_set_circuit_interaction(false)
-	_result_overlay.visible = false
+	_workshop_overlay.visible = false
 	var completed: bool = await _production_loader.begin(
 		day_started_event.production,
 		day_started_event.day_number,
@@ -127,6 +151,7 @@ func _on_producer_choice_pressed(choice_index: int) -> void:
 
 	_input_locked = false
 	_render(events, true)
+	_focus_first_available_lever()
 	production_loading_completed.emit()
 
 
@@ -174,6 +199,7 @@ func is_input_locked() -> bool:
 
 func _render(events: Array[Dictionary], fresh_day := false) -> void:
 	var state: Dictionary = _session.state()
+	_configure_machine(state.machine_slot_count, state.machine_circuits)
 	_score_label.text = "SCORE %d / %d" % [state.score, state.target_score]
 	_cash_label.text = "CASH £%d" % state.cash
 	_cash_label.accessibility_name = "Cash balance £%d" % state.cash
@@ -181,8 +207,9 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 	_hopper_count_label.text = "HOPPER %d" % state.hopper_egg_count
 
 	for slot_index in range(_belt_slots.size()):
+		var slot_egg: Dictionary = state.slots[slot_index] if slot_index < state.slots.size() else {}
 		_belt_slots[slot_index].render_egg(
-			state.slots[slot_index],
+			slot_egg,
 			false,
 			false
 		)
@@ -191,17 +218,21 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		_pipe_slots[preview_index].render_egg(egg, false, true)
 
 	for circuit_button: Button in _circuit_buttons:
+		if not circuit_button.visible:
+			circuit_button.set_available(false)
+			continue
 		var descriptions: Array[String] = []
 		var has_egg := false
 		for slot_index: int in circuit_button.slot_indices:
-			var egg: Dictionary = state.slots[slot_index]
+			var egg: Dictionary = state.slots[slot_index] if slot_index < state.slots.size() else {}
 			has_egg = has_egg or not egg.is_empty()
 			descriptions.append("empty" if egg.is_empty() else _belt_slots[slot_index].egg_description())
 		circuit_button.set_target_descriptions(descriptions)
-		circuit_button.set_available(has_egg and not state.ended and not _input_locked)
+		circuit_button.set_available(has_egg and state.phase == "day" and not _input_locked)
 
-	_result_overlay.visible = state.ended
-	if state.ended:
+	_result_overlay.visible = state.phase in ["reward", "failed"]
+	_workshop_overlay.visible = state.phase == "workshop"
+	if _result_overlay.visible:
 		var choosing_producer: bool = state.phase == "reward"
 		_result_label.text = "CHOOSE A PRODUCER" if choosing_producer else "DAY FAILED"
 		_result_score_label.text = "%d / %d POINTS" % [state.score, state.target_score]
@@ -240,18 +271,177 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 			_restart_button.text = "RETRY DAY %d" % state.day_number
 			_restart_button.grab_focus.call_deferred()
 
+	if _workshop_overlay.visible:
+		_workshop_balance_label.text = "BALANCE £%d" % state.cash
+		_continue_workshop_button.text = "START DAY %d" % (state.day_number + 1)
+		if state.machine_refit_due:
+			_workshop_summary_label.text = "The growing flock has outgrown the first line. Every factory refits before Day 3."
+			_workshop_config_title.text = "TEN-BAY HAIRPIN REFIT"
+			_workshop_config_detail.text = "Five independent spoon towers each strike one aligned pair; the tight bend carries eggs but is not a bay."
+			_workshop_status_label.text = "FIVE PAIRED LEVERS  •  TWO TARGETS EACH"
+			_continue_workshop_button.text = "REFIT & START DAY 3"
+		elif state.machine_refit_complete:
+			_workshop_summary_label.text = "The hairpin line is cleared for tomorrow's flock."
+			_workshop_config_title.text = "TEN-BAY HAIRPIN"
+			_workshop_config_detail.text = "Each lever drives one linked two-bowl tower; the right-hand bend is transport only."
+			_workshop_status_label.text = "1+10  •  2+9  •  3+8  •  4+7  •  5+6"
+		else:
+			_workshop_summary_label.text = "The five-bay line is cleared for tomorrow's flock."
+			_workshop_config_title.text = "FIVE-BAY LINE"
+			_workshop_config_detail.text = "The factory refit arrives for every run before Day 3."
+			_workshop_status_label.text = "RED 1+3  •  BLUE 2+4  •  PINK 5"
+		_continue_workshop_button.grab_focus.call_deferred()
+
 	if fresh_day:
-		_feedback_label.text = "DAY %d  •  RED 1+3  •  BLUE 2+4  •  PINK 5 — EMPTY STRIKES ARE WASTED" % state.day_number
+		_feedback_label.text = "DAY %d  •  %s — EMPTY STRIKES ARE WASTED" % [
+			state.day_number,
+			_circuit_summary(state.circuits),
+		]
 	else:
 		_feedback_label.text = _feedback_for(events)
 
 
 func _set_circuit_interaction(enabled: bool) -> void:
 	for circuit_button: Button in _circuit_buttons:
+		if not circuit_button.visible:
+			circuit_button.set_available(false)
+			continue
 		var has_egg := false
 		for slot_index: int in circuit_button.slot_indices:
 			has_egg = has_egg or not _belt_slots[slot_index].current_egg().is_empty()
 		circuit_button.set_available(enabled and has_egg)
+
+
+func _focus_first_available_lever() -> void:
+	for circuit_button: Button in _circuit_buttons:
+		if circuit_button.visible and not circuit_button.disabled:
+			circuit_button.grab_focus()
+			return
+
+
+func _configure_machine(slot_count: int, circuits: Array) -> void:
+	_machine_stage.set_slot_count(slot_count)
+	var hairpin := slot_count == ChickenDay.HAIRPIN_SLOT_COUNT
+	for slot_index in range(_belt_slots.size()):
+		var active := slot_index < slot_count
+		_belt_slots[slot_index].visible = active
+		if not active:
+			continue
+		_belt_slots[slot_index].scale = Vector2.ONE
+		# Eggs sit directly on the moving belt in both layouts; individual cups
+		# make the early line read as five separate machines instead of one flow.
+		_belt_slots[slot_index].set_bare_belt_mode(true)
+		if not hairpin:
+			_belt_slots[slot_index].position = Vector2(200.0 + 190.0 * slot_index, 170.0)
+		else:
+			var column_index := slot_index if slot_index < 5 else 9 - slot_index
+			var hairpin_y := 170.0 if slot_index < 5 else 300.0
+			_belt_slots[slot_index].position = Vector2(185.0 + 190.0 * column_index, hairpin_y)
+			_belt_slots[slot_index].scale = Vector2(0.78, 0.78)
+
+	for hammer_index in range(_hammers.size()):
+		_hammers[hammer_index].visible = true
+		_hammers[hammer_index].scale = Vector2.ONE
+		_hammers[hammer_index].set_bowl_scale(1.0)
+		_hammers[hammer_index].clear_paired_carriage()
+		if hairpin:
+			_hammers[hammer_index].position = Vector2.ZERO
+			_hammers[hammer_index].size = Vector2(1280.0, 560.0)
+			var top_slot: Control = _belt_slots[hammer_index]
+			var bottom_slot: Control = _belt_slots[9 - hammer_index]
+			var top_target_global := top_slot.get_global_transform() * (top_slot.size * 0.5)
+			var bottom_target_global := (
+				bottom_slot.get_global_transform() * (bottom_slot.size * 0.5)
+			)
+			var top_target_local: Vector2 = (
+				_hammers[hammer_index].get_global_transform().affine_inverse()
+				* top_target_global
+			)
+			var bottom_target_local: Vector2 = (
+				_hammers[hammer_index].get_global_transform().affine_inverse()
+				* bottom_target_global
+			)
+			_hammers[hammer_index].configure_paired_carriage(
+				top_target_local,
+				bottom_target_local
+			)
+		else:
+			_hammers[hammer_index].position = Vector2(200.0 + 190.0 * hammer_index, 20.0)
+			_hammers[hammer_index].size = Vector2(185.0, 250.0)
+			var slot: Control = _belt_slots[hammer_index]
+			var contact_global: Vector2 = slot.impact_global_position()
+			var contact_local: Vector2 = (
+				_hammers[hammer_index].get_global_transform().affine_inverse()
+				* contact_global
+			)
+			_hammers[hammer_index].configure_wall_spoon(contact_local)
+
+	for circuit_button: Button in _circuit_buttons:
+		circuit_button.visible = false
+		circuit_button.set_available(false)
+		circuit_button.slot_indices.clear()
+	for circuit: Dictionary in circuits:
+		var circuit_button: Button = _circuit_button(String(circuit.id))
+		circuit_button.visible = true
+		circuit_button.slot_indices.assign(circuit.slot_indices)
+		circuit_button.queue_redraw()
+
+	var hammer_circuit_ids: Array[String] = []
+	hammer_circuit_ids.assign(
+		["red", "blue", "green", "purple", "pink"]
+		if hairpin
+		else ["red", "blue", "red", "blue", "pink"]
+	)
+	for hammer_index in range(_hammers.size()):
+		_apply_circuit_appearance(_hammers[hammer_index], hammer_circuit_ids[hammer_index])
+	_presenter.set_slot_hammer_indices(
+		[0, 1, 2, 3, 4, 4, 3, 2, 1, 0]
+		if hairpin
+		else [0, 1, 2, 3, 4]
+	)
+	if hairpin:
+		for button_index in range(_circuit_buttons.size()):
+			_circuit_buttons[button_index].position = Vector2(236.3 + 190.0 * button_index, 440.0)
+			_circuit_buttons[button_index].size = Vector2(150.0, 88.0)
+		_drop_label.position = Vector2(115.0, 365.0)
+	else:
+		var base_buttons: Array[Button] = [%RedCircuit, %BlueCircuit, %PinkCircuit]
+		for button_index in range(base_buttons.size()):
+			base_buttons[button_index].position = Vector2(210.0 + 320.0 * button_index, 416.0)
+			base_buttons[button_index].size = Vector2(280.0, 112.0)
+		_drop_label.position = Vector2(1140.0, 326.0)
+
+
+func _apply_circuit_appearance(control: Control, circuit_id: String) -> void:
+	var appearances := {
+		"red": {"color": Color("c43b36"), "symbol": "diamond"},
+		"blue": {"color": Color("287cbd"), "symbol": "circle"},
+		"green": {"color": Color("69a645"), "symbol": "triangle"},
+		"purple": {"color": Color("8f59b8"), "symbol": "hexagon"},
+		"pink": {"color": Color("cf4f8b"), "symbol": "spark"},
+	}
+	var appearance: Dictionary = appearances[circuit_id]
+	control.circuit_id = circuit_id
+	control.circuit_color = appearance.color
+	control.circuit_symbol = appearance.symbol
+	control.queue_redraw()
+
+
+func _circuit_button(circuit_id: String) -> Button:
+	for circuit_button: Button in _circuit_buttons:
+		if circuit_button.circuit_id == circuit_id:
+			return circuit_button
+	return null
+
+
+func _circuit_summary(circuits: Array) -> String:
+	var summaries: Array[String] = []
+	for circuit: Dictionary in circuits:
+		var slots: Array[String] = []
+		for slot_index: int in circuit.slot_indices:
+			slots.append(str(slot_index + 1))
+		summaries.append("%s %s" % [String(circuit.id).to_upper(), "+".join(slots)])
+	return "  •  ".join(summaries)
 
 
 func _on_presentation_event(event_type: String) -> void:
@@ -286,7 +476,7 @@ func _feedback_for(events: Array[Dictionary]) -> String:
 			]
 	for event: Dictionary in events:
 		if event.type == "eggs_swapped":
-			return "Scuttle! The Plover swapped one slot toward the pipe."
+			return "Scuttle! The Plover retreated one bay to the left."
 	for event: Dictionary in events:
 		if event.type == "egg_discarded":
 			return "An egg fell from the belt. The spoon cannot save them all."

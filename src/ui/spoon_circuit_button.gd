@@ -5,7 +5,7 @@ signal circuit_requested(circuit_id: String)
 @export var circuit_id := "red"
 @export var slot_indices: Array[int] = []
 @export var circuit_color := Color("b6322c")
-@export_enum("diamond", "circle", "spark") var circuit_symbol := "diamond"
+@export_enum("diamond", "circle", "triangle", "hexagon", "spark") var circuit_symbol := "diamond"
 
 var press_amount := 0.0:
 	set(value):
@@ -45,13 +45,35 @@ func reset_pose() -> void:
 	press_amount = 0.0
 
 
+func control_form() -> String:
+	return "lever"
+
+
+func lever_handle_center() -> Vector2:
+	var pivot := _lever_pivot()
+	var lever_length := clampf(size.y * 0.52, 46.0, 64.0)
+	var eased := smoothstep(0.0, 1.0, press_amount)
+	var angle := lerpf(-2.02, -0.55, eased)
+	return pivot + Vector2.from_angle(angle) * lever_length
+
+
 func _refresh_accessibility() -> void:
 	tooltip_text = ""
-	accessibility_name = "%s %s circuit" % [circuit_id.capitalize(), circuit_symbol]
+	accessibility_name = "%s %s lever" % [circuit_id.capitalize(), circuit_symbol]
 	var slot_names: Array[String] = []
 	for slot_index: int in slot_indices:
 		slot_names.append(str(slot_index + 1))
-	var connection_text := "slot %s" % slot_names[0] if slot_names.size() == 1 else "slots %s and %s" % slot_names
+	if slot_names.is_empty():
+		accessibility_description = "Not installed on the current machine."
+		return
+	var connection_text := "slot %s" % slot_names[0]
+	if slot_names.size() == 2:
+		connection_text = "slots %s and %s" % slot_names
+	elif slot_names.size() > 2:
+		connection_text = "slots %s, and %s" % [
+			", ".join(slot_names.slice(0, -1)),
+			slot_names[-1],
+		]
 	var target_text := ""
 	for target_index in range(_target_descriptions.size()):
 		target_text += "%sSlot %d: %s" % [
@@ -67,62 +89,82 @@ func _refresh_accessibility() -> void:
 
 
 func _draw() -> void:
-	var down := press_amount * 10.0
 	var highlighted := (is_hovered() or has_focus()) and _available
-	var top_color := circuit_color if _available else circuit_color.darkened(0.48)
-	if highlighted:
-		top_color = circuit_color.lightened(0.20)
-	var outline := Color("ffe3a1") if highlighted else circuit_color.darkened(0.58)
+	var pivot := _lever_pivot()
+	var handle := lever_handle_center()
+	var live_color := circuit_color if _available else circuit_color.darkened(0.48)
+	var outline := Color("ffe3a1") if highlighted else live_color.darkened(0.42)
+	var glow_strength := 0.20 + press_amount * 0.42 if _available else 0.05
 
-	draw_rect(Rect2(8, 18, size.x - 16, size.y - 14), Color(0.0, 0.0, 0.0, 0.62), true)
-	var top := PackedVector2Array([
-		Vector2(18, 7 + down),
-		Vector2(size.x - 18, 7 + down),
-		Vector2(size.x - 7, size.y - 28 + down * 0.35),
-		Vector2(7, size.y - 28 + down * 0.35),
+	# A coloured conduit exits the control and visually joins the rail beneath
+	# the conveyor. The circuit badge on each spoon repeats the same symbol.
+	draw_line(Vector2(pivot.x, 0), pivot - Vector2(0, 12), Color("0b0c0e"), 14.0, true)
+	draw_line(Vector2(pivot.x, 0), pivot - Vector2(0, 12), live_color, 5.0, true)
+	draw_circle(Vector2(pivot.x, 2), 7.0, Color("111316"))
+	draw_circle(Vector2(pivot.x, 2), 4.0, live_color.lightened(0.18))
+
+	# Cast base, lever gate, and pivot housing.
+	_draw_oval(pivot + Vector2(4, 10), Vector2(58, 22), Color(0.0, 0.0, 0.0, 0.60))
+	var base := PackedVector2Array([
+		pivot + Vector2(-54, -15), pivot + Vector2(54, -15),
+		pivot + Vector2(45, 18), pivot + Vector2(-45, 18),
 	])
-	draw_colored_polygon(top, top_color)
-	var outline_points := top.duplicate()
-	outline_points.append(top[0])
-	draw_polyline(outline_points, outline, 4.0, true)
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(7, size.y - 28 + down * 0.35),
-		Vector2(size.x - 7, size.y - 28 + down * 0.35),
-		Vector2(size.x - 12, size.y - 10 + down * 0.2),
-		Vector2(12, size.y - 10 + down * 0.2),
-	]), circuit_color.darkened(0.36) if _available else Color("4a3a38"))
-	draw_line(Vector2(18, 16 + down), Vector2(size.x - 18, 16 + down), Color(1.0, 1.0, 0.90, 0.42), 3.0)
+	draw_colored_polygon(base, Color("17191b"))
+	var base_outline := base.duplicate()
+	base_outline.append(base[0])
+	draw_polyline(base_outline, outline, 4.0, true)
+	draw_arc(pivot, 39.0, -2.08, -0.49, 24, Color("08090a"), 13.0, true)
+	draw_arc(pivot, 39.0, -2.08, -0.49, 24, live_color.darkened(0.12), 5.0, true)
+	for gate_angle in [-2.02, -1.28, -0.55]:
+		var gate_point := pivot + Vector2.from_angle(gate_angle) * 39.0
+		draw_circle(gate_point, 4.5, Color("d58a42") if _available else Color("59463d"))
 
-	var ink := Color("fff0cf") if _available else Color("aa9c88")
-	draw_string(
-		ThemeDB.fallback_font,
-		Vector2(18, 40 + down),
-		circuit_id.to_upper(),
-		HORIZONTAL_ALIGNMENT_CENTER,
-		size.x - 36,
-		25,
-		ink
-	)
-	var slot_text: Array[String] = []
-	for slot_index: int in slot_indices:
-		slot_text.append(str(slot_index + 1))
-	var mapping := " + ".join(slot_text)
-	draw_string(
-		ThemeDB.fallback_font,
-		Vector2(18, 70 + down * 0.7),
-		mapping,
-		HORIZONTAL_ALIGNMENT_CENTER,
-		size.x - 36,
-		19,
-		ink
-	)
-	_draw_symbol(Vector2(size.x * 0.5 - 36.0, 64.0 + down * 0.7), ink)
+	# The metal shaft has a dark under-stroke and a bright edge so its sweep is
+	# readable even against the workshop wall.
+	draw_line(pivot, handle, Color("08090a"), 15.0, true)
+	draw_line(pivot, handle, Color("9da09e") if _available else Color("555554"), 9.0, true)
+	draw_line(pivot + Vector2(-2, -1), handle + Vector2(-2, -1), Color(1.0, 0.95, 0.82, 0.52), 2.0, true)
+	draw_circle(pivot, 19.0, Color("0c0d0f"))
+	draw_circle(pivot, 14.0, live_color.darkened(0.18))
+	draw_circle(pivot, 6.0, Color("a6a29a"))
+
+	# The knob is the only visible legend: colour plus the established symbol.
+	draw_circle(handle, 28.0, Color(live_color, glow_strength))
+	draw_circle(handle, 22.0, Color("111316"))
+	draw_circle(handle, 18.0, live_color.lightened(0.18) if highlighted else live_color)
+	draw_arc(handle, 18.0, 0.0, TAU, 24, Color("fff0cf") if highlighted else outline, 3.0, true)
+	draw_circle(handle - Vector2(5, 5), 4.0, Color(1.0, 0.88, 0.72, 0.40))
+	_draw_symbol(handle, Color("fff0cf") if _available else Color("8e8377"))
+
+
+func _lever_pivot() -> Vector2:
+	return Vector2(size.x * 0.5, size.y - 24.0)
+
+
+func _draw_oval(center: Vector2, radii: Vector2, color: Color) -> void:
+	var points := PackedVector2Array()
+	for point_index in range(32):
+		var angle := TAU * float(point_index) / 32.0
+		points.append(center + Vector2(cos(angle) * radii.x, sin(angle) * radii.y))
+	draw_colored_polygon(points, color)
 
 
 func _draw_symbol(center: Vector2, color: Color) -> void:
 	match circuit_symbol:
 		"circle":
 			draw_arc(center, 8.0, 0.0, TAU, 20, color, 3.0, true)
+		"triangle":
+			draw_polyline(PackedVector2Array([
+				center + Vector2(0, -10), center + Vector2(10, 8),
+				center + Vector2(-10, 8), center + Vector2(0, -10),
+			]), color, 3.0, true)
+		"hexagon":
+			var points := PackedVector2Array()
+			for point_index in range(7):
+				points.append(center + Vector2.from_angle(
+					-PI * 0.5 + TAU * float(point_index) / 6.0
+				) * 9.0)
+			draw_polyline(points, color, 3.0, true)
 		"spark":
 			var points := PackedVector2Array([
 				center + Vector2(0, -11), center + Vector2(3, -3),

@@ -4,6 +4,18 @@ extends RefCounted
 const MIX_RATE := 44100
 
 
+static func lever() -> AudioStreamWAV:
+	return _build_stream(0.16, 211, func(t: float, sample_index: int) -> float:
+		var latch := sin(TAU * 185.0 * t) * exp(-34.0 * t) * 0.48
+		var metal := sin(TAU * 1420.0 * t) * exp(-42.0 * t) * 0.16
+		var travel := _noise(sample_index, 211) * _pulse(t, 0.025, 0.065) * 0.11
+		var stop_time := maxf(t - 0.082, 0.0)
+		var stop := sin(TAU * 126.0 * stop_time) * _pulse(t, 0.082, 0.065) * 0.52
+		var stop_click := _noise(sample_index, 223) * _pulse(t, 0.082, 0.018) * 0.30
+		return (latch + metal + travel + stop + stop_click) * 0.72
+	)
+
+
 static func impact() -> AudioStreamWAV:
 	return _build_stream(0.16, 11, func(t: float, sample_index: int) -> float:
 		var envelope := exp(-24.0 * t)

@@ -164,10 +164,80 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D016's requirement that a successful day continue until twentieth-thwack or egg exhaustion. D016's £1 rate, persistent balance, success-only award, and lack of a manual cash-out action remain.
 
+## D018 — Offer a symmetric two-bay line extension
+
+**Status:** accepted
+
+**Decision:** After the player chooses the producer earned from Day 1, open a workshop before Day 2's flock production begins. Offer an optional persistent two-bay conveyor extension. The extended line has seven slots: Red fires over slots 1, 3, and 5; Blue fires over slots 2, 4, and 6; Pink and the drop move to slot 7. The player may keep the five-slot line instead. The current prototype offers the module once for £8.
+
+**Reason:** Producer growth already makes the daily egg pool physically larger. Letting saved thwacks buy a visibly larger machine connects that pressure, the new currency, and progression in one causal loop. Two bays preserve Red/Blue alternation and Pink's final-position specialty; a single bay would break that grammar or require another control at the same time. Keeping the purchase optional exposes its strategic value, while isolating layout expansion from new spoon behavior makes the playtest signal readable.
+
+**Supersedes:** D009's five-slot circuit mapping only when the extension has been purchased. The starting five-slot machine, three circuit controls, shared movement, and all egg-resolution rules remain.
+
+## D019 — Fold the extended conveyor into a return
+
+**Status:** accepted
+
+**Decision:** Present the seven-slot extension as a horseshoe rather than compressing all seven stations into one straight run. Slots 1–5 retain their established size and left-to-right upper route. After slot 5 the belt turns downward; slot 6 sits below slot 5, slot 7 continues left beneath the upper run, and Pink and the drop move to that return leg's leftward end. Mount the slot-6 and slot-7 spoons beneath the return belt so their stored poses remain outside the egg route.
+
+**Reason:** A folded return makes the purchase read as added factory floor and preserves the physical scale of the original machine. Compressing seven stations into the old width looked like a denser interface rather than a larger mechanism. Route arrows, numbering, the visible bend, and inverted lower spoons make conveyor order legible despite screen-space adjacency no longer matching sequence.
+
+**Supersedes:** D018's straight-line presentation only. D018's seven-slot rules, circuit mappings, workshop timing, price, persistence, and optional purchase remain.
+
+## D020 — Keep the return module available until purchased
+
+**Status:** accepted
+
+**Decision:** Offer the £8 two-bay return in every workshop until it is installed. Keeping the current line postpones the purchase rather than permanently declining it. Once purchased, the module remains installed for the run and cannot be bought again.
+
+**Reason:** A one-workshop deadline was not communicated by the interface and made saved cash misleading: a player could reach a later workshop with enough money while the visible module unexpectedly reported that no upgrades were available. Letting the player defer preserves the meaningful cash decision without turning an uninformed first skip into an irreversible loss.
+
+**Supersedes:** D018's once-only offer and first-workshop-only timing. Its price, optional purchase, persistence, seven-slot rules, and circuit mappings remain.
+
+## D021 — Make the full loop a universal Day 3 refit
+
+**Status:** accepted
+
+**Decision:** Days 1 and 2 retain the five-bay line. Before Day 3, every run automatically and freely refits to an eleven-bay loop: slots 1–5 travel right across the upper run, slot 6 turns downward, and slots 7–11 return left to the drop. Five overhead spoons remain. Red covers slots 1, 3, 9, and 11; Blue covers 2, 4, 8, and 10; Pink covers the full right-hand turn at 5, 6, and 7. A surviving directly struck Plover now hops one bay to screen-right when one exists; slots 5–7 therefore offer no Plover hop. Normal conveyor advance and route-relative adjacency are unchanged.
+
+**Reason:** The smaller optional return made a major spatial rule hard to reason about while also asking the player to value it as shop stock. A full loop gives the route an immediately recognisable upper run, turn, and lower return; paired overhead columns preserve Red/Blue balance at four targets each, and Pink's three-bay corner creates a distinct hot zone. Making this a universal milestone lets the game teach one shared topology and reserves currency choices for less foundational changes such as producer removal and upgrades. Defining Plover as literally moving right preserves the character of the effect without pretending that “back” has one screen direction on a folded belt.
+
+**Supersedes:** D006's route-relative Plover retreat and D018–D020's optional paid seven-bay extension. The starting five-bay circuit map, the between-day workshop boundary, persistent cash, and all unrelated egg-resolution rules remain.
+
+## D022 — Exclude the hairpin bend from targeting
+
+**Status:** accepted
+
+**Decision:** Keep the universal free refit before Day 3, but install a ten-bay hairpin instead of the eleven-bay loop. Slots 1–5 travel right across the upper run, an untargetable bend carries eggs downward, and slots 6–10 return left underneath. Five enlarged single spoons remain aligned above the five screen columns and each strikes both bays beneath it. Red covers 1, 3, 8, and 10; Blue covers 2, 4, 7, and 9; Pink covers 5 and 6. Eggs sit directly on two touching conveyor casings without buckets or raised bay furniture. Plovers still hop literally screen-right; slots 5 and 6 have no rightward destination.
+
+**Reason:** Putting a target on the bend forced the route, Pink balance, and physical spoon into one awkward shape. Mockups with a three-bay Pink bracket, duplicate spoon heads, and bucket-like holders made the machine harder to read and visually unlike the established implementation. Removing the bend bay restores five repeated columns, gives Red and Blue four targets each and Pink two—the doubled form of the starting line's 2/2/1 reach—and lets one familiar enlarged spoon represent each column.
+
+**Supersedes:** D021's eleven-slot count, targetable turn, 4/4/3 circuit map, and multi-head spoon presentation. D021's mandatory free Day 3 timing, folded route, screen-right Plover rule, and all unrelated progression and resolution rules remain.
+
+## D023 — Make Plover retreat literally left
+
+**Status:** accepted
+
+**Decision:** A surviving directly struck Plover swaps one bay to screen-left when that bay exists. On the five-bay line and the hairpin's upper run this moves toward lower slot numbers; on the hairpin's lower return it moves toward higher slot numbers. Slots 1 and 10 have no leftward destination. Cuckoo echoes still resolve before the swap and normal conveyor advance still follows. In the Day 3 hairpin presentation, each single spoon extends during its thwack so its bowl visibly contacts the aligned lower bay while its shaft crosses the upper run.
+
+**Reason:** A literal left retreat restores the Plover's original visual character without making “back” depend on conveyor direction. The previous enlarged spoons communicated column ownership while idle but their contact stopped on the upper row, making the lower strike look purely abstract. Extending the same handle and bowl to the second row preserves one physical spoon per column and makes the paired hit causal on screen.
+
+**Supersedes:** D021 and D022's literal screen-right Plover rule, and D022's presentation in which the spoon only contacted the upper bay. All circuit maps, Day 3 refit timing, damage order, and other hairpin rules remain.
+
+## D024 — Give every hairpin column its own paired spoon tower
+
+**Status:** accepted
+
+**Decision:** Days 1 and 2 retain the established Red 1+3, Blue 2+4, and Pink 5 circuits. The universal Day 3 hairpin refit replaces them with five independent column levers: Red strikes slots 1 and 10, Blue strikes 2 and 9, Green strikes 3 and 8, Purple strikes 4 and 7, and Pink strikes 5 and 6. Each lever drives one upright rigid carriage with two linked spoon bowls, and both bowls strike their aligned eggs simultaneously as one direct-damage batch. One pull still spends one thwack and advances the conveyor once. Pink remains the only Spoonbill weakness.
+
+**Reason:** The single extending spoon made the lower hit visible only by turning a familiar utensil into a long rod, while its shaft crossed rather than convincingly thwacked the upper egg. Five paired tower mechanisms make both contact points literal and connect every control directly to one screen column. Independent levers trade the old Red and Blue four-target hairpin volleys for greater precision while retaining a two-target maximum, preventing the doubled belt from also doubling direct damage per action. The five towers also create clear physical sockets for later engine-building upgrades without making those upgrades part of this slice.
+
+**Supersedes:** D022's 4/4/2 hairpin circuit map and single-spoon-per-column presentation, and D023's extending-spoon presentation. D009's three starting-line circuits, D023's literal screen-left Plover rule, the Day 3 refit timing, the ten-bay route, Pink's Spoonbill weakness, and all unrelated resolution rules remain.
+
 <!--
 Copy for the next entry:
 
-## D018 — Short decision title
+## D025 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

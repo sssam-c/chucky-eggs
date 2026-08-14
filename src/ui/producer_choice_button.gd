@@ -74,8 +74,8 @@ func _effect_description(effect: String) -> String:
 	match effect:
 		"adjacent_echo":
 			return "Copies damage from an adjacent egg."
-		"retreat":
-			return "A surviving direct hit retreats."
+		"screen_left":
+			return "A surviving direct hit makes it retreat left."
 		"pink_weakness":
 			return "Pink deals 2 direct damage."
 	return "Reliable and plentiful."

@@ -8,6 +8,7 @@ const DEFAULT_DAY_SEED := 20260813
 const REWARD_SEED_STEP := 1009
 const DAY_ONE_TARGET := 15
 const LATER_DAY_TARGET := 20
+const HAIRPIN_REFIT_DAY := 3
 
 var _day
 var _flock
@@ -18,6 +19,7 @@ var _phase := "day"
 var _reward_choices: Array[Dictionary] = []
 var _cash := 0
 var _last_cash_awarded := 0
+var _machine_slot_count := ChickenDay.BASE_SLOT_COUNT
 
 
 func _init(day_seed := DEFAULT_DAY_SEED, flock = null, shuffler = null) -> void:
@@ -36,6 +38,14 @@ func state() -> Dictionary:
 	current_state["reward_choices"] = _reward_choices.duplicate(true)
 	current_state["cash"] = _cash
 	current_state["last_cash_awarded"] = _last_cash_awarded
+	current_state["machine_slot_count"] = _machine_slot_count
+	current_state["machine_circuits"] = ChickenDay.circuits_for_slot_count(_machine_slot_count)
+	current_state["machine_refit_due"] = (
+		_phase == "workshop"
+		and _day_number + 1 == HAIRPIN_REFIT_DAY
+		and _machine_slot_count == ChickenDay.BASE_SLOT_COUNT
+	)
+	current_state["machine_refit_complete"] = _machine_slot_count == ChickenDay.HAIRPIN_SLOT_COUNT
 	return current_state
 
 
@@ -66,7 +76,7 @@ func submit_circuit(circuit_id: String) -> Array[Dictionary]:
 
 
 func restart() -> void:
-	if _phase == "reward":
+	if _phase in ["reward", "workshop"]:
 		return
 	_start_day()
 
@@ -87,13 +97,33 @@ func select_producer(kind: String) -> Array[Dictionary]:
 		"flock_size": _flock.snapshot().size(),
 		"daily_egg_count": daily_egg_count,
 	}]
+	_phase = "workshop"
+	_reward_choices.clear()
+	return events
+
+
+func continue_from_workshop() -> Array[Dictionary]:
+	if _phase != "workshop":
+		return [{"type": "workshop_continue_rejected", "reason": "wrong_phase"}]
+
+	var daily_egg_count: int = _flock.lay_daily_egg_kinds().size()
 	_day_number += 1
+	var events: Array[Dictionary] = []
+	if _day_number == HAIRPIN_REFIT_DAY and _machine_slot_count == ChickenDay.BASE_SLOT_COUNT:
+		_machine_slot_count = ChickenDay.HAIRPIN_SLOT_COUNT
+		events.append({
+			"type": "machine_refitted",
+			"day_number": _day_number,
+			"slot_count": _machine_slot_count,
+			"circuits": ChickenDay.circuits_for_slot_count(_machine_slot_count),
+		})
 	_start_day()
 	events.append({
 		"type": "day_started",
 		"day_number": _day_number,
 		"target_score": _day.snapshot().target_score,
 		"daily_egg_count": daily_egg_count,
+		"slot_count": _machine_slot_count,
 		"production": _production_snapshot(),
 	})
 	return events
@@ -107,7 +137,7 @@ func _start_day() -> void:
 	var current_day_seed: int = _day_seed + _day_number - 1
 	var day_shuffler = _shuffler if _shuffler != null else SeededShuffler.new(current_day_seed)
 	var shuffled_eggs: Array[String] = day_shuffler.shuffle_strings(laid_eggs)
-	_day = ChickenDay.new(shuffled_eggs, _target_for_day(_day_number))
+	_day = ChickenDay.new(shuffled_eggs, _target_for_day(_day_number), _machine_slot_count)
 
 
 func _target_for_day(day_number: int) -> int:

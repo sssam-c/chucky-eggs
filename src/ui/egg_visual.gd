@@ -98,7 +98,7 @@ func effect_emblem() -> String:
 		"cuckoo":
 			return "echo"
 		"plover":
-			return "retreat"
+			return "screen_left"
 		"spoonbill":
 			return "spark"
 	return ""
@@ -115,8 +115,8 @@ func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 	match effect_emblem():
 		"echo":
 			_draw_echo_emblem(emblem_center, mark_scale)
-		"retreat":
-			_draw_retreat_emblem(emblem_center, mark_scale)
+		"screen_left":
+			_draw_left_emblem(emblem_center, mark_scale)
 		"spark":
 			_draw_spark_emblem(emblem_center, mark_scale)
 
@@ -157,12 +157,12 @@ func _draw_echo_emblem(center: Vector2, mark_scale: float) -> void:
 	draw_arc(center, 7.0 * mark_scale, -0.58, 0.58, 8, shine, 1.0 * mark_scale, true)
 
 
-func _draw_retreat_emblem(center: Vector2, mark_scale: float) -> void:
+func _draw_left_emblem(center: Vector2, mark_scale: float) -> void:
 	var ink := Color("293714")
 	var line_width := 3.2 * mark_scale
 	draw_line(
-		center + Vector2(11.0, 0.0) * mark_scale,
-		center + Vector2(-8.0, 0.0) * mark_scale,
+		center + Vector2(8.0, 0.0) * mark_scale,
+		center + Vector2(-11.0, 0.0) * mark_scale,
 		ink,
 		line_width,
 		true
@@ -175,8 +175,8 @@ func _draw_retreat_emblem(center: Vector2, mark_scale: float) -> void:
 	draw_arc(
 		center + Vector2(5.0, -5.0) * mark_scale,
 		6.0 * mark_scale,
-		-1.55,
-		-0.05,
+		-PI + 0.05,
+		-PI + 1.55,
 		8,
 		Color(0.83, 0.95, 0.48, 0.72),
 		1.4 * mark_scale,

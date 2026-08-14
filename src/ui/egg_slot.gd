@@ -10,6 +10,7 @@ extends Button
 var _egg: Dictionary = {}
 var _preview := false
 var _content_origin := Vector2.ZERO
+var _bare_belt_mode := false
 
 
 func _ready() -> void:
@@ -53,9 +54,20 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 
 
 func set_interaction_enabled(enabled: bool) -> void:
-	# The foreground circuit controls own interaction; the cup is presentation only.
+	# The foreground circuit levers own interaction; the egg slot is presentation only.
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
+
+
+func set_bare_belt_mode(enabled: bool) -> void:
+	if _bare_belt_mode == enabled:
+		return
+	_bare_belt_mode = enabled
+	queue_redraw()
+
+
+func is_bare_belt_mode() -> bool:
+	return _bare_belt_mode
 
 
 func apply_damage(remaining_toughness: int) -> void:
@@ -136,7 +148,7 @@ func _effect_description(kind: String) -> String:
 		"cuckoo":
 			return "copies damage from an adjacent egg"
 		"plover":
-			return "a surviving direct hit swaps it one slot toward the pipe"
+			return "a surviving direct hit retreats it one bay to the left"
 		"spoonbill":
 			return "its spark weakness takes 2 damage from Pink's direct strike"
 	return "no extra effect"
@@ -146,6 +158,12 @@ func _draw() -> void:
 	if _preview:
 		return
 	var center := Vector2(size.x * 0.5, size.y - 30.0)
+	if _bare_belt_mode:
+		_draw_oval(center + Vector2(0, 4), Vector2(55, 12), Color(0.0, 0.0, 0.0, 0.34))
+		draw_line(center + Vector2(-48, 0), center + Vector2(48, 0), Color("a65d31"), 3.0)
+		draw_circle(center + Vector2(-48, 0), 3.0, Color("d18b45"))
+		draw_circle(center + Vector2(48, 0), 3.0, Color("d18b45"))
+		return
 	_draw_oval(center + Vector2(0, 6), Vector2(63, 24), Color(0.0, 0.0, 0.0, 0.48))
 	_draw_oval(center, Vector2(61, 22), Color("19191b"))
 	draw_arc(center, 61.0, PI, TAU, 32, Color("a65d31"), 5.0, true)

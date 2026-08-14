@@ -10,6 +10,7 @@ const AUTHORED_PATTERN: Array[String] = [
 func test_plover_is_a_four_point_high_commitment_egg() -> void:
 	assert_eq(ChickenDay.PLOVER_TOUGHNESS, 6)
 	assert_eq(ChickenDay.PLOVER_POINTS, 4)
+	assert_eq(ChickenDay.egg_definition("plover").effect, "screen_left")
 
 
 func test_finite_daily_pool_exposes_only_the_next_three_eggs() -> void:
@@ -57,6 +58,23 @@ func test_day_exposes_the_three_fixed_spoon_circuits() -> void:
 	])
 	assert_eq(state.pipe[2].toughness, 5)
 	assert_eq(state.pipe[2].points, 4)
+
+
+func test_hairpin_machine_exposes_five_independent_paired_column_levers() -> void:
+	var eggs: Array[String] = ["chicken", "chicken", "chicken"]
+	var day = ChickenDay.new(eggs, 15, 10)
+
+	assert_eq(day.snapshot().slots.size(), 10)
+	assert_eq(day.snapshot().circuits, [
+		{"id": "red", "slot_indices": [0, 9]},
+		{"id": "blue", "slot_indices": [1, 8]},
+		{"id": "green", "slot_indices": [2, 7]},
+		{"id": "purple", "slot_indices": [3, 6]},
+		{"id": "pink", "slot_indices": [4, 5]},
+	])
+	var events: Array[Dictionary] = day.resolve_circuit("red")
+	assert_eq(events[0].slot_indices, [0, 9])
+	assert_eq(events[0].occupied_slot_indices, [0])
 
 
 func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
@@ -179,8 +197,10 @@ func test_pink_deals_two_damage_to_a_spoonbill_in_slot_five() -> void:
 
 
 func test_cuckoo_copies_the_full_two_damage_from_a_pink_struck_spoonbill() -> void:
-	var day = _new_authored_day()
-	for circuit_id in ["red", "blue", "red", "red", "blue", "red", "pink"]:
+	var day = ChickenDay.new([
+		"spoonbill", "cuckoo", "chicken", "chicken", "chicken", "chicken",
+	])
+	for circuit_id in ["red", "red", "blue", "red"]:
 		day.resolve_circuit(circuit_id)
 	assert_eq(day.snapshot().slots[3].kind, "cuckoo")
 	assert_eq(day.snapshot().slots[4].kind, "spoonbill")
@@ -199,26 +219,30 @@ func test_cuckoo_copies_the_full_two_damage_from_a_pink_struck_spoonbill() -> vo
 	assert_eq(damage_events[1].remaining_toughness, 0)
 
 
-func test_pink_still_rescues_a_surviving_plover_once() -> void:
-	var day = _new_authored_day()
-	for turn in range(7):
-		day.resolve_circuit("red")
-	day.resolve_circuit("blue")
+func test_surviving_directly_struck_plover_retreats_one_bay_to_screen_left() -> void:
+	var day = ChickenDay.new(["plover", "chicken", "chicken"])
 	day.resolve_circuit("red")
-	assert_eq(day.snapshot().slots[4].kind, "plover")
-	assert_eq(day.snapshot().slots[4].toughness, 5)
 
-	var events: Array[Dictionary] = day.resolve_circuit("pink")
+	var events: Array[Dictionary] = day.resolve_circuit("blue")
 	var state: Dictionary = day.snapshot()
 	var swaps := events.filter(
 		func(event: Dictionary) -> bool: return event.type == "eggs_swapped"
 	)
 
 	assert_eq(swaps.size(), 1)
-	assert_eq(swaps[0].from_slot_index, 4)
-	assert_eq(swaps[0].to_slot_index, 3)
-	assert_eq(state.slots[4].kind, "plover")
-	assert_eq(state.slots[4].toughness, 4)
+	assert_eq(swaps[0].from_slot_index, 1)
+	assert_eq(swaps[0].to_slot_index, 0)
+	assert_eq(swaps[0].direction, "screen_left")
+	assert_eq(state.slots[1].kind, "plover")
+	assert_eq(state.slots[1].toughness, 4)
+
+
+func test_hairpin_topology_defines_literal_screen_left_on_both_rows() -> void:
+	var destinations: Array[int] = []
+	for slot_index in range(10):
+		destinations.append(ChickenDay.screen_left_destination(slot_index, 10))
+
+	assert_eq(destinations, [-1, 0, 1, 2, 3, 6, 7, 8, 9, -1])
 
 
 func test_unhatched_egg_is_discarded_after_slot_five() -> void:

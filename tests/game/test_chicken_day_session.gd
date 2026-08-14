@@ -121,7 +121,7 @@ func test_success_banks_one_pound_per_remaining_thwack_exactly_once() -> void:
 	assert_eq(session.state().cash, 9)
 
 
-func test_selecting_an_offered_producer_starts_day_two_with_its_yield() -> void:
+func test_selecting_an_offered_producer_opens_the_workshop_before_day_two() -> void:
 	var session = _successful_day_session()
 	_complete_successful_day(session)
 	var before: Dictionary = session.state()
@@ -130,24 +130,73 @@ func test_selecting_an_offered_producer_starts_day_two_with_its_yield() -> void:
 	var events: Array[Dictionary] = session.select_producer(selected.kind)
 	var after: Dictionary = session.state()
 
-	assert_eq(events.map(func(event: Dictionary) -> String: return event.type), [
-		"producer_added", "day_started",
-	])
-	assert_eq(events[1].production.size(), after.producers.size())
-	assert_eq(events[1].target_score, 20)
-	assert_eq(events[1].production.reduce(
+	assert_eq(events.map(func(event: Dictionary) -> String: return event.type), ["producer_added"])
+	assert_eq(after.phase, "workshop")
+	assert_eq(after.day_number, 1)
+	assert_eq(after.producers.size(), before.producers.size() + 1)
+	assert_eq(after.daily_egg_count, before.daily_egg_count)
+	assert_true(after.reward_choices.is_empty())
+	assert_false(after.machine_refit_due)
+	assert_false(after.machine_refit_complete)
+
+	var day_events: Array[Dictionary] = session.continue_from_workshop()
+	var day_two: Dictionary = session.state()
+
+	assert_eq(day_events.map(func(event: Dictionary) -> String: return event.type), ["day_started"])
+	assert_eq(day_events[0].production.size(), day_two.producers.size())
+	assert_eq(day_events[0].target_score, 20)
+	assert_eq(day_events[0].production.reduce(
 		func(total: int, producer: Dictionary) -> int: return total + producer.daily_yield,
 		0
-	), after.daily_egg_count)
-	assert_true(events[1].production.all(func(producer: Dictionary) -> bool:
+	), day_two.daily_egg_count)
+	assert_true(day_events[0].production.all(func(producer: Dictionary) -> bool:
 		return producer.has_all(["kind", "daily_yield", "toughness", "points", "effect"])
 	))
-	assert_eq(after.phase, "day")
-	assert_eq(after.day_number, 2)
-	assert_eq(after.target_score, 20)
-	assert_eq(after.producers.size(), before.producers.size() + 1)
-	assert_eq(after.daily_egg_count, before.daily_egg_count + selected.daily_yield)
-	assert_true(after.reward_choices.is_empty())
+	assert_eq(day_two.phase, "day")
+	assert_eq(day_two.day_number, 2)
+	assert_eq(day_two.target_score, 20)
+	assert_eq(day_two.daily_egg_count, before.daily_egg_count + selected.daily_yield)
+	assert_eq(day_two.machine_slot_count, 5)
+
+
+func test_day_three_mandatorily_refits_every_run_to_the_ten_slot_hairpin() -> void:
+	var session = _successful_day_session()
+	_complete_successful_day(session)
+	session.select_producer(session.state().reward_choices[0].kind)
+	var day_two_events: Array[Dictionary] = session.continue_from_workshop()
+	assert_eq(day_two_events.map(func(event: Dictionary) -> String: return event.type), ["day_started"])
+	assert_eq(session.state().machine_slot_count, 5)
+
+	_complete_successful_day(session)
+	session.select_producer(session.state().reward_choices[0].kind)
+
+	var workshop: Dictionary = session.state()
+	assert_eq(workshop.phase, "workshop")
+	assert_eq(workshop.day_number, 2)
+	assert_true(workshop.machine_refit_due)
+	assert_false(workshop.machine_refit_complete)
+	var cash_before_refit: int = workshop.cash
+
+	var day_events: Array[Dictionary] = session.continue_from_workshop()
+
+	assert_eq(day_events.map(func(event: Dictionary) -> String: return event.type), [
+		"machine_refitted", "day_started",
+	])
+	assert_eq(day_events[0].slot_count, 10)
+	assert_eq(day_events[0].circuits, [
+		{"id": "red", "slot_indices": [0, 9]},
+		{"id": "blue", "slot_indices": [1, 8]},
+		{"id": "green", "slot_indices": [2, 7]},
+		{"id": "purple", "slot_indices": [3, 6]},
+		{"id": "pink", "slot_indices": [4, 5]},
+	])
+	assert_eq(day_events[0].day_number, 3)
+	assert_eq(day_events[1].day_number, 3)
+	assert_eq(day_events[1].slot_count, 10)
+	assert_eq(session.state().slots.size(), 10)
+	assert_eq(session.state().cash, cash_before_refit)
+	assert_true(session.state().machine_refit_complete)
+	assert_false(session.state().machine_refit_due)
 
 
 func test_banked_cash_persists_into_day_two() -> void:
@@ -156,6 +205,7 @@ func test_banked_cash_persists_into_day_two() -> void:
 	var selected: Dictionary = session.state().reward_choices[0]
 
 	session.select_producer(selected.kind)
+	session.continue_from_workshop()
 
 	assert_eq(session.state().day_number, 2)
 	assert_eq(session.state().cash, 9)
@@ -167,6 +217,7 @@ func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> voi
 	_complete_early_successful_day(session)
 	var selected: Dictionary = session.state().reward_choices[0]
 	session.select_producer(selected.kind)
+	session.continue_from_workshop()
 	var final_events: Array[Dictionary] = []
 
 	while session.state().phase == "day":
@@ -196,6 +247,7 @@ func test_restarting_day_two_preserves_its_twenty_point_target() -> void:
 	_complete_successful_day(session)
 	var selected: Dictionary = session.state().reward_choices[0]
 	session.select_producer(selected.kind)
+	session.continue_from_workshop()
 	session.submit_circuit("red")
 
 	session.restart()
