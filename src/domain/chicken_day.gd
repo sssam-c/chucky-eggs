@@ -80,9 +80,13 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		"circuit_id": circuit_id,
 		"slot_indices": circuit_slot_indices,
 		"occupied_slot_indices": occupied_slot_indices,
+		"sequential_strikes": _slots.size() == HAIRPIN_SLOT_COUNT,
 	}]
-	_damage_eggs(occupied_slot_indices, circuit_id, events)
-	_retreat_surviving_plovers_left(occupied_slot_indices, events)
+	if _slots.size() == HAIRPIN_SLOT_COUNT:
+		_resolve_hairpin_strikes(circuit_slot_indices, circuit_id, events)
+	else:
+		_damage_eggs(occupied_slot_indices, circuit_id, events)
+		_retreat_surviving_plovers_left(occupied_slot_indices, events)
 	_advance_conveyor(events)
 	_spend_thwack(events)
 
@@ -94,6 +98,33 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 			_end_day(events)
 
 	return events
+
+
+func _resolve_hairpin_strikes(
+	circuit_slot_indices: Array[int],
+	circuit_id: String,
+	events: Array[Dictionary]
+) -> void:
+	# The lower row is nearest the player. One telescoping spoon therefore hits
+	# the second circuit slot first, resolves that live state completely, then
+	# retracts to the upper-row slot. The second strike must not use the occupancy
+	# captured when the lever was pulled: the first strike may hatch or move eggs.
+	var strike_slots: Array[int] = [circuit_slot_indices[1], circuit_slot_indices[0]]
+	var phases: Array[String] = ["near", "far"]
+	for strike_index in range(strike_slots.size()):
+		var slot_index := strike_slots[strike_index]
+		var occupied := not _slots[slot_index].is_empty()
+		events.append({
+			"type": "spoon_struck",
+			"circuit_id": circuit_id,
+			"slot_index": slot_index,
+			"phase": phases[strike_index],
+			"occupied": occupied,
+		})
+		if not occupied:
+			continue
+		_damage_eggs([slot_index], circuit_id, events)
+		_retreat_surviving_plovers_left([slot_index], events)
 
 
 func _circuit(circuit_id: String) -> Dictionary:

@@ -244,10 +244,50 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D024's paired carriage and tower presentation only. D024's five independent levers, column mappings, two-target ceiling, simultaneous damage batch, Day 3 timing, and future whole-column tool sockets remain.
 
+## D026 — Preserve spoon identity across the hairpin fall
+
+**Status:** accepted
+
+**Decision:** In each Day 3 double-spoon mechanism, the lower stored spoon continues to the lower, farther conveyor and the upper stored spoon lands on the upper conveyor. The authored poses may briefly overlap edge-on, but the two visible spoon identities must not cross. The shared shaft follows the outermost bowl throughout the fall. Both contacts remain one simultaneous direct-damage batch.
+
+**Reason:** Sending the upper stored spoon past the lower one made the final geometry impossible to reconcile with the resting mechanism, even when foreshortening communicated depth. Direct spatial correspondence makes both destinations predictable and lets the player read one continuous physical action.
+
+**Supersedes:** D025's presentation in which the original far/upper stored bowl became the lower/front impact bowl. D025's double-bowled wall mechanism, authored fall, paired mappings, clink feedback, and simultaneous resolver behaviour remain.
+
+## D027 — Map the lower wall spoon to the farther belt
+
+**Status:** accepted
+
+**Decision:** In each Day 3 double-spoon mechanism, the lower spoon on the wall contacts the upper, visually farther conveyor. The upper wall spoon travels the longer projected arc to the lower, visually nearer conveyor. The shared shaft continues to the outermost bowl during the fall, and both contacts remain one simultaneous direct-damage batch.
+
+**Reason:** “Farther conveyor” describes scene depth, not the lower row's greater screen-space distance from the hinge. The lower wall spoon has the shorter physical arc and therefore belongs to the farther belt; reversing that relationship makes the mechanism impossible to reconcile spatially.
+
+**Supersedes:** D026's wall-spoon-to-belt correspondence. D025's original correspondence is restored; all paired mappings, authored-frame presentation, clink feedback, and resolver behaviour remain.
+
+## D028 — Make both hairpin spoons traceable
+
+**Status:** accepted
+
+**Decision:** Present each Day 3 column as two wall spoons on adjacent shafts sharing one pivot rather than two bowls on one continuous shaft. Slightly offset both shafts and bowl centres through the edge-on pose, then converge them onto their aligned egg crowns. The shorter lower-wall spoon contacts the upper, visually farther belt around the first clink while the longer upper-wall spoon is still travelling to the lower, visually nearer belt. Both hits remain one simultaneous direct-damage batch, and the complete paired mechanism remains one future positional tool socket.
+
+**Reason:** Swapping internal bowl identities did not change the visible silhouette: the renderer drew the same two unmarked bowls, collapsed them onto one edge-on centre, and exposed only one shaft. Two persistent shaft tracks make the wall-to-belt correspondence mechanically inspectable, while a brief first-contact cue turns the existing clink order into visible depth feedback.
+
+**Supersedes:** D025 and D027's single continuous-shaft presentation only. D027's lower-wall-to-farther-belt mapping, all paired circuit mappings, the two-target ceiling, clink feedback, and simultaneous resolver behaviour remain.
+
+## D029 — Resolve one telescoping spoon near first, then far
+
+**Status:** accepted
+
+**Decision:** Keep the universal Day 3 hairpin, five independent column levers, and their 1+10, 2+9, 3+8, 4+7, and 5+6 mappings. Replace each two-spoon mechanism with one ordinary single-bowl spoon pinned to the wall on a telescoping handle. A pull first extends the still-upright spoon on the wall, then tips it onto the lower, visually nearer bay. Resolve its direct damage, Cuckoo echoes, hatches, and surviving Plover retreat completely. The spoon then returns fully upright, retracts on the wall, and performs a second complete throw onto the upper, visually farther bay, resolving that hit against the resulting live state. Both contacts occur even when empty. Only after both contacts does the belt advance once and the action spend one thwack; meeting the score target on the near hit does not skip the far hit.
+
+**Reason:** The paired and double-bowled versions repeatedly made the resting and falling geometry difficult to reconcile and left tool identity ambiguous. One familiar bowl has a stable silhouette and preserves the forceful Days 1–2 landing. Its visible extension and retraction explain both reach and timing, while full resolution between contacts creates a readable two-stage interaction with useful engine-building potential.
+
+**Supersedes:** D024–D028's paired/double-spoon presentation and simultaneous Day 3 damage batch, and restores D023's extending single-spoon direction with explicit near-first/far-second timing. The hairpin route, five independent mappings, two-target ceiling, Pink weakness, Plover screen-left rule, one conveyor advance, and one-thwack cost remain.
+
 <!--
 Copy for the next entry:
 
-## D026 — Short decision title
+## D030 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

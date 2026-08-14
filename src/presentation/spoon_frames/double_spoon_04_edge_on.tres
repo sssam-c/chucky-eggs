@@ -6,6 +6,8 @@
 script = ExtResource("1_frame")
 near_offset = Vector2(0, 0)
 far_offset = Vector2(0, 0)
+near_track_x = -7.0
+far_track_x = 7.0
 near_radii = Vector2(30, 9)
 far_radii = Vector2(38, 11)
 tipped_amount = 0.55

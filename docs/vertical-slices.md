@@ -6,7 +6,7 @@ This file describes current implementation and learning scope. It does not overr
 
 ### Question
 
-Does a mandatory ten-bay hairpin with five independent double-bowled wall spoons make Day 3 feel like meaningful factory growth while keeping route direction and target ownership understandable at a glance?
+Does a mandatory ten-bay hairpin with five independent telescoping spoons make Day 3 feel like meaningful factory growth while keeping route direction, target ownership, and two-hit resolution understandable at a glance?
 
 ### Settled rules preserved
 
@@ -18,11 +18,11 @@ Does a mandatory ten-bay hairpin with five independent double-bowled wall spoons
 
 ### Hypothesis
 
-Folding the conveyor into two touching five-bay runs before Day 3 should turn flock growth into a visible factory milestone without forcing the player to evaluate foundational topology as a shop upgrade. Replacing the three shared circuits with five independent double-bowled wall spoons should make each lever's two targets physically obvious, retain the starting line's maximum two direct hits per thwack, and create five future whole-utensil engine-building sockets. Literal screen-left Plover retreats may remain intuitive across both rows if route arrows clearly distinguish them from normal belt travel.
+Folding the conveyor into two touching five-bay runs before Day 3 should turn flock growth into a visible factory milestone without forcing the player to evaluate foundational topology as a shop upgrade. Replacing the three shared circuits with five independent telescoping spoons should make each lever's two targets physically obvious, retain the starting line's maximum two direct hits per thwack, and create five future whole-mechanism engine-building sockets. Resolving the near hit before the far hit may create satisfying two-stage combinations without making the board harder to parse.
 
 ### Player-visible path
 
-Complete Days 1 and 2 on the five-bay line. After the Day 2 producer choice, see the workshop announce a free mandatory refit. Start Day 3 and read the route as 1→5 across the top, through a tight target-free bend, then 6→10 returning left to the drop. Pull Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, or Pink 5+6. Watch one wall-hinged utensil tip both of its bowls onto the two egg crowns, with the farther clink arriving just before the nearer one. Strike surviving Plovers on both rows and compare their screen-left retreat with the belt's subsequent route movement.
+Complete Days 1 and 2 on the five-bay line. After the Day 2 producer choice, see the workshop announce a free mandatory refit. Start Day 3 and read the route as 1→5 across the top, through a tight target-free bend, then 6→10 returning left to the drop. Pull Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, or Pink 5+6. Watch one upright spoon extend on the wall, thwack the lower near egg, return upright and retract, then thwack the upper far egg before the belt advances once.
 
 ### In scope
 
@@ -30,7 +30,8 @@ Complete Days 1 and 2 on the five-bay line. After the Day 2 producer choice, see
 - The established workshop phase between producer selection and next-day flock loading.
 - Persistent five- or ten-slot day construction with resolver-authored control maps.
 - Ten saved-scene bays arranged into touching upper and lower runs, joined by an untargetable right-hand bend and ending at a left-side drop.
-- Five wall-hinged double-bowled spoons mapped by aligned screen columns to ten logical strike positions, with one continuous handle and two simultaneous bowls per utensil and no buckets or bend targets.
+- Five wall-hinged telescoping spoons mapped by aligned screen columns to ten logical strike positions, with one traceable bowl, one pivot, and no buckets or bend targets.
+- Resolver-authored near-then-far strike facts, with damage, echoes, hatches, and Plover movement completed after each contact against live state.
 - Five independent hairpin levers and conduits replacing the starting machine's three shared circuit controls.
 - Resolver-owned screen-left Plover destinations for both top and bottom rows, including no retreat from slots 1 and 10.
 - Route-vector presentation for rightward, downward, and leftward conveyor movement and Plover swaps without moving rule ownership out of the resolver.
@@ -40,7 +41,7 @@ Complete Days 1 and 2 on the five-bay line. After the Day 2 producer choice, see
 
 - The refit occurs immediately on the Day 3 transition without a dedicated construction animation.
 - Day 3 retains the current 20-point later-day target; hairpin-specific difficulty tuning waits for playtest evidence.
-- The upper and lower conveyor casings touch as a compact double-decker machine. Five colour-and-symbol levers sit directly beneath their spoons, eggs sit directly on the belt, and each double-bowled utensil visibly contacts both egg crowns in its paired column. A presentation-only two-clink cue gives the farther bowl a slight lead without splitting the damage batch.
+- The upper and lower conveyor casings touch as a compact double-decker machine. Five colour-and-symbol levers sit directly beneath their spoons, eggs sit directly on the belt, and each single bowl visibly visits both egg crowns in its column.
 
 ### Outside this slice
 
@@ -51,9 +52,9 @@ Complete Days 1 and 2 on the five-bay line. After the Day 2 producer choice, see
 
 ### Exit evidence
 
-- Domain tests prove the exact five-slot circuit and ten-slot paired-column maps, full Plover screen-left topology, damage order, adjacency, movement, and discard.
+- Domain tests prove the exact five-slot circuit and ten-slot paired-column maps, near-resolve-far ordering against live state, full Plover screen-left topology, adjacency, movement, and discard.
 - Session tests prove Days 1–2 remain at five slots, the workshop reports the due refit, Day 3 installs it exactly once for free, and resolved refit facts precede the new day.
-- UI tests prove all ten saved bays form two aligned rows, exactly five double-bowled wall spoons and five levers exist, every utensil has one continuous handle, exposes two aligned crown-contact points, keeps its stored bowls clear of the eggs, and layers only its bowls in front at impact; every hairpin bay uses the bare-belt presentation, accessibility exposes all five paired mappings, a hairpin Red press fires its one physical utensil once, and input unlocks after playback.
+- UI tests prove all ten saved bays form two aligned rows, exactly five single-bowl telescoping mechanisms and five levers exist, every mechanism exposes both aligned crown-contact points, uses one bowl through the full sequence, and layers only its bowl in front at impact; every hairpin bay uses the bare-belt presentation, accessibility exposes all five mappings, a hairpin Red press fires its one physical mechanism once, and input unlocks after playback.
 - A 1280×720 running-game render verifies the continuous hairpin, visible right/down/left route arrows, target-free bend, below-machine controls, left drop, and lack of overlap with the persistent HUD. A 1024×576 window check verifies the project's reference-canvas scaling path without clipping.
 - A short playtest asks: “Could you predict where each egg would move, see each spoon reach both rows, and tell where a Plover would retreat on either row?”
 

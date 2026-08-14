@@ -77,6 +77,79 @@ func test_hairpin_machine_exposes_five_independent_paired_column_levers() -> voi
 	assert_eq(events[0].occupied_slot_indices, [0])
 
 
+func test_hairpin_resolves_near_bay_completely_before_striking_far_bay() -> void:
+	# After these setup turns the Spoonbill is in near slot 6 and the Cuckoo is
+	# in far slot 5 on Pink's column. The Cuckoo has one toughness remaining.
+	var day = ChickenDay.new([
+		"spoonbill", "cuckoo", "chicken", "chicken", "chicken", "chicken",
+	], 1, ChickenDay.HAIRPIN_SLOT_COUNT)
+	for circuit_id in ["red", "red", "blue", "green", "red"]:
+		day.resolve_circuit(circuit_id)
+	assert_eq(day.snapshot().slots[5].kind, "spoonbill")
+	assert_eq(day.snapshot().slots[4].kind, "cuckoo")
+	assert_eq(day.snapshot().slots[4].toughness, 1)
+
+	var events: Array[Dictionary] = day.resolve_circuit("pink")
+	var strike_events := events.filter(
+		func(event: Dictionary) -> bool: return event.type == "spoon_struck"
+	)
+	var damage_events := events.filter(
+		func(event: Dictionary) -> bool: return event.type == "egg_damaged"
+	)
+
+	assert_eq(strike_events.map(func(event: Dictionary) -> String: return event.phase), [
+		"near", "far",
+	])
+	assert_eq(strike_events.map(func(event: Dictionary) -> int: return event.slot_index), [5, 4])
+	assert_true(strike_events[0].occupied)
+	assert_false(strike_events[1].occupied)
+	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.slot_index), [5, 4])
+	assert_eq(damage_events.map(func(event: Dictionary) -> String: return event.cause), [
+		"spoon", "cuckoo_echo",
+	])
+	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.damage_amount), [2, 2])
+	var near_strike_index := events.find(strike_events[0])
+	var hatch_index := events.find(events.filter(
+		func(event: Dictionary) -> bool: return event.type == "egg_hatched"
+	)[0])
+	var far_strike_index := events.find(strike_events[1])
+	assert_lt(near_strike_index, hatch_index)
+	assert_lt(hatch_index, far_strike_index)
+	assert_eq(events.filter(
+		func(event: Dictionary) -> bool: return event.type == "conveyor_advanced"
+	).size(), 1)
+	assert_eq(events.filter(
+		func(event: Dictionary) -> bool: return event.type == "thwack_spent"
+	).size(), 1)
+	assert_true(day.snapshot().ended)
+	assert_true(day.snapshot().succeeded)
+
+
+func test_hairpin_near_plover_retreats_before_the_far_strike() -> void:
+	var day = ChickenDay.new([
+		"plover", "chicken", "chicken", "chicken", "chicken", "chicken",
+	], 99, ChickenDay.HAIRPIN_SLOT_COUNT)
+	for circuit_id in ["red", "red", "red", "red", "red"]:
+		day.resolve_circuit(circuit_id)
+
+	var events: Array[Dictionary] = day.resolve_circuit("pink")
+	var near_strike_index := -1
+	var retreat_index := -1
+	var far_strike_index := -1
+	for event_index in range(events.size()):
+		var event: Dictionary = events[event_index]
+		if event.type == "spoon_struck" and event.phase == "near":
+			near_strike_index = event_index
+		elif event.type == "eggs_swapped":
+			retreat_index = event_index
+		elif event.type == "spoon_struck" and event.phase == "far":
+			far_strike_index = event_index
+
+	assert_gte(near_strike_index, 0)
+	assert_gt(retreat_index, near_strike_index)
+	assert_gt(far_strike_index, retreat_index)
+
+
 func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
 	var day = _new_authored_day()
 

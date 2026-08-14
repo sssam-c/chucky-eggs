@@ -320,13 +320,13 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		if state.machine_refit_due:
 			_workshop_summary_label.text = "The growing flock has outgrown the first line. Every factory refits before Day 3."
 			_workshop_config_title.text = "TEN-BAY HAIRPIN REFIT"
-			_workshop_config_detail.text = "Five wall-hinged spoons gain a second bowl, striking both eggs in their aligned column."
-			_workshop_status_label.text = "FIVE DOUBLE-BOWLED SPOONS  •  TWO TARGETS EACH"
+			_workshop_config_detail.text = "Five spoons extend upright, hit near, reset and retract, then hit far."
+			_workshop_status_label.text = "FIVE TELESCOPING SPOONS  •  TWO SEQUENTIAL HITS"
 			_continue_workshop_button.text = "REFIT & START DAY 3"
 		elif state.machine_refit_complete:
 			_workshop_summary_label.text = "The hairpin line is cleared for tomorrow's flock."
 			_workshop_config_title.text = "TEN-BAY HAIRPIN"
-			_workshop_config_detail.text = "Each lever tips one double-bowled spoon; the right-hand bend is transport only."
+			_workshop_config_detail.text = "Each lever extends one spoon to the near row, resolves it, then retracts to the far row."
 			_workshop_status_label.text = "1+10  •  2+9  •  3+8  •  4+7  •  5+6"
 		else:
 			_workshop_summary_label.text = "The five-bay line is cleared for tomorrow's flock."
@@ -395,7 +395,7 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 		_hammers[hammer_index].visible = true
 		_hammers[hammer_index].scale = Vector2.ONE
 		_hammers[hammer_index].set_bowl_scale(1.0)
-		_hammers[hammer_index].clear_double_bowled_spoon()
+		_hammers[hammer_index].clear_telescoping_spoon()
 		if hairpin:
 			_hammers[hammer_index].position = Vector2.ZERO
 			_hammers[hammer_index].size = Vector2(1280.0, 560.0)
@@ -411,7 +411,7 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 				_hammers[hammer_index].get_global_transform().affine_inverse()
 				* bottom_target_global
 			)
-			_hammers[hammer_index].configure_double_bowled_spoon(
+			_hammers[hammer_index].configure_telescoping_spoon(
 				top_target_local,
 				bottom_target_local
 			)

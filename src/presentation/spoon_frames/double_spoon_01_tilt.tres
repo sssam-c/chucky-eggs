@@ -6,6 +6,8 @@
 script = ExtResource("1_frame")
 near_offset = Vector2(0, -45)
 far_offset = Vector2(0, -118)
+near_track_x = -7.0
+far_track_x = 7.0
 near_radii = Vector2(24, 33)
 far_radii = Vector2(25, 35)
 near_collar_direction = Vector2(0, 1)

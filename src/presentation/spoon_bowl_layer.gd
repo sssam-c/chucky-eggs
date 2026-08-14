@@ -10,21 +10,23 @@ func _draw() -> void:
 	var spoon := get_parent()
 	if not spoon.has_method("bowl_visuals"):
 		return
-	var handle: Dictionary = spoon.foreground_handle_visual()
-	if not handle.is_empty():
+	for handle: Dictionary in spoon.foreground_handle_visuals():
 		var visibility: float = handle.visibility
+		var width_scale: float = handle.get("width_scale", 1.0)
 		# Every falling asset draws its shaft and bowls in one pass. The authored
 		# contact asset alone omits this foreground shaft so egg occlusion can put
 		# the same handle back on the wall plane without exposing a gap in flight.
-		draw_line(handle.from, handle.to, Color(0.04, 0.04, 0.05, visibility), 13.0, true)
-		draw_line(handle.from, handle.to, Color(0.62, 0.64, 0.63, visibility), 8.0, true)
+		draw_line(handle.from, handle.to, Color(0.04, 0.04, 0.05, visibility), 13.0 * width_scale, true)
+		draw_line(handle.from, handle.to, Color(0.62, 0.64, 0.63, visibility), 8.0 * width_scale, true)
 		draw_line(
-			handle.from - Vector2(2.0, 0.0),
-			handle.to - Vector2(2.0, 0.0),
+			handle.from - Vector2(1.5, 0.0),
+			handle.to - Vector2(1.5, 0.0),
 			Color(1.0, 0.95, 0.84, 0.46 * visibility),
-			2.0,
+			1.5,
 			true
 		)
+		if handle.get("telescoping", false):
+			_draw_telescoping_collars(handle.from, handle.to, visibility)
 	for visual: Dictionary in spoon.bowl_visuals():
 		_draw_bowl(visual.center, visual.radii, visual.tipped_amount)
 		if visual.get("draw_neck", false):
@@ -34,6 +36,33 @@ func _draw() -> void:
 				visual.get("collar_direction", Vector2.DOWN),
 				visual.get("neck_scale", 1.0)
 			)
+		var impact_emphasis: float = visual.get("impact_emphasis", 0.0)
+		if impact_emphasis > 0.001:
+			_draw_impact_marks(visual.center, visual.radii, impact_emphasis)
+
+
+func _draw_telescoping_collars(from: Vector2, to: Vector2, visibility: float) -> void:
+	for progress in [0.28, 0.48, 0.68]:
+		var center := from.lerp(to, progress)
+		var outer := Rect2(center - Vector2(11.0, 4.5), Vector2(22.0, 9.0))
+		var inner := Rect2(center - Vector2(8.0, 2.5), Vector2(16.0, 5.0))
+		draw_rect(outer, Color(0.13, 0.08, 0.03, visibility), true)
+		draw_rect(outer, Color(0.62, 0.36, 0.12, visibility), false, 2.0)
+		draw_rect(inner, Color(0.78, 0.48, 0.18, visibility), true)
+
+
+func _draw_impact_marks(center: Vector2, radii: Vector2, emphasis: float) -> void:
+	var color := Color(1.0, 0.76, 0.28, emphasis)
+	for side in [-1.0, 1.0]:
+		var origin := center + Vector2(side * (radii.x + 2.0), radii.y * 0.18)
+		draw_line(origin, origin + Vector2(side * 8.0, 5.0), color, 2.5, true)
+		draw_line(
+			origin + Vector2(side * 1.0, -4.0),
+			origin + Vector2(side * 6.0, -8.0),
+			color,
+			2.0,
+			true
+		)
 
 
 func _draw_bowl_neck(
@@ -42,9 +71,9 @@ func _draw_bowl_neck(
 	direction: Vector2,
 	neck_scale: float
 ) -> void:
-	# Both bowls have a visible manufactured socket into the shared shaft. At the
+	# Both bowls have a visible manufactured socket into their own shaft. At the
 	# exact edge-on frame direction is zero, so the sockets compress into brass
-	# bands across the single narrow silhouette instead of jumping sides.
+	# bands across the narrow paired silhouette instead of jumping sides.
 	var collar_center := center
 	if not direction.is_zero_approx():
 		collar_center += direction * (radii.y + 4.0)

@@ -4,6 +4,7 @@ extends Node
 signal event_presented(event_type: String)
 signal playback_finished
 signal hammer_fired(slot_index: int)
+signal spoon_motion_phase_reached(phase: String)
 signal hatch_payoff_started(slot_index: int, points_awarded: int)
 signal score_committed(points_awarded: int, score: int)
 signal _animation_step_released
@@ -93,14 +94,6 @@ func play_events(events: Array[Dictionary]) -> bool:
 		if not completed or playback_generation != _generation:
 			return false
 		event_presented.emit(event.type)
-		if _is_direct_spoon_damage(event):
-			var next_is_direct_damage := (
-				event_index + 1 < events.size()
-				and _is_direct_spoon_damage(events[event_index + 1])
-			)
-			if not next_is_direct_damage:
-				if not await _recover_held_mechanism(playback_generation):
-					return false
 
 	if not await _recover_held_mechanism(playback_generation):
 		return false
@@ -151,6 +144,8 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 	match event.type:
 		"circuit_fired":
 			return await _present_circuit(event, playback_generation)
+		"spoon_struck":
+			return await _present_spoon_strike(event, playback_generation)
 		"egg_damaged":
 			return await _present_damage(event, playback_generation)
 		"egg_hatched":
@@ -158,6 +153,8 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 		"eggs_swapped":
 			return await _present_swap(event, playback_generation)
 		"conveyor_advanced":
+			if not await _recover_held_mechanism(playback_generation):
+				return false
 			return await _present_conveyor(event, playback_generation)
 		"egg_discarded":
 			return await _present_loss(playback_generation)
@@ -208,22 +205,36 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 		fired_hammer_indices.append(hammer_index)
 		fired_hammers.append(_hammers[hammer_index])
 		hammer_fired.emit(hammer_index)
-	var holds_through_damage := fired_hammers.any(func(hammer: Control) -> bool:
-		return hammer.has_method("is_double_bowled_spoon") and hammer.is_double_bowled_spoon()
-	)
+	var holds_through_damage: bool = event.get("sequential_strikes", false)
 	if holds_through_damage:
-		_play(_double_clink_player)
 		_held_circuit_button = circuit_button
 		_held_hammers.assign(fired_hammers)
+		if _reduced_motion:
+			circuit_button.set_press_amount(1.0)
+			for hammer: Control in fired_hammers:
+				hammer.extension_amount = 1.0
+			spoon_motion_phase_reached.emit("extended_on_wall")
+			return true
+
+		var lever_pull := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		lever_pull.tween_property(circuit_button, "press_amount", 1.0, 0.12)
+		if not await _run_tween(lever_pull, playback_generation):
+			return false
+		var wall_extension := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		for hammer: Control in fired_hammers:
+			wall_extension.parallel().tween_property(hammer, "extension_amount", 1.0, 0.18)
+		if not await _run_tween(wall_extension, playback_generation):
+			return false
+		spoon_motion_phase_reached.emit("extended_on_wall")
+		return true
 
 	if _reduced_motion:
 		circuit_button.set_press_amount(1.0)
 		for hammer: Control in fired_hammers:
 			hammer.set_strike_amount(1.0)
-		if not holds_through_damage:
-			circuit_button.reset_pose()
-			for hammer: Control in fired_hammers:
-				hammer.reset_pose()
+		circuit_button.reset_pose()
+		for hammer: Control in fired_hammers:
+			hammer.reset_pose()
 		return true
 
 	var anticipation := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -232,11 +243,9 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 		anticipation.parallel().tween_property(hammer, "strike_amount", -0.10, 0.055)
 	if not await _run_tween(anticipation, playback_generation):
 		return false
-
-	# The authored double-spoon strip needs enough screen refreshes to expose its
-	# complete silhouettes. Its poses already contain the acceleration, so play
-	# them linearly while retaining the quicker eased strike for early-day spoons.
-	var strike_duration := 0.14 if holds_through_damage else 0.075
+	# Every spoon now shares the authored landing strip. Its poses already contain
+	# the acceleration, so give all line layouts the same linear 140 ms cadence.
+	var strike_duration := 0.14
 	var strike := create_tween()
 	strike.tween_property(circuit_button, "press_amount", 1.0, strike_duration).set_trans(
 		Tween.TRANS_QUAD
@@ -248,14 +257,9 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 			1.0,
 			strike_duration
 		)
-		hammer_strike.set_trans(
-			Tween.TRANS_LINEAR if holds_through_damage else Tween.TRANS_QUAD
-		).set_ease(Tween.EASE_IN)
+		hammer_strike.set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN)
 	if not await _run_tween(strike, playback_generation):
 		return false
-	if holds_through_damage:
-		return true
-
 	var recovery := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	recovery.tween_property(circuit_button, "press_amount", 0.0, 0.14)
 	for hammer: Control in fired_hammers:
@@ -263,11 +267,50 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 	return await _run_tween(recovery, playback_generation)
 
 
-func _is_direct_spoon_damage(event: Dictionary) -> bool:
-	return (
-		String(event.get("type", "")) == "egg_damaged"
-		and String(event.get("cause", "spoon")) == "spoon"
-	)
+func _present_spoon_strike(event: Dictionary, playback_generation: int) -> bool:
+	if _held_hammers.is_empty():
+		return false
+	var hammer: Control = _held_hammers[0]
+	var phase := String(event.get("phase", ""))
+	if phase == "near":
+		if _reduced_motion:
+			hammer.set_strike_amount(1.0)
+			spoon_motion_phase_reached.emit("near_contact")
+			return true
+		var strike := create_tween().set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN)
+		strike.tween_property(hammer, "strike_amount", 1.0, 0.18)
+		if not await _run_tween(strike, playback_generation):
+			return false
+		_play(_double_clink_player)
+		spoon_motion_phase_reached.emit("near_contact")
+		return true
+	if phase == "far":
+		if _reduced_motion:
+			hammer.set_strike_amount(0.0)
+			spoon_motion_phase_reached.emit("returned_to_wall")
+			hammer.extension_amount = 0.0
+			spoon_motion_phase_reached.emit("retracted_on_wall")
+			hammer.set_strike_amount(1.0)
+			spoon_motion_phase_reached.emit("far_contact")
+			return true
+		var wall_return := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		wall_return.tween_property(hammer, "strike_amount", 0.0, 0.16)
+		if not await _run_tween(wall_return, playback_generation):
+			return false
+		spoon_motion_phase_reached.emit("returned_to_wall")
+		var retract := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		retract.tween_property(hammer, "extension_amount", 0.0, 0.14)
+		if not await _run_tween(retract, playback_generation):
+			return false
+		spoon_motion_phase_reached.emit("retracted_on_wall")
+		var far_strike := create_tween().set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_IN)
+		far_strike.tween_property(hammer, "strike_amount", 1.0, 0.14)
+		if not await _run_tween(far_strike, playback_generation):
+			return false
+		_play(_double_clink_player)
+		spoon_motion_phase_reached.emit("far_contact")
+		return true
+	return false
 
 
 func _recover_held_mechanism(playback_generation: int) -> bool:

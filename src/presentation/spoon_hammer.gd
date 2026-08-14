@@ -8,8 +8,13 @@ extends Control
 const DEFAULT_SINGLE_CONTACT := Vector2(85.0, 170.0)
 const SINGLE_HINGE_TO_CONTACT := 16.0
 const SINGLE_STORED_RISE := 96.0
+const WALL_EXTENSION_PROJECTION := 26.0
 const STORED_BOWL_RADII := Vector2(31.0, 43.0)
 const CONTACT_BOWL_RADII := Vector2(48.0, 15.0)
+const SINGLE_FRAME_BOWL_SCALE := Vector2(
+	STORED_BOWL_RADII.x / 24.0,
+	STORED_BOWL_RADII.y / 34.0
+)
 const DOUBLE_SPOON_FRAMES := [
 	preload("res://src/presentation/spoon_frames/double_spoon_00_stored.tres"),
 	preload("res://src/presentation/spoon_frames/double_spoon_01_tilt.tres"),
@@ -27,15 +32,21 @@ const DOUBLE_SPOON_FRAMES := [
 var strike_amount := 0.0:
 	set(value):
 		strike_amount = clampf(value, -0.12, 1.0)
-		# A double spoon keeps its one rigid handle on the wall layer. Only its
-		# bowls pass in front of the eggs, so the shaft never cuts across them.
-		z_index = 0 if _has_double_bowled_spoon else (5 if strike_amount >= 0.5 else 0)
+		# Every handle stays on the wall plane at contact. The shared bowl layer
+		# alone crosses in front of eggs, so both layouts land bowl-first.
+		z_index = 0
+		_sync_bowl_layer()
+		queue_redraw()
+
+var extension_amount := 0.0:
+	set(value):
+		extension_amount = clampf(value, 0.0, 1.0)
 		_sync_bowl_layer()
 		queue_redraw()
 
 var _bowl_size_scale := 1.0
-var _has_double_bowled_spoon := false
-var _double_targets: Array[Vector2] = []
+var _has_telescoping_spoon := false
+var _telescoping_targets: Array[Vector2] = []
 var _single_contact_target := DEFAULT_SINGLE_CONTACT
 
 
@@ -51,49 +62,34 @@ func set_strike_amount(amount: float) -> void:
 
 func reset_pose() -> void:
 	strike_amount = 0.0
+	extension_amount = 0.0
 
 
 func pivot_global_position() -> Vector2:
-	if _has_double_bowled_spoon:
-		return get_global_transform() * _double_hinge()
 	return get_global_transform() * _single_hinge()
 
 
 func stored_bowl_global_position() -> Vector2:
-	if _has_double_bowled_spoon:
-		return stored_bowl_global_positions()[0]
 	return get_global_transform() * _single_stored_bowl()
 
 
 func stored_bowl_global_positions() -> Array[Vector2]:
-	if not _has_double_bowled_spoon:
-		return [stored_bowl_global_position()]
-	var points: Array[Vector2] = []
-	for head: Vector2 in _double_bowl_positions(0.0):
-		points.append(get_global_transform() * head)
-	return points
+	return [stored_bowl_global_position()]
 
 
 func current_bowl_global_positions() -> Array[Vector2]:
-	if not _has_double_bowled_spoon:
-		return [get_global_transform() * _single_bowl_position(strike_amount)]
-	var points: Array[Vector2] = []
-	for head: Vector2 in _double_bowl_positions(strike_amount):
-		points.append(get_global_transform() * head)
-	return points
+	return [get_global_transform() * _single_bowl_position(strike_amount)]
 
 
 func contact_bowl_global_position() -> Vector2:
-	if _has_double_bowled_spoon:
-		return get_global_transform() * _double_targets[0]
-	return get_global_transform() * _single_contact_target
+	return get_global_transform() * _active_contact_target()
 
 
 func contact_points_global() -> Array[Vector2]:
-	if not _has_double_bowled_spoon:
+	if not _has_telescoping_spoon:
 		return [contact_bowl_global_position()]
 	var points: Array[Vector2] = []
-	for target: Vector2 in _double_targets:
+	for target: Vector2 in _telescoping_targets:
 		points.append(get_global_transform() * target)
 	return points
 
@@ -109,10 +105,11 @@ func bowl_scale() -> float:
 
 
 func configure_wall_spoon(contact_target: Vector2) -> void:
-	_has_double_bowled_spoon = false
-	_double_targets.clear()
+	_has_telescoping_spoon = false
+	_telescoping_targets.clear()
 	_single_contact_target = contact_target
-	z_index = 5 if strike_amount >= 0.5 else 0
+	extension_amount = 0.0
+	z_index = 0
 	_sync_bowl_layer()
 	queue_redraw()
 
@@ -129,99 +126,95 @@ func contact_bowl_screen_size() -> Vector2:
 	return CONTACT_BOWL_RADII * 2.0 * _bowl_size_scale
 
 
-func configure_double_bowled_spoon(top_target: Vector2, bottom_target: Vector2) -> void:
-	_has_double_bowled_spoon = true
-	_double_targets.assign([top_target, bottom_target])
+func configure_telescoping_spoon(far_target: Vector2, near_target: Vector2) -> void:
+	_has_telescoping_spoon = true
+	_telescoping_targets.assign([far_target, near_target])
+	_single_contact_target = far_target
+	extension_amount = 0.0
 	z_index = 0
 	_sync_bowl_layer()
 	queue_redraw()
 
 
-func clear_double_bowled_spoon() -> void:
-	_has_double_bowled_spoon = false
-	_double_targets.clear()
+func clear_telescoping_spoon() -> void:
+	_has_telescoping_spoon = false
+	_telescoping_targets.clear()
+	extension_amount = 0.0
 	z_index = 0
 	_sync_bowl_layer()
 	queue_redraw()
 
 
-func is_double_bowled_spoon() -> bool:
-	return _has_double_bowled_spoon
+func is_telescoping_spoon() -> bool:
+	return _has_telescoping_spoon
 
 
-func has_continuous_handle() -> bool:
-	return _has_double_bowled_spoon
+func has_paired_handles() -> bool:
+	return false
 
 
-func uses_authored_double_spoon_frames() -> bool:
+func uses_authored_landing_frames() -> bool:
 	return true
 
 
-func double_spoon_frame_count() -> int:
+func landing_frame_count() -> int:
 	return DOUBLE_SPOON_FRAMES.size()
 
 
-func double_spoon_frame_index() -> int:
+func landing_frame_index() -> int:
 	return roundi(
 		clampf(strike_amount, 0.0, 1.0) * float(DOUBLE_SPOON_FRAMES.size() - 1)
 	)
+
+
+func uses_authored_double_spoon_frames() -> bool:
+	return uses_authored_landing_frames()
+
+
+func double_spoon_frame_count() -> int:
+	return landing_frame_count()
+
+
+func double_spoon_frame_index() -> int:
+	return landing_frame_index()
 
 
 func bowl_foreground_z_index() -> int:
 	return _bowl_layer.z_index if is_instance_valid(_bowl_layer) else 0
 
 
-func foreground_handle_visual() -> Dictionary:
-	if not _has_double_bowled_spoon:
-		return {}
-	var frame: DoubleSpoonFrame = DOUBLE_SPOON_FRAMES[double_spoon_frame_index()]
+func foreground_handle_visuals() -> Array[Dictionary]:
+	var frame: DoubleSpoonFrame = DOUBLE_SPOON_FRAMES[landing_frame_index()]
 	var visibility := frame.foreground_handle_visibility
 	if visibility <= 0.001:
-		return {}
-	return {
-		"from": _double_hinge(),
-		"to": _double_bowl_positions(strike_amount)[1],
+		return []
+	return [{
+		"from": _single_hinge(),
+		"to": _single_bowl_position(strike_amount),
+		"spoon_identity": "telescoping" if _has_telescoping_spoon else "single",
 		"visibility": visibility,
-	}
+		"width_scale": 1.0,
+		"telescoping": _has_telescoping_spoon,
+	}]
 
 
 func is_foreground_handle_visible() -> bool:
-	return not foreground_handle_visual().is_empty()
+	return not foreground_handle_visuals().is_empty()
 
 
 func bowl_visuals() -> Array[Dictionary]:
-	var eased := smoothstep(0.0, 1.0, maxf(strike_amount, 0.0))
-	if not _has_double_bowled_spoon:
-		return [{
-			"center": _single_bowl_position(strike_amount),
-			"radii": STORED_BOWL_RADII.lerp(CONTACT_BOWL_RADII, eased) * _bowl_size_scale,
-			"tipped_amount": eased,
-		}]
-	# Each pose is a complete authored silhouette. Selecting a saved frame avoids
-	# independently interpolating the bowls and shaft through an impossible 2D
-	# approximation of the utensil's turn toward the player.
-	var frame: DoubleSpoonFrame = DOUBLE_SPOON_FRAMES[double_spoon_frame_index()]
-	var centers := _double_bowl_positions(strike_amount)
-	return [
-		{
-			"center": centers[0],
-			"radii": frame.near_radii * _bowl_size_scale,
-			"tipped_amount": frame.tipped_amount,
-			"tracked_far_bowl": false,
-			"draw_neck": true,
-			"neck_scale": 0.76,
-			"collar_direction": frame.near_collar_direction,
-		},
-		{
-			"center": centers[1],
-			"radii": frame.far_radii * _bowl_size_scale,
-			"tipped_amount": frame.tipped_amount,
-			"tracked_far_bowl": true,
-			"draw_neck": true,
-			"neck_scale": 1.0,
-			"collar_direction": frame.far_collar_direction,
-		},
-	]
+	var frame: DoubleSpoonFrame = DOUBLE_SPOON_FRAMES[landing_frame_index()]
+	var radii := frame.near_radii * SINGLE_FRAME_BOWL_SCALE
+	if landing_frame_index() == DOUBLE_SPOON_FRAMES.size() - 1:
+		radii = CONTACT_BOWL_RADII
+	return [{
+		"center": _single_bowl_position(strike_amount),
+		"radii": radii * _bowl_size_scale,
+		"tipped_amount": frame.tipped_amount,
+		"draw_neck": true,
+		"neck_scale": 1.0,
+		"collar_direction": frame.near_collar_direction,
+	}]
 
 
 func is_idle_back_facing() -> bool:
@@ -229,9 +222,6 @@ func is_idle_back_facing() -> bool:
 
 
 func _draw() -> void:
-	if _has_double_bowled_spoon:
-		_draw_double_bowled_spoon()
-		return
 	_draw_wall_spoon()
 
 
@@ -245,11 +235,15 @@ func _draw_wall_spoon() -> void:
 	draw_rect(Rect2(hinge - Vector2(27.0, 20.0), Vector2(54.0, 42.0)), Color("895326"), false, 4.0)
 	draw_line(hinge + Vector2(-22.0, 15.0), hinge + Vector2(22.0, 15.0), circuit_color.darkened(0.12), 4.0, true)
 
-	# Foreshortening reverses the handle across the fixed hinge and shortens it
-	# as the spoon points almost straight at the player.
-	draw_line(hinge, head, Color("0b0c0e"), 15.0, true)
-	draw_line(hinge, head, Color("9da09e"), 9.0, true)
-	draw_line(hinge - Vector2(2.0, 0.0), head - Vector2(2.0, 0.0), Color(1.0, 0.95, 0.84, 0.48), 2.0, true)
+	# The authored fall draws handle and bowl together. At final contact the bowl
+	# remains in front while this copy of the shaft returns behind the egg.
+	var frame: DoubleSpoonFrame = DOUBLE_SPOON_FRAMES[landing_frame_index()]
+	if frame.foreground_handle_visibility <= 0.001:
+		draw_line(hinge, head, Color("0b0c0e"), 15.0, true)
+		draw_line(hinge, head, Color("9da09e"), 9.0, true)
+		draw_line(hinge - Vector2(2.0, 0.0), head - Vector2(2.0, 0.0), Color(1.0, 0.95, 0.84, 0.48), 2.0, true)
+		if _has_telescoping_spoon:
+			_draw_telescoping_collars(hinge, head)
 
 	# The repeated symbol keeps linked Red and Blue spoons distinguishable
 	# without adding labels to the mechanism.
@@ -265,67 +259,57 @@ func _single_hinge() -> Vector2:
 
 
 func _single_stored_bowl() -> Vector2:
-	return _single_hinge() - Vector2(0.0, SINGLE_STORED_RISE)
+	var projected_extension := 0.0
+	if _has_telescoping_spoon:
+		projected_extension = WALL_EXTENSION_PROJECTION * extension_amount
+	return _single_hinge() - Vector2(0.0, SINGLE_STORED_RISE + projected_extension)
 
 
 func _single_bowl_position(amount: float) -> Vector2:
-	if amount < 0.0:
-		return _single_stored_bowl() + Vector2(0.0, amount * 18.0)
-	return _single_stored_bowl().lerp(
-		_single_contact_target,
-		smoothstep(0.0, 1.0, amount)
-	)
-
-
-func _draw_double_bowled_spoon() -> void:
-	if _double_targets.size() != 2:
-		return
-	var hinge := _double_hinge()
-	var bowls := _double_bowl_positions(strike_amount)
-	var far_bowl: Vector2 = bowls[1]
-	var frame: DoubleSpoonFrame = DOUBLE_SPOON_FRAMES[double_spoon_frame_index()]
-
-	# The mount always stays on the wall. The complete authored utensil is drawn
-	# together on the bowl layer during the fall. At final contact only, its shaft
-	# returns here behind the eggs while the two striking bowls stay in front.
-	draw_rect(Rect2(hinge - Vector2(27.0, 20.0), Vector2(54.0, 42.0)), Color("111316"), true)
-	draw_rect(Rect2(hinge - Vector2(27.0, 20.0), Vector2(54.0, 42.0)), Color("895326"), false, 4.0)
-	if frame.foreground_handle_visibility <= 0.001:
-		draw_line(hinge, far_bowl, Color("0b0c0e"), 15.0, true)
-		draw_line(hinge, far_bowl, Color("9da09e"), 9.0, true)
-		draw_line(hinge - Vector2(2.0, 0.0), far_bowl - Vector2(2.0, 0.0), Color(1.0, 0.95, 0.84, 0.48), 2.0, true)
-	draw_line(hinge - Vector2(24.0, 0.0), hinge + Vector2(24.0, 0.0), Color("0b0c0e"), 17.0, true)
-	draw_line(hinge - Vector2(21.0, 0.0), hinge + Vector2(21.0, 0.0), Color("b77836"), 10.0, true)
-	draw_circle(hinge, 13.0, Color("111316"))
-	draw_circle(hinge, 9.0, circuit_color.darkened(0.10))
-	_draw_circuit_symbol(hinge, circuit_color.lightened(0.38))
-
-
-func _double_hinge() -> Vector2:
-	if _double_targets.size() != 2:
-		return _single_hinge()
-	return _double_targets[0] - Vector2(0.0, SINGLE_HINGE_TO_CONTACT)
-
-
-func _double_bowl_positions(amount: float) -> Array[Vector2]:
-	if _double_targets.size() != 2:
-		return []
-	var hinge := _double_hinge()
-	var frame_index := double_spoon_frame_index()
+	var frame_index := landing_frame_index()
 	if frame_index == DOUBLE_SPOON_FRAMES.size() - 1:
-		return _double_targets.duplicate()
+		return _active_contact_target()
 	var frame: DoubleSpoonFrame = DOUBLE_SPOON_FRAMES[frame_index]
+	var offset := frame.near_offset
+	if offset.y < 0.0:
+		offset.y *= SINGLE_STORED_RISE / 50.0
 	var anticipation_lift := Vector2(0.0, amount * 18.0) if amount < 0.0 else Vector2.ZERO
-	return [
-		hinge + frame.near_offset + anticipation_lift,
-		hinge + frame.far_offset + anticipation_lift,
-	]
+	var extension_shift := Vector2.ZERO
+	if _has_telescoping_spoon and _telescoping_targets.size() == 2:
+		var row_reach := _telescoping_targets[0].distance_to(_telescoping_targets[1])
+		var projected_length := lerpf(
+			WALL_EXTENSION_PROJECTION,
+			row_reach,
+			smoothstep(0.45, 1.0, frame.tipped_amount)
+		)
+		# The extra length is foreshortened to zero as the spoon faces edge-on,
+		# then appears below the pivot as the underside turns toward the player.
+		extension_shift.y = (
+			-cos(PI * frame.tipped_amount) * projected_length * extension_amount
+		)
+	return _single_hinge() + offset + extension_shift + anticipation_lift
+
+
+func _active_contact_target() -> Vector2:
+	if not _has_telescoping_spoon or _telescoping_targets.size() != 2:
+		return _single_contact_target
+	return _telescoping_targets[0].lerp(_telescoping_targets[1], extension_amount)
+
+
+func _draw_telescoping_collars(from: Vector2, to: Vector2) -> void:
+	for progress in [0.28, 0.48, 0.68]:
+		var center := from.lerp(to, progress)
+		var outer := Rect2(center - Vector2(11.0, 4.5), Vector2(22.0, 9.0))
+		var inner := Rect2(center - Vector2(8.0, 2.5), Vector2(16.0, 5.0))
+		draw_rect(outer, Color("211308"), true)
+		draw_rect(outer, Color("9e5c1e"), false, 2.0)
+		draw_rect(inner, Color("c47a2d"), true)
 
 
 func _sync_bowl_layer() -> void:
 	if not is_instance_valid(_bowl_layer):
 		return
-	_bowl_layer.z_index = 6 if _has_double_bowled_spoon and strike_amount >= 0.5 else 0
+	_bowl_layer.z_index = 6 if strike_amount >= 0.5 else 0
 	_bowl_layer.queue_redraw()
 func _draw_circuit_symbol(center: Vector2, color: Color) -> void:
 	match circuit_symbol:

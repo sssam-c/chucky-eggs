@@ -26,7 +26,7 @@ After a successful day, bank the unused-thwack payout, inspect three distinct pr
 - Days 1 and 2 use five ordered conveyor slots. Slot 1 receives eggs and slot 5 begins beside the drop.
 - Before Day 3, every run receives an automatic, free factory refit. It is a progression milestone rather than a shop purchase and remains installed for later days.
 - The refitted conveyor has ten ordered slots in a tight screen-width hairpin. Slots 1–5 travel left-to-right across the upper run, the untargetable bend carries eggs downward, and slots 6–10 return right-to-left underneath. The drop is beside slot 10.
-- The hairpin has five independent wall-hinged double-bowled spoons, one per screen column. Each is one rigid utensil with two bowls fixed at different distances along a continuous handle; tipping it toward the player makes the two convex undersides strike its aligned upper and lower bays. Eggs sit directly on the two touching conveyor runs; the bend contains no egg bay.
+- The hairpin has five independent wall-hinged telescoping spoons, one per screen column. After its lever is pulled, each ordinary single bowl extends while upright on the wall, slams onto the lower, visually nearer bay, returns upright, retracts on the wall, then slams onto the aligned upper, visually farther bay. Eggs sit directly on the two touching conveyor runs; the bend contains no egg bay.
 - The starting flock has five Chicken producers, three Cuckoo producers, and two Plover producers.
 - Each Chicken producer lays two eggs per day. Each Cuckoo and Plover producer lays one, producing a daily pool of 15 eggs.
 - A Spoonbill producer also lays one egg per day.
@@ -52,17 +52,15 @@ Each turn, the player must activate one available spoon control:
 
 Resolve the thwack in this order:
 
-1. Fire every spoon in the chosen circuit and reduce the toughness of every egg beneath those spoons by 1 as one simultaneous direct-damage batch.
-2. For each directly damaged egg, reduce the toughness of every Cuckoo immediately ahead of or behind it by the same amount. A Cuckoo beside a Pink-struck Spoonbill therefore takes 2 echo damage.
-3. Apply the entire damage batch before resolving hatches. Cuckoo echo damage does not create further echoes.
-4. Hatch every egg that reached 0 toughness in conveyor order, remove it, and gain its points.
-5. In conveyor order, each surviving directly struck Plover swaps with the egg or empty bay immediately to its screen-left when that bay exists. On the hairpin, slots 1 and 10 have no leftward destination.
-6. Advance every surviving conveyor egg one slot.
-7. Discard any egg that moves past the machine's final slot without scoring.
-8. Spend one of the day's 20 thwacks.
-9. If the score now meets or exceeds the target, end the day immediately, discard every remaining egg without scoring, and bank £1 for each unused thwack.
-10. Otherwise, if thwacks remain, drop the next hopper egg into slot 1 if one remains and refill the visible pipe preview.
-11. End the day as a failure if no eggs remain in either the hopper or conveyor. Otherwise, continue until the twentieth thwack.
+1. On the starting line, fire every spoon in the chosen circuit and apply their direct damage as one simultaneous batch. Apply each resulting Cuckoo echo, hatch every egg that reached 0 toughness in conveyor order, then retreat each surviving directly struck Plover.
+2. On the hairpin, extend the chosen spoon to the lower, visually nearer bay. Apply that direct damage and its Cuckoo echoes, resolve all resulting hatches, then retreat a surviving directly struck Plover. Retract the same bowl to the upper, visually farther bay and repeat the complete sequence using the live state left by the first hit. Both taps occur even when their bay is empty, and reaching the target on the first hit never skips the second.
+3. Cuckoo echo damage does not create further echoes. A Cuckoo beside a Pink-struck Spoonbill takes 2 echo damage.
+4. Advance every surviving conveyor egg one slot.
+5. Discard any egg that moves past the machine's final slot without scoring.
+6. Spend one of the day's 20 thwacks.
+7. If the score now meets or exceeds the target, end the day immediately, discard every remaining egg without scoring, and bank £1 for each unused thwack.
+8. Otherwise, if thwacks remain, drop the next hopper egg into slot 1 if one remains and refill the visible pipe preview.
+9. End the day as a failure if no eggs remain in either the hopper or conveyor. Otherwise, continue until the twentieth thwack.
 
 Hatching an egg never prevents the conveyor from advancing. Partially damaged eggs retain their remaining toughness until they hatch or are discarded.
 
@@ -70,7 +68,7 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 
 - **Thwack:** The player's single action for a turn and the unit of day time.
 - **Spoon circuit:** A fixed group of one or more colour-matched spoons that always fire together.
-- **Double-bowled spoon:** One Day 3 utensil with two bowls fixed at different distances along the same wall-hinged handle. Pulling its lever strikes the two aligned hairpin bays as one simultaneous direct-damage batch.
+- **Telescoping spoon:** One Day 3 wall-hinged spoon with one bowl and an extending handle. Pulling its lever hits the near bay, fully resolves it, returns and retracts on the wall, then hits the far bay.
 - **Toughness:** The number of further thwacks an egg needs before it hatches.
 - **Adjacent:** Immediately ahead of or behind an egg in conveyor order. Visual proximity does not create adjacency.
 - **Behind:** One slot closer to the pipe in conveyor order.
