@@ -120,6 +120,52 @@ static func pipe() -> AudioStreamWAV:
 	)
 
 
+static func ui_focus() -> AudioStreamWAV:
+	return _build_stream(0.055, 401, func(t: float, sample_index: int) -> float:
+		var tick := _noise(sample_index, 401) * exp(-62.0 * t) * 0.16
+		var enamel := sin(TAU * 1540.0 * t) * exp(-48.0 * t) * 0.13
+		return (tick + enamel) * 0.58
+	)
+
+
+static func ui_press() -> AudioStreamWAV:
+	return _build_stream(0.075, 419, func(t: float, sample_index: int) -> float:
+		var latch := sin(TAU * 190.0 * t) * exp(-40.0 * t) * 0.30
+		var click := _noise(sample_index, 419) * exp(-68.0 * t) * 0.23
+		return (latch + click) * 0.62
+	)
+
+
+static func ui_confirm() -> AudioStreamWAV:
+	return _build_stream(0.18, 433, func(t: float, sample_index: int) -> float:
+		var coin := _noise(sample_index, 433) * exp(-66.0 * t) * 0.15
+		var first := sin(TAU * 880.0 * t) * exp(-23.0 * t) * 0.19
+		var second_time := maxf(t - 0.052, 0.0)
+		var second := sin(TAU * 1320.0 * second_time) * _pulse(t, 0.052, 0.11) * 0.18
+		return (coin + first + second) * 0.66
+	)
+
+
+static func ui_reject() -> AudioStreamWAV:
+	return _build_stream(0.19, 461, func(t: float, sample_index: int) -> float:
+		var first := sin(TAU * 132.0 * t) * exp(-31.0 * t) * 0.31
+		var first_click := _noise(sample_index, 461) * exp(-70.0 * t) * 0.18
+		var second_time := maxf(t - 0.082, 0.0)
+		var second := sin(TAU * 112.0 * second_time) * _pulse(t, 0.082, 0.08) * 0.34
+		return (first + first_click + second) * 0.68
+	)
+
+
+static func ui_panel() -> AudioStreamWAV:
+	return _build_stream(0.22, 487, func(t: float, sample_index: int) -> float:
+		var latch := sin(TAU * 164.0 * t) * exp(-30.0 * t) * 0.25
+		var slide := _noise(sample_index, 487) * _pulse(t, 0.025, 0.12) * 0.07
+		var stop_time := maxf(t - 0.135, 0.0)
+		var stop := sin(TAU * 118.0 * stop_time) * _pulse(t, 0.135, 0.075) * 0.28
+		return (latch + slide + stop) * 0.62
+	)
+
+
 static func _build_stream(duration: float, seed: int, sampler: Callable) -> AudioStreamWAV:
 	var sample_count := int(ceil(duration * MIX_RATE))
 	var pcm := PackedByteArray()

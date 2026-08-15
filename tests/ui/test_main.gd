@@ -2,6 +2,9 @@ extends GutTest
 
 const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 const ProducerFlock = preload("res://src/domain/producer_flock.gd")
+const MotionTokens = preload("res://src/presentation/motion_tokens.gd")
+const BirdPortrait = preload("res://src/ui/bird_portrait.gd")
+const EggVisual = preload("res://src/ui/egg_visual.gd")
 const AUTHORED_DAILY_EGGS: Array[String] = [
 	"chicken", "cuckoo", "chicken", "spoonbill",
 	"cuckoo", "plover", "chicken", "chicken",
@@ -24,6 +27,60 @@ class IdentityShuffler:
 
 	func shuffle_dictionaries(values: Array[Dictionary]) -> Array[Dictionary]:
 		return values.duplicate(true)
+
+
+func test_each_species_selects_distinct_illustrated_portrait_and_egg_art() -> void:
+	var portrait := BirdPortrait.new()
+	var egg_visual := EggVisual.new()
+	add_child_autofree(portrait)
+	add_child_autofree(egg_visual)
+
+	if not portrait.has_method("artwork_region") or not egg_visual.has_method("artwork_region"):
+		fail_test("Species visuals must expose their illustrated atlas selection.")
+		return
+
+	var portrait_regions: Array[Rect2] = []
+	var egg_regions: Array[Rect2] = []
+	for kind in ["chicken", "cuckoo", "plover", "spoonbill"]:
+		portrait.set_bird_kind(kind)
+		egg_visual.set_egg({"kind": kind, "toughness": 3, "max_toughness": 3, "points": 1})
+		var portrait_region: Rect2 = portrait.artwork_region()
+		var egg_region: Rect2 = egg_visual.artwork_region()
+		assert_true(portrait_region.has_area())
+		assert_true(egg_region.has_area())
+		assert_false(portrait_regions.has(portrait_region))
+		assert_false(egg_regions.has(egg_region))
+		portrait_regions.append(portrait_region)
+		egg_regions.append(egg_region)
+
+	assert_true(ResourceLoader.exists("res://assets/generated/bird_portraits_v1.png"))
+	assert_true(ResourceLoader.exists("res://assets/generated/egg_shells_v1.png"))
+
+
+func test_machine_materials_and_ambience_respect_reduced_motion() -> void:
+	var main := _add_main()
+	var stage: Control = main.get_node("Content/Stage/Workshop")
+	if not stage.has_method("material_texture_count"):
+		fail_test("The machine must expose its material texture integration.")
+		return
+	assert_eq(stage.material_texture_count(), 2)
+	assert_true(ResourceLoader.exists("res://assets/generated/dark_timber_v1.png"))
+	assert_true(ResourceLoader.exists("res://assets/generated/cast_iron_v1.png"))
+
+	var ambience = main.get_node_or_null("Content/Stage/Ambience")
+	assert_not_null(ambience)
+	if ambience == null:
+		return
+	assert_gt(ambience.mote_count(), 0)
+	assert_true(ambience.is_motion_active())
+
+	main.set_reduced_motion(true)
+	assert_true(ambience.is_reduced_motion())
+	assert_false(ambience.is_motion_active())
+
+	main.set_reduced_motion(false)
+	assert_false(ambience.is_reduced_motion())
+	assert_true(ambience.is_motion_active())
 
 
 func test_main_renders_initial_day_and_shell_information() -> void:
@@ -542,6 +599,51 @@ func test_mute_and_reduced_motion_controls_update_presentation() -> void:
 	assert_true(main.is_reduced_motion())
 	assert_true(main.get_node("Content/Accessibility/Mute").button_pressed)
 	assert_true(main.get_node("Content/Accessibility/ReducedMotion").button_pressed)
+	assert_true(main.get_node("Presentation/UIFeedback").is_muted())
+	assert_true(main.get_node("Presentation/UIFeedback").is_reduced_motion())
+
+
+func test_ui_feedback_uses_shared_motion_tokens_and_cancellable_control_motion() -> void:
+	var main := _add_main()
+	var feedback = main.get_node("Presentation/UIFeedback")
+	var action: Button = main.get_node("ResultOverlay/Card/Content/Restart")
+
+	assert_lt(MotionTokens.SNAP, MotionTokens.SETTLE)
+	assert_lt(MotionTokens.SETTLE, MotionTokens.REVEAL)
+	assert_true(feedback.is_control_registered(action))
+	assert_true(feedback.is_control_registered(
+		main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1")
+	))
+	assert_gte(feedback.registered_control_count(), 16)
+
+	main.set_reduced_motion(false)
+	action.button_down.emit()
+	assert_true(feedback.is_control_animating(action))
+	main.set_reduced_motion(true)
+	assert_false(feedback.is_control_animating(action))
+	assert_eq(action.scale, Vector2.ONE)
+
+
+func test_resolved_hud_facts_trigger_non_blocking_ui_feedback() -> void:
+	var main := _add_main()
+	main.set_reduced_motion(false)
+	var feedback = main.get_node("Presentation/UIFeedback")
+	var kinds: Array[String] = []
+	feedback.feedback_presented.connect(
+		func(kind: String) -> void: kinds.append(kind)
+	)
+
+	await _press_and_wait(main, "RedCircuit")
+
+	assert_true("thwacks" in kinds)
+	assert_true("hopper" in kinds)
+	assert_true(feedback.has_active_motion())
+	main.set_reduced_motion(true)
+	assert_false(feedback.has_active_motion())
+	assert_eq(main.get_node("Content/Header/Thwacks").scale, Vector2.ONE)
+	assert_eq(main.get_node("Content/Header/HopperCount").scale, Vector2.ONE)
+	assert_eq(main.get_node("Content/Header/Thwacks").modulate, Color.WHITE)
+	assert_eq(main.get_node("Content/Header/HopperCount").modulate, Color.WHITE)
 
 
 func test_crunch_audio_streams_are_present_and_non_empty() -> void:
@@ -552,6 +654,11 @@ func test_crunch_audio_streams_are_present_and_non_empty() -> void:
 		var player: AudioStreamPlayer = audio_root.get_node(player_name)
 		assert_not_null(player.stream, "%s has a stream" % player_name)
 		assert_gt(player.stream.data.size(), 1000, "%s stream contains PCM data" % player_name)
+	var ui_audio_root: Node = main.get_node("Presentation/UIFeedback/Audio")
+	for player_name in ["Focus", "Press", "Confirm", "Reject", "Panel"]:
+		var player: AudioStreamPlayer = ui_audio_root.get_node(player_name)
+		assert_not_null(player.stream, "%s UI sound has a stream" % player_name)
+		assert_gt(player.stream.data.size(), 1000, "%s UI sound contains PCM data" % player_name)
 
 
 func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
@@ -569,10 +676,70 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	assert_true(main.get_node("ResultOverlay/Card/Content/Restart").visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Restart").text, "RETRY DAY 1")
 	assert_eq(main.get_node("ResultOverlay/Card/Content/CashPayout").text, "NO CASH EARNED  •  BALANCE £0")
+	assert_eq(
+		main.get_node("ResultOverlay/Card/Content/FlockSummary").text,
+		"FLOCK 1 PRODUCER  •  DAILY OUTPUT 1 EGG"
+	)
 
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 	assert_false(result_panel.visible)
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
+
+
+func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void:
+	var main := _add_authored_main()
+	main.set_reduced_motion(true)
+
+	await _complete_successful_day(main, false)
+	await get_tree().process_frame
+
+	var result_overlay: Control = main.get_node("ResultOverlay")
+	var result_card: Control = main.get_node("ResultOverlay/Card")
+	assert_true(result_overlay.visible)
+	assert_false(main.get_node("WorkshopOverlay").visible)
+	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY 1 COMPLETE")
+	assert_string_contains(
+		main.get_node("ResultOverlay/Card/Content/ResultScore").text,
+		"TARGET MET"
+	)
+	assert_string_contains(
+		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
+		"BALANCE £8"
+	)
+	assert_string_contains(
+		main.get_node("ResultOverlay/Card/Content/FlockSummary").text,
+		"FLOCK 24"
+	)
+	for panel_path in ["HeaderRack", "LedgerPanel", "ActionWell"]:
+		assert_true(result_card.get_global_rect().encloses(
+			main.get_node("ResultOverlay/Card/Content/%s" % panel_path).get_global_rect()
+		))
+	var action: Button = main.get_node("ResultOverlay/Card/Content/Restart")
+	assert_eq(action.text, "ENTER THE GENERAL STORE")
+	assert_true(action.has_focus())
+	assert_false(main.is_result_transition_active())
+
+	action.pressed.emit()
+	await get_tree().process_frame
+
+	assert_false(result_overlay.visible)
+	assert_true(main.get_node("WorkshopOverlay").visible)
+	assert_true(main.get_node(
+		"WorkshopOverlay/Card/Content/RewardChoices/Choice1"
+	).has_focus())
+
+
+func test_result_reveal_is_cancelled_when_the_session_is_replaced() -> void:
+	var main := _add_authored_main()
+	main.set_reduced_motion(false)
+
+	await _complete_successful_day(main, false)
+
+	assert_true(main.is_result_transition_active())
+	main.replace_session(ChickenDaySession.new())
+	await get_tree().process_frame
+	assert_false(main.is_result_transition_active())
+	assert_false(main.get_node("ResultOverlay").visible)
 
 
 func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void:
@@ -632,6 +799,48 @@ func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void
 		assert_true(shop_card.get_global_rect().encloses(
 			(main.get_node(shop_section_path) as Control).get_global_rect()
 		), "%s stays inside the shop card" % shop_section_path)
+	var header_rack: Control = main.get_node("WorkshopOverlay/Card/Content/HeaderRack")
+	for header_path in ["Title", "WorkshopBalance", "WorkshopSummary"]:
+		assert_true(header_rack.get_global_rect().encloses(
+			(main.get_node("WorkshopOverlay/Card/Content/%s" % header_path) as Control).get_global_rect()
+		), "%s stays inside the store header" % header_path)
+	var recruitment_panel: Control = main.get_node(
+		"WorkshopOverlay/Card/Content/RecruitmentPanel"
+	)
+	assert_true(recruitment_panel.get_global_rect().encloses(choices.get_global_rect()))
+	for choice: Button in choices.get_children():
+		assert_gte(choice.custom_minimum_size.x, 320.0)
+		assert_gte(choice.custom_minimum_size.y, 200.0)
+	assert_true(main.get_node(
+		"WorkshopOverlay/Card/Content/ManagementPanel"
+	).get_global_rect().encloses(
+		main.get_node("WorkshopOverlay/Card/Content/MergeActions").get_global_rect()
+	))
+	assert_true(main.get_node(
+		"WorkshopOverlay/Card/Content/FlockLedger"
+	).get_global_rect().encloses(
+		main.get_node("WorkshopOverlay/Card/Content/RetirementActions").get_global_rect()
+	))
+
+
+func test_store_motion_is_cancellable_and_reduced_motion_opens_immediately() -> void:
+	var main := _add_authored_main()
+	main.set_reduced_motion(false)
+
+	await _complete_successful_day(main)
+
+	assert_true(main.get_node("WorkshopOverlay").visible)
+	assert_true(main.is_workshop_transition_active())
+	main.replace_session(ChickenDaySession.new())
+	await get_tree().process_frame
+	assert_false(main.is_workshop_transition_active())
+	assert_false(main.get_node("WorkshopOverlay").visible)
+
+	main = _add_authored_main()
+	main.set_reduced_motion(true)
+	await _complete_successful_day(main)
+	assert_true(main.get_node("WorkshopOverlay").visible)
+	assert_false(main.is_workshop_transition_active())
 
 
 func test_early_success_shows_unused_thwack_payout_and_persistent_balance() -> void:
@@ -653,6 +862,10 @@ func test_early_success_shows_unused_thwack_payout_and_persistent_balance() -> v
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text,
 		"BALANCE £10"
 	)
+	assert_true(main.get_node("ResultOverlay").visible)
+	assert_false(main.get_node("WorkshopOverlay").visible)
+	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
+	await get_tree().process_frame
 	assert_true(main.get_node("WorkshopOverlay").visible)
 
 
@@ -683,6 +896,21 @@ func test_shop_allows_multiple_purchases_then_leave_starts_day_two() -> void:
 	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £5")
 	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "1 MERGE QUEUED")
 	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "PAIR QUEUED")
+	var ui_feedback = main.get_node("Presentation/UIFeedback")
+	assert_eq(ui_feedback.last_feedback_kind(), "confirm")
+	var extra_thwack: Button = main.get_node(
+		"WorkshopOverlay/Card/Content/MergeActions/ExtraThwack"
+	)
+	extra_thwack.pressed.emit()
+	await get_tree().process_frame
+	assert_eq(ui_feedback.last_feedback_kind(), "confirm")
+	extra_thwack.pressed.emit()
+	await get_tree().process_frame
+	assert_eq(ui_feedback.last_feedback_kind(), "reject")
+	assert_string_contains(
+		main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text,
+		"PURCHASE DECLINED"
+	)
 	assert_eq(
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").text,
 		"LEAVE SHOP & START DAY 2"
@@ -869,7 +1097,8 @@ func test_replacing_the_session_cancels_an_active_production_loading_sequence() 
 	)
 
 	main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").pressed.emit()
-	await get_tree().process_frame
+	while started_count[0] == 0:
+		await get_tree().process_frame
 	assert_eq(started_count[0], 1)
 	assert_true(main.is_input_locked())
 	assert_true(main.get_node("ProductionLoader").is_active())
@@ -893,7 +1122,7 @@ func _press_and_wait(main: Control, circuit_name: String) -> void:
 	await get_tree().process_frame
 
 
-func _complete_successful_day(main: Control) -> void:
+func _complete_successful_day(main: Control, acknowledge_result := true) -> void:
 	for circuit_name in [
 		"RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
 		"BlueCircuit", "RedCircuit", "PinkCircuit", "RedCircuit", "BlueCircuit",
@@ -905,6 +1134,13 @@ func _complete_successful_day(main: Control) -> void:
 		await _press_and_wait(main, circuit_name)
 		if main.get_node("ResultOverlay").visible or main.get_node("WorkshopOverlay").visible:
 			break
+	if (
+		acknowledge_result
+		and main.get_node("ResultOverlay").visible
+		and main.get_node("ResultOverlay/Card/Content/Result").text.contains("COMPLETE")
+	):
+		main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
+		await get_tree().process_frame
 
 
 func _add_main() -> Control:

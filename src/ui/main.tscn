@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=24 format=3]
 
 [ext_resource type="Script" path="res://src/ui/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" path="res://src/presentation/production_loader.tscn" id="11_loader"]
 [ext_resource type="Theme" path="res://src/ui/workshop_theme.tres" id="12_theme"]
 [ext_resource type="FontFile" path="res://addons/gut/fonts/LobsterTwo-Bold.ttf" id="13_display"]
+[ext_resource type="Script" path="res://src/presentation/ui_feedback.gd" id="14_feedback"]
+[ext_resource type="Script" path="res://src/presentation/workshop_ambience.gd" id="15_ambience"]
 
 [sub_resource type="StyleBoxFlat" id="TitlePlate"]
 bg_color = Color(0.075, 0.048, 0.038, 0.99)
@@ -82,21 +84,6 @@ shadow_color = Color(0, 0, 0, 0.48)
 shadow_size = 5
 shadow_offset = Vector2(0, 3)
 
-[sub_resource type="StyleBoxFlat" id="PanelResult"]
-bg_color = Color(0.91, 0.74, 0.43, 1)
-border_width_left = 6
-border_width_top = 6
-border_width_right = 6
-border_width_bottom = 8
-border_color = Color(0.29, 0.10, 0.07, 1)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-shadow_color = Color(0, 0, 0, 0.72)
-shadow_size = 18
-shadow_offset = Vector2(0, 10)
-
 [sub_resource type="StyleBoxFlat" id="RestartNormal"]
 bg_color = Color(0.58, 0.19, 0.09, 1)
 border_width_left = 3
@@ -120,6 +107,69 @@ corner_radius_top_left = 5
 corner_radius_top_right = 5
 corner_radius_bottom_right = 5
 corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StoreCabinet"]
+bg_color = Color(0.055, 0.038, 0.032, 0.995)
+border_width_left = 6
+border_width_top = 6
+border_width_right = 6
+border_width_bottom = 8
+border_color = Color(0.43, 0.26, 0.12, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.78)
+shadow_size = 20
+shadow_offset = Vector2(0, 9)
+
+[sub_resource type="StyleBoxFlat" id="StoreHeader"]
+bg_color = Color(0.09, 0.055, 0.042, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 4
+border_color = Color(0.53, 0.34, 0.16, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StoreSection"]
+bg_color = Color(0.075, 0.058, 0.052, 0.98)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 4
+border_color = Color(0.34, 0.23, 0.14, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StoreLedger"]
+bg_color = Color(0.12, 0.10, 0.085, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 4
+border_color = Color(0.55, 0.39, 0.20, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StoreStatus"]
+bg_color = Color(0.10, 0.17, 0.17, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.25, 0.63, 0.60, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [node name="Main" type="Control"]
 layout_mode = 3
@@ -308,6 +358,17 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("4_stage")
+
+[node name="Ambience" type="Control" parent="Content/Stage"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("15_ambience")
 
 [node name="Pipe" type="Control" parent="Content/Stage"]
 layout_mode = 0
@@ -693,6 +754,27 @@ text = "REDUCED MOTION"
 unique_name_in_owner = true
 script = ExtResource("3_presenter")
 
+[node name="UIFeedback" type="Node" parent="Presentation"]
+unique_name_in_owner = true
+script = ExtResource("14_feedback")
+
+[node name="Audio" type="Node" parent="Presentation/UIFeedback"]
+
+[node name="Focus" type="AudioStreamPlayer" parent="Presentation/UIFeedback/Audio"]
+volume_db = -8.0
+
+[node name="Press" type="AudioStreamPlayer" parent="Presentation/UIFeedback/Audio"]
+volume_db = -7.0
+
+[node name="Confirm" type="AudioStreamPlayer" parent="Presentation/UIFeedback/Audio"]
+volume_db = -5.0
+
+[node name="Reject" type="AudioStreamPlayer" parent="Presentation/UIFeedback/Audio"]
+volume_db = -5.0
+
+[node name="Panel" type="AudioStreamPlayer" parent="Presentation/UIFeedback/Audio"]
+volume_db = -7.0
+
 [node name="Audio" type="Node" parent="Presentation"]
 
 [node name="Lever" type="AudioStreamPlayer" parent="Presentation/Audio"]
@@ -718,7 +800,7 @@ script = ExtResource("3_presenter")
 [node name="ResultOverlay" type="Control" parent="."]
 unique_name_in_owner = true
 visible = false
-z_index = 100
+z_index = 120
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -733,7 +815,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.02, 0.015, 0.014, 0.82)
+color = Color(0.012, 0.009, 0.008, 0.94)
 
 [node name="Card" type="PanelContainer" parent="ResultOverlay"]
 layout_mode = 1
@@ -742,67 +824,121 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -240.0
-offset_top = -145.0
-offset_right = 240.0
-offset_bottom = 145.0
+offset_left = -380.0
+offset_top = -250.0
+offset_right = 380.0
+offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("PanelResult")
+theme_override_styles/panel = SubResource("StoreCabinet")
 
-[node name="Content" type="VBoxContainer" parent="ResultOverlay/Card"]
+[node name="Content" type="Control" parent="ResultOverlay/Card"]
 layout_mode = 2
-theme_override_constants/separation = 18
-alignment = 1
+
+[node name="HeaderRack" type="PanelContainer" parent="ResultOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 736.0
+offset_bottom = 112.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StoreHeader")
+
+[node name="LedgerPanel" type="PanelContainer" parent="ResultOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 122.0
+offset_right = 736.0
+offset_bottom = 356.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StoreLedger")
+
+[node name="ActionWell" type="PanelContainer" parent="ResultOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 366.0
+offset_right = 736.0
+offset_bottom = 476.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StoreSection")
 
 [node name="Result" type="Label" parent="ResultOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.27, 0.07, 0.04, 1)
-theme_override_font_sizes/font_size = 38
+layout_mode = 0
+offset_left = 30.0
+offset_top = 22.0
+offset_right = 718.0
+offset_bottom = 96.0
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+theme_override_fonts/font = ExtResource("13_display")
+theme_override_font_sizes/font_size = 44
 text = "DAY COMPLETE"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ResultScore" type="Label" parent="ResultOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.23, 0.13, 0.08, 1)
-theme_override_font_sizes/font_size = 24
+layout_mode = 0
+offset_left = 34.0
+offset_top = 138.0
+offset_right = 714.0
+offset_bottom = 190.0
+theme_override_colors/font_color = Color(0.56, 1, 0.94, 1)
+theme_override_font_sizes/font_size = 27
 text = "3 / 3 POINTS"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="CashPayout" type="Label" parent="ResultOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.44, 0.24, 0.06, 1)
-theme_override_font_sizes/font_size = 20
+layout_mode = 0
+offset_left = 34.0
+offset_top = 195.0
+offset_right = 714.0
+offset_bottom = 244.0
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+theme_override_font_sizes/font_size = 23
 text = "NO CASH EARNED  •  BALANCE £0"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Summary" type="Label" parent="ResultOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.30, 0.21, 0.14, 1)
-theme_override_font_sizes/font_size = 16
+layout_mode = 0
+offset_left = 44.0
+offset_top = 310.0
+offset_right = 704.0
+offset_bottom = 346.0
+theme_override_colors/font_color = Color(0.72, 0.69, 0.62, 1)
+theme_override_font_sizes/font_size = 15
 text = "The remaining eggs were discarded when the bell rang."
 horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 2
 
 [node name="FlockSummary" type="Label" parent="ResultOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.24, 0.12, 0.07, 1)
-theme_override_font_sizes/font_size = 17
+layout_mode = 0
+offset_left = 34.0
+offset_top = 252.0
+offset_right = 714.0
+offset_bottom = 300.0
+theme_override_colors/font_color = Color(0.93, 0.84, 0.68, 1)
+theme_override_font_sizes/font_size = 18
 text = "FLOCK 10 PRODUCERS  •  DAILY OUTPUT 15 EGGS"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Restart" type="Button" parent="ResultOverlay/Card/Content"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 58)
-layout_mode = 2
+layout_mode = 0
+offset_left = 124.0
+offset_top = 390.0
+offset_right = 624.0
+offset_bottom = 452.0
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 21
 theme_override_styles/normal = SubResource("RestartNormal")
 theme_override_styles/hover = SubResource("RestartHover")
 theme_override_styles/pressed = SubResource("RestartNormal")
@@ -827,7 +963,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.02, 0.015, 0.014, 0.82)
+color = Color(0.012, 0.009, 0.008, 0.94)
 
 [node name="Card" type="PanelContainer" parent="WorkshopOverlay"]
 layout_mode = 1
@@ -836,54 +972,121 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -580.0
-offset_top = -340.0
-offset_right = 580.0
-offset_bottom = 340.0
+offset_left = -620.0
+offset_top = -350.0
+offset_right = 620.0
+offset_bottom = 350.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_styles/panel = SubResource("PanelResult")
+theme_override_styles/panel = SubResource("StoreCabinet")
 
-[node name="Content" type="VBoxContainer" parent="WorkshopOverlay/Card"]
+[node name="Content" type="Control" parent="WorkshopOverlay/Card"]
 layout_mode = 2
-theme_override_constants/separation = 8
-alignment = 1
+
+[node name="HeaderRack" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = 1218.0
+offset_bottom = 80.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StoreHeader")
+
+[node name="RecruitmentPanel" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 88.0
+offset_right = 1218.0
+offset_bottom = 374.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StoreSection")
+
+[node name="ManagementPanel" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 382.0
+offset_right = 794.0
+offset_bottom = 574.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StoreSection")
+
+[node name="FlockLedger" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 802.0
+offset_top = 382.0
+offset_right = 1218.0
+offset_bottom = 574.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StoreLedger")
+
+[node name="StatusPanel" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 582.0
+offset_right = 1218.0
+offset_bottom = 624.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StoreStatus")
 
 [node name="Title" type="Label" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.27, 0.07, 0.04, 1)
-theme_override_font_sizes/font_size = 34
+layout_mode = 0
+offset_left = 28.0
+offset_top = 12.0
+offset_right = 454.0
+offset_bottom = 74.0
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+theme_override_fonts/font = ExtResource("13_display")
+theme_override_font_sizes/font_size = 38
 text = "THE GENERAL STORE"
-horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="WorkshopBalance" type="Label" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.44, 0.24, 0.06, 1)
-theme_override_font_sizes/font_size = 20
+layout_mode = 0
+offset_left = 464.0
+offset_top = 18.0
+offset_right = 672.0
+offset_bottom = 70.0
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+theme_override_font_sizes/font_size = 24
 text = "BALANCE £0"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="WorkshopSummary" type="Label" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.30, 0.21, 0.14, 1)
+layout_mode = 0
+offset_left = 690.0
+offset_top = 15.0
+offset_right = 1198.0
+offset_bottom = 73.0
+theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
 theme_override_font_sizes/font_size = 16
 text = "Spend as much as you like, or save for later."
 horizontal_alignment = 1
+vertical_alignment = 1
 autowrap_mode = 2
 
 [node name="RecruitTitle" type="Label" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.44, 0.24, 0.06, 1)
-theme_override_font_sizes/font_size = 18
+layout_mode = 0
+offset_left = 28.0
+offset_top = 94.0
+offset_right = 1200.0
+offset_bottom = 124.0
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+theme_override_font_sizes/font_size = 19
 text = "RECRUITMENT  •  ONE BIRD / ONE DAILY EGG"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="RewardChoices" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 18
+layout_mode = 0
+offset_left = 76.0
+offset_top = 132.0
+offset_right = 1152.0
+offset_bottom = 356.0
+theme_override_constants/separation = 20
 alignment = 1
 
 [node name="Choice1" parent="WorkshopOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
@@ -900,138 +1103,148 @@ layout_mode = 2
 
 [node name="MergeSummary" type="Label" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.30, 0.21, 0.14, 1)
-theme_override_font_sizes/font_size = 16
+layout_mode = 0
+offset_left = 28.0
+offset_top = 390.0
+offset_right = 776.0
+offset_bottom = 420.0
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+theme_override_font_sizes/font_size = 15
 text = "PICK OF THE LITTER  •  TWO MATCHING BIRDS BECOME ONE 50% BETTER BIRD"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="MergeActions" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 2
-theme_override_constants/separation = 10
+[node name="MergeActions" type="GridContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 426.0
+offset_right = 776.0
+offset_bottom = 560.0
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 3
 alignment = 1
 
 [node name="MergeChicken" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 48)
+custom_minimum_size = Vector2(236, 57)
 layout_mode = 2
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("RestartNormal")
-theme_override_styles/hover = SubResource("RestartHover")
-theme_override_styles/pressed = SubResource("RestartNormal")
-theme_override_styles/focus = SubResource("RestartHover")
 text = "CHICKEN ×2 → TIER 1\n3 / 2% → 4 / 3%"
 
 [node name="MergeCuckoo" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 48)
+custom_minimum_size = Vector2(236, 57)
 layout_mode = 2
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("RestartNormal")
-theme_override_styles/hover = SubResource("RestartHover")
-theme_override_styles/pressed = SubResource("RestartNormal")
-theme_override_styles/focus = SubResource("RestartHover")
 text = "CUCKOO ×2 → TIER 1\n1 / 0% → 1 / 0%"
 
 [node name="MergePlover" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 48)
+custom_minimum_size = Vector2(236, 57)
 layout_mode = 2
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("RestartNormal")
-theme_override_styles/hover = SubResource("RestartHover")
-theme_override_styles/pressed = SubResource("RestartNormal")
-theme_override_styles/focus = SubResource("RestartHover")
 text = "PLOVER ×2 → TIER 1\n4 / 0% → 6 / 0%"
 
 [node name="MergeSpoonbill" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 48)
+custom_minimum_size = Vector2(236, 57)
 layout_mode = 2
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("RestartNormal")
-theme_override_styles/hover = SubResource("RestartHover")
-theme_override_styles/pressed = SubResource("RestartNormal")
-theme_override_styles/focus = SubResource("RestartHover")
 text = "SPOONBILL ×2 → TIER 1\n4 / 0% → 6 / 0%"
 
 [node name="ExtraThwack" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(240, 48)
+custom_minimum_size = Vector2(236, 57)
 layout_mode = 2
 mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("RestartNormal")
-theme_override_styles/hover = SubResource("RestartHover")
-theme_override_styles/pressed = SubResource("RestartNormal")
-theme_override_styles/focus = SubResource("RestartHover")
 text = "STARTING THWACKS 20 → 21  •  £5"
 
 [node name="RetireTitle" type="Label" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.44, 0.24, 0.06, 1)
-theme_override_font_sizes/font_size = 17
-text = "RETIRE ONE BIRD  •  £2"
+layout_mode = 0
+offset_left = 820.0
+offset_top = 390.0
+offset_right = 1200.0
+offset_bottom = 420.0
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+theme_override_font_sizes/font_size = 16
+text = "FLOCK LEDGER  •  RETIRE ONE FOR £2"
 horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="RetirementActions" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 2
-theme_override_constants/separation = 10
+[node name="RetirementActions" type="GridContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 0
+offset_left = 820.0
+offset_top = 428.0
+offset_right = 1200.0
+offset_bottom = 550.0
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 2
 alignment = 1
 
 [node name="RetireChicken" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(205, 42)
+custom_minimum_size = Vector2(184, 51)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "CHICKEN (10)"
 
 [node name="RetireCuckoo" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(205, 42)
+custom_minimum_size = Vector2(184, 51)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "CUCKOO (3)"
 
 [node name="RetirePlover" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(205, 42)
+custom_minimum_size = Vector2(184, 51)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "PLOVER (2)"
 
 [node name="RetireSpoonbill" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(205, 42)
+custom_minimum_size = Vector2(184, 51)
 layout_mode = 2
+theme_override_font_sizes/font_size = 12
 text = "SPOONBILL (0)"
 
 [node name="WorkshopStatus" type="Label" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.47, 0.91, 0.88, 1)
+layout_mode = 0
+offset_left = 26.0
+offset_top = 586.0
+offset_right = 1202.0
+offset_bottom = 620.0
+theme_override_colors/font_color = Color(0.57, 1, 0.94, 1)
 theme_override_font_sizes/font_size = 15
 text = "BUY ANY NUMBER OF AFFORDABLE ITEMS  •  OR SAVE YOUR CASH"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="WorkshopActions" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 2
-theme_override_constants/separation = 18
+layout_mode = 0
+offset_left = 334.0
+offset_top = 632.0
+offset_right = 894.0
+offset_bottom = 690.0
 alignment = 1
 
 [node name="ContinueWorkshop" type="Button" parent="WorkshopOverlay/Card/Content/WorkshopActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(430, 54)
+custom_minimum_size = Vector2(560, 56)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("RestartNormal")
 theme_override_styles/hover = SubResource("RestartHover")
 theme_override_styles/pressed = SubResource("RestartNormal")

@@ -5,9 +5,11 @@ signal presentation_event(event_type: String)
 signal playback_completed
 signal production_loading_started(producer_count: int, egg_count: int)
 signal production_loading_completed
+signal workshop_transition_settled(token: int, completed: bool)
 
 const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
+const MotionTokens = preload("res://src/presentation/motion_tokens.gd")
 
 @onready var _score_label: Label = %Score
 @onready var _cash_label: Label = %Cash
@@ -21,7 +23,11 @@ const ChickenDay = preload("res://src/domain/chicken_day.gd")
 @onready var _result_summary_label: Label = %Summary
 @onready var _flock_summary_label: Label = %FlockSummary
 @onready var _restart_button: Button = %Restart
+@onready var _result_reveal_controls: Array[Control] = [
+	%Result, %ResultScore, %CashPayout, %FlockSummary, %Summary, %Restart,
+]
 @onready var _workshop_overlay: Control = %WorkshopOverlay
+@onready var _workshop_card: PanelContainer = $WorkshopOverlay/Card
 @onready var _workshop_balance_label: Label = %WorkshopBalance
 @onready var _workshop_summary_label: Label = %WorkshopSummary
 @onready var _workshop_status_label: Label = %WorkshopStatus
@@ -44,10 +50,12 @@ const ChickenDay = preload("res://src/domain/chicken_day.gd")
 @onready var _reduced_motion_button: CheckButton = %ReducedMotion
 @onready var _belt: Control = %Belt
 @onready var _machine_stage: Control = $Content/Stage/Workshop
+@onready var _workshop_ambience: Control = %Ambience
 @onready var _drop_label: Label = %Drop
 @onready var _echo_trace: Control = %EchoTrace
 @onready var _hatch_payoff: Control = %HatchPayoff
 @onready var _presenter: Node = %Presentation
+@onready var _ui_feedback: Node = %UIFeedback
 @onready var _production_loader: Control = %ProductionLoader
 @onready var _hopper_count_label: Label = %HopperCount
 @onready var _belt_slots: Array[Button] = [
@@ -65,6 +73,10 @@ var _session = ChickenDaySession.new()
 var _input_locked := false
 var _request_generation := 0
 var _dev_day_number := 0
+var _workshop_transition: Tween
+var _workshop_transition_serial := 0
+var _active_workshop_transition_token := 0
+var _result_transition: Tween
 
 
 func _ready() -> void:
@@ -80,6 +92,16 @@ func _ready() -> void:
 	_extra_thwack_button.pressed.connect(_on_factory_upgrade_pressed.bind("extra_thwack"))
 	for kind: String in _retirement_buttons:
 		_retirement_buttons[kind].pressed.connect(_on_retirement_pressed.bind(kind))
+	var microinteraction_controls: Array = []
+	microinteraction_controls.append_array(_producer_choice_buttons)
+	microinteraction_controls.append_array(_merge_buttons.values())
+	microinteraction_controls.append(_extra_thwack_button)
+	microinteraction_controls.append_array(_retirement_buttons.values())
+	microinteraction_controls.append(_continue_workshop_button)
+	microinteraction_controls.append(_restart_button)
+	microinteraction_controls.append(_mute_button)
+	microinteraction_controls.append(_reduced_motion_button)
+	_ui_feedback.configure(microinteraction_controls)
 	_restart_button.pressed.connect(_on_restart_pressed)
 	_continue_workshop_button.pressed.connect(_on_leave_shop_pressed)
 	_mute_button.toggled.connect(set_muted)
@@ -139,6 +161,9 @@ func _on_circuit_requested(circuit_id: String) -> void:
 
 
 func _on_restart_pressed() -> void:
+	if String(_session.state().phase) == "shop":
+		_dismiss_success_result()
+		return
 	restart_day()
 
 
@@ -189,7 +214,9 @@ func _on_leave_shop_pressed() -> void:
 	_request_generation += 1
 	var request_generation := _request_generation
 	_set_circuit_interaction(false)
-	_workshop_overlay.visible = false
+	var store_closed := await _play_workshop_exit()
+	if not store_closed or request_generation != _request_generation:
+		return
 	var completed: bool = await _production_loader.begin(
 		day_started_event.production,
 		day_started_event.day_number,
@@ -209,6 +236,9 @@ func restart_day() -> void:
 	_request_generation += 1
 	_presenter.cancel_playback()
 	_production_loader.cancel()
+	_cancel_workshop_motion()
+	_cancel_result_motion()
+	_ui_feedback.cancel_all()
 	_input_locked = false
 	_session.restart()
 	_render([], true)
@@ -248,6 +278,9 @@ func _replace_session(session, dev_day_number: int) -> void:
 	_request_generation += 1
 	_presenter.cancel_playback()
 	_production_loader.cancel()
+	_cancel_workshop_motion()
+	_cancel_result_motion()
+	_ui_feedback.cancel_all()
 	_input_locked = false
 	_session = session
 	_dev_day_number = dev_day_number
@@ -257,6 +290,7 @@ func _replace_session(session, dev_day_number: int) -> void:
 
 func set_muted(muted: bool) -> void:
 	_presenter.set_muted(muted)
+	_ui_feedback.set_muted(muted)
 	_mute_button.set_pressed_no_signal(muted)
 
 
@@ -266,6 +300,8 @@ func is_muted() -> bool:
 
 func set_reduced_motion(reduced: bool) -> void:
 	_presenter.set_reduced_motion(reduced)
+	_ui_feedback.set_reduced_motion(reduced)
+	_workshop_ambience.set_reduced_motion(reduced)
 	_reduced_motion_button.set_pressed_no_signal(reduced)
 
 
@@ -275,6 +311,14 @@ func is_reduced_motion() -> bool:
 
 func is_input_locked() -> bool:
 	return _input_locked
+
+
+func is_workshop_transition_active() -> bool:
+	return _workshop_transition != null and _workshop_transition.is_running()
+
+
+func is_result_transition_active() -> bool:
+	return _result_transition != null and _result_transition.is_running()
 
 
 func _render(events: Array[Dictionary], fresh_day := false) -> void:
@@ -310,26 +354,24 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		circuit_button.set_target_descriptions(descriptions)
 		circuit_button.set_available(has_egg and state.phase == "day" and not _input_locked)
 
-	_result_overlay.visible = state.phase == "failed"
-	_workshop_overlay.visible = state.phase == "shop"
-	if _result_overlay.visible:
-		_result_label.text = "DAY FAILED"
-		_result_score_label.text = "%d / %d POINTS" % [state.score, state.target_score]
-		_cash_payout_label.text = "NO CASH EARNED  •  BALANCE £%d" % state.cash
-		_flock_summary_label.text = "FLOCK %d PRODUCERS  •  DAILY OUTPUT %d EGGS" % [
-			state.producers.size(), state.daily_egg_count,
-		]
-		_restart_button.visible = true
-		_result_card.offset_left = -240.0
-		_result_card.offset_top = -190.0
-		_result_card.offset_right = 240.0
-		_result_card.offset_bottom = 190.0
-		_result_summary_label.text = "No shop opens. Retry this day with the same flock and shuffle."
-		_restart_button.text = "RETRY DAY %d" % state.day_number
-		_restart_button.grab_focus.call_deferred()
-
-	if _workshop_overlay.visible:
+	var shop_visible: bool = String(state.phase) == "shop"
+	var successful_result: bool = shop_visible and events.any(
+		func(event: Dictionary) -> bool: return event.type == "cash_awarded"
+	)
+	var failed_result: bool = String(state.phase) == "failed"
+	if shop_visible:
 		_render_shop(state, events)
+	if successful_result or failed_result:
+		_hide_workshop_immediately()
+		_render_result(state, successful_result)
+		_show_result()
+		_restart_button.grab_focus.call_deferred()
+	else:
+		_hide_result_immediately()
+		if shop_visible:
+			_show_workshop()
+		else:
+			_hide_workshop_immediately()
 
 	if fresh_day:
 		_feedback_label.text = "%sDAY %d  •  EMPTY STRIKES ARE WASTED" % [
@@ -338,12 +380,113 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		]
 	else:
 		_feedback_label.text = _feedback_for(events)
+	_present_resolved_ui_feedback(events)
+
+
+func _render_result(state: Dictionary, successful: bool) -> void:
+	var producer_count := int(state.producers.size())
+	var egg_count := int(state.daily_egg_count)
+	_flock_summary_label.text = "FLOCK %d %s  •  DAILY OUTPUT %d %s" % [
+		producer_count,
+		"PRODUCER" if producer_count == 1 else "PRODUCERS",
+		egg_count,
+		"EGG" if egg_count == 1 else "EGGS",
+	]
+	if successful:
+		_result_label.text = "DAY %d COMPLETE" % state.day_number
+		_result_label.add_theme_color_override("font_color", Color("ffb934"))
+		_result_score_label.text = "TARGET MET  •  %d / %d POINTS" % [
+			state.score, state.target_score,
+		]
+		_result_score_label.add_theme_color_override("font_color", Color("8dfff0"))
+		_cash_payout_label.text = "+£%d FROM UNUSED THWACKS  •  BALANCE £%d" % [
+			state.last_cash_awarded, state.cash,
+		]
+		_result_summary_label.text = (
+			"GENERAL STORE OPEN  •  UNSPENT CASH CARRIES FORWARD"
+		)
+		_restart_button.text = "ENTER THE GENERAL STORE"
+		return
+	_result_label.text = "DAY FAILED"
+	_result_label.add_theme_color_override("font_color", Color("ff8a3d"))
+	_result_score_label.text = "TARGET MISSED  •  %d / %d POINTS" % [
+		state.score, state.target_score,
+	]
+	_result_score_label.add_theme_color_override("font_color", Color("ffb76b"))
+	_cash_payout_label.text = "NO CASH EARNED  •  BALANCE £%d" % state.cash
+	_result_summary_label.text = "NO SHOP OPENS  •  RETRY WITH THE SAME FLOCK AND SHUFFLE"
+	_restart_button.text = "RETRY DAY %d" % state.day_number
+
+
+func _show_result() -> void:
+	if _result_overlay.visible:
+		return
+	_cancel_result_motion()
+	_result_overlay.visible = true
+	_result_card.pivot_offset = _result_card.size * 0.5
+	if is_reduced_motion():
+		_reset_result_transform()
+		_ui_feedback.panel_opened()
+		return
+	_result_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_result_card.scale = Vector2(0.98, 0.98)
+	for control: Control in _result_reveal_controls:
+		control.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_result_transition = create_tween().set_parallel(true)
+	_result_transition.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_result_transition.tween_property(
+		_result_overlay, "modulate:a", 1.0, MotionTokens.SETTLE
+	)
+	_result_transition.tween_property(
+		_result_card, "scale", Vector2.ONE, MotionTokens.REVEAL
+	)
+	for control_index in range(_result_reveal_controls.size()):
+		_result_transition.tween_property(
+			_result_reveal_controls[control_index],
+			"modulate:a",
+			1.0,
+			MotionTokens.SETTLE
+		).set_delay(0.04 + MotionTokens.STAGGER * control_index)
+	_result_transition.finished.connect(_finish_result_transition)
+	_ui_feedback.panel_opened()
+
+
+func _finish_result_transition() -> void:
+	_result_transition = null
+	_reset_result_transform()
+
+
+func _cancel_result_motion() -> void:
+	if _result_transition != null:
+		_result_transition.kill()
+		_result_transition = null
+	_reset_result_transform()
+
+
+func _hide_result_immediately() -> void:
+	_cancel_result_motion()
+	_result_overlay.visible = false
+
+
+func _reset_result_transform() -> void:
+	_result_overlay.modulate = Color.WHITE
+	_result_card.scale = Vector2.ONE
+	for control: Control in _result_reveal_controls:
+		control.modulate = Color.WHITE
+
+
+func _dismiss_success_result() -> void:
+	if not _result_overlay.visible:
+		return
+	_hide_result_immediately()
+	_show_workshop()
+	_focus_first_shop_action.call_deferred()
 
 
 func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
 	_workshop_balance_label.text = "BALANCE £%d" % state.cash
 	_workshop_summary_label.text = (
-		"DAY %d COMPLETE  •  £%d BANKED  •  DAY %d TARGET %d  •  FLOCK %d → %d"
+		"DAY %d COMPLETE  •  £%d BANKED\nDAY %d TARGET %d  •  FLOCK %d → %d"
 		% [
 			state.day_number,
 			state.last_cash_awarded,
@@ -394,7 +537,7 @@ func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
 		var retirement_group := _lowest_unreserved_quality_group(state.quality_groups, kind)
 		var available_count := int(retirement_group.get("available_count", 0))
 		var retirement_button: Button = _retirement_buttons[kind]
-		retirement_button.text = "%s %s (%d)  •  £%d" % [
+		retirement_button.text = "%s %s\n×%d  •  £%d" % [
 			_tier_name(int(retirement_group.get("tier", 0))),
 			kind.to_upper(),
 			available_count,
@@ -418,8 +561,138 @@ func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
 	if state.machine_refit_due:
 		_continue_workshop_button.text = "FREE REFIT & START DAY 3"
 	_workshop_status_label.text = _shop_status(events, state.machine_refit_due)
-	if events.any(func(event: Dictionary) -> bool: return event.type == "cash_awarded"):
-		_focus_first_shop_action.call_deferred()
+	var rejected := not events.is_empty() and String(events[0].type) == "shop_purchase_rejected"
+	_workshop_status_label.add_theme_color_override(
+		"font_color", Color("ff9a60") if rejected else Color("91fff2")
+	)
+
+
+func _show_workshop() -> void:
+	if _workshop_overlay.visible:
+		return
+	_cancel_workshop_transition()
+	_workshop_overlay.visible = true
+	_workshop_card.pivot_offset = _workshop_card.size * 0.5
+	if is_reduced_motion():
+		_reset_workshop_transform()
+		_ui_feedback.panel_opened()
+		return
+	_workshop_overlay.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_workshop_card.scale = Vector2(0.985, 0.985)
+	var token := _begin_workshop_transition()
+	_workshop_transition = create_tween().set_parallel(true)
+	_workshop_transition.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_workshop_transition.tween_property(
+		_workshop_overlay, "modulate:a", 1.0, MotionTokens.SETTLE
+	)
+	_workshop_transition.tween_property(
+		_workshop_card, "scale", Vector2.ONE, MotionTokens.REVEAL
+	)
+	_workshop_transition.finished.connect(_finish_workshop_transition.bind(token))
+	_ui_feedback.panel_opened()
+
+
+func _play_workshop_exit() -> bool:
+	if not _workshop_overlay.visible:
+		return true
+	_cancel_workshop_transition()
+	if is_reduced_motion():
+		_hide_workshop_immediately()
+		return true
+	var token := _begin_workshop_transition()
+	_workshop_transition = create_tween().set_parallel(true)
+	_workshop_transition.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	_workshop_transition.tween_property(
+		_workshop_overlay, "modulate:a", 0.0, MotionTokens.SETTLE
+	)
+	_workshop_transition.tween_property(
+		_workshop_card, "scale", Vector2(0.985, 0.985), MotionTokens.SETTLE
+	)
+	_workshop_transition.finished.connect(_finish_workshop_transition.bind(token))
+	while true:
+		var result: Array = await workshop_transition_settled
+		if int(result[0]) != token:
+			continue
+		if bool(result[1]):
+			_workshop_overlay.visible = false
+			_reset_workshop_transform()
+		return bool(result[1])
+	return false
+
+
+func _begin_workshop_transition() -> int:
+	_workshop_transition_serial += 1
+	_active_workshop_transition_token = _workshop_transition_serial
+	return _active_workshop_transition_token
+
+
+func _finish_workshop_transition(token: int) -> void:
+	if token != _active_workshop_transition_token:
+		return
+	_workshop_transition = null
+	_active_workshop_transition_token = 0
+	_reset_workshop_transform()
+	workshop_transition_settled.emit(token, true)
+
+
+func _cancel_workshop_transition() -> void:
+	if _workshop_transition == null:
+		return
+	var cancelled_token := _active_workshop_transition_token
+	_workshop_transition.kill()
+	_workshop_transition = null
+	_active_workshop_transition_token = 0
+	_reset_workshop_transform()
+	workshop_transition_settled.emit(cancelled_token, false)
+
+
+func _cancel_workshop_motion() -> void:
+	_cancel_workshop_transition()
+	_workshop_status_label.modulate = Color.WHITE
+	_workshop_status_label.scale = Vector2.ONE
+
+
+func _hide_workshop_immediately() -> void:
+	_cancel_workshop_transition()
+	_workshop_overlay.visible = false
+	_reset_workshop_transform()
+
+
+func _reset_workshop_transform() -> void:
+	_workshop_overlay.modulate = Color.WHITE
+	_workshop_card.scale = Vector2.ONE
+
+
+func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
+	var thwacks_presented := false
+	var hopper_presented := false
+	var cash_presented := false
+	for event: Dictionary in events:
+		match String(event.type):
+			"thwack_spent":
+				if not thwacks_presented:
+					_ui_feedback.present_value(_thwacks_label, "thwacks", Color("66f5ed"))
+					thwacks_presented = true
+			"conveyor_advanced", "egg_entered":
+				if not hopper_presented:
+					_ui_feedback.present_value(_hopper_count_label, "hopper", Color("66f5ed"))
+					hopper_presented = true
+			"cash_awarded":
+				if not cash_presented:
+					_ui_feedback.present_value(_cash_label, "cash", Color("ffbf42"))
+					cash_presented = true
+			"producer_purchased", "producer_retired", "factory_upgrade_purchased":
+				if not cash_presented:
+					_ui_feedback.present_value(_cash_label, "cash", Color("ffbf42"))
+					_ui_feedback.present_value(
+						_workshop_balance_label, "balance", Color("ffbf42")
+					)
+					cash_presented = true
+				_ui_feedback.confirm(_workshop_status_label)
+			"producer_merge_queued":
+				_ui_feedback.confirm(_workshop_status_label)
+			"shop_purchase_rejected":
+				_ui_feedback.reject(_workshop_status_label)
 
 
 func _render_shop_offer_button(

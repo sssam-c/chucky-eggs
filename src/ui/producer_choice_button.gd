@@ -5,6 +5,7 @@ var producer_kind := ""
 
 @onready var _portrait: Control = %Portrait
 @onready var _name_label: Label = %Name
+@onready var _price_label: Label = %Price
 @onready var _yield_label: Label = %Yield
 @onready var _egg_preview: Control = %Egg1
 @onready var _stats_label: Label = %Stats
@@ -22,7 +23,8 @@ func render_choice(choice: Dictionary) -> void:
 	var price := int(choice.get("price", 0))
 	var effect_description := _effect_description(String(choice.get("effect", "none")))
 	_portrait.set_bird_kind(producer_kind)
-	_name_label.text = "%s  •  £%d" % [producer_kind.to_upper(), price]
+	_name_label.text = producer_kind.to_upper()
+	_price_label.text = "£%d" % price
 	_yield_label.text = "LAYS 1 EGG / DAY"
 	_stats_label.text = "%d TOUGHNESS  •  %d %s" % [
 		toughness, points, "POINT" if points == 1 else "POINTS",
@@ -60,7 +62,8 @@ func preview_egg_count() -> int:
 
 func card_text() -> String:
 	return " ".join([
-		_name_label.text, _yield_label.text, _stats_label.text, _effect_label.text,
+		_name_label.text, _price_label.text, _yield_label.text,
+		_stats_label.text, _effect_label.text,
 	])
 
 
