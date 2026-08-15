@@ -27,9 +27,8 @@ After a successful day, bank the unused-thwack payout, inspect three distinct pr
 - Before Day 3, every run receives an automatic, free factory refit. It is a progression milestone rather than a shop purchase and remains installed for later days.
 - The refitted conveyor has ten ordered slots in a tight screen-width hairpin. Slots 1–5 travel left-to-right across the upper run, the untargetable bend carries eggs downward, and slots 6–10 return right-to-left underneath. The drop is beside slot 10.
 - The hairpin has five independent wall-hinged telescoping spoons, one per screen column. After its lever is pulled, each ordinary single bowl extends while upright on the wall, slams onto the lower, visually nearer bay, returns upright, retracts on the wall, then slams onto the aligned upper, visually farther bay. Eggs sit directly on the two touching conveyor runs; the bend contains no egg bay.
-- The starting flock has five Chicken producers, three Cuckoo producers, and two Plover producers.
-- Each Chicken producer lays two eggs per day. Each Cuckoo and Plover producer lays one, producing a daily pool of 15 eggs.
-- A Spoonbill producer also lays one egg per day.
+- The starting flock has ten Chicken producers, three Cuckoo producers, and two Plover producers.
+- Every producer lays exactly one egg per day, so the starting flock produces a daily pool of 15 eggs.
 - Shuffle the complete daily pool once, load its first egg into slot 1, and place the rest in the finite hopper. Do not reshuffle during the day.
 - A Chicken egg has 3 toughness and is worth 3 points when hatched.
 - A Cuckoo egg has 4 toughness and is worth 1 point when hatched.
@@ -37,9 +36,9 @@ After a successful day, bank the unused-thwack payout, inspect three distinct pr
 - A Spoonbill egg has 5 toughness, is worth 4 points when hatched, and takes 2 damage from a direct Pink strike instead of 1.
 - The pipe shows up to the next three hopper eggs. After each non-final thwack, the next hopper egg drops into slot 1 if one remains.
 - Egg toughness, current score, cash balance, remaining thwacks, and the number of eggs left in the hopper are always visible.
-- Producer offers identify the animal with a portrait, show its daily yield, preview every egg it lays, and state those eggs' toughness, points, and effect before selection.
+- Producer offers identify the animal with a portrait, preview the one egg it lays each day, and state that egg's toughness, points, and effect before selection.
 - A producer draft shows the next day's target before selection.
-- Before each later day begins, the complete flock and every producer's yield are shown loading the new daily egg pool into the hopper.
+- Before each later day begins, the complete flock is shown loading one egg per bird into the new daily hopper.
 
 ## Actions and resolution
 
@@ -76,7 +75,7 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 - **Spark weakness:** The four-point spark on a Spoonbill matches Pink's circuit symbol. A direct Pink strike deals 2 damage to it; Red, Blue, and echo damage still deal their normal amounts.
 - **Plover retreat:** A surviving Plover directly struck by a circuit swaps with the egg or empty bay immediately to its screen-left when one exists. This is intentionally a screen-space rule, not an ahead/behind rule: it moves toward lower slot numbers across the five-bay line and hairpin's upper run, but toward higher slot numbers across the lower return. Slots 1 and 10 at the left edges have no leftward destination. Cuckoo echoes use the positions from before any retreat, and the normal conveyor advance still follows.
 - **Discarded:** Removed without hatching or awarding points.
-- **Producer:** A persistent flock member that lays its stated number of fresh eggs into the daily pool.
+- **Producer:** A persistent flock member that lays exactly one fresh egg into the daily pool.
 - **Hopper:** The finite shuffled sequence of eggs that have not yet entered the conveyor.
 - **Producer offer:** One of three distinct Chicken, Cuckoo, Plover, or Spoonbill producers offered after a successful day. Exactly one must be added before the next day.
 - **Cash:** Persistent whole-pound currency held for the current run and earned from unused thwacks. The current slice exposes the balance but does not yet offer shop stock.

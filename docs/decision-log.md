@@ -284,10 +284,20 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D024–D028's paired/double-spoon presentation and simultaneous Day 3 damage batch, and restores D023's extending single-spoon direction with explicit near-first/far-second timing. The hairpin route, five independent mappings, two-target ceiling, Pink weakness, Plover screen-left rule, one conveyor advance, and one-thwack cost remain.
 
+## D030 — Make every bird contribute one egg
+
+**Status:** accepted
+
+**Decision:** Every producer lays exactly one egg per day. The starting flock contains ten Chicken producers, three Cuckoo producers, and two Plover producers, preserving the existing daily pool of ten Chicken, three Cuckoo, and two Plover eggs. Every producer selected after a successful day adds one bird and therefore exactly one egg to each subsequent daily pool.
+
+**Reason:** A direct one-bird, one-egg relationship makes flock size, daily output, reward weight, removal, and shuffle probability easier to reason about as the flock becomes the run's deck. Doubling the starting Chickens preserves the existing 15-egg opening composition while removing Chicken's exceptional two-egg producer rule, so this structural simplification does not also rebalance the opening pool.
+
+**Supersedes:** D011's five two-yield Chicken producers and D013's two-egg Chicken reward. D011's starting egg composition, finite once-shuffled pool, preview, and exhaustion rules remain; D013's three distinct offers, mandatory selection, established species pool, and failure behavior remain.
+
 <!--
 Copy for the next entry:
 
-## D030 — Short decision title
+## D031 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

@@ -440,7 +440,7 @@ func test_success_opens_three_legible_producer_choices_instead_of_retry() -> voi
 		offered_kinds.append(choice.producer_kind)
 		assert_eq(choice.portrait_kind(), choice.producer_kind)
 		assert_eq(choice.preview_egg_kind(), choice.producer_kind)
-		assert_eq(choice.preview_egg_count(), choice.daily_yield)
+		assert_eq(choice.preview_egg_count(), 1)
 		assert_string_contains(choice.card_text(), "EGG")
 		assert_string_contains(choice.card_text(), "TOUGHNESS")
 		assert_string_contains(choice.card_text(), "POINT")
@@ -499,7 +499,7 @@ func test_selecting_a_producer_opens_workshop_then_continue_starts_day_two() -> 
 	main.set_reduced_motion(true)
 	await _complete_successful_day(main)
 	var first_choice = main.get_node("ResultOverlay/Card/Content/RewardChoices/Choice1")
-	var expected_hopper_count: int = 23 + first_choice.daily_yield
+	var expected_hopper_count := 24
 	var loading_facts: Array[Vector2i] = []
 	main.production_loading_started.connect(
 		func(producer_count: int, egg_count: int) -> void:
@@ -525,7 +525,7 @@ func test_selecting_a_producer_opens_workshop_then_continue_starts_day_two() -> 
 	await main.production_loading_completed
 	await get_tree().process_frame
 
-	assert_eq(loading_facts, [Vector2i(25, 24 + first_choice.daily_yield)])
+	assert_eq(loading_facts, [Vector2i(25, 25)])
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_false(main.get_node("ProductionLoader").visible)
@@ -765,7 +765,7 @@ func _add_authored_main() -> Control:
 func _add_main_for_ordered_eggs(egg_kinds: Array[String]) -> Control:
 	var producers: Array[Dictionary] = []
 	for kind: String in egg_kinds:
-		producers.append({"kind": kind, "daily_yield": 1})
+		producers.append({"kind": kind})
 	var session = ChickenDaySession.new(
 		0,
 		ProducerFlock.new(producers),

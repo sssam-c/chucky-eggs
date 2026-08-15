@@ -31,7 +31,7 @@ func test_session_builds_a_fifteen_egg_day_from_the_starting_flock() -> void:
 	assert_eq(state.target_score, 15)
 	assert_eq(state.cash, 0)
 	assert_eq(state.last_cash_awarded, 0)
-	assert_eq(state.producers.size(), 10)
+	assert_eq(state.producers.size(), 15)
 	assert_eq(state.daily_egg_count, 15)
 	assert_eq(state.hopper_egg_count, 14)
 	assert_eq(state.pipe.size(), 3)
@@ -166,17 +166,14 @@ func test_selecting_an_offered_producer_opens_the_workshop_before_day_two() -> v
 	assert_eq(day_events.map(func(event: Dictionary) -> String: return event.type), ["day_started"])
 	assert_eq(day_events[0].production.size(), day_two.producers.size())
 	assert_eq(day_events[0].target_score, 20)
-	assert_eq(day_events[0].production.reduce(
-		func(total: int, producer: Dictionary) -> int: return total + producer.daily_yield,
-		0
-	), day_two.daily_egg_count)
+	assert_eq(day_events[0].production.size(), day_two.daily_egg_count)
 	assert_true(day_events[0].production.all(func(producer: Dictionary) -> bool:
-		return producer.has_all(["kind", "daily_yield", "toughness", "points", "effect"])
+		return producer.has_all(["kind", "toughness", "points", "effect"])
 	))
 	assert_eq(day_two.phase, "day")
 	assert_eq(day_two.day_number, 2)
 	assert_eq(day_two.target_score, 20)
-	assert_eq(day_two.daily_egg_count, before.daily_egg_count + selected.daily_yield)
+	assert_eq(day_two.daily_egg_count, before.daily_egg_count + 1)
 	assert_eq(day_two.machine_slot_count, 5)
 
 
@@ -307,7 +304,7 @@ func test_restart_cannot_bypass_the_mandatory_success_choice() -> void:
 
 
 func test_failure_offers_no_producer_and_retry_replays_the_same_day() -> void:
-	var flock = ProducerFlock.new([{"kind": "chicken", "daily_yield": 1}])
+	var flock = ProducerFlock.new([{"kind": "chicken"}])
 	var session = ChickenDaySession.new(7, flock, IdentityShuffler.new())
 	var opening: Dictionary = session.state()
 
@@ -335,14 +332,14 @@ func test_failure_offers_no_producer_and_retry_replays_the_same_day() -> void:
 func _successful_day_session():
 	var producers: Array[Dictionary] = []
 	for kind: String in SUCCESSFUL_DAY_EGGS:
-		producers.append({"kind": kind, "daily_yield": 1})
+		producers.append({"kind": kind})
 	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new())
 
 
 func _early_success_session():
 	var producers: Array[Dictionary] = []
 	for egg_index in range(7):
-		producers.append({"kind": "chicken", "daily_yield": 1})
+		producers.append({"kind": "chicken"})
 	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new())
 
 

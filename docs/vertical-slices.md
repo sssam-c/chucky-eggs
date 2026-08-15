@@ -2,7 +2,61 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — Universal Day 3 hairpin
+## Active slice — First positional spoon upgrade
+
+### Question
+
+Does spending efficiency-earned cash on one persistent, column-specific spoon upgrade, then using it against a tougher final demo day, make the run feel like a build rather than a sequence of disconnected days?
+
+### Settled rules preserved
+
+- Days 1 and 2 use the five-bay line, and every run receives the free ten-bay hairpin refit before Day 3.
+- The hairpin keeps five independent telescoping spoons, near-then-far resolution, one conveyor advance, and one spent thwack per lever pull.
+- Cash still comes only from unused thwacks after a successful target-reaching action; failure awards no cash and preserves the run's existing balance.
+- Every success still requires one informed producer choice before the workshop and next-day flock loading.
+- Every producer lays exactly one egg per day; the 15-bird starting flock contains ten Chickens, three Cuckoos, and two Plovers.
+- Egg damage, effects, hatch order, upgrade ownership, spending, and day transitions remain deterministic rule or session state rather than presentation state.
+
+### Hypothesis
+
+The hairpin becomes meaningful progression infrastructure when the player can permanently improve one of its five physical mechanisms. A deliberately simple first upgrade should isolate whether earning, spending, and choosing a position are satisfying before the prototype adds a catalogue: a Tempered Bowl sets both direct contacts from one chosen hairpin spoon to 2 damage. Pink's existing 2-damage Spoonbill strike does not stack beyond 2. Offering that purchase before a somewhat tougher Day 4 should make the chosen column affect planning immediately, while a clear Day 4 conclusion should give the short demo an arc and a payoff.
+
+### Player-visible path
+
+Complete Day 3 on the refitted hairpin, bank the unused-thwack payout, and choose the usual producer. In the workshop, inspect one £8 Tempered Bowl offer, preview its exact effect, and select one of the five spoon columns before confirming the purchase; skip it or see a clear insufficient-funds state when appropriate. Start Day 4 with the upgraded spoon visibly distinct and its two affected bays exposed through focus and hover. Use its 2-damage contacts while pursuing a prototype 25-point target. On success, see a concise demo-complete summary of days cleared, flock, cash earned and spent, and the installed upgrade; on failure, retry Day 4 with the same flock, shuffle, cash, and upgrade.
+
+### In scope
+
+- Session-owned persistent installed-upgrade state for at most one selected hairpin column.
+- One authored workshop offer after Day 3: Tempered Bowl at a prototype price of £8, with buy, skip, insufficient-funds, duplicate-purchase, and invalid-column outcomes.
+- A pre-purchase five-column socket selection that previews the affected 1+10, 2+9, 3+8, 4+7, or 5+6 pair before spending cash.
+- Resolver-authored 2 direct damage on both contacts from the installed spoon, preserving complete near resolution before the far strike and capping Pink-on-Spoonbill damage at 2.
+- Persistent visual and accessible identification of the upgraded spoon, including its effect and mapped bays during play.
+- A prototype Day 4 target of 25 and a Day 4 success summary that marks the end of the current demo.
+- Preservation of the installed upgrade and already-spent cash across a failed Day 4 retry.
+
+### Implementation conveniences
+
+- The name Tempered Bowl, £8 price, 2-damage value, one-upgrade limit, Day 4 target, and four-day demo length are test values rather than settled economy or campaign rules.
+- Workshop stock is fixed and the player selects the installation column directly; random stock, rarity, and rerolls are unnecessary for this question.
+- Reuse the existing workshop boundary and result overlay. A short fitting beat and clear changed spoon silhouette are sufficient without a construction minigame or bespoke ending scene.
+
+### Outside this slice
+
+- Additional upgrade types, upgrade levels, multiple installed upgrades, replacement, refunds, resale, discounts, rarity, rerolls, or random shop stock.
+- Producer removal, selling, breeding, flock limits, or other ways to edit previously chosen producers.
+- New egg species, producers, conveyor layouts, machine milestones, currencies, meta-progression, unlock trees, or persistence between runs.
+- Final target curve, prices, economy pacing, campaign length, narrative ending, and broad content production.
+
+### Exit evidence
+
+- Domain tests prove only the selected hairpin column deals 2 direct damage, both sequential contacts use it, near-side consequences still affect the far strike, Pink's Spoonbill damage remains capped at 2, and unupgraded and five-bay circuits remain unchanged.
+- Session tests prove the offer timing, exact cash deduction, invalid and insufficient-funds rejection without mutation, one-install limit, persistence into Day 4, and retry preservation.
+- UI tests prove all five sockets expose their bay mappings before confirmation, the cost and effect remain visible without relying on colour, the installed spoon is identifiable during play, and workshop input cannot double-spend during transition playback.
+- A 1280×720 running-game check follows the full Day 3 reward → producer → purchase → Day 4 path and verifies that selection, fitting feedback, the upgraded spoon, and the demo summary do not obscure the hairpin or persistent HUD.
+- A short playtest asks: “Did you care how much cash you earned, why did you choose that spoon, and did the upgrade change any Day 4 decisions rather than merely make the numbers larger?”
+
+## Completed slice — Universal Day 3 hairpin
 
 ### Question
 

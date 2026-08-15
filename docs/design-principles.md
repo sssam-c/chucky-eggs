@@ -10,7 +10,7 @@ Prototype the smallest interaction that can answer a design question. Add conten
 
 Show the state, cost, and likely consequence needed for a meaningful choice. Do not conceal essential rules behind animation, flavor text, or uninspectable randomness.
 
-Flock additions must show both the egg's gameplay properties and the producer's full daily yield. A frequent producer changes shuffle odds more than a rare one, so presenting only egg strength would hide part of the choice.
+Every producer contributes exactly one egg to the daily pool. Keep that one-bird, one-egg relationship visible so flock size, pool size, additions, removals, and shuffle odds can be reasoned about directly. Producer offers must show the contributed egg's complete gameplay properties.
 
 Show the next day's target on the producer draft. The player should evaluate flock growth against the demand it must answer rather than discovering that demand after committing.
 

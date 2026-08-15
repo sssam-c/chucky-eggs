@@ -54,7 +54,7 @@ func begin(
 		var origins: Array[Vector2] = tile.egg_origins_global()
 		for egg_index in range(origins.size()):
 			_spawn_flying_egg(fact, origins[egg_index])
-		loaded_eggs += int(fact.daily_yield)
+		loaded_eggs += 1
 		_hopper_label.text = "LOADING HOPPER  •  %d / %d EGGS" % [loaded_eggs, daily_egg_count]
 		await get_tree().create_timer(0.07).timeout
 		if playback_generation != _generation:
