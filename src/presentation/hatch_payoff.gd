@@ -6,6 +6,7 @@ const SHARD_ANGLES := [
 ]
 
 @onready var _points_label: Label = %Points
+@onready var _jackpot_label: Label = %Jackpot
 
 var burst_progress := 0.0:
 	set(value):
@@ -27,6 +28,7 @@ var _target := Vector2.ZERO
 var _shell_color := Color("e6bd7a")
 var _outline_color := Color("572719")
 var _active := false
+var _double_yolker := false
 
 
 func _ready() -> void:
@@ -34,12 +36,19 @@ func _ready() -> void:
 	reset_effect()
 
 
-func begin(origin_global: Vector2, target_global: Vector2, points_awarded: int, kind: String) -> void:
+func begin(
+	origin_global: Vector2,
+	target_global: Vector2,
+	points_awarded: int,
+	kind: String,
+	double_yolker := false
+) -> void:
 	var inverse := get_global_transform().affine_inverse()
 	_origin = inverse * origin_global
 	_target = inverse * target_global
 	_set_shell_palette(kind)
 	_active = true
+	_double_yolker = double_yolker
 	visible = true
 	burst_progress = 0.0
 	travel_progress = 0.0
@@ -47,12 +56,16 @@ func begin(origin_global: Vector2, target_global: Vector2, points_awarded: int, 
 	_points_label.text = "+%d" % points_awarded
 	_points_label.visible = true
 	_points_label.modulate = Color.WHITE
+	_jackpot_label.visible = _double_yolker
+	_jackpot_label.text = "DOUBLE YOLKER!" if _double_yolker else ""
+	_jackpot_label.position = _origin + Vector2(-220.0, -154.0)
 	_place_points_label()
 	queue_redraw()
 
 
 func reset_effect() -> void:
 	_active = false
+	_double_yolker = false
 	visible = false
 	burst_progress = 0.0
 	travel_progress = 0.0
@@ -62,6 +75,9 @@ func reset_effect() -> void:
 		_points_label.visible = false
 		_points_label.scale = Vector2.ONE
 		_points_label.modulate = Color.WHITE
+	if is_instance_valid(_jackpot_label):
+		_jackpot_label.text = ""
+		_jackpot_label.visible = false
 	queue_redraw()
 
 
@@ -71,6 +87,14 @@ func is_active() -> bool:
 
 func point_text() -> String:
 	return _points_label.text if is_instance_valid(_points_label) else ""
+
+
+func jackpot_text() -> String:
+	return _jackpot_label.text if is_instance_valid(_jackpot_label) and _jackpot_label.visible else ""
+
+
+func yolk_count() -> int:
+	return 2 if _double_yolker else 1
 
 
 func fragment_count() -> int:
@@ -121,10 +145,11 @@ func _draw_burst() -> void:
 	var expansion := 1.0 - pow(1.0 - burst_progress, 2.0)
 	var debris_alpha := 1.0 - smoothstep(0.62, 1.0, burst_progress)
 	var flash_alpha := 1.0 - smoothstep(0.0, 0.44, burst_progress)
-	draw_circle(_origin, 44.0 + expansion * 34.0, Color(1.0, 0.72, 0.18, flash_alpha * 0.30))
+	var payoff_scale := 1.35 if _double_yolker else 1.0
+	draw_circle(_origin, (44.0 + expansion * 34.0) * payoff_scale, Color(1.0, 0.72, 0.18, flash_alpha * (0.48 if _double_yolker else 0.30)))
 	draw_arc(
 		_origin,
-		30.0 + expansion * 104.0,
+		(30.0 + expansion * 104.0) * payoff_scale,
 		0.0,
 		TAU,
 		48,
@@ -132,6 +157,14 @@ func _draw_burst() -> void:
 		6.0 - burst_progress * 3.0,
 		true
 	)
+	if _double_yolker:
+		var yolk_alpha := 1.0 - smoothstep(0.64, 1.0, burst_progress)
+		var yolk_spread := 18.0 + expansion * 54.0
+		for side in [-1.0, 1.0]:
+			var yolk_center := _origin + Vector2(side * yolk_spread, -18.0 - expansion * 22.0)
+			draw_circle(yolk_center, 24.0 + expansion * 8.0, Color(1.0, 0.95, 0.66, yolk_alpha * 0.86))
+			draw_circle(yolk_center, 15.0 + expansion * 5.0, Color(1.0, 0.61, 0.02, yolk_alpha))
+			draw_circle(yolk_center + Vector2(-4.0, -5.0), 4.0, Color(1.0, 0.91, 0.36, yolk_alpha))
 
 	for shard_index in range(SHARD_ANGLES.size()):
 		var direction := Vector2.from_angle(SHARD_ANGLES[shard_index])

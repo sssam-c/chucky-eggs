@@ -2,6 +2,7 @@ extends GutTest
 
 const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 const ProducerFlock = preload("res://src/domain/producer_flock.gd")
+const SeededChanceRoller = preload("res://src/core/seeded_chance_roller.gd")
 
 const SUCCESSFUL_DAY_EGGS: Array[String] = [
 	"chicken", "cuckoo", "chicken", "spoonbill",
@@ -22,6 +23,9 @@ class IdentityShuffler:
 
 	func shuffle_strings(values: Array[String]) -> Array[String]:
 		return values.duplicate()
+
+	func shuffle_dictionaries(values: Array[Dictionary]) -> Array[Dictionary]:
+		return values.duplicate(true)
 
 
 func test_session_builds_a_fifteen_egg_day_from_the_starting_flock() -> void:
@@ -44,6 +48,27 @@ func test_equal_day_seeds_replay_the_same_visible_shuffle() -> void:
 
 	assert_eq(first.slots, second.slots)
 	assert_eq(first.pipe, second.pipe)
+	assert_eq(first.slots[0].get("is_double_yolker"), second.slots[0].get("is_double_yolker"))
+
+
+func test_starting_flock_exposes_exactly_two_ten_percent_parents() -> void:
+	var state: Dictionary = ChickenDaySession.new(42).state()
+
+	assert_eq(state.producers.filter(func(producer: Dictionary) -> bool:
+		return is_equal_approx(float(producer.get("double_yolk_chance", 0.0)), 0.10)
+	).size(), 2)
+
+
+func test_default_day_one_seed_contains_one_double_yolker_for_the_prototype_playtest() -> void:
+	var laid_eggs: Array[Dictionary] = ProducerFlock.new().lay_daily_eggs(
+		SeededChanceRoller.new(
+			ChickenDaySession.DEFAULT_DAY_SEED + ChickenDaySession.DOUBLE_YOLK_SEED_STEP
+		)
+	)
+
+	assert_eq(laid_eggs.filter(func(egg: Dictionary) -> bool:
+		return bool(egg.is_double_yolker)
+	).size(), 1)
 
 
 func test_session_can_initialize_canonical_day_three_for_dev_tools() -> void:

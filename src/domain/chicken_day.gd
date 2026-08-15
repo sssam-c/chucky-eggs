@@ -26,19 +26,19 @@ var _circuits: Array[Dictionary] = []
 
 
 func _init(
-	daily_egg_kinds: Array[String],
+	daily_eggs: Array,
 	target_score := DEFAULT_TARGET_SCORE,
 	slot_count := BASE_SLOT_COUNT
 ) -> void:
-	assert(not daily_egg_kinds.is_empty(), "A day needs at least one laid egg.")
+	assert(not daily_eggs.is_empty(), "A day needs at least one laid egg.")
 	assert(target_score > 0, "A day needs a positive target score.")
 	assert(slot_count in [BASE_SLOT_COUNT, HAIRPIN_SLOT_COUNT], "Unsupported conveyor size.")
 	_target_score = target_score
 	_circuits = circuits_for_slot_count(slot_count)
 	for slot_index in range(slot_count):
 		_slots.append({})
-	for kind: String in daily_egg_kinds:
-		_hopper.append(_new_egg(kind))
+	for laid_egg: Variant in daily_eggs:
+		_hopper.append(_new_egg(laid_egg))
 	_daily_egg_count = _hopper.size()
 	_slots[0] = _hopper.pop_front()
 
@@ -194,12 +194,17 @@ func _resolve_hatches(events: Array[Dictionary]) -> void:
 			continue
 		var egg: Dictionary = _slots[slot_index]
 		_slots[slot_index] = {}
-		_score += egg.points
+		var base_points := int(egg.points)
+		var is_double_yolker := bool(egg.get("is_double_yolker", false))
+		var points_awarded := base_points * 2 if is_double_yolker else base_points
+		_score += points_awarded
 		events.append({
 			"type": "egg_hatched",
 			"slot_index": slot_index,
 			"kind": egg.kind,
-			"points_awarded": egg.points,
+			"base_points": base_points,
+			"double_yolker": is_double_yolker,
+			"points_awarded": points_awarded,
 			"score": _score,
 			"target_score": _target_score,
 		})
@@ -323,14 +328,28 @@ static func circuits_for_slot_count(slot_count: int) -> Array[Dictionary]:
 	]
 
 
-func _new_egg(kind: String) -> Dictionary:
+func _new_egg(laid_egg: Variant) -> Dictionary:
+	var kind := String(laid_egg.get("kind", "")) if laid_egg is Dictionary else String(laid_egg)
 	var definition := egg_definition(kind)
 	assert(not definition.is_empty(), "Unknown egg kind: %s" % kind)
+	var double_yolk_chance := (
+		float(laid_egg.get("double_yolk_chance", 0.0))
+		if laid_egg is Dictionary
+		else 0.0
+	)
+	var is_double_yolker := (
+		bool(laid_egg.get("is_double_yolker", false))
+		if laid_egg is Dictionary
+		else false
+	)
+	assert(double_yolk_chance >= 0.0 and double_yolk_chance <= 1.0, "Double Yolker chance must be between zero and one.")
 	return {
 		"kind": definition.kind,
 		"toughness": definition.toughness,
 		"max_toughness": definition.toughness,
 		"points": definition.points,
+		"double_yolk_chance": double_yolk_chance,
+		"is_double_yolker": is_double_yolker,
 	}
 
 

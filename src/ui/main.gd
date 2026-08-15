@@ -508,6 +508,24 @@ func _event_of_type(events: Array[Dictionary], event_type: String) -> Dictionary
 
 
 func _feedback_for(events: Array[Dictionary]) -> String:
+	var double_yolker_hatches := events.filter(
+		func(event: Dictionary) -> bool:
+			return event.type == "egg_hatched" and bool(event.get("double_yolker", false))
+	)
+	if double_yolker_hatches.size() == 1:
+		var double_hatch: Dictionary = double_yolker_hatches[0]
+		return "DOUBLE YOLKER! A %s hatched for %d points." % [
+			String(double_hatch.get("kind", "egg")).capitalize(),
+			double_hatch.points_awarded,
+		]
+	if double_yolker_hatches.size() > 1:
+		var double_points := 0
+		for double_hatch: Dictionary in double_yolker_hatches:
+			double_points += int(double_hatch.points_awarded)
+		return "DOUBLE YOLKERS! %d lucky eggs hatched for %d points." % [
+			double_yolker_hatches.size(),
+			double_points,
+		]
 	for event: Dictionary in events:
 		if event.type == "day_ended":
 			return "The final bell rings. Every unhatched egg is discarded."

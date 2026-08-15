@@ -22,6 +22,9 @@ class IdentityShuffler:
 	func shuffle_strings(values: Array[String]) -> Array[String]:
 		return values.duplicate()
 
+	func shuffle_dictionaries(values: Array[Dictionary]) -> Array[Dictionary]:
+		return values.duplicate(true)
+
 
 func test_main_renders_initial_day_and_shell_information() -> void:
 	var main := _add_main()
@@ -315,6 +318,57 @@ func test_hatch_burst_carries_resolved_points_into_the_score_before_event_comple
 	assert_gte(payoff.fragment_count(), 12)
 	assert_eq(milestones, ["burst", "score:3:3", "event"])
 	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 3 / 15")
+	assert_false(payoff.is_active())
+
+
+func test_ten_percent_egg_exposes_its_chance_without_revealing_the_result() -> void:
+	var flock = ProducerFlock.new([
+		{"kind": "chicken", "double_yolk_chance": 0.10},
+		{"kind": "chicken", "double_yolk_chance": 0.10},
+		{"kind": "chicken"},
+	])
+	var session = ChickenDaySession.new(42, flock, IdentityShuffler.new())
+	var main := _add_main()
+	main.replace_session(session)
+	var first_slot = main.get_node("Content/Stage/Belt/Slots/Slot1")
+
+	assert_eq(first_slot.double_yolk_chance_percent(), 10)
+	assert_string_contains(first_slot.egg_summary(), "10% DOUBLE YOLKER CHANCE")
+	assert_string_contains(first_slot.egg_description(), "10 percent chance")
+	assert_false(first_slot.egg_description().contains("is a Double Yolker"))
+	var previews: Array[Node] = main.get_node("Content/Stage/Pipe/Preview").get_children()
+	assert_eq(previews[0].double_yolk_chance_percent(), 10)
+	assert_eq(previews[1].double_yolk_chance_percent(), 0)
+
+
+func test_double_yolker_hatch_has_a_large_two_yolk_six_point_payoff() -> void:
+	var flock = ProducerFlock.new([
+		{"kind": "chicken", "double_yolk_chance": 1.0},
+		{"kind": "chicken"},
+		{"kind": "chicken"},
+		{"kind": "chicken"},
+	])
+	var session = ChickenDaySession.new(42, flock, IdentityShuffler.new())
+	var main := _add_main()
+	main.replace_session(session)
+	main.set_reduced_motion(true)
+	await _press_and_wait(main, "RedCircuit")
+	await _press_and_wait(main, "BlueCircuit")
+	main.set_reduced_motion(false)
+	var payoff := main.get_node("Content/HatchPayoff")
+	var reveal := ["", "", 0]
+	main.get_node("Presentation").hatch_payoff_started.connect(
+		func(_slot_index: int, _points_awarded: int) -> void:
+			reveal[0] = payoff.jackpot_text()
+			reveal[1] = payoff.point_text()
+			reveal[2] = payoff.yolk_count()
+	)
+
+	await _press_and_wait(main, "RedCircuit")
+
+	assert_eq(reveal, ["DOUBLE YOLKER!", "+6", 2])
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 6 / 15")
+	assert_eq(main.get_node("Content/Feedback").text, "DOUBLE YOLKER! A Chicken hatched for 6 points.")
 	assert_false(payoff.is_active())
 
 

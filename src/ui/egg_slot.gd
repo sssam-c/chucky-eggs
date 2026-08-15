@@ -89,24 +89,30 @@ func current_egg() -> Dictionary:
 func egg_summary() -> String:
 	if _egg.is_empty():
 		return "EMPTY"
-	return "%s EGG TOUGHNESS %d %d %s" % [
+	var summary := "%s EGG TOUGHNESS %d %d %s" % [
 		String(_egg.kind).to_upper(),
 		_egg.toughness,
 		_egg.points,
 		"POINT" if _egg.points == 1 else "POINTS",
 	]
+	if double_yolk_chance_percent() > 0:
+		summary += "  %d%% DOUBLE YOLKER CHANCE" % double_yolk_chance_percent()
+	return summary
 
 
 func egg_description() -> String:
 	if _egg.is_empty():
 		return "No egg in this slot."
-	return "%s egg: %d toughness remaining, worth %d %s; %s." % [
+	var description := "%s egg: %d toughness remaining, worth %d %s; %s" % [
 		String(_egg.kind).capitalize(),
 		_egg.toughness,
 		_egg.points,
 		"point" if _egg.points == 1 else "points",
 		_effect_description(String(_egg.kind)),
 	]
+	if double_yolk_chance_percent() > 0:
+		description += "; %d percent chance to be a Double Yolker when hatched" % double_yolk_chance_percent()
+	return description + "."
 
 
 func score_seal_value() -> int:
@@ -119,6 +125,10 @@ func effect_emblem() -> String:
 
 func egg_kind() -> String:
 	return _egg.get("kind", "")
+
+
+func double_yolk_chance_percent() -> int:
+	return _egg_visual.double_yolk_chance_percent()
 
 
 func impact_global_position() -> Vector2:

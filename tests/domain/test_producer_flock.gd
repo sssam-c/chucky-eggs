@@ -3,6 +3,13 @@ extends GutTest
 const ProducerFlock = preload("res://src/domain/producer_flock.gd")
 
 
+class EligibleEggsDoubleRoller:
+	extends RefCounted
+
+	func roll(chance: float) -> bool:
+		return chance > 0.0
+
+
 func test_starting_flock_has_fifteen_one_egg_producers() -> void:
 	var flock = ProducerFlock.new()
 	var producers: Array[Dictionary] = flock.snapshot()
@@ -16,6 +23,25 @@ func test_starting_flock_has_fifteen_one_egg_producers() -> void:
 	assert_eq(egg_kinds.count("chicken"), 10)
 	assert_eq(egg_kinds.count("cuckoo"), 3)
 	assert_eq(egg_kinds.count("plover"), 2)
+
+
+func test_two_starting_chickens_lay_hidden_ten_percent_double_yolker_gambles() -> void:
+	var flock = ProducerFlock.new()
+	var producers: Array[Dictionary] = flock.snapshot()
+	var laid_eggs: Array[Dictionary] = flock.lay_daily_eggs(EligibleEggsDoubleRoller.new())
+
+	assert_eq(producers.filter(func(producer: Dictionary) -> bool:
+		return is_equal_approx(float(producer.get("double_yolk_chance", 0.0)), 0.10)
+	).size(), 2)
+	assert_eq(laid_eggs.filter(func(egg: Dictionary) -> bool:
+		return is_equal_approx(float(egg.double_yolk_chance), 0.10)
+	).size(), 2)
+	assert_eq(laid_eggs.filter(func(egg: Dictionary) -> bool:
+		return bool(egg.is_double_yolker)
+	).size(), 2)
+	assert_true(laid_eggs.all(func(egg: Dictionary) -> bool:
+		return egg.has_all(["kind", "double_yolk_chance", "is_double_yolker"])
+	))
 
 
 func test_every_producer_lays_exactly_one_egg() -> void:

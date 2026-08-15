@@ -108,9 +108,17 @@ func egg_kind() -> String:
 	return String(_egg.get("kind", ""))
 
 
+func double_yolk_chance_percent() -> int:
+	if _egg.is_empty():
+		return 0
+	return roundi(float(_egg.get("double_yolk_chance", 0.0)) * 100.0)
+
+
 func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 	var mark_scale := 0.72 if _preview else 1.0
 	_draw_score_seal(center + Vector2(0.0, -radius_y * 0.61), mark_scale)
+	if double_yolk_chance_percent() > 0:
+		_draw_double_yolk_chance(center + Vector2(29.0, -3.0) * mark_scale, mark_scale)
 	var emblem_center := center + Vector2(0.0, radius_y * 0.48)
 	match effect_emblem():
 		"echo":
@@ -119,6 +127,27 @@ func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 			_draw_left_emblem(emblem_center, mark_scale)
 		"spark":
 			_draw_spark_emblem(emblem_center, mark_scale)
+
+
+func _draw_double_yolk_chance(center: Vector2, mark_scale: float) -> void:
+	var badge_size := Vector2(56.0, 28.0) * mark_scale
+	var badge_rect := Rect2(center - badge_size * 0.5, badge_size)
+	draw_rect(badge_rect, Color("3a1b12"), true)
+	draw_rect(badge_rect, Color("fff0b3"), false, 2.0 * mark_scale)
+	var font_size := 13 if not _preview else 9
+	draw_string(
+		ThemeDB.fallback_font,
+		badge_rect.position + Vector2(3.0, 18.5) * mark_scale,
+		"%d%%" % double_yolk_chance_percent(),
+		HORIZONTAL_ALIGNMENT_LEFT,
+		32.0 * mark_scale,
+		font_size,
+		Color("fff0b3")
+	)
+	var yolk_radius := 3.5 * mark_scale
+	var yolk_center := badge_rect.position + Vector2(45.0, 14.0) * mark_scale
+	draw_circle(yolk_center + Vector2(-3.0, 0.0) * mark_scale, yolk_radius, Color("ffb20f"))
+	draw_circle(yolk_center + Vector2(3.0, 0.0) * mark_scale, yolk_radius, Color("ffd84a"))
 
 
 func _draw_score_seal(center: Vector2, mark_scale: float) -> void:

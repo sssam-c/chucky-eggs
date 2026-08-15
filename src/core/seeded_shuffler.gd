@@ -16,3 +16,13 @@ func shuffle_strings(values: Array[String]) -> Array[String]:
 		shuffled[index] = shuffled[swap_index]
 		shuffled[swap_index] = held_value
 	return shuffled
+
+
+func shuffle_dictionaries(values: Array[Dictionary]) -> Array[Dictionary]:
+	var shuffled: Array[Dictionary] = values.duplicate(true)
+	for index in range(shuffled.size() - 1, 0, -1):
+		var swap_index := _random.randi_range(0, index)
+		var held_value: Dictionary = shuffled[index]
+		shuffled[index] = shuffled[swap_index]
+		shuffled[swap_index] = held_value
+	return shuffled

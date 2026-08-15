@@ -3,9 +3,11 @@ extends RefCounted
 
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
 const ProducerFlock = preload("res://src/domain/producer_flock.gd")
+const SeededChanceRoller = preload("res://src/core/seeded_chance_roller.gd")
 const SeededShuffler = preload("res://src/core/seeded_shuffler.gd")
 const DEFAULT_DAY_SEED := 20260813
 const REWARD_SEED_STEP := 1009
+const DOUBLE_YOLK_SEED_STEP := 9
 const DAY_ONE_TARGET := 15
 const LATER_DAY_TARGET := 20
 const HAIRPIN_REFIT_DAY := 3
@@ -144,10 +146,12 @@ func _start_day() -> void:
 	_phase = "day"
 	_reward_choices.clear()
 	_last_cash_awarded = 0
-	var laid_eggs: Array[String] = _flock.lay_daily_egg_kinds()
 	var current_day_seed: int = _day_seed + _day_number - 1
+	var laid_eggs: Array[Dictionary] = _flock.lay_daily_eggs(
+		SeededChanceRoller.new(current_day_seed + DOUBLE_YOLK_SEED_STEP)
+	)
 	var day_shuffler = _shuffler if _shuffler != null else SeededShuffler.new(current_day_seed)
-	var shuffled_eggs: Array[String] = day_shuffler.shuffle_strings(laid_eggs)
+	var shuffled_eggs: Array[Dictionary] = day_shuffler.shuffle_dictionaries(laid_eggs)
 	_day = ChickenDay.new(shuffled_eggs, _target_for_day(_day_number), _machine_slot_count)
 
 

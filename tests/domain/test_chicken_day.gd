@@ -243,6 +243,48 @@ func test_complete_paired_damage_batch_precedes_conveyor_ordered_hatches() -> vo
 	assert_eq(hatches[0].kind, "chicken")
 
 
+func test_hidden_double_yolker_chicken_awards_six_points_once_when_hatched() -> void:
+	var laid_eggs: Array = [{
+		"kind": "chicken",
+		"double_yolk_chance": 0.10,
+		"is_double_yolker": true,
+	}]
+	var day = ChickenDay.new(laid_eggs, 99)
+	day.resolve_circuit("red")
+	day.resolve_circuit("blue")
+
+	var events: Array[Dictionary] = day.resolve_circuit("red")
+	var hatches := events.filter(func(event: Dictionary) -> bool:
+		return event.type == "egg_hatched"
+	)
+
+	assert_eq(hatches.size(), 1)
+	assert_true(hatches[0].double_yolker)
+	assert_eq(hatches[0].base_points, 3)
+	assert_eq(hatches[0].points_awarded, 6)
+	assert_eq(hatches[0].score, 6)
+
+
+func test_unsuccessful_double_yolker_roll_keeps_the_chicken_at_three_points() -> void:
+	var laid_eggs: Array = [{
+		"kind": "chicken",
+		"double_yolk_chance": 0.10,
+		"is_double_yolker": false,
+	}]
+	var day = ChickenDay.new(laid_eggs, 99)
+	day.resolve_circuit("red")
+	day.resolve_circuit("blue")
+
+	var events: Array[Dictionary] = day.resolve_circuit("red")
+	var hatch: Dictionary = events.filter(func(event: Dictionary) -> bool:
+		return event.type == "egg_hatched"
+	)[0]
+
+	assert_false(hatch.double_yolker)
+	assert_eq(hatch.points_awarded, 3)
+	assert_eq(hatch.score, 3)
+
+
 func test_pink_deals_two_damage_to_a_spoonbill_in_slot_five() -> void:
 	var day = _new_authored_day()
 	for circuit_id in ["red", "blue", "red", "red", "blue", "red", "pink"]:

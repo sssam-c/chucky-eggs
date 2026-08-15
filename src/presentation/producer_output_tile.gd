@@ -20,6 +20,7 @@ func render_producer(fact: Dictionary) -> void:
 		"toughness": int(fact.toughness),
 		"max_toughness": int(fact.toughness),
 		"points": int(fact.points),
+		"double_yolk_chance": float(fact.get("double_yolk_chance", 0.0)),
 	}
 	_egg_preview.set_egg(egg, true)
 

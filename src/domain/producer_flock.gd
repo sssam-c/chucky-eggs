@@ -2,9 +2,10 @@ class_name ProducerFlock
 extends RefCounted
 
 const PRODUCER_KINDS: Array[String] = ["chicken", "cuckoo", "plover", "spoonbill"]
+const PROTOTYPE_DOUBLE_YOLK_CHANCE := 0.10
 const STARTING_PRODUCERS: Array[Dictionary] = [
-	{"kind": "chicken"},
-	{"kind": "chicken"},
+	{"kind": "chicken", "double_yolk_chance": PROTOTYPE_DOUBLE_YOLK_CHANCE},
+	{"kind": "chicken", "double_yolk_chance": PROTOTYPE_DOUBLE_YOLK_CHANCE},
 	{"kind": "chicken"},
 	{"kind": "chicken"},
 	{"kind": "chicken"},
@@ -38,6 +39,19 @@ func lay_daily_egg_kinds() -> Array[String]:
 	for producer: Dictionary in _producers:
 		egg_kinds.append(String(producer.kind))
 	return egg_kinds
+
+
+func lay_daily_eggs(chance_roller) -> Array[Dictionary]:
+	var eggs: Array[Dictionary] = []
+	for producer: Dictionary in _producers:
+		var chance := float(producer.get("double_yolk_chance", 0.0))
+		assert(chance >= 0.0 and chance <= 1.0, "Double Yolker chance must be between zero and one.")
+		eggs.append({
+			"kind": String(producer.kind),
+			"double_yolk_chance": chance,
+			"is_double_yolker": chance_roller.roll(chance),
+		})
+	return eggs
 
 
 func add_producer(kind: String) -> Dictionary:

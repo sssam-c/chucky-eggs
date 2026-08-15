@@ -2,7 +2,59 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — First positional spoon upgrade
+## Active slice — Hidden Double Yolker gamble
+
+### Question
+
+Does clearly marking a Chicken egg with a 10% chance of secretly being a Double Yolker make the player value that egg differently, and does revealing a six-point hatch create an exciting payoff worth pursuing again?
+
+### Settled rules preserved
+
+- Every bird lays exactly one egg per day; the starting pool remains ten Chicken, three Cuckoo, and two Plover eggs.
+- Egg type, toughness, base points, circuits, movement, hatching order, targets, cash payout, producer rewards, retries, and the Day 3 hairpin remain unchanged.
+- Daily randomness remains seeded and equal retries reproduce the same shuffle and hidden outcomes.
+- Presentation plays resolver-authored hatch and score facts without deciding whether an egg is a Double Yolker.
+
+### Hypothesis
+
+Two of the ten starting Chicken parents each have a visible prototype 10% chance to lay a Double Yolker. Their eggs show that chance without revealing the result, inviting the player to spend scarce thwacks on a known gamble. If one hatches as a Double Yolker, awarding twice the Chicken's normal value with a conspicuously larger two-yolk payoff should create a memorable peak without making ordinary success depend on the bonus.
+
+### Player-visible path
+
+Begin Day 1 and find up to two Chicken eggs in the shuffled conveyor or three-egg preview bearing a clear `10% DOUBLE YOLKER` chance mark. Decide whether that upside changes which circuit deserves the next thwack. Hatch the egg to reveal either the normal three-point Chicken payoff or a Double Yolker worth six points. On a Double Yolker, see two yolks, an unmistakable announcement, and the resolver-authored `+6` travel into the score. Restart the same day to confirm the concealed result and shuffle are reproducible.
+
+### In scope
+
+- Two prototype starting Chicken producer records with a 10% Double Yolker chance; every other current producer has zero chance.
+- One seeded hidden roll per laid egg, fixed before the daily shuffle and reproduced on retry.
+- Chance metadata preserved from producer through shuffled hopper, pipe preview, conveyor, accessibility text, discard, and hatch.
+- A non-colour `10%` Double Yolker chance mark on each eligible egg without exposing its resolved result.
+- Resolver-authored doubled points and explicit Double Yolker hatch facts.
+- A larger cancellable hatch payoff with two yolks, a `DOUBLE YOLKER!` announcement, stronger scale and colour treatment, and an equally explicit reduced-motion result.
+
+### Implementation conveniences
+
+- The two eligible parents are fixed starting Chickens rather than named or selectable individuals.
+- Ten percent, two eligible parents, Chicken-only eligibility, and exactly double points are prototype values rather than settled balance rules.
+- Newly drafted producers have zero Double Yolker chance until a later tending mechanic is deliberately designed.
+- The fixed Day 1 prototype seed contains one successful hidden roll so the payoff can be found during this playtest; the chance calculation itself remains 10% and retries reproduce it.
+- Reuse the current seeded day construction, egg renderer, hatch payoff overlay, score travel, sound set, and presentation barrier.
+
+### Outside this slice
+
+- Tending, XP, parent names, parent selection, chance upgrades, inheritance, breeding, pity systems, rerolls, or persistence between runs.
+- Double Yolkers from Cuckoo, Plover, or Spoonbill producers.
+- Elite conditions, target retuning, reward weighting, shops, machine upgrades, or a campaign map.
+- Final probability curves, frequency, economy effects, and production art.
+
+### Exit evidence
+
+- Domain and session tests prove exactly two starting eggs carry 10% chance, seeded rolls reproduce across equal retries, zero- and guaranteed-chance fixtures resolve correctly, a Double Yolker Chicken awards six points once, and normal Chickens remain worth three.
+- UI tests prove eligible conveyor and preview eggs expose `10%` without exposing the result, ordinary eggs do not show the mark, Double Yolker presentation consumes the resolver flag, commits `+6` exactly once, and cancellation or reduced motion cannot leave stale payoff state.
+- A 1280×720 running-game check inspects the chance mark on the belt and in the pipe, then follows a Double Yolker through its two-yolk reveal and score arrival without obscuring the machine or header.
+- A short playtest asks: “Did the 10% mark change which egg you tried to save, and did the reveal make you want to improve those odds in a future run?”
+
+## Deferred slice — First positional spoon upgrade
 
 ### Question
 

@@ -369,12 +369,14 @@ func _present_echo_damage(slot: Button, event: Dictionary, playback_generation: 
 
 func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	var slot: Button = _belt_slots[event.slot_index]
+	var is_double_yolker := bool(event.get("double_yolker", false))
 	var score_target := _score_label.global_position + _score_label.size * Vector2(0.72, 0.5)
 	_hatch_payoff.begin(
 		slot.hatch_global_position(),
 		score_target,
 		event.points_awarded,
-		String(event.get("kind", "chicken"))
+		String(event.get("kind", "chicken")),
+		is_double_yolker
 	)
 	hatch_payoff_started.emit(event.slot_index, event.points_awarded)
 	_play(_hatch_player)
@@ -393,7 +395,7 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 		return false
 
 	var burst := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	burst.tween_property(content, "scale", Vector2(1.52, 1.28), 0.13)
+	burst.tween_property(content, "scale", Vector2(1.82, 1.52) if is_double_yolker else Vector2(1.52, 1.28), 0.16 if is_double_yolker else 0.13)
 	burst.parallel().tween_property(content, "rotation", 0.12, 0.13)
 	burst.parallel().tween_property(content, "modulate:a", 0.0, 0.13)
 	burst.parallel().tween_property(_hatch_payoff, "burst_progress", 0.66, 0.13)
@@ -402,8 +404,8 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	slot.clear_visual()
 
 	var travel := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	travel.tween_property(_hatch_payoff, "travel_progress", 1.0, 0.30)
-	travel.parallel().tween_property(_hatch_payoff, "burst_progress", 1.0, 0.30)
+	travel.tween_property(_hatch_payoff, "travel_progress", 1.0, 0.38 if is_double_yolker else 0.30)
+	travel.parallel().tween_property(_hatch_payoff, "burst_progress", 1.0, 0.38 if is_double_yolker else 0.30)
 	if not await _run_tween(travel, playback_generation):
 		return false
 
@@ -411,7 +413,7 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	_score_label.pivot_offset = _score_label.size * 0.5
 	var arrival := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	arrival.tween_property(_hatch_payoff, "arrival_progress", 1.0, 0.20)
-	arrival.parallel().tween_property(_score_label, "scale", Vector2(1.28, 1.28), 0.075)
+	arrival.parallel().tween_property(_score_label, "scale", Vector2(1.48, 1.48) if is_double_yolker else Vector2(1.28, 1.28), 0.075)
 	arrival.parallel().tween_property(_score_label, "modulate", Color(1.0, 0.88, 0.32, 1.0), 0.075)
 	arrival.tween_property(_score_label, "scale", Vector2.ONE, 0.125)
 	arrival.parallel().tween_property(_score_label, "modulate", Color.WHITE, 0.125)
