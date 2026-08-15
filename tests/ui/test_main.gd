@@ -34,8 +34,12 @@ func test_main_renders_initial_day_and_shell_information() -> void:
 	assert_eq(main.get_node("Content/Header/Cash").accessibility_name, "Cash balance £0")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
 	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER 14")
-	assert_string_contains(main.get_node("Content/Header/ShellLegend").text, "CHICKENS")
-	assert_string_contains(main.get_node("Content/Header/ShellLegend").text, "DOUBLE YOLK 2%")
+	var shell_legend: Label = main.get_node("Content/Header/ShellLegend")
+	assert_string_contains(shell_legend.text, "DOUBLE YOLK 2%")
+	assert_string_contains(shell_legend.text, "RIPPLE")
+	assert_string_contains(shell_legend.text, "RETREAT LEFT")
+	assert_string_contains(shell_legend.text, "PINK ×2")
+	assert_false(shell_legend.text.contains("\n"))
 	assert_false(
 		main.get_node("Content/Header/Thwacks").get_global_rect().intersects(
 			main.get_node("Content/Header/HopperCount").get_global_rect()
@@ -47,6 +51,28 @@ func test_main_renders_initial_day_and_shell_information() -> void:
 		assert_true(preview.egg_kind() in ["chicken", "cuckoo", "plover"])
 	assert_not_null(main.get_node("Content/Accessibility/Mute"))
 	assert_not_null(main.get_node("Content/Accessibility/ReducedMotion"))
+	assert_true(main.theme.has_stylebox("normal", "Button"))
+	assert_true(main.theme.has_stylebox("checked", "CheckButton"))
+
+
+func test_integrated_header_and_footer_keep_day_three_controls_clear() -> void:
+	var main := _add_main()
+	assert_true(main.start_dev_day(3))
+	await get_tree().process_frame
+
+	var header_cabinet: Control = main.get_node("Content/Header/HeaderCabinet")
+	for instrument_path in ["TitlePlate", "ShellLegendPlate", "HudPlate"]:
+		assert_true(header_cabinet.get_global_rect().encloses(
+			(main.get_node("Content/Header/%s" % instrument_path) as Control).get_global_rect()
+		))
+
+	var footer_plate: Control = main.get_node("Content/FooterPlate")
+	var feedback: Control = main.get_node("Content/Feedback")
+	assert_true(footer_plate.get_global_rect().encloses(feedback.get_global_rect()))
+	assert_false(main.get_node("Content/Controls").visible)
+	for circuit_button: Control in main.get_node("Content/Stage/CircuitBank").get_children():
+		if circuit_button.visible:
+			assert_false(circuit_button.get_global_rect().intersects(footer_plate.get_global_rect()))
 
 
 func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
@@ -148,6 +174,25 @@ func test_circuit_lever_has_a_clear_mechanical_throw_and_resets_to_idle() -> voi
 	lever.reset_pose()
 	assert_eq(lever.press_amount, 0.0)
 	assert_eq(lever.lever_handle_center(), idle_handle)
+	assert_eq(lever.mapping_text(), "1+3")
+
+
+func test_focused_lever_highlights_its_linked_belt_sections() -> void:
+	var main := _add_main()
+	var stage = main.get_node("Content/Stage/Workshop")
+	var red: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
+
+	assert_true(red.has_focus())
+	assert_eq(stage.highlighted_circuit_id(), "red")
+
+	main.set_reduced_motion(true)
+	await _press_and_wait(main, "RedCircuit")
+	var blue: Button = main.get_node("Content/Stage/CircuitBank/BlueCircuit")
+	assert_false(blue.disabled)
+	blue.grab_focus()
+	await get_tree().process_frame
+
+	assert_eq(stage.highlighted_circuit_id(), "blue")
 
 
 func test_early_line_spoons_are_wall_pinned_behind_eggs_and_tip_bowl_first() -> void:

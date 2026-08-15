@@ -1,6 +1,7 @@
 extends Button
 
 signal circuit_requested(circuit_id: String)
+signal preview_changed(circuit_id: String, active: bool)
 
 @export var circuit_id := "red"
 @export var slot_indices: Array[int] = []
@@ -14,10 +15,17 @@ var press_amount := 0.0:
 
 var _available := false
 var _target_descriptions: Array[String] = []
+var _hover_preview := false
+var _focus_preview := false
+var _preview_active := false
 
 
 func _ready() -> void:
 	pressed.connect(_on_pressed)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+	focus_entered.connect(_on_focus_entered)
+	focus_exited.connect(_on_focus_exited)
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	tooltip_text = ""
 	queue_redraw()
@@ -25,6 +33,10 @@ func _ready() -> void:
 
 func set_available(available: bool) -> void:
 	_available = available
+	if not available:
+		_hover_preview = false
+		_focus_preview = false
+		_refresh_preview_state()
 	disabled = not available
 	mouse_filter = Control.MOUSE_FILTER_STOP if available else Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_ALL if available else Control.FOCUS_NONE
@@ -47,6 +59,17 @@ func reset_pose() -> void:
 
 func control_form() -> String:
 	return "lever"
+
+
+func mapping_text() -> String:
+	var slot_names: Array[String] = []
+	for slot_index: int in slot_indices:
+		slot_names.append(str(slot_index + 1))
+	return "+".join(slot_names)
+
+
+func is_preview_active() -> bool:
+	return _preview_active
 
 
 func lever_handle_center() -> Vector2:
@@ -136,9 +159,31 @@ func _draw() -> void:
 	draw_circle(handle - Vector2(5, 5), 4.0, Color(1.0, 0.88, 0.72, 0.40))
 	_draw_symbol(handle, Color("fff0cf") if _available else Color("8e8377"))
 
+	# Put the mapping on the physical control so the footer does not need to
+	# repeat every circuit. The plate remains readable without circuit colour.
+	var mapping := mapping_text()
+	if not mapping.is_empty():
+		var plate_width := maxf(54.0, 28.0 + float(mapping.length()) * 9.0)
+		var plate := Rect2(
+			Vector2(pivot.x - plate_width * 0.5, size.y - 25.0),
+			Vector2(plate_width, 23.0)
+		)
+		draw_rect(Rect2(plate.position + Vector2(2, 3), plate.size), Color(0, 0, 0, 0.48), true)
+		draw_rect(plate, Color("d6b675") if _available else Color("62594b"), true)
+		draw_rect(plate, Color("fff0cf") if highlighted else Color("6b3d1e"), false, 2.0)
+		draw_string(
+			ThemeDB.fallback_font,
+			Vector2(plate.position.x, plate.position.y + 17.0),
+			mapping,
+			HORIZONTAL_ALIGNMENT_CENTER,
+			plate.size.x,
+			14,
+			Color("3a1b12") if _available else Color("292421")
+		)
+
 
 func _lever_pivot() -> Vector2:
-	return Vector2(size.x * 0.5, size.y - 24.0)
+	return Vector2(size.x * 0.5, size.y - 36.0)
 
 
 func _draw_oval(center: Vector2, radii: Vector2, color: Color) -> void:
@@ -184,3 +229,31 @@ func _draw_symbol(center: Vector2, color: Color) -> void:
 func _on_pressed() -> void:
 	if _available:
 		circuit_requested.emit(circuit_id)
+
+
+func _on_mouse_entered() -> void:
+	_hover_preview = true
+	_refresh_preview_state()
+
+
+func _on_mouse_exited() -> void:
+	_hover_preview = false
+	_refresh_preview_state()
+
+
+func _on_focus_entered() -> void:
+	_focus_preview = true
+	_refresh_preview_state()
+
+
+func _on_focus_exited() -> void:
+	_focus_preview = false
+	_refresh_preview_state()
+
+
+func _refresh_preview_state() -> void:
+	var active := _available and (_hover_preview or _focus_preview)
+	if active == _preview_active:
+		return
+	_preview_active = active
+	preview_changed.emit(circuit_id, active)

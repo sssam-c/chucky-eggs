@@ -70,6 +70,7 @@ var _dev_day_number := 0
 func _ready() -> void:
 	for circuit_button: Button in _circuit_buttons:
 		circuit_button.connect("circuit_requested", _on_circuit_requested)
+		circuit_button.connect("preview_changed", _on_circuit_preview_changed)
 	for choice_index in range(_producer_choice_buttons.size()):
 		_producer_choice_buttons[choice_index].pressed.connect(
 			_on_producer_choice_pressed.bind(choice_index)
@@ -331,10 +332,9 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		_render_shop(state, events)
 
 	if fresh_day:
-		_feedback_label.text = "%sDAY %d  •  %s — EMPTY STRIKES ARE WASTED" % [
+		_feedback_label.text = "%sDAY %d  •  EMPTY STRIKES ARE WASTED" % [
 			"DEV MODE  •  " if is_dev_mode() else "",
 			state.day_number,
-			_circuit_summary(state.circuits),
 		]
 	else:
 		_feedback_label.text = _feedback_for(events)
@@ -702,14 +702,17 @@ func _circuit_button(circuit_id: String) -> Button:
 	return null
 
 
-func _circuit_summary(circuits: Array) -> String:
-	var summaries: Array[String] = []
-	for circuit: Dictionary in circuits:
-		var slots: Array[String] = []
-		for slot_index: int in circuit.slot_indices:
-			slots.append(str(slot_index + 1))
-		summaries.append("%s %s" % [String(circuit.id).to_upper(), "+".join(slots)])
-	return "  •  ".join(summaries)
+func _on_circuit_preview_changed(circuit_id: String, active: bool) -> void:
+	if active:
+		_machine_stage.set_highlighted_circuit(circuit_id)
+		return
+	if _machine_stage.highlighted_circuit_id() != circuit_id:
+		return
+	for circuit_button: Button in _circuit_buttons:
+		if circuit_button.visible and circuit_button.is_preview_active():
+			_machine_stage.set_highlighted_circuit(circuit_button.circuit_id)
+			return
+	_machine_stage.set_highlighted_circuit("")
 
 
 func _on_presentation_event(event_type: String) -> void:

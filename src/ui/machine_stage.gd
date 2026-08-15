@@ -3,6 +3,7 @@ extends Control
 var _slot_count := 5
 var _slot_circuit_ids: Array[String] = []
 var _slot_circuit_colors: Array[Color] = []
+var _highlighted_circuit_id := ""
 
 
 func _ready() -> void:
@@ -27,6 +28,17 @@ func belt_section_circuit_id(slot_index: int) -> String:
 	if slot_index < 0 or slot_index >= _slot_circuit_ids.size():
 		return ""
 	return _slot_circuit_ids[slot_index]
+
+
+func set_highlighted_circuit(circuit_id: String) -> void:
+	if _highlighted_circuit_id == circuit_id:
+		return
+	_highlighted_circuit_id = circuit_id
+	queue_redraw()
+
+
+func highlighted_circuit_id() -> String:
+	return _highlighted_circuit_id
 
 
 func _draw() -> void:
@@ -175,10 +187,17 @@ func _draw_belt_section(rect: Rect2, slot_index: int) -> void:
 	var color := _slot_circuit_colors[slot_index]
 	var fill := color.darkened(0.58)
 	fill.a = 0.78
+	var circuit_id := belt_section_circuit_id(slot_index)
+	var highlighted := not _highlighted_circuit_id.is_empty() and circuit_id == _highlighted_circuit_id
+	if not _highlighted_circuit_id.is_empty():
+		fill = color.darkened(0.36 if highlighted else 0.74)
+		fill.a = 0.96 if highlighted else 0.48
 	draw_rect(rect, fill, true)
 	var edge := color.lightened(0.08)
-	edge.a = 0.86
+	edge.a = 1.0 if highlighted else 0.42 if not _highlighted_circuit_id.is_empty() else 0.86
 	draw_line(rect.position, Vector2(rect.end.x, rect.position.y), edge, 5.0, true)
+	if highlighted:
+		draw_rect(rect.grow(-4.0), Color(color.lightened(0.30), 0.56), false, 2.0)
 	draw_line(
 		Vector2(rect.end.x, rect.position.y + 5.0),
 		Vector2(rect.end.x, rect.end.y - 3.0),
