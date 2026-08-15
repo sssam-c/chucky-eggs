@@ -125,7 +125,7 @@ Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop annou
 - The established workshop phase between producer selection and next-day flock loading.
 - Persistent five- or ten-slot day construction with resolver-authored control maps.
 - Ten saved-scene bays arranged into touching upper and lower runs, joined by an untargetable right-hand bend and ending at a left-side drop.
-- Five single-bowl telescoping rear-wall spoons: columns 1–4 make one short-reach upper hit for Red or Blue or one long-reach lower hit for Green or Purple, while Pink alone uses both reaches sequentially in one action, with no buckets or extra bend target.
+- Five neutral single-bowl telescoping rear-wall spoons: columns 1–4 make one short-reach upper hit for Red or Blue or one long-reach lower hit for Green or Purple, while Pink alone uses both reaches sequentially in one action. The belt section beneath each target, rather than its shared spoon or a separate pad, carries the circuit colour; there are no buckets or extra bend targets.
 - Simultaneous resolver batches for Red, Blue, Green, and Purple; Pink alone emits near-then-far strike facts with damage, echoes, hatches, and Plover movement completed after each contact against live state.
 - Five independent hairpin levers and conduits replacing the starting machine's three shared circuit controls.
 - Resolver-owned screen-left Plover destinations for both top and bottom rows, including no retreat from slots 1 and 10.
@@ -136,7 +136,7 @@ Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop annou
 
 - The refit occurs immediately on the Day 3 transition without a dedicated construction animation.
 - Day 3 retains the current 20-point later-day target; hairpin-specific difficulty tuning waits for playtest evidence.
-- The upper and lower conveyor casings touch as a compact double-decker machine. Five rear-wall spoon positions preserve the starting layout, while five colour-and-symbol levers expose the misaligned circuits and target lengths; eggs sit directly on the belt, and only Pink visits both rows during one action.
+- The upper and lower conveyor casings touch as a compact double-decker machine. Five neutral rear-wall spoon positions preserve the starting layout, while coloured belt sections and five colour-and-symbol levers expose the misaligned circuits and target lengths; eggs sit directly on the belt, and only Pink visits both rows during one action.
 
 ### Outside this slice
 
@@ -149,7 +149,7 @@ Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop annou
 
 - Domain tests prove the exact five-slot and mirrored ten-slot maps, simultaneous four-circuit batches, Pink's near-resolve-far ordering against live state, full Plover screen-left topology, adjacency, movement, and discard.
 - Session tests prove Days 1–2 remain at five slots, the workshop reports the due refit, Day 3 installs it exactly once for free, and resolved refit facts precede the new day.
-- UI tests prove all ten saved bays form two aligned rows, exactly five single-bowl spoons exist, each spoon exposes its aligned upper and lower contact coordinates, upper slots select zero extension, lower slots select full extension, Red fires only its two selected spoons once each, Pink uses one mechanism through its ordered sequence, and input unlocks after playback.
+- UI tests prove all ten saved bays form two aligned rows, every space receives its resolver-authored circuit colour, exactly five neutral single-bowl spoons exist, each spoon exposes its aligned upper and lower contact coordinates, upper slots select zero extension, lower slots select full extension, Red fires only its two selected spoons once each, Pink uses one mechanism through its ordered sequence, and input unlocks after playback.
 - A 1280×720 running-game render verifies the continuous hairpin, visible right/down/left route arrows, target-free bend, below-machine controls, left drop, and lack of overlap with the persistent HUD. A 1024×576 window check verifies the project's reference-canvas scaling path without clipping.
 - A short playtest asks: “Could you predict which colour would own an egg two moves from now, and did Pink's bend extender feel meaningfully different from the four paired circuits?”
 

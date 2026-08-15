@@ -45,6 +45,7 @@ var extension_amount := 0.0:
 		queue_redraw()
 
 var _bowl_size_scale := 1.0
+var _circuit_marked := true
 var _has_telescoping_spoon := false
 var _telescoping_targets: Array[Vector2] = []
 var _single_contact_target := DEFAULT_SINGLE_CONTACT
@@ -102,6 +103,17 @@ func set_bowl_scale(value: float) -> void:
 
 func bowl_scale() -> float:
 	return _bowl_size_scale
+
+
+func set_neutral_appearance() -> void:
+	circuit_id = ""
+	circuit_color = Color("8b6a43")
+	_circuit_marked = false
+	queue_redraw()
+
+
+func is_circuit_marked() -> bool:
+	return _circuit_marked
 
 
 func configure_wall_spoon(contact_target: Vector2) -> void:
@@ -233,7 +245,8 @@ func _draw_wall_spoon() -> void:
 	# out toward the player, like a small drawbridge.
 	draw_rect(Rect2(hinge - Vector2(27.0, 20.0), Vector2(54.0, 42.0)), Color("111316"), true)
 	draw_rect(Rect2(hinge - Vector2(27.0, 20.0), Vector2(54.0, 42.0)), Color("895326"), false, 4.0)
-	draw_line(hinge + Vector2(-22.0, 15.0), hinge + Vector2(22.0, 15.0), circuit_color.darkened(0.12), 4.0, true)
+	var mount_accent := circuit_color.darkened(0.12) if _circuit_marked else Color("6f4b2b")
+	draw_line(hinge + Vector2(-22.0, 15.0), hinge + Vector2(22.0, 15.0), mount_accent, 4.0, true)
 
 	# The authored fall draws handle and bowl together. At final contact the bowl
 	# remains in front while this copy of the shaft returns behind the egg.
@@ -245,13 +258,16 @@ func _draw_wall_spoon() -> void:
 		if _has_telescoping_spoon:
 			_draw_telescoping_collars(hinge, head)
 
-	# The repeated symbol keeps linked Red and Blue spoons distinguishable
-	# without adding labels to the mechanism.
+	# Circuit identity now lives on the belt sections. The shared spoon keeps a
+	# plain brass fastener instead of implying that it belongs to one circuit.
 	draw_line(hinge - Vector2(24.0, 0.0), hinge + Vector2(24.0, 0.0), Color("0b0c0e"), 17.0, true)
 	draw_line(hinge - Vector2(21.0, 0.0), hinge + Vector2(21.0, 0.0), Color("b77836"), 10.0, true)
 	draw_circle(hinge, 13.0, Color("111316"))
-	draw_circle(hinge, 9.0, circuit_color.darkened(0.10))
-	_draw_circuit_symbol(hinge, circuit_color.lightened(0.38))
+	draw_circle(hinge, 9.0, circuit_color.darkened(0.10) if _circuit_marked else Color("735536"))
+	if _circuit_marked:
+		_draw_circuit_symbol(hinge, circuit_color.lightened(0.38))
+	else:
+		draw_circle(hinge, 3.0, Color("d09a52"))
 
 
 func _single_hinge() -> Vector2:

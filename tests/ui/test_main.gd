@@ -99,10 +99,12 @@ func test_merged_egg_shows_its_quality_tier_and_floored_gameplay_score() -> void
 	assert_eq(slot.quality_ring_count(), 1)
 
 
-func test_stage_starts_with_three_levers_and_five_visible_colour_matched_spoons() -> void:
+func test_stage_colours_belt_sections_and_keeps_five_spoons_neutral() -> void:
 	var main := _add_main()
 	var circuits := main.get_node("Content/Stage/CircuitBank")
 	var hammers := main.get_node("Content/Stage/HammerBank")
+	var slots := main.get_node("Content/Stage/Belt/Slots")
+	var machine_stage := main.get_node("Content/Stage/Workshop")
 
 	assert_eq(circuits.get_child_count(), 5)
 	assert_eq(circuits.get_children().filter(func(control: Control) -> bool:
@@ -119,12 +121,14 @@ func test_stage_starts_with_three_levers_and_five_visible_colour_matched_spoons(
 	assert_eq(circuits.get_node("BlueCircuit").circuit_symbol, "circle")
 	assert_eq(circuits.get_node("PinkCircuit").slot_indices, [4])
 	assert_eq(circuits.get_node("PinkCircuit").circuit_symbol, "spark")
-	assert_eq(hammers.get_node("Hammer1").circuit_id, "red")
-	assert_eq(hammers.get_node("Hammer2").circuit_id, "blue")
-	assert_eq(hammers.get_node("Hammer3").circuit_id, "red")
-	assert_eq(hammers.get_node("Hammer4").circuit_id, "blue")
-	assert_eq(hammers.get_node("Hammer5").circuit_id, "pink")
-	assert_eq(hammers.get_node("Hammer5").circuit_symbol, "spark")
+	var expected_slot_circuits := ["red", "blue", "red", "blue", "pink"]
+	for slot_index in range(5):
+		var slot: Control = slots.get_node("Slot%d" % (slot_index + 1))
+		assert_eq(slot.circuit_id(), expected_slot_circuits[slot_index])
+		assert_gt(slot.circuit_color().a, 0.9)
+		assert_eq(machine_stage.belt_section_circuit_id(slot_index), expected_slot_circuits[slot_index])
+	for hammer: Control in hammers.get_children():
+		assert_false(hammer.is_circuit_marked())
 	for circuit_lever: Button in circuits.get_children():
 		assert_eq(circuit_lever.control_form(), "lever")
 		assert_eq(circuit_lever.text, "")
@@ -707,6 +711,16 @@ func test_day_three_refit_uses_five_single_spoons_with_targeted_extension() -> v
 	var hairpin_slots: Array[Control] = []
 	for slot_number in range(1, 11):
 		hairpin_slots.append(main.get_node("Content/Stage/Belt/Slots/Slot%d" % slot_number))
+	var expected_slot_circuits := [
+		"red", "blue", "red", "blue", "pink",
+		"pink", "green", "purple", "green", "purple",
+	]
+	for slot_index in range(hairpin_slots.size()):
+		assert_eq(hairpin_slots[slot_index].circuit_id(), expected_slot_circuits[slot_index])
+		assert_eq(
+			main.get_node("Content/Stage/Workshop").belt_section_circuit_id(slot_index),
+			expected_slot_circuits[slot_index]
+		)
 	for slot_index in range(1, 5):
 		assert_eq(hairpin_slots[slot_index].position.y, hairpin_slots[0].position.y)
 		assert_gt(hairpin_slots[slot_index].position.x, hairpin_slots[slot_index - 1].position.x)

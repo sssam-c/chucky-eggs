@@ -354,10 +354,20 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D035's eight-ordinary-spoon presentation. D034's circuit ownership and simultaneous ordinary resolution remain unchanged; Pink's unique sequential two-target action remains unchanged.
 
+## D037 — Put circuit colour into the belt sections
+
+**Status:** accepted
+
+**Decision:** Colour the conveyor belt section beneath every target according to its resolver-authored circuit and render all five physical spoons with neutral brass markings. Do not add a separate coloured pad around the egg. This applies to both the starting five-slot line and the Day 3 hairpin. Levers retain their colour-and-symbol identities.
+
+**Reason:** A Day 3 spoon can serve different circuits at its short and long reach, so colouring the utensil falsely implies that it belongs to only one control. Colouring the belt communicates the positional rule directly and makes the circuit layout part of the machine, rather than an overlay placed beneath each egg. It keeps both rows readable while the spoons are idle and preserves the restored five-single-spoon silhouette.
+
+**Supersedes:** Circuit-coloured spoon markings in D035–D036 and earlier presentation. Circuit mappings, target-dependent reach, lever identity, and resolution are unchanged.
+
 <!--
 Copy for the next entry:
 
-## D037 — Short decision title
+## D038 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

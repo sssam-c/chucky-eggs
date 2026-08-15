@@ -574,6 +574,18 @@ func _requested_dev_day() -> int:
 
 func _configure_machine(slot_count: int, circuits: Array) -> void:
 	_machine_stage.set_slot_count(slot_count)
+	var slot_circuit_ids: Array[String] = []
+	var slot_circuit_colors: Array[Color] = []
+	slot_circuit_ids.resize(slot_count)
+	slot_circuit_colors.resize(slot_count)
+	slot_circuit_ids.fill("")
+	slot_circuit_colors.fill(Color("4b4d4f"))
+	for circuit: Dictionary in circuits:
+		var appearance := _circuit_appearance(String(circuit.id))
+		for slot_index: int in circuit.slot_indices:
+			slot_circuit_ids[slot_index] = String(circuit.id)
+			slot_circuit_colors[slot_index] = appearance.color
+	_machine_stage.set_belt_section_appearances(slot_circuit_ids, slot_circuit_colors)
 	var hairpin := slot_count == ChickenDay.HAIRPIN_SLOT_COUNT
 	for slot_index in range(_belt_slots.size()):
 		var active := slot_index < slot_count
@@ -631,15 +643,15 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 		circuit_button.visible = true
 		circuit_button.slot_indices.assign(circuit.slot_indices)
 		circuit_button.queue_redraw()
-
-	var hammer_circuit_ids: Array[String] = []
-	hammer_circuit_ids.assign(
-		["red", "blue", "red", "blue", "pink"]
-		if hairpin
-		else ["red", "blue", "red", "blue", "pink"]
-	)
-	for hammer_index in range(hammer_circuit_ids.size()):
-		_apply_circuit_appearance(_hammers[hammer_index], hammer_circuit_ids[hammer_index])
+		var appearance := _circuit_appearance(String(circuit.id))
+		for slot_index: int in circuit.slot_indices:
+			_belt_slots[slot_index].set_circuit_appearance(
+				String(circuit.id),
+				appearance.color,
+				appearance.symbol
+			)
+	for hammer: Control in _hammers:
+		hammer.set_neutral_appearance()
 	_presenter.set_slot_hammer_indices(
 		[0, 1, 2, 3, 4, 4, 3, 2, 1, 0]
 		if hairpin
@@ -672,7 +684,7 @@ func _local_impact_target(hammer: Control, slot: Control) -> Vector2:
 	)
 
 
-func _apply_circuit_appearance(control: Control, circuit_id: String) -> void:
+func _circuit_appearance(circuit_id: String) -> Dictionary:
 	var appearances := {
 		"red": {"color": Color("c43b36"), "symbol": "diamond"},
 		"blue": {"color": Color("287cbd"), "symbol": "circle"},
@@ -680,11 +692,7 @@ func _apply_circuit_appearance(control: Control, circuit_id: String) -> void:
 		"purple": {"color": Color("8f59b8"), "symbol": "hexagon"},
 		"pink": {"color": Color("cf4f8b"), "symbol": "spark"},
 	}
-	var appearance: Dictionary = appearances[circuit_id]
-	control.circuit_id = circuit_id
-	control.circuit_color = appearance.color
-	control.circuit_symbol = appearance.symbol
-	control.queue_redraw()
+	return appearances[circuit_id]
 
 
 func _circuit_button(circuit_id: String) -> Button:

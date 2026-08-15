@@ -1,6 +1,8 @@
 extends Control
 
 var _slot_count := 5
+var _slot_circuit_ids: Array[String] = []
+var _slot_circuit_colors: Array[Color] = []
 
 
 func _ready() -> void:
@@ -13,6 +15,18 @@ func set_slot_count(slot_count: int) -> void:
 		return
 	_slot_count = slot_count
 	queue_redraw()
+
+
+func set_belt_section_appearances(circuit_ids: Array, colors: Array) -> void:
+	_slot_circuit_ids.assign(circuit_ids)
+	_slot_circuit_colors.assign(colors)
+	queue_redraw()
+
+
+func belt_section_circuit_id(slot_index: int) -> String:
+	if slot_index < 0 or slot_index >= _slot_circuit_ids.size():
+		return ""
+	return _slot_circuit_ids[slot_index]
 
 
 func _draw() -> void:
@@ -55,6 +69,7 @@ func _draw_straight_machine() -> void:
 	# One continuous left-to-right conveyor. Four marks between the five bays
 	# communicate flow without creating a second row of visual targets.
 	draw_rect(Rect2(166, 314, 1050, 111), Color("171719"), true)
+	_draw_straight_belt_sections()
 	draw_rect(Rect2(166, 314, 1050, 111), Color("6d4026"), false, 5.0)
 	draw_line(Vector2(171, 326), Vector2(1209, 326), Color("ad6532"), 3.0)
 	for arrow_x in [380.0, 570.0, 760.0, 950.0]:
@@ -86,8 +101,9 @@ func _draw_hairpin_machine() -> void:
 	# The two casings share a seam. The narrow right cheek is visibly a bend,
 	# not another egg station.
 	draw_rect(Rect2(166, 230, 910, 95), Color("171719"), true)
-	draw_rect(Rect2(166, 230, 910, 95), Color("6d4026"), false, 5.0)
 	draw_rect(Rect2(166, 325, 910, 95), Color("171719"), true)
+	_draw_hairpin_belt_sections()
+	draw_rect(Rect2(166, 230, 910, 95), Color("6d4026"), false, 5.0)
 	draw_rect(Rect2(166, 325, 910, 95), Color("6d4026"), false, 5.0)
 	draw_rect(Rect2(1035, 249, 55, 152), Color("171719"), true)
 	draw_arc(Vector2(1035, 325), 76.0, -PI * 0.5, PI * 0.5, 28, Color("6d4026"), 5.0, true)
@@ -100,8 +116,8 @@ func _draw_hairpin_machine() -> void:
 		_draw_route_arrow(Vector2(arrow_x, 408), Vector2.LEFT)
 	_draw_route_arrow(Vector2(1080, 325), Vector2.DOWN)
 
-	# Five colour rails identify the circuit levers below the rear-wall spoon bank.
-	# Repeated symbols on the mechanisms carry each rail's identity to both spoons.
+	# Five colour rails connect the circuit levers to the machine. Target identity
+	# is carried by the belt sections, while the shared spoons remain neutral.
 	draw_line(Vector2(185, 435), Vector2(1075, 435), Color("090a0b"), 13.0, true)
 	var spoon_colors := [
 		Color("c43b36"), Color("287cbd"), Color("69a645"),
@@ -123,6 +139,53 @@ func _draw_rollers(from_x: int, to_x: int, roller_y: int) -> void:
 		draw_circle(Vector2(roller_x, roller_y), 22.0, Color("08090a"))
 		draw_circle(Vector2(roller_x, roller_y), 14.0, Color("303033"))
 		draw_circle(Vector2(roller_x, roller_y), 5.0, Color("a35b2e"))
+
+
+func _draw_straight_belt_sections() -> void:
+	var boundaries := [166.0, 380.0, 570.0, 760.0, 950.0, 1216.0]
+	for slot_index in range(5):
+		_draw_belt_section(
+			Rect2(
+				boundaries[slot_index] + 3.0,
+				319.0,
+				boundaries[slot_index + 1] - boundaries[slot_index] - 6.0,
+				70.0
+			),
+			slot_index
+		)
+
+
+func _draw_hairpin_belt_sections() -> void:
+	var boundaries := [166.0, 346.0, 536.0, 726.0, 916.0, 1076.0]
+	for column_index in range(5):
+		var section_width: float = boundaries[column_index + 1] - boundaries[column_index] - 6.0
+		_draw_belt_section(
+			Rect2(boundaries[column_index] + 3.0, 235.0, section_width, 85.0),
+			column_index
+		)
+		_draw_belt_section(
+			Rect2(boundaries[column_index] + 3.0, 330.0, section_width, 85.0),
+			9 - column_index
+		)
+
+
+func _draw_belt_section(rect: Rect2, slot_index: int) -> void:
+	if slot_index < 0 or slot_index >= _slot_circuit_colors.size():
+		return
+	var color := _slot_circuit_colors[slot_index]
+	var fill := color.darkened(0.58)
+	fill.a = 0.78
+	draw_rect(rect, fill, true)
+	var edge := color.lightened(0.08)
+	edge.a = 0.86
+	draw_line(rect.position, Vector2(rect.end.x, rect.position.y), edge, 5.0, true)
+	draw_line(
+		Vector2(rect.end.x, rect.position.y + 5.0),
+		Vector2(rect.end.x, rect.end.y - 3.0),
+		Color(0.04, 0.04, 0.05, 0.72),
+		3.0,
+		true
+	)
 
 
 func _draw_route_arrow(center: Vector2, direction: Vector2) -> void:

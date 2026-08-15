@@ -11,6 +11,8 @@ var _egg: Dictionary = {}
 var _preview := false
 var _content_origin := Vector2.ZERO
 var _bare_belt_mode := false
+var _circuit_id := ""
+var _circuit_color := Color("bd7742")
 
 
 func _ready() -> void:
@@ -68,6 +70,22 @@ func set_bare_belt_mode(enabled: bool) -> void:
 
 func is_bare_belt_mode() -> bool:
 	return _bare_belt_mode
+
+
+func set_circuit_appearance(circuit_id: String, color: Color, _symbol: String) -> void:
+	_circuit_id = circuit_id
+	_circuit_color = color
+	if is_instance_valid(_caption_label):
+		_caption_label.add_theme_color_override("font_color", color.lightened(0.28))
+	queue_redraw()
+
+
+func circuit_id() -> String:
+	return _circuit_id
+
+
+func circuit_color() -> Color:
+	return _circuit_color
 
 
 func apply_damage(remaining_toughness: int) -> void:
@@ -178,8 +196,8 @@ func _draw() -> void:
 		return
 	var center := Vector2(size.x * 0.5, size.y - 30.0)
 	if _bare_belt_mode:
-		# A soft contact shadow is enough to seat an egg on the continuous belt.
-		# Per-bay rails and end caps made the line read as separate machines.
+		# The machine stage colours the belt section. The slot adds only a soft
+		# contact shadow so eggs remain seated without looking like separate pads.
 		_draw_oval(center + Vector2(0, 4), Vector2(55, 12), Color(0.0, 0.0, 0.0, 0.34))
 		return
 	_draw_oval(center + Vector2(0, 6), Vector2(63, 24), Color(0.0, 0.0, 0.0, 0.48))
