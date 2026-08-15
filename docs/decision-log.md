@@ -294,10 +294,40 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D011's five two-yield Chicken producers and D013's two-egg Chicken reward. D011's starting egg composition, finite once-shuffled pool, preview, and exhaustion rules remain; D013's three distinct offers, mandatory selection, established species pool, and failure behavior remain.
 
+## D031 — Make flock growth optional
+
+**Status:** accepted
+
+**Decision:** A successful day no longer requires adding a producer. The flock grows only when the player deliberately chooses a recruitment opportunity. When a producer is recruited, it still adds exactly one bird and therefore one egg to every subsequent daily pool. Failed days grant no recruitment or other between-day build opportunity.
+
+**Reason:** Compulsory recruitment makes the flock expand regardless of the intended build, while a separate removal option can then feel like spending a reward merely to undo forced growth. Optional recruitment lets adding, improving, or thinning the flock become genuine competing directions and keeps the one-bird, one-egg relationship strategically meaningful.
+
+**Supersedes:** D013's mandatory post-success producer selection and D030's implication that every success adds a producer. D013's established species pool and offer legibility remain; D030's one-bird, one-egg production rule and starting flock remain.
+
+## D032 — Unify optional progression in one cash shop
+
+**Status:** accepted
+
+**Decision:** After each successful day banks its unused-thwack payout, open one unified shop before the next flock loads. Recruiting one bird, retiring one bird, improving a species' base score or Double Yolker chance, and installing optional factory upgrades are all shop transactions that cost cash. The player may make any number of affordable purchases or leave and preserve the balance. A failed day grants no cash or shop visit. The universal free Day 3 hairpin refit remains outside the shop.
+
+**Reason:** Cash already measures efficient play and can supply the opportunity cost directly. One shop lets flock composition, species specialisation, and machine power compete in a single legible economy without an additional destination-choice layer or an oversized permanent Retirement Home option. Allowing several purchases makes an unusually successful run's compounding power an intentional roguelike reward, while saving remains a meaningful choice.
+
+**Supersedes:** D031's single between-day build opportunity, while preserving its optional recruitment and failure restrictions. It also replaces the proposed Farm Store, Retirement Home, and Factory Shop destination split; stock composition, prices, and final upgrade ladders remain prototype questions.
+
+## D033 — Replace species investment with pair merging
+
+**Status:** accepted
+
+**Decision:** In the unified post-success shop, two birds of the same species and quality tier may be queued for merging into one bird of the next tier without spending cash. All queued merges resolve when the player leaves, before the next flock loads, and their outputs cannot become inputs during the same shop visit. Each quality tier multiplies the bird's exact egg base score and exact Double Yolker chance by 1.5, with chance capped at 100%. Gameplay awards and every player-facing score or percentage round down to whole numbers, while later tiers and hidden rolls use the unfloored values. Quality is visible, but whether an egg is actually a Double Yolker remains hidden until it hatches. Hybrids are deferred.
+
+**Reason:** Pair merging turns duplicate recruitment into both a build investment and a way to thin the flock without introducing named-bird XP or species-wide incremental upgrades. Because two daily eggs become one egg worth only 1.5 times as much, the action trades aggregate score and effect frequency for concentration instead of being a free numerical improvement. Delayed resolution prevents one shop visit from collapsing a large flock through several generations before the player experiences the intermediate build. Exact internal arithmetic preserves honest compounding, while floored displays keep play readable.
+
+**Supersedes:** D032's species-wide score and Double Yolker investments and its requirement that every shop transaction spend cash. D032's unified shop, optional recruitment and retirement, cash-funded factory progression, multiple actions, saving, failure restriction, and free Day 3 refit remain.
+
 <!--
 Copy for the next entry:
 
-## D031 — Short decision title
+## D034 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

@@ -252,7 +252,7 @@ theme_override_colors/font_shadow_color = Color(0.03, 0.02, 0.01, 1)
 theme_override_constants/line_spacing = 0
 theme_override_constants/shadow_outline_size = 2
 theme_override_font_sizes/font_size = 13
-text = "BRASS SEAL = HATCH SCORE\nRIPPLE = COPIES NEIGHBOUR DAMAGE\nLEFT ARROW = RETREATS LEFT AFTER DIRECT HIT\nSPARK = PINK DEALS 2 TO SPOONBILL"
+text = "CHICKENS  •  DOUBLE YOLK 2%\nRIPPLE = COPIES NEIGHBOUR DAMAGE\nLEFT ARROW = RETREATS LEFT AFTER DIRECT HIT\nSPARK = PINK DEALS 2 TO SPOONBILL"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -758,24 +758,6 @@ theme_override_font_sizes/font_size = 17
 text = "FLOCK 10 PRODUCERS  •  DAILY OUTPUT 15 EGGS"
 horizontal_alignment = 1
 
-[node name="RewardChoices" type="HBoxContainer" parent="ResultOverlay/Card/Content"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 18
-alignment = 1
-
-[node name="Choice1" parent="ResultOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Choice2" parent="ResultOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="Choice3" parent="ResultOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
-unique_name_in_owner = true
-layout_mode = 2
-
 [node name="Restart" type="Button" parent="ResultOverlay/Card/Content"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 58)
@@ -816,31 +798,31 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -380.0
-offset_top = -225.0
-offset_right = 380.0
-offset_bottom = 225.0
+offset_left = -580.0
+offset_top = -340.0
+offset_right = 580.0
+offset_bottom = 340.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("PanelResult")
 
 [node name="Content" type="VBoxContainer" parent="WorkshopOverlay/Card"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 8
 alignment = 1
 
 [node name="Title" type="Label" parent="WorkshopOverlay/Card/Content"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.27, 0.07, 0.04, 1)
-theme_override_font_sizes/font_size = 38
-text = "FACTORY CHANGEOVER"
+theme_override_font_sizes/font_size = 34
+text = "THE GENERAL STORE"
 horizontal_alignment = 1
 
 [node name="WorkshopBalance" type="Label" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.44, 0.24, 0.06, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 20
 text = "BALANCE £0"
 horizontal_alignment = 1
 
@@ -848,42 +830,156 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.30, 0.21, 0.14, 1)
-theme_override_font_sizes/font_size = 17
-text = "The line is being cleared for tomorrow's flock."
+theme_override_font_sizes/font_size = 16
+text = "Spend as much as you like, or save for later."
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="ExtensionPlate" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
-custom_minimum_size = Vector2(0, 150)
+[node name="RecruitTitle" type="Label" parent="WorkshopOverlay/Card/Content"]
 layout_mode = 2
-theme_override_styles/panel = SubResource("HudPlate")
+theme_override_colors/font_color = Color(0.44, 0.24, 0.06, 1)
+theme_override_font_sizes/font_size = 18
+text = "RECRUITMENT  •  ONE BIRD / ONE DAILY EGG"
+horizontal_alignment = 1
 
-[node name="Offer" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/ExtensionPlate"]
+[node name="RewardChoices" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 18
 alignment = 1
 
-[node name="ExtensionTitle" type="Label" parent="WorkshopOverlay/Card/Content/ExtensionPlate/Offer"]
+[node name="Choice1" parent="WorkshopOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.74, 0.23, 1)
-theme_override_font_sizes/font_size = 24
-text = "SHIFT CONFIGURATION"
-horizontal_alignment = 1
 
-[node name="ExtensionDetail" type="Label" parent="WorkshopOverlay/Card/Content/ExtensionPlate/Offer"]
+[node name="Choice2" parent="WorkshopOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
+unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.80, 0.59, 1)
+
+[node name="Choice3" parent="WorkshopOverlay/Card/Content/RewardChoices" instance=ExtResource("10_choice")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MergeSummary" type="Label" parent="WorkshopOverlay/Card/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.30, 0.21, 0.14, 1)
 theme_override_font_sizes/font_size = 16
-text = "The five-bay line remains in service for the next shift."
+text = "PICK OF THE LITTER  •  TWO MATCHING BIRDS BECOME ONE 50% BETTER BIRD"
 horizontal_alignment = 1
-autowrap_mode = 2
 
-[node name="WorkshopStatus" type="Label" parent="WorkshopOverlay/Card/Content/ExtensionPlate/Offer"]
+[node name="MergeActions" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="MergeChicken" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("RestartNormal")
+theme_override_styles/hover = SubResource("RestartHover")
+theme_override_styles/pressed = SubResource("RestartNormal")
+theme_override_styles/focus = SubResource("RestartHover")
+text = "CHICKEN ×2 → TIER 1\n3 / 2% → 4 / 3%"
+
+[node name="MergeCuckoo" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("RestartNormal")
+theme_override_styles/hover = SubResource("RestartHover")
+theme_override_styles/pressed = SubResource("RestartNormal")
+theme_override_styles/focus = SubResource("RestartHover")
+text = "CUCKOO ×2 → TIER 1\n1 / 0% → 1 / 0%"
+
+[node name="MergePlover" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("RestartNormal")
+theme_override_styles/hover = SubResource("RestartHover")
+theme_override_styles/pressed = SubResource("RestartNormal")
+theme_override_styles/focus = SubResource("RestartHover")
+text = "PLOVER ×2 → TIER 1\n4 / 0% → 6 / 0%"
+
+[node name="MergeSpoonbill" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("RestartNormal")
+theme_override_styles/hover = SubResource("RestartHover")
+theme_override_styles/pressed = SubResource("RestartNormal")
+theme_override_styles/focus = SubResource("RestartHover")
+text = "SPOONBILL ×2 → TIER 1\n4 / 0% → 6 / 0%"
+
+[node name="ExtraThwack" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("RestartNormal")
+theme_override_styles/hover = SubResource("RestartHover")
+theme_override_styles/pressed = SubResource("RestartNormal")
+theme_override_styles/focus = SubResource("RestartHover")
+text = "STARTING THWACKS 20 → 21  •  £5"
+
+[node name="RetireTitle" type="Label" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.44, 0.24, 0.06, 1)
+theme_override_font_sizes/font_size = 17
+text = "RETIRE ONE BIRD  •  £2"
+horizontal_alignment = 1
+
+[node name="RetirementActions" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="RetireChicken" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(205, 42)
+layout_mode = 2
+text = "CHICKEN (10)"
+
+[node name="RetireCuckoo" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(205, 42)
+layout_mode = 2
+text = "CUCKOO (3)"
+
+[node name="RetirePlover" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(205, 42)
+layout_mode = 2
+text = "PLOVER (2)"
+
+[node name="RetireSpoonbill" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(205, 42)
+layout_mode = 2
+text = "SPOONBILL (0)"
+
+[node name="WorkshopStatus" type="Label" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.47, 0.91, 0.88, 1)
-theme_override_font_sizes/font_size = 16
-text = "DAY 2  •  FIVE-BAY LINE"
+theme_override_font_sizes/font_size = 15
+text = "BUY ANY NUMBER OF AFFORDABLE ITEMS  •  OR SAVE YOUR CASH"
 horizontal_alignment = 1
 
 [node name="WorkshopActions" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
@@ -893,16 +989,16 @@ alignment = 1
 
 [node name="ContinueWorkshop" type="Button" parent="WorkshopOverlay/Card/Content/WorkshopActions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(430, 58)
+custom_minimum_size = Vector2(430, 54)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 19
 theme_override_styles/normal = SubResource("RestartNormal")
 theme_override_styles/hover = SubResource("RestartHover")
 theme_override_styles/pressed = SubResource("RestartNormal")
 theme_override_styles/focus = SubResource("RestartHover")
-text = "START DAY 2"
+text = "LEAVE SHOP & START DAY 2"
 
 [node name="ProductionLoader" parent="." instance=ExtResource("11_loader")]
 unique_name_in_owner = true

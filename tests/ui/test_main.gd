@@ -34,6 +34,8 @@ func test_main_renders_initial_day_and_shell_information() -> void:
 	assert_eq(main.get_node("Content/Header/Cash").accessibility_name, "Cash balance £0")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
 	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER 14")
+	assert_string_contains(main.get_node("Content/Header/ShellLegend").text, "CHICKENS")
+	assert_string_contains(main.get_node("Content/Header/ShellLegend").text, "DOUBLE YOLK 2%")
 	assert_false(
 		main.get_node("Content/Header/Thwacks").get_global_rect().intersects(
 			main.get_node("Content/Header/HopperCount").get_global_rect()
@@ -79,6 +81,22 @@ func test_plover_shell_information_shows_the_four_point_payoff() -> void:
 	assert_string_contains(summary, "TOUGHNESS 6")
 	assert_string_contains(summary, "4 POINTS")
 	assert_eq(slot.effect_emblem(), "screen_left")
+
+
+func test_merged_egg_shows_its_quality_tier_and_floored_gameplay_score() -> void:
+	var flock = ProducerFlock.new([{"kind": "chicken", "tier": 1}])
+	var session = ChickenDaySession.new(42, flock, IdentityShuffler.new())
+	var main := _add_main()
+	main.replace_session(session)
+	var slot = main.get_node("Content/Stage/Belt/Slots/Slot1")
+
+	assert_eq(slot.current_egg().tier, 1)
+	assert_almost_eq(float(slot.current_egg().exact_base_points), 4.5, 0.00001)
+	assert_string_contains(slot.egg_summary(), "4 POINTS")
+	assert_false(slot.egg_summary().contains("4.5"))
+	assert_string_contains(slot.egg_description(), "Prize")
+	assert_eq(slot.quality_tier(), 1)
+	assert_eq(slot.quality_ring_count(), 1)
 
 
 func test_stage_starts_with_three_levers_and_five_visible_colour_matched_spoons() -> void:
@@ -321,10 +339,10 @@ func test_hatch_burst_carries_resolved_points_into_the_score_before_event_comple
 	assert_false(payoff.is_active())
 
 
-func test_ten_percent_egg_exposes_its_chance_without_revealing_the_result() -> void:
+func test_double_yolk_eggs_look_identical_and_do_not_expose_parent_odds() -> void:
 	var flock = ProducerFlock.new([
-		{"kind": "chicken", "double_yolk_chance": 0.10},
-		{"kind": "chicken", "double_yolk_chance": 0.10},
+		{"kind": "chicken"},
+		{"kind": "chicken"},
 		{"kind": "chicken"},
 	])
 	var session = ChickenDaySession.new(42, flock, IdentityShuffler.new())
@@ -332,23 +350,46 @@ func test_ten_percent_egg_exposes_its_chance_without_revealing_the_result() -> v
 	main.replace_session(session)
 	var first_slot = main.get_node("Content/Stage/Belt/Slots/Slot1")
 
-	assert_eq(first_slot.double_yolk_chance_percent(), 10)
-	assert_string_contains(first_slot.egg_summary(), "10% DOUBLE YOLKER CHANCE")
-	assert_string_contains(first_slot.egg_description(), "10 percent chance")
-	assert_false(first_slot.egg_description().contains("is a Double Yolker"))
+	assert_eq(float(first_slot.current_egg().double_yolk_chance), 0.02)
+	assert_false(first_slot.egg_summary().contains("DOUBLE"))
+	assert_false(first_slot.egg_summary().contains("1 IN"))
+	assert_false(first_slot.egg_summary().contains("10%"))
+	assert_false(first_slot.egg_description().contains("Double Yolker"))
 	var previews: Array[Node] = main.get_node("Content/Stage/Pipe/Preview").get_children()
-	assert_eq(previews[0].double_yolk_chance_percent(), 10)
-	assert_eq(previews[1].double_yolk_chance_percent(), 0)
+	assert_eq(float(previews[0].current_egg().double_yolk_chance), 0.02)
+	assert_eq(float(previews[1].current_egg().double_yolk_chance), 0.02)
+	assert_eq(previews[0].egg_summary(), previews[1].egg_summary())
+	assert_eq(previews[0].egg_description(), previews[1].egg_description())
+
+
+func test_parent_loading_tile_does_not_repeat_species_level_odds() -> void:
+	var tile = (load("res://src/presentation/producer_output_tile.tscn") as PackedScene).instantiate()
+	add_child_autofree(tile)
+	tile.render_producer({
+		"kind": "chicken",
+		"toughness": 3,
+		"points": 3,
+		"double_yolk_chance": 0.10,
+	})
+
+	assert_eq(tile.odds_text(), "")
+	assert_eq(float(tile.production_fact.double_yolk_chance), 0.10)
 
 
 func test_double_yolker_hatch_has_a_large_two_yolk_six_point_payoff() -> void:
 	var flock = ProducerFlock.new([
-		{"kind": "chicken", "double_yolk_chance": 1.0},
+		{"kind": "chicken"},
 		{"kind": "chicken"},
 		{"kind": "chicken"},
 		{"kind": "chicken"},
 	])
-	var session = ChickenDaySession.new(42, flock, IdentityShuffler.new())
+	var session = null
+	for day_seed in range(1000):
+		var candidate = ChickenDaySession.new(day_seed, flock, IdentityShuffler.new())
+		if bool(candidate.state().slots[0].is_double_yolker):
+			session = candidate
+			break
+	assert_not_null(session)
 	var main := _add_main()
 	main.replace_session(session)
 	main.set_reduced_motion(true)
@@ -472,7 +513,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	assert_true(result_panel.visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY FAILED")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 17")
-	assert_false(main.get_node("ResultOverlay/Card/Content/RewardChoices").visible)
+	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_true(main.get_node("ResultOverlay/Card/Content/Restart").visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Restart").text, "RETRY DAY 1")
 	assert_eq(main.get_node("ResultOverlay/Card/Content/CashPayout").text, "NO CASH EARNED  •  BALANCE £0")
@@ -482,15 +523,15 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 20")
 
 
-func test_success_opens_three_legible_producer_choices_instead_of_retry() -> void:
+func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void:
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 
 	await _complete_successful_day(main)
 
-	var choices: HBoxContainer = main.get_node("ResultOverlay/Card/Content/RewardChoices")
+	var choices: HBoxContainer = main.get_node("WorkshopOverlay/Card/Content/RewardChoices")
 	var offered_kinds: Array[String] = []
-	for choice in choices.get_children():
+	for choice in choices.get_children().filter(func(button: Button) -> bool: return button.visible):
 		offered_kinds.append(choice.producer_kind)
 		assert_eq(choice.portrait_kind(), choice.producer_kind)
 		assert_eq(choice.preview_egg_kind(), choice.producer_kind)
@@ -498,10 +539,11 @@ func test_success_opens_three_legible_producer_choices_instead_of_retry() -> voi
 		assert_string_contains(choice.card_text(), "EGG")
 		assert_string_contains(choice.card_text(), "TOUGHNESS")
 		assert_string_contains(choice.card_text(), "POINT")
+		assert_string_contains(choice.card_text(), "£3")
 		assert_eq(choice.tooltip_text, "")
-	assert_true(main.get_node("ResultOverlay").visible)
-	assert_gt(main.get_node("ResultOverlay").z_index, main.get_node("Content").z_index)
-	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "CHOOSE A PRODUCER")
+	assert_false(main.get_node("ResultOverlay").visible)
+	assert_true(main.get_node("WorkshopOverlay").visible)
+	assert_gt(main.get_node("WorkshopOverlay").z_index, main.get_node("Content").z_index)
 	assert_true(choices.visible)
 	assert_eq(choices.get_child_count(), 3)
 	assert_eq(offered_kinds.duplicate().reduce(
@@ -511,19 +553,33 @@ func test_success_opens_three_legible_producer_choices_instead_of_retry() -> voi
 			return unique,
 		[]
 	).size(), 3)
-	assert_false(main.get_node("ResultOverlay/Card/Content/Restart").visible)
-	assert_eq(main.get_node("ResultOverlay/Card/Content/FlockSummary").text, "FLOCK 24 PRODUCERS  •  DAILY OUTPUT 24 EGGS")
 	assert_string_contains(
-		main.get_node("ResultOverlay/Card/Content/Summary").text,
-		"DAY 2 TARGET: 20 POINTS"
+		main.get_node("WorkshopOverlay/Card/Content/WorkshopSummary").text,
+		"DAY 2 TARGET 20"
 	)
 	assert_eq(
-		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
-		"£8 BANKED FROM 8 UNUSED THWACKS  •  BALANCE £8"
+		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text,
+		"BALANCE £8"
+	)
+	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "0 MERGES QUEUED")
+	assert_string_contains(
+		main.get_node("WorkshopOverlay/Card/Content/MergeActions/MergeChicken").text,
+		"3 PTS / 2%  →  4 PTS / 3%"
 	)
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 8")
 	await get_tree().process_frame
 	assert_true(choices.get_child(0).has_focus())
+	var shop_card: Control = main.get_node("WorkshopOverlay/Card")
+	assert_true(main.get_global_rect().encloses(shop_card.get_global_rect()))
+	for shop_section_path in [
+		"WorkshopOverlay/Card/Content/RewardChoices",
+		"WorkshopOverlay/Card/Content/MergeActions",
+		"WorkshopOverlay/Card/Content/RetirementActions",
+		"WorkshopOverlay/Card/Content/WorkshopActions",
+	]:
+		assert_true(shop_card.get_global_rect().encloses(
+			(main.get_node(shop_section_path) as Control).get_global_rect()
+		), "%s stays inside the shop card" % shop_section_path)
 
 
 func test_early_success_shows_unused_thwack_payout_and_persistent_balance() -> void:
@@ -539,20 +595,20 @@ func test_early_success_shows_unused_thwack_payout_and_persistent_balance() -> v
 		await _press_and_wait(main, circuit_name)
 
 	assert_eq(presented.slice(-3), ["day_remainder_discarded", "day_ended", "cash_awarded"])
-	assert_eq(main.get_node("Content/Header/Cash").text, "CASH £9")
-	assert_eq(main.get_node("Content/Header/Cash").accessibility_name, "Cash balance £9")
+	assert_eq(main.get_node("Content/Header/Cash").text, "CASH £10")
+	assert_eq(main.get_node("Content/Header/Cash").accessibility_name, "Cash balance £10")
 	assert_eq(
-		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
-		"£9 BANKED FROM 9 UNUSED THWACKS  •  BALANCE £9"
+		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text,
+		"BALANCE £10"
 	)
-	assert_true(main.get_node("ResultOverlay").visible)
+	assert_true(main.get_node("WorkshopOverlay").visible)
 
 
-func test_selecting_a_producer_opens_workshop_then_continue_starts_day_two() -> void:
+func test_shop_allows_multiple_purchases_then_leave_starts_day_two() -> void:
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _complete_successful_day(main)
-	var first_choice = main.get_node("ResultOverlay/Card/Content/RewardChoices/Choice1")
+	var first_choice = main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1")
 	var expected_hopper_count := 24
 	var loading_facts: Array[Vector2i] = []
 	main.production_loading_started.connect(
@@ -565,25 +621,30 @@ func test_selecting_a_producer_opens_workshop_then_continue_starts_day_two() -> 
 
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_true(main.get_node("WorkshopOverlay").visible)
-	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £8")
+	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £5")
 	assert_string_contains(
-		main.get_node("WorkshopOverlay/Card/Content/ExtensionPlate/Offer/WorkshopStatus").text,
-		"RED 1+3"
+		main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text,
+		"RECRUITED"
 	)
+	main.get_node("WorkshopOverlay/Card/Content/MergeActions/MergeChicken").pressed.emit()
+	await get_tree().process_frame
+	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £5")
+	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "1 MERGE QUEUED")
+	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "PAIR QUEUED")
 	assert_eq(
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").text,
-		"START DAY 2"
+		"LEAVE SHOP & START DAY 2"
 	)
 
 	main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").pressed.emit()
 	await main.production_loading_completed
 	await get_tree().process_frame
 
-	assert_eq(loading_facts, [Vector2i(25, 25)])
+	assert_eq(loading_facts, [Vector2i(24, 24)])
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_false(main.get_node("ProductionLoader").visible)
-	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER %d" % expected_hopper_count)
+	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER %d" % (expected_hopper_count - 1))
 	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 20")
 	assert_string_contains(main.get_node("Content/Feedback").text, "DAY 2")
 	assert_false(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().is_empty())
@@ -599,23 +660,18 @@ func test_day_three_refit_builds_five_sequential_telescoping_wall_spoons() -> vo
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _complete_successful_day(main)
-	main.get_node("ResultOverlay/Card/Content/RewardChoices/Choice1").pressed.emit()
-	await get_tree().process_frame
 	main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").pressed.emit()
 	await main.production_loading_completed
 
 	await _complete_successful_day(main)
-	main.get_node("ResultOverlay/Card/Content/RewardChoices/Choice1").pressed.emit()
-	await get_tree().process_frame
-
 	assert_true(main.get_node("WorkshopOverlay").visible)
 	assert_string_contains(
-		main.get_node("WorkshopOverlay/Card/Content/ExtensionPlate/Offer/WorkshopStatus").text,
-		"FIVE TELESCOPING SPOONS"
+		main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text,
+		"FREE TEN-BAY HAIRPIN REFIT"
 	)
 	assert_eq(
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").text,
-		"REFIT & START DAY 3"
+		"FREE REFIT & START DAY 3"
 	)
 
 	main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").pressed.emit()
@@ -767,8 +823,6 @@ func test_replacing_the_session_cancels_an_active_production_loading_sequence() 
 		func(_producer_count: int, _egg_count: int) -> void: started_count[0] += 1
 	)
 
-	main.get_node("ResultOverlay/Card/Content/RewardChoices/Choice1").pressed.emit()
-	await get_tree().process_frame
 	main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").pressed.emit()
 	await get_tree().process_frame
 	assert_eq(started_count[0], 1)
@@ -786,7 +840,10 @@ func test_replacing_the_session_cancels_an_active_production_loading_sequence() 
 
 
 func _press_and_wait(main: Control, circuit_name: String) -> void:
-	main.get_node("Content/Stage/CircuitBank/%s" % circuit_name).pressed.emit()
+	var circuit_button: Button = main.get_node("Content/Stage/CircuitBank/%s" % circuit_name)
+	if circuit_button.disabled:
+		return
+	circuit_button.pressed.emit()
 	await main.playback_completed
 	await get_tree().process_frame
 
@@ -801,7 +858,7 @@ func _complete_successful_day(main: Control) -> void:
 		if main.get_node("Content/Stage/CircuitBank/%s" % circuit_name).disabled:
 			continue
 		await _press_and_wait(main, circuit_name)
-		if main.get_node("ResultOverlay").visible:
+		if main.get_node("ResultOverlay").visible or main.get_node("WorkshopOverlay").visible:
 			break
 
 

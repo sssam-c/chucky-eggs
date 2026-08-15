@@ -2,70 +2,84 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active slice — Hidden Double Yolker gamble
+## Active design slice — Pair merging
 
 ### Question
 
-Does clearly marking a Chicken egg with a 10% chance of secretly being a Double Yolker make the player value that egg differently, and does revealing a six-point hatch create an exciting payoff worth pursuing again?
+Does turning two matching birds into one 50%-stronger bird make duplicate recruitment and flock thinning strategically exciting without making merging automatic?
 
 ### Settled rules preserved
 
 - Every bird lays exactly one egg per day; the starting pool remains ten Chicken, three Cuckoo, and two Plover eggs.
-- Egg type, toughness, base points, circuits, movement, hatching order, targets, cash payout, producer rewards, retries, and the Day 3 hairpin remain unchanged.
+- Successful days no longer compel a producer addition; flock growth occurs only through a deliberate shop purchase.
+- Recruitment, retirement, merging, and factory upgrades share one post-success shop. Recruitment, retirement, and factory upgrades cost cash; a merge consumes two matching birds.
+- Failed days grant neither cash nor shop access. The universal free Day 3 hairpin refit remains outside the shop.
+- Egg toughness, species effects, circuits, movement, hatching order, targets, cash payout, retries, and the Day 3 hairpin remain unchanged.
 - Daily randomness remains seeded and equal retries reproduce the same shuffle and hidden outcomes.
 - Presentation plays resolver-authored hatch and score facts without deciding whether an egg is a Double Yolker.
 
 ### Hypothesis
 
-Two of the ten starting Chicken parents each have a visible prototype 10% chance to lay a Double Yolker. Their eggs show that chance without revealing the result, inviting the player to spend scarce thwacks on a known gamble. If one hatches as a Double Yolker, awarding twice the Chicken's normal value with a conspicuously larger two-yolk payoff should create a memorable peak without making ordinary success depend on the bonus.
+Pair merging should turn duplicates into a resource while keeping a meaningful quantity-versus-quality trade-off. Two daily eggs become one egg with 1.5 times the exact individual score and Double Yolker chance, so the flock becomes smaller and more concentrated but loses aggregate output and effect frequency. Recruitment can pursue merge inputs; merging and retirement can deliberately thin an unwanted or overrepresented species.
 
-### Player-visible path
+Quality belongs to a species-and-tier group rather than a named individual. Queueing merges until the shop closes creates one visible generation per day: the player must use and understand Prize birds before converting pairs of them into Champions. Exact internal values compound honestly even when simple whole-number player views round them down.
 
-Begin Day 1 and find up to two Chicken eggs in the shuffled conveyor or three-egg preview bearing a clear `10% DOUBLE YOLKER` chance mark. Decide whether that upside changes which circuit deserves the next thwack. Hatch the egg to reveal either the normal three-point Chicken payoff or a Double Yolker worth six points. On a Double Yolker, see two yolks, an unmistakable announcement, and the resolver-authored `+6` travel into the score. Restart the same day to confirm the concealed result and shuffle are reproducible.
+### Candidate player-visible path
 
-### In scope
+Complete a day and enter the unified shop. Inspect birds grouped by species and quality; queue any legal two-to-one merges while the projected flock count updates. Recruit a Standard bird to create a future pair, retire the lowest unreserved quality of a species, buy the prototype factory option, combine legal actions, or leave without spending. On leaving, resolve the queued merges and watch the resulting tiered flock load one egg per bird for the next day.
 
-- Two prototype starting Chicken producer records with a 10% Double Yolker chance; every other current producer has zero chance.
-- One seeded hidden roll per laid egg, fixed before the daily shuffle and reproduced on retry.
-- Chance metadata preserved from producer through shuffled hopper, pipe preview, conveyor, accessibility text, discard, and hatch.
-- A non-colour `10%` Double Yolker chance mark on each eligible egg without exposing its resolved result.
-- Resolver-authored doubled points and explicit Double Yolker hatch facts.
-- A larger cancellable hatch payoff with two yolks, a `DOUBLE YOLKER!` announcement, stronger scale and colour treatment, and an equally explicit reduced-motion result.
+### Candidate prototype scope
 
-### Implementation conveniences
+- One quality tier on each bird, with flock views grouped by species and tier rather than individual identity.
+- A merge requires exactly two unreserved birds of the same species and tier and produces one bird of the next tier.
+- Each tier uses an exact `1.5^tier` multiplier for egg base score and Double Yolker chance, capped at 100% chance.
+- Gameplay score, shop score previews, and displayed percentage chances always floor to whole numbers. Hidden rolls and later tier calculations retain exact values.
+- One unified post-success shop with recruitment, retirement, four-species merging, and the existing prototype factory improvement.
+- Queued inputs are reserved immediately, merges cost no cash, and all outputs appear only when the player leaves. Outputs cannot chain during that visit.
+- Retirement removes one lowest-quality unreserved bird of the chosen species and cannot consume a queued merge input.
+- Offers expose both matching inputs and the floored before-and-after consequence, plus next-day target and projected flock size.
+- One seeded hidden Double Yolker roll per laid egg; no egg reveals its result before hatching.
+- Quality is visible through the bird title and restrained egg contour rings; eggs remain free of printed chance labels, lineage, names, and XP.
+- Resolver-authored scoring uses the exact tier value at day construction, floors the awarded base score, and doubles that floored score for a Double Yolker.
 
-- The two eligible parents are fixed starting Chickens rather than named or selectable individuals.
-- Ten percent, two eligible parents, Chicken-only eligibility, and exactly double points are prototype values rather than settled balance rules.
-- Newly drafted producers have zero Double Yolker chance until a later tending mechanic is deliberately designed.
-- The fixed Day 1 prototype seed contains one successful hidden roll so the payoff can be found during this playtest; the chance calculation itself remains 10% and retries reproduce it.
-- Reuse the current seeded day construction, egg renderer, hatch payoff overlay, score travel, sound set, and presentation barrier.
+### Balancing constraints
 
-### Outside this slice
+- A merge converts two eggs with aggregate base value `2V` into one worth `1.5V`; it therefore lowers raw daily score before considering concentration, machine losses, or target overkill.
+- Merging also halves the frequency of toughness and positional effects from those two birds. A high-tier Cuckoo or Plover must not silently erase the value of having two effect triggers.
+- Chicken begins with a 2% Double Yolker chance. Species with a zero baseline remain at zero through multiplication, so later authored ways to establish a non-zero chance remain a separate design question.
+- Starting with ten Chickens allows up to five Prize Chicken merges after Day 1. That extreme thinning is useful prototype evidence, but projected output can become too small to meet later targets.
+- Floors create intentionally uneven visible steps: a 3-point Chicken becomes 4 points at Prize while its exact 4.5 value becomes 6 at Champion from 6.75, not from displayed 4. Players must be told that quality compounds even though decimals remain hidden.
+- Positive feedback from efficient play into greater purchasing power is intentional. The failure risks are a purchase that removes future decisions or a build that cannot clear its deterministic retry and therefore cannot reach the shop.
+- Failed days must not grant cash or shop access, or the player could farm removal and upgrades without clearing the score requirement.
 
-- Tending, XP, parent names, parent selection, chance upgrades, inheritance, breeding, pity systems, rerolls, or persistence between runs.
-- Double Yolkers from Cuckoo, Plover, or Spoonbill producers.
-- Elite conditions, target retuning, reward weighting, shops, machine upgrades, or a campaign map.
-- Final probability curves, frequency, economy effects, and production art.
+### Explicitly deferred
+
+- Hybrid and cross-species recipes, inherited effects, authored hybrid art, and merging unlike tiers.
+- Parent names, selection, lineage, breeding, individual XP, inheritance, per-egg inspection panels, pity systems, or rerolls.
+- Merge undo, cancellation, selling outputs, cash costs, hard tier caps, bespoke tier names beyond Champion, or final tuning.
+- Random stock, a campaign map, shop rerolls, discounts, selling, retirement rewards, or named individual birds.
+- Elite conditions, target retuning, a catalogue of machine upgrades, and production art.
 
 ### Exit evidence
 
-- Domain and session tests prove exactly two starting eggs carry 10% chance, seeded rolls reproduce across equal retries, zero- and guaranteed-chance fixtures resolve correctly, a Double Yolker Chicken awards six points once, and normal Chickens remain worth three.
-- UI tests prove eligible conveyor and preview eggs expose `10%` without exposing the result, ordinary eggs do not show the mark, Double Yolker presentation consumes the resolver flag, commits `+6` exactly once, and cancellation or reduced motion cannot leave stale payoff state.
-- A 1280×720 running-game check inspects the chance mark on the belt and in the pipe, then follows a Double Yolker through its two-yolk reveal and score arrival without obscuring the machine or header.
-- A short playtest asks: “Did the 10% mark change which egg you tried to save, and did the reveal make you want to improve those odds in a future run?”
+- Domain tests prove same-species/same-tier validity, two-to-one mutation, exact repeated 1.5 multiplication, floored scoring, and deterministic hidden rolls.
+- Session tests prove reservations, projected flock size, free queueing, cash persistence, no same-visit output chaining, retirement safety, and merge events resolving before the next day starts.
+- UI tests prove offers show matching inputs and only floored consequences, queued merges update the projected flock, tiered eggs remain free of printed odds, and the next daily pool contains the resolved outputs.
+- A 1280×720 running-game check verifies the unified shop remains readable with four merge offers, recruitment, retirement, factory stock, and leave action present together.
+- A short playtest asks: “Which duplicates did you pursue, when did you refuse a legal merge, and did the smaller flock feel more focused or simply weaker?”
 
 ## Deferred slice — First positional spoon upgrade
 
 ### Question
 
-Does spending efficiency-earned cash on one persistent, column-specific spoon upgrade, then using it against a tougher final demo day, make the run feel like a build rather than a sequence of disconnected days?
+Does buying one persistent, column-specific spoon upgrade from the unified shop, then using it against a tougher final demo day, make the factory side of the run feel like a build rather than a sequence of disconnected days?
 
 ### Settled rules preserved
 
 - Days 1 and 2 use the five-bay line, and every run receives the free ten-bay hairpin refit before Day 3.
 - The hairpin keeps five independent telescoping spoons, near-then-far resolution, one conveyor advance, and one spent thwack per lever pull.
 - Cash still comes only from unused thwacks after a successful target-reaching action; failure awards no cash and preserves the run's existing balance.
-- Every success still requires one informed producer choice before the workshop and next-day flock loading.
+- Producer additions remain optional cash purchases in the same shop as factory upgrades.
 - Every producer lays exactly one egg per day; the 15-bird starting flock contains ten Chickens, three Cuckoos, and two Plovers.
 - Egg damage, effects, hatch order, upgrade ownership, spending, and day transitions remain deterministic rule or session state rather than presentation state.
 
@@ -75,7 +89,7 @@ The hairpin becomes meaningful progression infrastructure when the player can pe
 
 ### Player-visible path
 
-Complete Day 3 on the refitted hairpin, bank the unused-thwack payout, and choose the usual producer. In the workshop, inspect one £8 Tempered Bowl offer, preview its exact effect, and select one of the five spoon columns before confirming the purchase; skip it or see a clear insufficient-funds state when appropriate. Start Day 4 with the upgraded spoon visibly distinct and its two affected bays exposed through focus and hover. Use its 2-damage contacts while pursuing a prototype 25-point target. On success, see a concise demo-complete summary of days cleared, flock, cash earned and spent, and the installed upgrade; on failure, retry Day 4 with the same flock, shuffle, cash, and upgrade.
+Complete Day 3 on the refitted hairpin and bank the unused-thwack payout. In the unified shop, inspect one £8 Tempered Bowl offer alongside the flock options, preview its exact effect, and select one of the five spoon columns before confirming the purchase; leave it or see a clear insufficient-funds state when appropriate. Start Day 4 with the upgraded spoon visibly distinct and its two affected bays exposed through focus and hover. Use its 2-damage contacts while pursuing a prototype 25-point target. On success, see a concise demo-complete summary of days cleared, flock, cash earned and spent, and the installed upgrade; on failure, retry Day 4 with the same flock, shuffle, cash, and upgrade.
 
 ### In scope
 
@@ -118,7 +132,7 @@ Does a mandatory ten-bay hairpin with five independent telescoping spoons make D
 
 - The starting machine has five slots and the established Red 1+3, Blue 2+4, Pink 5 circuits.
 - Cash is earned only from unused thwacks after meeting a day's target.
-- A successful day still requires one producer choice, and the complete flock still visibly loads the next hopper before play resumes.
+- Successful days grant one optional build direction rather than compelling flock growth, and the resulting complete flock still visibly loads the next hopper before play resumes.
 - Egg damage, effects, hatch order, conveyor advance, target completion, and presentation barriers remain resolver-owned.
 - Cuckoo adjacency and conveyor motion follow route order; Plover's left retreat is an explicit screen-space effect.
 
@@ -128,7 +142,7 @@ Folding the conveyor into two touching five-bay runs before Day 3 should turn fl
 
 ### Player-visible path
 
-Complete Days 1 and 2 on the five-bay line. After the Day 2 producer choice, see the workshop announce a free mandatory refit. Start Day 3 and read the route as 1→5 across the top, through a tight target-free bend, then 6→10 returning left to the drop. Pull Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, or Pink 5+6. Watch one upright spoon extend on the wall, thwack the lower near egg, return upright and retract, then thwack the upper far egg before the belt advances once.
+Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop announce a free mandatory refit. Start Day 3 and read the route as 1→5 across the top, through a tight target-free bend, then 6→10 returning left to the drop. Pull Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, or Pink 5+6. Watch one upright spoon extend on the wall, thwack the lower near egg, return upright and retract, then thwack the upper far egg before the belt advances once.
 
 ### In scope
 

@@ -20,14 +20,25 @@ const ChickenDay = preload("res://src/domain/chicken_day.gd")
 @onready var _cash_payout_label: Label = %CashPayout
 @onready var _result_summary_label: Label = %Summary
 @onready var _flock_summary_label: Label = %FlockSummary
-@onready var _reward_choices_container: HBoxContainer = %RewardChoices
 @onready var _restart_button: Button = %Restart
 @onready var _workshop_overlay: Control = %WorkshopOverlay
 @onready var _workshop_balance_label: Label = %WorkshopBalance
 @onready var _workshop_summary_label: Label = %WorkshopSummary
 @onready var _workshop_status_label: Label = %WorkshopStatus
-@onready var _workshop_config_title: Label = $WorkshopOverlay/Card/Content/ExtensionPlate/Offer/ExtensionTitle
-@onready var _workshop_config_detail: Label = $WorkshopOverlay/Card/Content/ExtensionPlate/Offer/ExtensionDetail
+@onready var _merge_summary_label: Label = %MergeSummary
+@onready var _merge_buttons: Dictionary = {
+	"chicken": %MergeChicken,
+	"cuckoo": %MergeCuckoo,
+	"plover": %MergePlover,
+	"spoonbill": %MergeSpoonbill,
+}
+@onready var _extra_thwack_button: Button = %ExtraThwack
+@onready var _retirement_buttons: Dictionary = {
+	"chicken": %RetireChicken,
+	"cuckoo": %RetireCuckoo,
+	"plover": %RetirePlover,
+	"spoonbill": %RetireSpoonbill,
+}
 @onready var _continue_workshop_button: Button = %ContinueWorkshop
 @onready var _mute_button: CheckButton = %Mute
 @onready var _reduced_motion_button: CheckButton = %ReducedMotion
@@ -63,8 +74,13 @@ func _ready() -> void:
 		_producer_choice_buttons[choice_index].pressed.connect(
 			_on_producer_choice_pressed.bind(choice_index)
 		)
+	for kind: String in _merge_buttons:
+		_merge_buttons[kind].pressed.connect(_on_merge_pressed.bind(kind))
+	_extra_thwack_button.pressed.connect(_on_factory_upgrade_pressed.bind("extra_thwack"))
+	for kind: String in _retirement_buttons:
+		_retirement_buttons[kind].pressed.connect(_on_retirement_pressed.bind(kind))
 	_restart_button.pressed.connect(_on_restart_pressed)
-	_continue_workshop_button.pressed.connect(_on_continue_workshop_pressed)
+	_continue_workshop_button.pressed.connect(_on_leave_shop_pressed)
 	_mute_button.toggled.connect(set_muted)
 	_reduced_motion_button.toggled.connect(set_reduced_motion)
 	_presenter.event_presented.connect(_on_presentation_event)
@@ -129,20 +145,40 @@ func _on_producer_choice_pressed(choice_index: int) -> void:
 	if _input_locked:
 		return
 	var state: Dictionary = _session.state()
-	if state.phase != "reward" or choice_index >= state.reward_choices.size():
+	if state.phase != "shop" or choice_index >= state.shop_stock.recruitment.size():
 		return
-	var selected: Dictionary = state.reward_choices[choice_index]
-	var events: Array[Dictionary] = _session.select_producer(selected.kind)
-	if events.is_empty() or events[0].type == "producer_selection_rejected":
-		return
+	var selected: Dictionary = state.shop_stock.recruitment[choice_index]
+	var events: Array[Dictionary] = _session.purchase_producer(selected.kind)
 	_render(events)
 
 
-func _on_continue_workshop_pressed() -> void:
+func _on_merge_pressed(kind: String) -> void:
 	if _input_locked:
 		return
-	var events: Array[Dictionary] = _session.continue_from_workshop()
-	if events.is_empty() or events[0].type == "workshop_continue_rejected":
+	var state: Dictionary = _session.state()
+	var offer := _first_merge_offer(state.shop_stock.merges, kind)
+	if offer.is_empty():
+		return
+	_render(_session.queue_merge(kind, int(offer.tier)))
+
+
+func _on_factory_upgrade_pressed(upgrade_id: String) -> void:
+	if _input_locked:
+		return
+	_render(_session.purchase_factory_upgrade(upgrade_id))
+
+
+func _on_retirement_pressed(kind: String) -> void:
+	if _input_locked:
+		return
+	_render(_session.purchase_retirement(kind))
+
+
+func _on_leave_shop_pressed() -> void:
+	if _input_locked:
+		return
+	var events: Array[Dictionary] = _session.leave_shop()
+	if events.is_empty() or events[0].type == "shop_leave_rejected":
 		return
 	var day_started_event := _event_of_type(events, "day_started")
 	if day_started_event.is_empty():
@@ -273,67 +309,26 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		circuit_button.set_target_descriptions(descriptions)
 		circuit_button.set_available(has_egg and state.phase == "day" and not _input_locked)
 
-	_result_overlay.visible = state.phase in ["reward", "failed"]
-	_workshop_overlay.visible = state.phase == "workshop"
+	_result_overlay.visible = state.phase == "failed"
+	_workshop_overlay.visible = state.phase == "shop"
 	if _result_overlay.visible:
-		var choosing_producer: bool = state.phase == "reward"
-		_result_label.text = "CHOOSE A PRODUCER" if choosing_producer else "DAY FAILED"
+		_result_label.text = "DAY FAILED"
 		_result_score_label.text = "%d / %d POINTS" % [state.score, state.target_score]
-		_cash_payout_label.text = (
-			"£%d BANKED FROM %d UNUSED THWACKS  •  BALANCE £%d" % [
-				state.last_cash_awarded,
-				state.last_cash_awarded,
-				state.cash,
-			]
-			if choosing_producer
-			else "NO CASH EARNED  •  BALANCE £%d" % state.cash
-		)
+		_cash_payout_label.text = "NO CASH EARNED  •  BALANCE £%d" % state.cash
 		_flock_summary_label.text = "FLOCK %d PRODUCERS  •  DAILY OUTPUT %d EGGS" % [
 			state.producers.size(), state.daily_egg_count,
 		]
-		_reward_choices_container.visible = choosing_producer
-		_restart_button.visible = not choosing_producer
-		if choosing_producer:
-			_result_card.offset_left = -500.0
-			_result_card.offset_top = -250.0
-			_result_card.offset_right = 500.0
-			_result_card.offset_bottom = 250.0
-			_result_summary_label.text = "DAY %d TARGET: %d POINTS  •  Add one producer. Its full daily yield joins tomorrow's shuffled hopper." % [
-				state.day_number + 1,
-				state.next_day_target_score,
-			]
-			for choice_index in range(_producer_choice_buttons.size()):
-				_producer_choice_buttons[choice_index].render_choice(state.reward_choices[choice_index])
-			_producer_choice_buttons[0].grab_focus.call_deferred()
-		else:
-			_result_card.offset_left = -240.0
-			_result_card.offset_top = -190.0
-			_result_card.offset_right = 240.0
-			_result_card.offset_bottom = 190.0
-			_result_summary_label.text = "No producer joins the flock. Retry this day with the same flock and shuffle."
-			_restart_button.text = "RETRY DAY %d" % state.day_number
-			_restart_button.grab_focus.call_deferred()
+		_restart_button.visible = true
+		_result_card.offset_left = -240.0
+		_result_card.offset_top = -190.0
+		_result_card.offset_right = 240.0
+		_result_card.offset_bottom = 190.0
+		_result_summary_label.text = "No shop opens. Retry this day with the same flock and shuffle."
+		_restart_button.text = "RETRY DAY %d" % state.day_number
+		_restart_button.grab_focus.call_deferred()
 
 	if _workshop_overlay.visible:
-		_workshop_balance_label.text = "BALANCE £%d" % state.cash
-		_continue_workshop_button.text = "START DAY %d" % (state.day_number + 1)
-		if state.machine_refit_due:
-			_workshop_summary_label.text = "The growing flock has outgrown the first line. Every factory refits before Day 3."
-			_workshop_config_title.text = "TEN-BAY HAIRPIN REFIT"
-			_workshop_config_detail.text = "Five spoons extend upright, hit near, reset and retract, then hit far."
-			_workshop_status_label.text = "FIVE TELESCOPING SPOONS  •  TWO SEQUENTIAL HITS"
-			_continue_workshop_button.text = "REFIT & START DAY 3"
-		elif state.machine_refit_complete:
-			_workshop_summary_label.text = "The hairpin line is cleared for tomorrow's flock."
-			_workshop_config_title.text = "TEN-BAY HAIRPIN"
-			_workshop_config_detail.text = "Each lever extends one spoon to the near row, resolves it, then retracts to the far row."
-			_workshop_status_label.text = "1+10  •  2+9  •  3+8  •  4+7  •  5+6"
-		else:
-			_workshop_summary_label.text = "The five-bay line is cleared for tomorrow's flock."
-			_workshop_config_title.text = "FIVE-BAY LINE"
-			_workshop_config_detail.text = "The factory refit arrives for every run before Day 3."
-			_workshop_status_label.text = "RED 1+3  •  BLUE 2+4  •  PINK 5"
-		_continue_workshop_button.grab_focus.call_deferred()
+		_render_shop(state, events)
 
 	if fresh_day:
 		_feedback_label.text = "%sDAY %d  •  %s — EMPTY STRIKES ARE WASTED" % [
@@ -343,6 +338,212 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		]
 	else:
 		_feedback_label.text = _feedback_for(events)
+
+
+func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
+	_workshop_balance_label.text = "BALANCE £%d" % state.cash
+	_workshop_summary_label.text = (
+		"DAY %d COMPLETE  •  £%d BANKED  •  DAY %d TARGET %d  •  FLOCK %d → %d"
+		% [
+			state.day_number,
+			state.last_cash_awarded,
+			state.day_number + 1,
+			state.next_day_target_score,
+			state.producers.size(),
+			state.projected_flock_size,
+		]
+	)
+
+	var recruitment: Array = state.shop_stock.recruitment
+	for choice_index in range(_producer_choice_buttons.size()):
+		var choice_button: Button = _producer_choice_buttons[choice_index]
+		choice_button.visible = choice_index < recruitment.size()
+		if not choice_button.visible:
+			continue
+		choice_button.render_choice(recruitment[choice_index])
+		choice_button.disabled = state.cash < int(recruitment[choice_index].price)
+
+	_merge_summary_label.text = (
+		"PICK OF THE LITTER  •  %d MERGE%s QUEUED  •  OUTPUTS ARRIVE NEXT DAY"
+		% [
+			_pending_pair_count(state.pending_merges),
+			"" if _pending_pair_count(state.pending_merges) == 1 else "S",
+		]
+	)
+	for kind: String in _merge_buttons:
+		_render_merge_button(
+			_merge_buttons[kind],
+			_first_merge_offer(state.shop_stock.merges, kind),
+			kind
+		)
+	var factory_offer := _offer_with_id(state.shop_stock.factory_upgrades, "extra_thwack")
+	_render_shop_offer_button(
+		_extra_thwack_button,
+		factory_offer,
+		"STARTING THWACKS %d → %d  •  £%d" if not factory_offer.is_empty() else "EXTRA STARTING THWACK  •  BOUGHT",
+		state.cash,
+		[
+			int(factory_offer.get("current_starting_thwacks", 0)),
+			int(factory_offer.get("next_starting_thwacks", 0)),
+			int(factory_offer.get("price", 0)),
+		]
+	)
+
+	var retirement_price := int(state.shop_stock.retirement.price)
+	for kind: String in _retirement_buttons:
+		var retirement_group := _lowest_unreserved_quality_group(state.quality_groups, kind)
+		var available_count := int(retirement_group.get("available_count", 0))
+		var retirement_button: Button = _retirement_buttons[kind]
+		retirement_button.text = "%s %s (%d)  •  £%d" % [
+			_tier_name(int(retirement_group.get("tier", 0))),
+			kind.to_upper(),
+			available_count,
+			retirement_price,
+		]
+		retirement_button.accessibility_description = (
+			"Retire one %s %s bird for %d pounds."
+			% [
+				_tier_name(int(retirement_group.get("tier", 0))).to_lower(),
+				kind.capitalize(),
+				retirement_price,
+			]
+		)
+		retirement_button.disabled = (
+			available_count == 0
+			or state.projected_flock_size <= 1
+			or state.cash < retirement_price
+		)
+
+	_continue_workshop_button.text = "LEAVE SHOP & START DAY %d" % (state.day_number + 1)
+	if state.machine_refit_due:
+		_continue_workshop_button.text = "FREE REFIT & START DAY 3"
+	_workshop_status_label.text = _shop_status(events, state.machine_refit_due)
+	if events.any(func(event: Dictionary) -> bool: return event.type == "cash_awarded"):
+		_focus_first_shop_action.call_deferred()
+
+
+func _render_shop_offer_button(
+	button: Button,
+	offer: Dictionary,
+	label_format: String,
+	cash: int,
+	values: Array
+) -> void:
+	button.text = label_format % values if not offer.is_empty() else label_format
+	button.disabled = offer.is_empty() or cash < int(offer.get("price", 0))
+
+
+func _render_merge_button(button: Button, offer: Dictionary, kind: String) -> void:
+	if offer.is_empty():
+		button.text = "%s\nNEED 2 MATCHING" % kind.to_upper()
+		button.accessibility_name = "%s merge unavailable" % kind.capitalize()
+		button.accessibility_description = "Requires two unreserved birds of the same quality tier."
+		button.disabled = true
+		return
+	button.text = "%s ×2  %s → %s\n%d PTS / %d%%  →  %d PTS / %d%%" % [
+		kind.to_upper(),
+		_tier_name(int(offer.tier)),
+		_tier_name(int(offer.output_tier)),
+		int(offer.current_points),
+		int(offer.current_double_yolk_percent),
+		int(offer.next_points),
+		int(offer.next_double_yolk_percent),
+	]
+	button.accessibility_name = "Merge two %s %s birds" % [
+		_tier_name(int(offer.tier)).to_lower(), kind.capitalize(),
+	]
+	button.accessibility_description = (
+		"Produces one %s bird. Its egg is worth %d points and has %d percent Double Yolker chance."
+		% [
+			_tier_name(int(offer.output_tier)).to_lower(),
+			int(offer.next_points),
+			int(offer.next_double_yolk_percent),
+		]
+	)
+	button.disabled = false
+
+
+func _first_merge_offer(offers: Array, kind: String) -> Dictionary:
+	for offer: Dictionary in offers:
+		if offer.kind == kind:
+			return offer
+	return {}
+
+
+func _pending_pair_count(pending_merges: Array) -> int:
+	var total := 0
+	for pending: Dictionary in pending_merges:
+		total += int(pending.pair_count)
+	return total
+
+
+func _lowest_unreserved_quality_group(groups: Array, kind: String) -> Dictionary:
+	for group: Dictionary in groups:
+		var available_count := int(group.bird_count) - int(group.reserved_count)
+		if group.kind == kind and available_count > 0:
+			return {
+				"tier": int(group.tier),
+				"available_count": available_count,
+			}
+	return {}
+
+
+func _tier_name(tier: int) -> String:
+	match tier:
+		0:
+			return "STANDARD"
+		1:
+			return "PRIZE"
+		2:
+			return "CHAMPION"
+	return "TIER %d" % tier
+
+
+func _offer_with_id(offers: Array, offer_id: String) -> Dictionary:
+	for offer: Dictionary in offers:
+		if offer.id == offer_id:
+			return offer
+	return {}
+
+
+func _shop_status(events: Array[Dictionary], refit_due: bool) -> String:
+	if not events.is_empty():
+		var event: Dictionary = events[0]
+		match String(event.type):
+			"producer_purchased":
+				return "%s RECRUITED  •  £%d REMAINING" % [
+					String(event.producer.kind).to_upper(), event.cash_total,
+				]
+			"producer_retired":
+				return "ONE %s %s RETIRED  •  £%d REMAINING" % [
+					_tier_name(int(event.producer.tier)),
+					String(event.producer.kind).to_upper(),
+					event.cash_total,
+				]
+			"producer_merge_queued":
+				return "%s %s PAIR QUEUED → %s  •  FLOCK WILL BE %d" % [
+					String(event.kind).to_upper(),
+					_tier_name(int(event.tier)),
+					_tier_name(int(event.output_tier)),
+					int(event.projected_flock_size),
+				]
+			"factory_upgrade_purchased":
+				return "EXTRA STARTING THWACK INSTALLED  •  £%d REMAINING" % event.cash_total
+			"shop_purchase_rejected":
+				return "PURCHASE DECLINED  •  %s" % String(event.reason).replace("_", " ").to_upper()
+	return (
+		"FREE TEN-BAY HAIRPIN REFIT INCLUDED WHEN YOU LEAVE"
+		if refit_due
+		else "MERGE MATCHES  •  BUY ANY AFFORDABLE ITEMS  •  OR SAVE YOUR CASH"
+	)
+
+
+func _focus_first_shop_action() -> void:
+	for choice_button: Button in _producer_choice_buttons:
+		if choice_button.visible and not choice_button.disabled:
+			choice_button.grab_focus()
+			return
+	_continue_workshop_button.grab_focus()
 
 
 func _set_circuit_interaction(enabled: bool) -> void:

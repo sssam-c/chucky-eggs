@@ -23,24 +23,29 @@ func test_starting_flock_has_fifteen_one_egg_producers() -> void:
 	assert_eq(egg_kinds.count("chicken"), 10)
 	assert_eq(egg_kinds.count("cuckoo"), 3)
 	assert_eq(egg_kinds.count("plover"), 2)
+	assert_true(producers.all(func(producer: Dictionary) -> bool:
+		return producer.tier == 0
+	))
 
 
-func test_two_starting_chickens_lay_hidden_ten_percent_double_yolker_gambles() -> void:
+func test_starting_chickens_share_the_standard_quality_double_yolker_chance() -> void:
 	var flock = ProducerFlock.new()
 	var producers: Array[Dictionary] = flock.snapshot()
 	var laid_eggs: Array[Dictionary] = flock.lay_daily_eggs(EligibleEggsDoubleRoller.new())
 
-	assert_eq(producers.filter(func(producer: Dictionary) -> bool:
-		return is_equal_approx(float(producer.get("double_yolk_chance", 0.0)), 0.10)
-	).size(), 2)
+	assert_true(producers.all(func(producer: Dictionary) -> bool:
+		return not producer.has("double_yolk_chance")
+	))
 	assert_eq(laid_eggs.filter(func(egg: Dictionary) -> bool:
-		return is_equal_approx(float(egg.double_yolk_chance), 0.10)
-	).size(), 2)
+		return egg.kind == "chicken" and is_equal_approx(float(egg.double_yolk_chance), 0.02)
+	).size(), 10)
 	assert_eq(laid_eggs.filter(func(egg: Dictionary) -> bool:
 		return bool(egg.is_double_yolker)
-	).size(), 2)
+	).size(), 10)
 	assert_true(laid_eggs.all(func(egg: Dictionary) -> bool:
-		return egg.has_all(["kind", "double_yolk_chance", "is_double_yolker"])
+		return egg.has_all([
+			"kind", "tier", "quality_multiplier", "double_yolk_chance", "is_double_yolker",
+		])
 	))
 
 
@@ -59,7 +64,7 @@ func test_adding_a_producer_adds_one_bird_and_one_daily_egg() -> void:
 
 	var added: Dictionary = flock.add_producer("spoonbill")
 
-	assert_eq(added, {"kind": "spoonbill"})
+	assert_eq(added, {"kind": "spoonbill", "tier": 0})
 	assert_eq(flock.snapshot().size(), 16)
 	assert_eq(flock.lay_daily_egg_kinds().size(), original_daily_output + 1)
 	assert_eq(flock.lay_daily_egg_kinds().count("spoonbill"), 1)
@@ -71,6 +76,61 @@ func test_chicken_addition_contributes_one_egg() -> void:
 	flock.add_producer("chicken")
 
 	assert_eq(flock.lay_daily_egg_kinds(), ["chicken"])
+
+
+func test_two_matching_birds_merge_into_one_next_tier_bird() -> void:
+	var flock = ProducerFlock.new([
+		{"kind": "chicken"}, {"kind": "chicken"}, {"kind": "plover"},
+	])
+
+	var merged: Dictionary = flock.merge_producers("chicken", 0)
+
+	assert_eq(merged, {"kind": "chicken", "tier": 1})
+	assert_eq(flock.snapshot(), [
+		{"kind": "plover", "tier": 0}, {"kind": "chicken", "tier": 1},
+	])
+	assert_false(flock.can_merge("chicken", 0))
+
+
+func test_merge_requires_two_birds_of_the_same_species_and_tier() -> void:
+	var flock = ProducerFlock.new([
+		{"kind": "chicken", "tier": 0},
+		{"kind": "chicken", "tier": 1},
+		{"kind": "plover", "tier": 0},
+	])
+	var before: Array[Dictionary] = flock.snapshot()
+
+	assert_false(flock.can_merge("chicken", 0))
+	assert_true(flock.merge_producers("chicken", 0).is_empty())
+	assert_true(flock.merge_producers("dragon", 0).is_empty())
+	assert_eq(flock.snapshot(), before)
+
+
+func test_quality_compounds_exactly_while_laid_eggs_keep_the_real_values() -> void:
+	var flock = ProducerFlock.new([
+		{"kind": "chicken", "tier": 2}, {"kind": "cuckoo", "tier": 1},
+	])
+	var eggs: Array[Dictionary] = flock.lay_daily_eggs(EligibleEggsDoubleRoller.new())
+
+	assert_almost_eq(float(eggs[0].quality_multiplier), 2.25, 0.00001)
+	assert_almost_eq(float(eggs[0].double_yolk_chance), 0.045, 0.00001)
+	assert_eq(eggs[0].tier, 2)
+	assert_almost_eq(float(eggs[1].quality_multiplier), 1.5, 0.00001)
+	assert_eq(eggs[1].double_yolk_chance, 0.0)
+
+
+func test_retiring_removes_one_bird_without_creating_individual_identity() -> void:
+	var flock = ProducerFlock.new([
+		{"kind": "chicken", "tier": 1}, {"kind": "chicken"}, {"kind": "plover"},
+	])
+
+	assert_eq(flock.remove_producer("chicken"), {"kind": "chicken", "tier": 0})
+	assert_eq(flock.lay_daily_egg_kinds(), ["chicken", "plover"])
+	assert_true(flock.remove_producer("cuckoo").is_empty())
+	assert_eq(flock.snapshot().size(), 2)
+	assert_true(flock.snapshot().all(func(producer: Dictionary) -> bool:
+		return producer.has_all(["kind", "tier"])
+	))
 
 
 func _count_kind(producers: Array[Dictionary], kind: String) -> int:

@@ -282,7 +282,29 @@ func test_unsuccessful_double_yolker_roll_keeps_the_chicken_at_three_points() ->
 
 	assert_false(hatch.double_yolker)
 	assert_eq(hatch.points_awarded, 3)
-	assert_eq(hatch.score, 3)
+
+
+func test_quality_uses_exact_multiplier_but_rounds_gameplay_score_down() -> void:
+	var day = ChickenDay.new([{
+		"kind": "chicken",
+		"tier": 1,
+		"quality_multiplier": 1.5,
+		"double_yolk_chance": 0.03,
+		"is_double_yolker": true,
+	}])
+
+	var events: Array[Dictionary] = []
+	for circuit_id in ["red", "blue", "red"]:
+		events = day.resolve_circuit(circuit_id)
+	var hatch: Dictionary = events.filter(func(event: Dictionary) -> bool:
+		return event.type == "egg_hatched"
+	)[0]
+
+	assert_eq(hatch.base_points, 4)
+	assert_eq(hatch.points_awarded, 8)
+	assert_eq(hatch.score, 8)
+	assert_almost_eq(float(hatch.exact_base_points), 4.5, 0.00001)
+	assert_eq(hatch.tier, 1)
 
 
 func test_pink_deals_two_damage_to_a_spoonbill_in_slot_five() -> void:

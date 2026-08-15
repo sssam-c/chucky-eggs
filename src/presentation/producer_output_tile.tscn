@@ -5,7 +5,7 @@
 [ext_resource type="Script" path="res://src/ui/egg_visual.gd" id="3_egg"]
 
 [node name="ProducerOutputTile" type="Control"]
-custom_minimum_size = Vector2(152, 166)
+custom_minimum_size = Vector2(152, 185)
 mouse_filter = 2
 script = ExtResource("1_tile")
 
@@ -47,8 +47,21 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 60.0
-offset_top = 116.0
+offset_top = 137.0
 offset_right = 94.0
-offset_bottom = 164.0
+offset_bottom = 185.0
 mouse_filter = 2
 script = ExtResource("3_egg")
+
+[node name="Odds" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_top = 119.0
+offset_right = 152.0
+offset_bottom = 139.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.74, 0.23, 1)
+theme_override_font_sizes/font_size = 11
+text = "DOUBLE YOLK  •  1 IN 10"
+horizontal_alignment = 1

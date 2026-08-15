@@ -89,30 +89,26 @@ func current_egg() -> Dictionary:
 func egg_summary() -> String:
 	if _egg.is_empty():
 		return "EMPTY"
-	var summary := "%s EGG TOUGHNESS %d %d %s" % [
+	return "%s%s EGG TOUGHNESS %d %d %s" % [
+		"%s " % _quality_name(int(_egg.get("tier", 0))) if int(_egg.get("tier", 0)) > 0 else "",
 		String(_egg.kind).to_upper(),
 		_egg.toughness,
 		_egg.points,
 		"POINT" if _egg.points == 1 else "POINTS",
 	]
-	if double_yolk_chance_percent() > 0:
-		summary += "  %d%% DOUBLE YOLKER CHANCE" % double_yolk_chance_percent()
-	return summary
 
 
 func egg_description() -> String:
 	if _egg.is_empty():
 		return "No egg in this slot."
-	var description := "%s egg: %d toughness remaining, worth %d %s; %s" % [
+	return "%s%s egg: %d toughness remaining, worth %d %s; %s." % [
+		"%s " % _quality_name(int(_egg.get("tier", 0))) if int(_egg.get("tier", 0)) > 0 else "",
 		String(_egg.kind).capitalize(),
 		_egg.toughness,
 		_egg.points,
 		"point" if _egg.points == 1 else "points",
 		_effect_description(String(_egg.kind)),
 	]
-	if double_yolk_chance_percent() > 0:
-		description += "; %d percent chance to be a Double Yolker when hatched" % double_yolk_chance_percent()
-	return description + "."
 
 
 func score_seal_value() -> int:
@@ -127,8 +123,12 @@ func egg_kind() -> String:
 	return _egg.get("kind", "")
 
 
-func double_yolk_chance_percent() -> int:
-	return _egg_visual.double_yolk_chance_percent()
+func quality_tier() -> int:
+	return _egg_visual.quality_tier()
+
+
+func quality_ring_count() -> int:
+	return _egg_visual.quality_ring_count()
 
 
 func impact_global_position() -> Vector2:
@@ -162,6 +162,15 @@ func _effect_description(kind: String) -> String:
 		"spoonbill":
 			return "its spark weakness takes 2 damage from Pink's direct strike"
 	return "no extra effect"
+
+
+func _quality_name(tier: int) -> String:
+	match tier:
+		1:
+			return "Prize"
+		2:
+			return "Champion"
+	return "Tier %d" % tier
 
 
 func _draw() -> void:

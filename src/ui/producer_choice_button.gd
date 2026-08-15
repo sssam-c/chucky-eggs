@@ -19,9 +19,10 @@ func render_choice(choice: Dictionary) -> void:
 	producer_kind = String(choice.get("kind", ""))
 	var toughness := int(choice.get("toughness", 0))
 	var points := int(choice.get("points", 0))
+	var price := int(choice.get("price", 0))
 	var effect_description := _effect_description(String(choice.get("effect", "none")))
 	_portrait.set_bird_kind(producer_kind)
-	_name_label.text = producer_kind.to_upper()
+	_name_label.text = "%s  •  £%d" % [producer_kind.to_upper(), price]
 	_yield_label.text = "LAYS 1 EGG / DAY"
 	_stats_label.text = "%d TOUGHNESS  •  %d %s" % [
 		toughness, points, "POINT" if points == 1 else "POINTS",
@@ -29,13 +30,15 @@ func render_choice(choice: Dictionary) -> void:
 	_effect_label.text = effect_description
 	var egg := {
 		"kind": producer_kind,
+		"tier": int(choice.get("tier", 0)),
 		"toughness": toughness,
 		"max_toughness": toughness,
 		"points": points,
 	}
 	_egg_preview.set_egg(egg, true)
-	accessibility_name = "%s producer" % producer_kind.capitalize()
-	accessibility_description = "Lays 1 egg per day. %d toughness. Worth %d %s. %s" % [
+	accessibility_name = "%s producer, £%d" % [producer_kind.capitalize(), price]
+	accessibility_description = "Costs £%d. Lays 1 egg per day. %d toughness. Worth %d %s. %s" % [
+		price,
 		toughness,
 		points,
 		"point" if points == 1 else "points",

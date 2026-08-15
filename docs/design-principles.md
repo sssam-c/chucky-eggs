@@ -12,7 +12,13 @@ Show the state, cost, and likely consequence needed for a meaningful choice. Do 
 
 Every producer contributes exactly one egg to the daily pool. Keep that one-bird, one-egg relationship visible so flock size, pool size, additions, removals, and shuffle odds can be reasoned about directly. Producer offers must show the contributed egg's complete gameplay properties.
 
-Show the next day's target on the producer draft. The player should evaluate flock growth against the demand it must answer rather than discovering that demand after committing.
+Flock growth must be chosen rather than awarded compulsorily. Recruiting another bird should compete with merging or retiring birds, strengthening the factory, or saving cash, so a larger daily pool reflects the player's build direction rather than unavoidable accumulation.
+
+Quality belongs to interchangeable species-and-tier groups, not named individuals. A merge must expose both what improves and what is consumed: two matching daily eggs become one egg with 1.5 times their exact individual value. Queue merges until the player leaves the shop so a newly produced bird cannot immediately feed another tier and erase the decision cadence.
+
+Show whole-number consequences wherever the player makes or resolves a choice. Floor score values and displayed percentage chances, but compound future quality tiers and roll randomness from the exact internal values. The interface should never imply that the displayed integer became the new mathematical base.
+
+Show the next day's target whenever recruitment is offered. The player should evaluate flock growth against the demand it must answer rather than discovering that demand after committing.
 
 Use the transition between days to demonstrate where the next hopper comes from. Showing each owned animal beside the eggs it contributes makes flock growth, dilution, and daily output physical consequences rather than spreadsheet facts.
 
@@ -49,6 +55,8 @@ Seed randomness, inject time, and make state transitions replayable. A surprisin
 ## Efficiency becomes future agency
 
 End the day automatically once a fully resolved thwack meets the target, then convert every unused thwack into cash. This makes speed-to-target valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
+
+Use one shop for optional run progression. Cash remains the shared opportunity cost for recruitment, retirement, and factory upgrades; matching birds themselves pay for merges. Permit multiple legal actions and allow the player to leave with unspent cash. Positive feedback is an intended roguelike reward, but a merge should remain a real quantity-versus-quality choice: it reduces flock size and daily effect frequency while concentrating the surviving egg's value. Guard against universally dominant actions and genuinely unwinnable retry states rather than flattening successful builds.
 
 ## Machine growth preserves its grammar
 

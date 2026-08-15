@@ -28,11 +28,14 @@ var _circuits: Array[Dictionary] = []
 func _init(
 	daily_eggs: Array,
 	target_score := DEFAULT_TARGET_SCORE,
-	slot_count := BASE_SLOT_COUNT
+	slot_count := BASE_SLOT_COUNT,
+	starting_thwacks := STARTING_THWACKS
 ) -> void:
 	assert(not daily_eggs.is_empty(), "A day needs at least one laid egg.")
 	assert(target_score > 0, "A day needs a positive target score.")
 	assert(slot_count in [BASE_SLOT_COUNT, HAIRPIN_SLOT_COUNT], "Unsupported conveyor size.")
+	assert(starting_thwacks > 0, "A day needs at least one thwack.")
+	_remaining_thwacks = starting_thwacks
 	_target_score = target_score
 	_circuits = circuits_for_slot_count(slot_count)
 	for slot_index in range(slot_count):
@@ -195,6 +198,7 @@ func _resolve_hatches(events: Array[Dictionary]) -> void:
 		var egg: Dictionary = _slots[slot_index]
 		_slots[slot_index] = {}
 		var base_points := int(egg.points)
+		var exact_base_points := float(egg.get("exact_base_points", base_points))
 		var is_double_yolker := bool(egg.get("is_double_yolker", false))
 		var points_awarded := base_points * 2 if is_double_yolker else base_points
 		_score += points_awarded
@@ -202,7 +206,9 @@ func _resolve_hatches(events: Array[Dictionary]) -> void:
 			"type": "egg_hatched",
 			"slot_index": slot_index,
 			"kind": egg.kind,
+			"tier": int(egg.get("tier", 0)),
 			"base_points": base_points,
+			"exact_base_points": exact_base_points,
 			"double_yolker": is_double_yolker,
 			"points_awarded": points_awarded,
 			"score": _score,
@@ -342,12 +348,27 @@ func _new_egg(laid_egg: Variant) -> Dictionary:
 		if laid_egg is Dictionary
 		else false
 	)
+	var tier := (
+		int(laid_egg.get("tier", 0))
+		if laid_egg is Dictionary
+		else 0
+	)
+	var quality_multiplier := (
+		float(laid_egg.get("quality_multiplier", 1.0))
+		if laid_egg is Dictionary
+		else 1.0
+	)
+	assert(tier >= 0, "An egg's quality tier cannot be negative.")
+	assert(quality_multiplier >= 1.0, "An egg's quality multiplier cannot be below one.")
 	assert(double_yolk_chance >= 0.0 and double_yolk_chance <= 1.0, "Double Yolker chance must be between zero and one.")
+	var exact_base_points := float(definition.points) * quality_multiplier
 	return {
 		"kind": definition.kind,
+		"tier": tier,
 		"toughness": definition.toughness,
 		"max_toughness": definition.toughness,
-		"points": definition.points,
+		"points": floori(exact_base_points),
+		"exact_base_points": exact_base_points,
 		"double_yolk_chance": double_yolk_chance,
 		"is_double_yolker": is_double_yolker,
 	}

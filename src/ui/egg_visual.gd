@@ -43,6 +43,7 @@ func _draw() -> void:
 	var outline := shell_points.duplicate()
 	outline.append(shell_points[0])
 	draw_polyline(outline, outline_color, 4.0, true)
+	_draw_quality_rings(center, radius_x, radius_y)
 	var highlight := Color(0.76, 1.0, 0.96, 0.54) if is_cuckoo else Color(0.92, 1.0, 0.63, 0.54) if is_plover else Color(1.0, 0.88, 0.98, 0.58) if is_spoonbill else Color(1.0, 0.91, 0.68, 0.58)
 	draw_circle(center + Vector2(-radius_x * 0.28, -radius_y * 0.30), radius_x * 0.15, highlight)
 	draw_arc(center, radius_x * 0.78, 0.25, 2.35, 20, Color(0.70, 1.0, 0.96, 0.34) if is_cuckoo else Color(0.91, 1.0, 0.55, 0.30) if is_plover else Color(1.0, 0.72, 0.93, 0.34) if is_spoonbill else Color(1.0, 0.88, 0.52, 0.34), 3.0, true)
@@ -108,17 +109,33 @@ func egg_kind() -> String:
 	return String(_egg.get("kind", ""))
 
 
-func double_yolk_chance_percent() -> int:
-	if _egg.is_empty():
-		return 0
-	return roundi(float(_egg.get("double_yolk_chance", 0.0)) * 100.0)
+func quality_tier() -> int:
+	return int(_egg.get("tier", 0))
+
+
+func quality_ring_count() -> int:
+	return mini(quality_tier(), 3)
+
+
+func _draw_quality_rings(center: Vector2, radius_x: float, radius_y: float) -> void:
+	for ring_index in range(quality_ring_count()):
+		var inset := 6.0 + ring_index * 5.0
+		var ring_points := PackedVector2Array()
+		for point_index in range(40):
+			var angle := TAU * float(point_index) / 40.0
+			var vertical := sin(angle)
+			var taper := lerpf(0.78, 1.08, (vertical + 1.0) * 0.5)
+			ring_points.append(center + Vector2(
+				cos(angle) * maxf(radius_x - inset, 1.0) * taper,
+				vertical * maxf(radius_y - inset, 1.0)
+			))
+		ring_points.append(ring_points[0])
+		draw_polyline(ring_points, Color("f3cf62"), 2.2 if not _preview else 1.5, true)
 
 
 func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 	var mark_scale := 0.72 if _preview else 1.0
 	_draw_score_seal(center + Vector2(0.0, -radius_y * 0.61), mark_scale)
-	if double_yolk_chance_percent() > 0:
-		_draw_double_yolk_chance(center + Vector2(29.0, -3.0) * mark_scale, mark_scale)
 	var emblem_center := center + Vector2(0.0, radius_y * 0.48)
 	match effect_emblem():
 		"echo":
@@ -127,29 +144,6 @@ func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 			_draw_left_emblem(emblem_center, mark_scale)
 		"spark":
 			_draw_spark_emblem(emblem_center, mark_scale)
-
-
-func _draw_double_yolk_chance(center: Vector2, mark_scale: float) -> void:
-	var badge_size := Vector2(56.0, 28.0) * mark_scale
-	var badge_rect := Rect2(center - badge_size * 0.5, badge_size)
-	draw_rect(badge_rect, Color("3a1b12"), true)
-	draw_rect(badge_rect, Color("fff0b3"), false, 2.0 * mark_scale)
-	var font_size := 13 if not _preview else 9
-	draw_string(
-		ThemeDB.fallback_font,
-		badge_rect.position + Vector2(3.0, 18.5) * mark_scale,
-		"%d%%" % double_yolk_chance_percent(),
-		HORIZONTAL_ALIGNMENT_LEFT,
-		32.0 * mark_scale,
-		font_size,
-		Color("fff0b3")
-	)
-	var yolk_radius := 3.5 * mark_scale
-	var yolk_center := badge_rect.position + Vector2(45.0, 14.0) * mark_scale
-	draw_circle(yolk_center + Vector2(-3.0, 0.0) * mark_scale, yolk_radius, Color("ffb20f"))
-	draw_circle(yolk_center + Vector2(3.0, 0.0) * mark_scale, yolk_radius, Color("ffd84a"))
-
-
 func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 	var outer_radius := 15.0 * mark_scale
 	var seal_points := PackedVector2Array()

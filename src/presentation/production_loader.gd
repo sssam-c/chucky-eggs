@@ -100,6 +100,7 @@ func _spawn_flying_egg(fact: Dictionary, origin_global: Vector2) -> void:
 		"toughness": int(fact.toughness),
 		"max_toughness": int(fact.toughness),
 		"points": int(fact.points),
+		"double_yolk_chance": float(fact.get("double_yolk_chance", 0.0)),
 	}, true)
 	flight.position = origin_global - _egg_flights.global_position - flight.size * 0.5
 	var target_global: Vector2 = _hopper_mouth.global_position + _hopper_mouth.size * 0.5
