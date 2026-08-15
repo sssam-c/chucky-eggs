@@ -158,14 +158,19 @@ func queue_merge(kind: String, tier: int) -> Array[Dictionary]:
 		return [_purchase_rejected("merge", "%s_%d" % [kind, tier], "wrong_phase")]
 	if _unreserved_count(kind, tier) < 2:
 		return [_purchase_rejected("merge", "%s_%d" % [kind, tier], "not_available")]
+	var offer := _merge_offer(kind, tier)
+	var price := int(offer.price)
+	if _cash < price:
+		return [_purchase_rejected("merge", "%s_%d" % [kind, tier], "insufficient_cash")]
+	_cash -= price
 	var key := _merge_key(kind, tier)
 	_pending_merges[key] = int(_pending_merges.get(key, 0)) + 1
-	var offer := _merge_offer(kind, tier)
 	return [{
 		"type": "producer_merge_queued",
 		"kind": kind,
 		"tier": tier,
 		"output_tier": tier + 1,
+		"price": price,
 		"pair_count": int(_pending_merges[key]),
 		"projected_flock_size": _flock.snapshot().size() - _pending_merge_count(),
 		"cash_total": _cash,
@@ -260,10 +265,6 @@ func _shop_stock() -> Dictionary:
 	if _phase != "shop":
 		return {}
 	var recruitment := _shop_recruitment.duplicate(true)
-	var merge_offers: Array[Dictionary] = []
-	for group: Dictionary in _flock.quality_groups_snapshot():
-		if _unreserved_count(String(group.kind), int(group.tier)) >= 2:
-			merge_offers.append(_merge_offer(String(group.kind), int(group.tier)))
 	var factory_offers: Array[Dictionary] = []
 	if not bool(_factory_upgrades.extra_thwack):
 		factory_offers.append({
@@ -275,9 +276,31 @@ func _shop_stock() -> Dictionary:
 	return {
 		"recruitment": recruitment,
 		"retirement": {"price": RETIRE_PRICE},
-		"merges": merge_offers,
+		"pairing_sources": _pairing_sources(),
 		"factory_upgrades": factory_offers,
 	}
+
+
+func _pairing_sources() -> Array[Dictionary]:
+	var sources: Array[Dictionary] = []
+	for group: Dictionary in _flock.quality_groups_snapshot():
+		var kind := String(group.kind)
+		var tier := int(group.tier)
+		var available_count := _unreserved_count(kind, tier)
+		var eligible_partners: Array[Dictionary] = []
+		if available_count >= 2:
+			var partner := _merge_offer(kind, tier)
+			partner["available_count"] = available_count - 1
+			eligible_partners.append(partner)
+		sources.append({
+			"id": _merge_key(kind, tier),
+			"kind": kind,
+			"tier": tier,
+			"available_count": available_count,
+			"available_pair_count": floori(available_count / 2.0),
+			"eligible_partners": eligible_partners,
+		})
+	return sources
 
 
 func _quality_groups_snapshot() -> Array[Dictionary]:
@@ -303,7 +326,7 @@ func _merge_offer(kind: String, tier: int) -> Dictionary:
 		"kind": kind,
 		"tier": tier,
 		"output_tier": tier + 1,
-		"input_count": _unreserved_count(kind, tier),
+		"price": tier + 1,
 		"current_exact_points": float(definition.points) * current_multiplier,
 		"current_points": floori(float(definition.points) * current_multiplier),
 		"next_exact_points": float(definition.points) * next_multiplier,

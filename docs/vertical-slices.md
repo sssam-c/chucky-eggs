@@ -2,17 +2,21 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active design slice — Pair merging
+## Active validation slice — Pair merging
 
 ### Question
 
 Does turning two matching birds into one 50%-stronger bird make duplicate recruitment and flock thinning strategically exciting without making merging automatic?
 
+### Status
+
+The complete player-visible path is implemented and covered by the automated suite. The next worthwhile work is to playtest the existing three-day loop rather than add another progression mechanic. No recorded playtest yet answers whether a legal merge is tempting but genuinely optional, or whether thinning creates a focused build rather than a merely weaker one.
+
 ### Settled rules preserved
 
 - Every bird lays exactly one egg per day; the starting pool remains ten Chicken, three Cuckoo, and two Plover eggs.
 - Successful days no longer compel a producer addition; flock growth occurs only through a deliberate shop purchase.
-- Recruitment, retirement, merging, and factory upgrades share one post-success shop. Recruitment, retirement, and factory upgrades cost cash; a merge consumes two matching birds.
+- Recruitment, retirement, merging, and factory upgrades share one post-success shop. A merge consumes two matching birds and cash equal to its output tier.
 - Failed days grant neither cash nor shop access. The universal free Day 3 hairpin refit remains outside the shop.
 - Pair merging does not alter egg toughness, species effects, circuit resolution, movement, hatching order, targets, cash payout, retries, or the Day 3 hairpin.
 - Daily randomness remains seeded and equal retries reproduce the same shuffle and hidden outcomes.
@@ -20,27 +24,34 @@ Does turning two matching birds into one 50%-stronger bird make duplicate recrui
 
 ### Hypothesis
 
-Pair merging should turn duplicates into a resource while keeping a meaningful quantity-versus-quality trade-off. Two daily eggs become one egg with 1.5 times the exact individual score and Double Yolker chance, so the flock becomes smaller and more concentrated but loses aggregate output and effect frequency. Recruitment can pursue merge inputs; merging and retirement can deliberately thin an unwanted or overrepresented species.
+Pair merging should turn duplicates into a resource while keeping a meaningful quantity-versus-quality trade-off. Two daily eggs and a small tier-scaled cash fee become one egg with 1.5 times the exact individual score and Double Yolker chance, so the flock becomes smaller and more concentrated but loses aggregate output, effect frequency, and another shop opportunity. Recruitment can pursue merge inputs; merging and retirement can deliberately thin an unwanted or overrepresented species.
 
 Quality belongs to a species-and-tier group rather than a named individual. Queueing merges until the shop closes creates one visible generation per day: the player must use and understand Prize birds before converting pairs of them into Champions. Exact internal values compound honestly even when simple whole-number player views round them down.
 
-### Candidate player-visible path
+### Player-visible path
 
-Complete a day and enter the unified shop. Inspect birds grouped by species and quality; queue any legal two-to-one merges while the projected flock count updates. Recruit a Standard bird to create a future pair, retire the lowest unreserved quality of a species, buy the prototype factory option, combine legal actions, or leave without spending. On leaving, resolve the queued merges and watch the resulting tiered flock load one egg per bird for the next day.
+Complete a day and enter the unified shop. Inspect every owned species-and-quality group, including greyed groups with no valid partner. Choose the first bird group, inspect its eligible partner list, then queue a legal pair while its tier-scaled fee, projected flock count, and remaining cash update. Recruit a Standard bird to create a future pair, retire the lowest unreserved quality of a species, buy the prototype factory option, combine legal actions, or leave without spending. On leaving, resolve the queued merges and watch the resulting tiered flock load one egg per bird for the next day.
 
-### Candidate prototype scope
+### Implemented prototype scope
 
 - One quality tier on each bird, with flock views grouped by species and tier rather than individual identity.
 - A merge requires exactly two unreserved birds of the same species and tier and produces one bird of the next tier.
 - Each tier uses an exact `1.5^tier` multiplier for egg base score and Double Yolker chance, capped at 100% chance.
 - Gameplay score, shop score previews, and displayed percentage chances always floor to whole numbers. Hidden rolls and later tier calculations retain exact values.
 - One unified post-success shop with recruitment, retirement, four-species merging, and the existing prototype factory improvement.
-- Queued inputs are reserved immediately, merges cost no cash, and all outputs appear only when the player leaves. Outputs cannot chain during that visit.
+- The first-stage picker lists every owned species-and-quality group and greys groups with no eligible partner. The second-stage list currently offers only exact species-and-quality matches.
+- Queued inputs are reserved immediately and cash equal to the output tier is spent once per pair: £1 for Prize, £2 for Champion, then the numbered tier. All outputs appear only when the player leaves and cannot chain during that visit.
 - Retirement removes one lowest-quality unreserved bird of the chosen species and cannot consume a queued merge input.
 - Offers expose both matching inputs and the floored before-and-after consequence, plus next-day target and projected flock size.
 - One seeded hidden Double Yolker roll per laid egg; no egg reveals its result before hatching.
 - Quality is visible through the bird title and restrained egg contour rings; eggs remain free of printed chance labels, lineage, names, and XP.
 - Resolver-authored scoring uses the exact tier value at day construction, floors the awarded base score, and doubles that floored score for a Double Yolker.
+
+### Implementation conveniences
+
+- The current fixed recruitment, retirement, and Extra Thwack prices are test-economy values; the merge fee's tier progression is settled but remains open to balance evidence.
+- Deterministic recruitment stock and the existing seeded run provide reproducible comparisons; random-stock variety is not required to answer this slice's question.
+- The Extra Thwack option gives merging another cash-funded competitor in the unified shop but is not evidence for the deferred positional spoon-upgrade design.
 
 ### Balancing constraints
 
@@ -56,17 +67,18 @@ Complete a day and enter the unified shop. Inspect birds grouped by species and 
 
 - Hybrid and cross-species recipes, inherited effects, authored hybrid art, and merging unlike tiers.
 - Parent names, selection, lineage, breeding, individual XP, inheritance, per-egg inspection panels, pity systems, or rerolls.
-- Merge undo, cancellation, selling outputs, cash costs, hard tier caps, bespoke tier names beyond Champion, or final tuning.
+- Merge undo, cancellation, selling outputs, hard tier caps, bespoke tier names beyond Champion, or final tuning.
 - Random stock, a campaign map, shop rerolls, discounts, selling, retirement rewards, or named individual birds.
 - Elite conditions, target retuning, a catalogue of machine upgrades, and production art.
 
 ### Exit evidence
 
 - Domain tests prove same-species/same-tier validity, two-to-one mutation, exact repeated 1.5 multiplication, floored scoring, and deterministic hidden rolls.
-- Session tests prove reservations, projected flock size, free queueing, cash persistence, no same-visit output chaining, retirement safety, and merge events resolving before the next day starts.
-- UI tests prove offers show matching inputs and only floored consequences, queued merges update the projected flock, tiered eggs remain free of printed odds, and the next daily pool contains the resolved outputs.
-- A 1280×720 running-game check verifies the unified shop remains readable with four merge offers, recruitment, retirement, factory stock, and leave action present together.
-- A short playtest asks: “Which duplicates did you pursue, when did you refuse a legal merge, and did the smaller flock feel more focused or simply weaker?”
+- Session tests prove complete source lists, exact-match eligibility, tier-scaled fees, rejection without mutation, reservations, projected flock size, cash persistence, no same-visit output chaining, retirement safety, and merge events resolving before the next day starts.
+- UI tests prove unmatched sources remain visible but greyed, choosing a source reveals its partner list, partner actions show their fee and floored consequence, queued merges update cash and projected flock, tiered eggs remain free of printed odds, and the next daily pool contains the resolved outputs.
+- A 1280×720 running-game check verifies the source list, partner sublist, recruitment, retirement, factory stock, and leave action remain readable together. A 1024×576 check verifies the scrollable pairing lists stay usable under the reference-canvas scaling path.
+- Automated evidence is complete as of 2026-08-15: the full suite passes 100 tests and 1,048 assertions.
+- The remaining evidence is a short playtest through at least the first two shop decisions and into the Day 3 hairpin. Record which legal merges the player accepts or refuses, what they believe each merge costs them, and whether the smaller flock feels more focused or simply weaker. Ask afterward: “Which duplicates did you pursue, when did you refuse a legal merge, and what made that choice worthwhile?”
 
 ## Deferred slice — First positional spoon upgrade (requires redesign)
 
@@ -77,7 +89,7 @@ What should a persistent positional upgrade own now that four circuits use two p
 ### Settled rules preserved
 
 - Days 1 and 2 use the five-bay line, and every run receives the free ten-bay hairpin refit before Day 3.
-- The hairpin uses simultaneous Red 1+3, Blue 2+4, Green 7+9, and Purple 8+10 paired spoons around Pink's sequential 5→6 bend extender. Every pull advances once and spends one thwack.
+- The hairpin uses simultaneous Red 1+3, Blue 2+4, Green 7+9, and Purple 8+10 circuits through five shared physical spoons with target-dependent reach. Pink alone resolves lower slot 6 and then upper slot 5 sequentially. Every pull advances once and spends one thwack.
 - Cash still comes only from unused thwacks after a successful target-reaching action; failure awards no cash and preserves the run's existing balance.
 - Producer additions remain optional cash purchases in the same shop as factory upgrades.
 - Every producer lays exactly one egg per day; the 15-bird starting flock contains ten Chickens, three Cuckoos, and two Plovers.

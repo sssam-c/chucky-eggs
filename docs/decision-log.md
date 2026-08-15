@@ -364,10 +364,20 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** Circuit-coloured spoon markings in D035–D036 and earlier presentation. Circuit mappings, target-dependent reach, lever identity, and resolution are unchanged.
 
+## D038 — Charge for a deliberately selected merge pair
+
+**Status:** accepted
+
+**Decision:** In the unified shop, first choose an owned species-and-quality group, then choose from the partner groups that are currently eligible. Every owned group remains listed; a group with no valid partner is visibly unavailable. For now, only another bird of the same species and quality is eligible. Queueing one pair immediately reserves both birds and spends cash equal to the output tier: £1 for Prize, £2 for Champion, then £3 for Tier 3 and so on. Insufficient cash rejects the request without changing cash or reservations. Outputs still resolve only when the player leaves and cannot chain into another merge during the same visit.
+
+**Reason:** A tier-scaled fee makes merging participate in the shop's shared opportunity cost without overwhelming the existing quantity and effect-frequency sacrifice. Separating the chosen bird group from its eligible partners keeps unavailable possibilities legible and gives future partner rules a clear presentation boundary without inventing named individual birds now.
+
+**Supersedes:** D033's cash-free merge rule and direct presentation of a complete pair as one shop action. D033's exact 1.5 quality multiplier, exact internal arithmetic, delayed output resolution, same-visit chaining restriction, hidden Double Yolker result, and deferral of hybrids remain.
+
 <!--
 Copy for the next entry:
 
-## D038 — Short decision title
+## D039 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

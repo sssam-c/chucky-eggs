@@ -1114,52 +1114,83 @@ text = "PICK OF THE LITTER  •  TWO MATCHING BIRDS BECOME ONE 50% BETTER BIRD"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MergeActions" type="GridContainer" parent="WorkshopOverlay/Card/Content"]
+[node name="MergeActions" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
 layout_mode = 0
 offset_left = 28.0
 offset_top = 426.0
 offset_right = 776.0
 offset_bottom = 560.0
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
-columns = 3
+theme_override_constants/separation = 10
 alignment = 1
 
-[node name="MergeChicken" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(236, 57)
+[node name="PairingSources" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions"]
+custom_minimum_size = Vector2(246, 132)
 layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 13
-text = "CHICKEN ×2 → TIER 1\n3 / 2% → 4 / 3%"
+theme_override_constants/separation = 4
 
-[node name="MergeCuckoo" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(236, 57)
+[node name="SourceTitle" type="Label" parent="WorkshopOverlay/Card/Content/MergeActions/PairingSources"]
+custom_minimum_size = Vector2(0, 22)
 layout_mode = 2
-mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
 theme_override_font_sizes/font_size = 13
-text = "CUCKOO ×2 → TIER 1\n1 / 0% → 1 / 0%"
+text = "1  •  PICK A BIRD"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="MergePlover" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(236, 57)
+[node name="SourceScroll" type="ScrollContainer" parent="WorkshopOverlay/Card/Content/MergeActions/PairingSources"]
+custom_minimum_size = Vector2(246, 106)
 layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 13
-text = "PLOVER ×2 → TIER 1\n4 / 0% → 6 / 0%"
+horizontal_scroll_mode = 0
 
-[node name="MergeSpoonbill" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
+[node name="PairingSourceButtons" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions/PairingSources/SourceScroll"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(236, 57)
 layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_font_sizes/font_size = 13
-text = "SPOONBILL ×2 → TIER 1\n4 / 0% → 6 / 0%"
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
 
-[node name="ExtraThwack" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions"]
+[node name="PairingPartners" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions"]
+custom_minimum_size = Vector2(246, 132)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="PairingPrompt" type="Label" parent="WorkshopOverlay/Card/Content/MergeActions/PairingPartners"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(236, 57)
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
+theme_override_font_sizes/font_size = 13
+text = "2  •  PICK A MATCH"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PartnerScroll" type="ScrollContainer" parent="WorkshopOverlay/Card/Content/MergeActions/PairingPartners"]
+custom_minimum_size = Vector2(246, 106)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="PairingPartnerButtons" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions/PairingPartners/PartnerScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="FactoryColumn" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions"]
+custom_minimum_size = Vector2(236, 132)
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="FactoryTitle" type="Label" parent="WorkshopOverlay/Card/Content/MergeActions/FactoryColumn"]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
+theme_override_font_sizes/font_size = 13
+text = "FACTORY"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExtraThwack" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions/FactoryColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(236, 76)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)

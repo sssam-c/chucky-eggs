@@ -21,7 +21,7 @@ Open `project.godot` in Godot 4.7 or run:
 godot --path .
 ```
 
-Foreground levers fire fixed spoon controls. The starting line uses three circuits: Red 1+3, Blue 2+4, and Pink 5. The Day 3 refit replaces them with five independent paired-column levers: Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, and Pink 5+6. Each hairpin lever drives one wall-hinged double-bowled spoon whose bowls strike the aligned upper and lower eggs simultaneously. The tight right-hand bend carries eggs but is not itself a bay. Every connected position fires, so an empty position wastes that strike. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; score, cash, remaining thwacks, mute, and reduced-motion controls stay visible.
+Foreground levers fire fixed spoon controls. The starting line uses three circuits: Red 1+3, Blue 2+4, and Pink 5. The Day 3 hairpin retains Red 1+3 and Blue 2+4 on the upper run, mirrors Green 7+9 and Purple 8+10 across the lower return, and lets Pink resolve lower slot 6 before upper slot 5. Five neutral wall spoons use target-dependent reach; Pink alone makes both contacts during one thwack. The tight right-hand bend is not an egg bay. Every connected position fires, so an empty position wastes that strike. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; score, cash, remaining thwacks, mute, and reduced-motion controls stay visible.
 
 ### Development start
 

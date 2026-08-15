@@ -614,7 +614,7 @@ func test_ui_feedback_uses_shared_motion_tokens_and_cancellable_control_motion()
 	assert_true(feedback.is_control_registered(
 		main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1")
 	))
-	assert_gte(feedback.registered_control_count(), 16)
+	assert_gte(feedback.registered_control_count(), 12)
 
 	main.set_reduced_motion(false)
 	action.button_down.emit()
@@ -781,10 +781,10 @@ func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void
 		"BALANCE £8"
 	)
 	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "0 MERGES QUEUED")
-	assert_string_contains(
-		main.get_node("WorkshopOverlay/Card/Content/MergeActions/MergeChicken").text,
-		"3 PTS / 2%  →  4 PTS / 3%"
-	)
+	var chicken_source := _pairing_source_button(main, "chicken:0")
+	assert_not_null(chicken_source)
+	assert_string_contains(chicken_source.text, "STANDARD CHICKEN")
+	assert_string_contains(chicken_source.text, "PERFECT PAIRS")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 8")
 	await get_tree().process_frame
 	assert_true(choices.get_child(0).has_focus())
@@ -821,6 +821,75 @@ func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void
 	).get_global_rect().encloses(
 		main.get_node("WorkshopOverlay/Card/Content/RetirementActions").get_global_rect()
 	))
+
+
+func test_pairing_picker_greys_unmatched_sources_then_queues_the_chosen_match() -> void:
+	var producers: Array[Dictionary] = []
+	for egg_index in range(7):
+		producers.append({"kind": "chicken"})
+	var session = ChickenDaySession.new(
+		42, ProducerFlock.new(producers), IdentityShuffler.new()
+	)
+	for circuit_id in [
+		"red", "red", "red", "blue", "red", "red",
+		"red", "blue", "blue", "pink", "pink",
+	]:
+		session.submit_circuit(circuit_id)
+		if session.state().phase != "day":
+			break
+	assert_eq(session.state().phase, "shop")
+	assert_eq(session.purchase_producer("cuckoo")[0].type, "producer_purchased")
+
+	var main := _add_main()
+	main.set_reduced_motion(true)
+	main.replace_session(session)
+	await get_tree().process_frame
+
+	var source_buttons: VBoxContainer = main.get_node(
+		"WorkshopOverlay/Card/Content/MergeActions/PairingSources/SourceScroll/PairingSourceButtons"
+	)
+	var partner_buttons: VBoxContainer = main.get_node(
+		"WorkshopOverlay/Card/Content/MergeActions/PairingPartners/PartnerScroll/PairingPartnerButtons"
+	)
+	assert_eq(source_buttons.get_child_count(), 2)
+	assert_eq(partner_buttons.get_child_count(), 0)
+
+	var chicken_source: Button
+	var cuckoo_source: Button
+	for button: Button in source_buttons.get_children():
+		if String(button.get_meta("pairing_source_id")) == "chicken:0":
+			chicken_source = button
+		if String(button.get_meta("pairing_source_id")) == "cuckoo:0":
+			cuckoo_source = button
+	assert_not_null(chicken_source)
+	assert_not_null(cuckoo_source)
+	assert_false(chicken_source.disabled)
+	assert_true(cuckoo_source.disabled)
+	assert_string_contains(cuckoo_source.text, "NO PERFECT MATCH")
+	assert_true(main.get_node("Presentation/UIFeedback").is_control_registered(chicken_source))
+
+	chicken_source.pressed.emit()
+	await get_tree().process_frame
+
+	assert_eq(partner_buttons.get_child_count(), 1)
+	var partner: Button = partner_buttons.get_child(0)
+	assert_false(partner.disabled)
+	assert_string_contains(partner.text, "PERFECT MATCH")
+	assert_string_contains(partner.text, "£1")
+	assert_string_contains(partner.accessibility_description, "one pound")
+
+	var cash_before := int(
+		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text.trim_prefix("BALANCE £")
+	)
+	partner.pressed.emit()
+	await get_tree().process_frame
+
+	assert_eq(
+		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text,
+		"BALANCE £%d" % (cash_before - 1)
+	)
+	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "1 MERGE QUEUED")
+	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "£1 PAID")
 
 
 func test_store_motion_is_cancellable_and_reduced_motion_opens_immediately() -> void:
@@ -891,19 +960,20 @@ func test_shop_allows_multiple_purchases_then_leave_starts_day_two() -> void:
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text,
 		"RECRUITED"
 	)
-	main.get_node("WorkshopOverlay/Card/Content/MergeActions/MergeChicken").pressed.emit()
+	_pairing_source_button(main, "chicken:0").pressed.emit()
 	await get_tree().process_frame
-	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £5")
+	main.get_node(
+		"WorkshopOverlay/Card/Content/MergeActions/PairingPartners/PartnerScroll/PairingPartnerButtons"
+	).get_child(0).pressed.emit()
+	await get_tree().process_frame
+	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £4")
 	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "1 MERGE QUEUED")
 	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "PAIR QUEUED")
 	var ui_feedback = main.get_node("Presentation/UIFeedback")
 	assert_eq(ui_feedback.last_feedback_kind(), "confirm")
 	var extra_thwack: Button = main.get_node(
-		"WorkshopOverlay/Card/Content/MergeActions/ExtraThwack"
+		"WorkshopOverlay/Card/Content/MergeActions/FactoryColumn/ExtraThwack"
 	)
-	extra_thwack.pressed.emit()
-	await get_tree().process_frame
-	assert_eq(ui_feedback.last_feedback_kind(), "confirm")
 	extra_thwack.pressed.emit()
 	await get_tree().process_frame
 	assert_eq(ui_feedback.last_feedback_kind(), "reject")
@@ -1141,6 +1211,16 @@ func _complete_successful_day(main: Control, acknowledge_result := true) -> void
 	):
 		main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 		await get_tree().process_frame
+
+
+func _pairing_source_button(main: Control, source_id: String) -> Button:
+	var container: VBoxContainer = main.get_node(
+		"WorkshopOverlay/Card/Content/MergeActions/PairingSources/SourceScroll/PairingSourceButtons"
+	)
+	for button: Button in container.get_children():
+		if button.visible and String(button.get_meta("pairing_source_id", "")) == source_id:
+			return button
+	return null
 
 
 func _add_main() -> Control:
