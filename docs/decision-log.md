@@ -324,10 +324,40 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D032's species-wide score and Double Yolker investments and its requirement that every shop transaction spend cash. D032's unified shop, optional recruitment and retirement, cash-funded factory progression, multiple actions, saving, failure restriction, and free Day 3 refit remain.
 
+## D034 — Mirror the starting circuits across the Day 3 hairpin
+
+**Status:** accepted
+
+**Decision:** From Day 3 onward, Red retains slots 1+3 and Blue retains 2+4 across the upper run. Green fires slots 7+9 and Purple fires 8+10 as mirrored alternating circuits across the lower return. Each of those four circuits uses two ordinary spoons and resolves both direct hits as one simultaneous batch. Pink alone bridges the bend at slots 5+6 with one telescoping spoon: it strikes and completely resolves lower slot 6, returns and retracts, then strikes upper slot 5 against the resulting live state. Every lever still has at most two targets, spends one thwack, and advances the conveyor once; Pink remains the only Spoonbill weakness.
+
+**Reason:** Aligned column pairs made an egg remain under the same control relationship at two distant points in its journey. Mirroring the learned alternating circuits makes circuit ownership change repeatedly as an egg advances, creating more positional planning while reusing a pattern the player already understands. The four inverted lower spoons make the return leg physically distinct, and reserving the extender and sequential resolution for Pink gives the bend a unique strategic and presentational identity instead of making all five controls behave alike.
+
+**Supersedes:** D024–D029's five aligned 1+10, 2+9, 3+8, 4+7, and 5+6 column mappings and D029's sequential resolution for every hairpin control. D029's single-bowl Pink extender order, the ten-bay hairpin route, two-target ceiling, Pink weakness, Plover screen-left rule, one conveyor advance, and one-thwack cost remain.
+
+## D035 — Keep every Day 3 spoon on the rear wall
+
+**Status:** accepted
+
+**Decision:** Preserve D034's circuit mappings and resolution, but present all eight ordinary spoons as upright rear-wall mechanisms using the established bowl, handle, hinge, fall, and impact language. Each of the first four screen columns holds two adjacent spoons of different colours: Red with Purple, Blue with Green, Red with Purple, and Blue with Green. Same-coloured spoons across separate columns form the simultaneous gameplay circuits; physical neighbours do not. The single Pink spoon remains the only telescoping mechanism and the only utensil that reaches both rows.
+
+**Reason:** Floor-mounted upward-facing spoons made the return row mechanically literal but abandoned the game's strongest established visual identity and crowded the foreground controls. Adjacent differently coloured wall spoons preserve the more interesting misaligned circuit map while keeping every utensil in the familiar workshop plane. Their repeated colour-and-symbol badges communicate the cross-column pairings, and Pink remains visually exceptional for the same reason that its resolution is exceptional.
+
+**Supersedes:** D034's inverted lower-spoon presentation only. D034's Red 1+3, Blue 2+4, Green 7+9, Purple 8+10, Pink 6→5 resolution, timing, and all gameplay consequences remain.
+
+## D036 — Restore single spoons with target-dependent reach
+
+**Status:** accepted
+
+**Decision:** Preserve D034's circuit mappings and D035's rear-wall placement, but restore exactly one single-bowl telescoping spoon in each of the five screen columns. In columns 1–4, selecting Red or Blue gives the relevant spoon zero extension and one upper-run impact; selecting Green or Purple gives that same physical spoon full extension and one lower-return impact. Pink retains its resolver-authored lower-then-upper sequence and is the only control that uses both reaches during one action.
+
+**Reason:** The desired earlier design was the single spoon whose segmented handle changed length according to its target, not either a paired-head or overlaid-head mechanism. Reusing one physical spoon for the two circuits that cross each column preserves the original five-spoon layout while changing only which target each lever selects.
+
+**Supersedes:** D035's eight-ordinary-spoon presentation. D034's circuit ownership and simultaneous ordinary resolution remain unchanged; Pink's unique sequential two-target action remains unchanged.
+
 <!--
 Copy for the next entry:
 
-## D034 — Short decision title
+## D037 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

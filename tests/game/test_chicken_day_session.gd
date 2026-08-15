@@ -299,10 +299,10 @@ func test_day_three_mandatorily_refits_every_run_to_the_ten_slot_hairpin() -> vo
 	])
 	assert_eq(day_events[0].slot_count, 10)
 	assert_eq(day_events[0].circuits, [
-		{"id": "red", "slot_indices": [0, 9]},
-		{"id": "blue", "slot_indices": [1, 8]},
-		{"id": "green", "slot_indices": [2, 7]},
-		{"id": "purple", "slot_indices": [3, 6]},
+		{"id": "red", "slot_indices": [0, 2]},
+		{"id": "blue", "slot_indices": [1, 3]},
+		{"id": "green", "slot_indices": [6, 8]},
+		{"id": "purple", "slot_indices": [7, 9]},
 		{"id": "pink", "slot_indices": [4, 5]},
 	])
 	assert_eq(day_events[0].day_number, 3)

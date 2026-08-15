@@ -600,21 +600,17 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 		if hairpin:
 			_hammers[hammer_index].position = Vector2.ZERO
 			_hammers[hammer_index].size = Vector2(1280.0, 560.0)
-			var top_slot: Control = _belt_slots[hammer_index]
-			var bottom_slot: Control = _belt_slots[9 - hammer_index]
-			var top_target_global: Vector2 = top_slot.impact_global_position()
-			var bottom_target_global: Vector2 = bottom_slot.impact_global_position()
-			var top_target_local: Vector2 = (
-				_hammers[hammer_index].get_global_transform().affine_inverse()
-				* top_target_global
+			var top_target := _local_impact_target(
+				_hammers[hammer_index],
+				_belt_slots[hammer_index]
 			)
-			var bottom_target_local: Vector2 = (
-				_hammers[hammer_index].get_global_transform().affine_inverse()
-				* bottom_target_global
+			var bottom_target := _local_impact_target(
+				_hammers[hammer_index],
+				_belt_slots[9 - hammer_index]
 			)
 			_hammers[hammer_index].configure_telescoping_spoon(
-				top_target_local,
-				bottom_target_local
+				top_target,
+				bottom_target
 			)
 		else:
 			_hammers[hammer_index].position = Vector2(200.0 + 190.0 * hammer_index, 20.0)
@@ -626,7 +622,6 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 				* contact_global
 			)
 			_hammers[hammer_index].configure_wall_spoon(contact_local)
-
 	for circuit_button: Button in _circuit_buttons:
 		circuit_button.visible = false
 		circuit_button.set_available(false)
@@ -639,16 +634,21 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 
 	var hammer_circuit_ids: Array[String] = []
 	hammer_circuit_ids.assign(
-		["red", "blue", "green", "purple", "pink"]
+		["red", "blue", "red", "blue", "pink"]
 		if hairpin
 		else ["red", "blue", "red", "blue", "pink"]
 	)
-	for hammer_index in range(_hammers.size()):
+	for hammer_index in range(hammer_circuit_ids.size()):
 		_apply_circuit_appearance(_hammers[hammer_index], hammer_circuit_ids[hammer_index])
 	_presenter.set_slot_hammer_indices(
 		[0, 1, 2, 3, 4, 4, 3, 2, 1, 0]
 		if hairpin
 		else [0, 1, 2, 3, 4]
+	)
+	_presenter.set_slot_hammer_extension_amounts(
+		[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+		if hairpin
+		else [0.0, 0.0, 0.0, 0.0, 0.0]
 	)
 	if hairpin:
 		for button_index in range(_circuit_buttons.size()):
@@ -663,6 +663,13 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 			base_buttons[button_index].position = Vector2(210.0 + 320.0 * button_index, 416.0)
 			base_buttons[button_index].size = Vector2(280.0, 112.0)
 		_drop_label.position = Vector2(1140.0, 326.0)
+
+
+func _local_impact_target(hammer: Control, slot: Control) -> Vector2:
+	return (
+		hammer.get_global_transform().affine_inverse()
+		* slot.impact_global_position()
+	)
 
 
 func _apply_circuit_appearance(control: Control, circuit_id: String) -> void:

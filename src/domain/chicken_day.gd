@@ -83,9 +83,9 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		"circuit_id": circuit_id,
 		"slot_indices": circuit_slot_indices,
 		"occupied_slot_indices": occupied_slot_indices,
-		"sequential_strikes": _slots.size() == HAIRPIN_SLOT_COUNT,
+		"sequential_strikes": _uses_sequential_strikes(circuit_id),
 	}]
-	if _slots.size() == HAIRPIN_SLOT_COUNT:
+	if _uses_sequential_strikes(circuit_id):
 		_resolve_hairpin_strikes(circuit_slot_indices, circuit_id, events)
 	else:
 		_damage_eggs(occupied_slot_indices, circuit_id, events)
@@ -101,6 +101,10 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 			_end_day(events)
 
 	return events
+
+
+func _uses_sequential_strikes(circuit_id: String) -> bool:
+	return _slots.size() == HAIRPIN_SLOT_COUNT and circuit_id == "pink"
 
 
 func _resolve_hairpin_strikes(
@@ -326,10 +330,10 @@ static func circuits_for_slot_count(slot_count: int) -> Array[Dictionary]:
 		]
 	assert(slot_count == HAIRPIN_SLOT_COUNT, "Unsupported conveyor size.")
 	return [
-		{"id": "red", "slot_indices": [0, 9]},
-		{"id": "blue", "slot_indices": [1, 8]},
-		{"id": "green", "slot_indices": [2, 7]},
-		{"id": "purple", "slot_indices": [3, 6]},
+		{"id": "red", "slot_indices": [0, 2]},
+		{"id": "blue", "slot_indices": [1, 3]},
+		{"id": "green", "slot_indices": [6, 8]},
+		{"id": "purple", "slot_indices": [7, 9]},
 		{"id": "pink", "slot_indices": [4, 5]},
 	]
 

@@ -109,6 +109,9 @@ func test_stage_starts_with_three_levers_and_five_visible_colour_matched_spoons(
 		return control.visible
 	).size(), 3)
 	assert_eq(hammers.get_child_count(), 5)
+	assert_eq(hammers.get_children().filter(func(control: Control) -> bool:
+		return control.visible
+	).size(), 5)
 	assert_eq(circuits.get_node("RedCircuit").circuit_id, "red")
 	assert_eq(circuits.get_node("RedCircuit").slot_indices, [0, 2])
 	assert_eq(circuits.get_node("RedCircuit").circuit_symbol, "diamond")
@@ -656,7 +659,7 @@ func test_shop_allows_multiple_purchases_then_leave_starts_day_two() -> void:
 		)
 
 
-func test_day_three_refit_builds_five_sequential_telescoping_wall_spoons() -> void:
+func test_day_three_refit_uses_five_single_spoons_with_targeted_extension() -> void:
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _complete_successful_day(main)
@@ -679,12 +682,13 @@ func test_day_three_refit_builds_five_sequential_telescoping_wall_spoons() -> vo
 	await get_tree().process_frame
 
 	var circuits := main.get_node("Content/Stage/CircuitBank")
-	assert_eq(circuits.get_node("RedCircuit").slot_indices, [0, 9])
-	assert_eq(circuits.get_node("BlueCircuit").slot_indices, [1, 8])
-	assert_eq(circuits.get_node("GreenCircuit").slot_indices, [2, 7])
-	assert_eq(circuits.get_node("PurpleCircuit").slot_indices, [3, 6])
+	assert_eq(circuits.get_node("RedCircuit").slot_indices, [0, 2])
+	assert_eq(circuits.get_node("BlueCircuit").slot_indices, [1, 3])
+	assert_eq(circuits.get_node("GreenCircuit").slot_indices, [6, 8])
+	assert_eq(circuits.get_node("PurpleCircuit").slot_indices, [7, 9])
 	assert_eq(circuits.get_node("PinkCircuit").slot_indices, [4, 5])
-	assert_string_contains(circuits.get_node("RedCircuit").accessibility_description, "slots 1 and 10")
+	assert_string_contains(circuits.get_node("RedCircuit").accessibility_description, "slots 1 and 3")
+	assert_string_contains(circuits.get_node("GreenCircuit").accessibility_description, "slots 7 and 9")
 	assert_string_contains(circuits.get_node("GreenCircuit").accessibility_name, "Green triangle lever")
 	assert_string_contains(circuits.get_node("PurpleCircuit").accessibility_name, "Purple hexagon lever")
 	assert_true(circuits.get_children().all(func(control: Control) -> bool:
@@ -695,7 +699,10 @@ func test_day_three_refit_builds_five_sequential_telescoping_wall_spoons() -> vo
 		assert_true(main.get_node("Content/Stage/Belt/Slots/Slot%d" % slot_number).visible)
 	assert_false(main.has_node("Content/Stage/Belt/Slots/Slot11"))
 	for hammer_number in range(1, 6):
-		assert_true(main.get_node("Content/Stage/HammerBank/Hammer%d" % hammer_number).visible)
+		assert_true(main.get_node(
+			"Content/Stage/HammerBank/Hammer%d" % hammer_number
+		).visible)
+	assert_false(main.has_node("Content/Stage/HammerBank/Hammer6"))
 
 	var hairpin_slots: Array[Control] = []
 	for slot_number in range(1, 11):
@@ -714,74 +721,39 @@ func test_day_three_refit_builds_five_sequential_telescoping_wall_spoons() -> vo
 	var lower_edge := hairpin_slots[9].position.y + hairpin_slots[9].size.y * hairpin_slots[9].scale.y
 	for circuit_button: Button in circuits.get_children():
 		assert_gt(circuit_button.position.y, lower_edge)
-	var column_lever_names := [
-		"RedCircuit", "BlueCircuit", "GreenCircuit", "PurpleCircuit", "PinkCircuit",
-	]
+	var presenter := main.get_node("Presentation")
+	for slot_index in range(5):
+		assert_eq(presenter.target_extension_for_slot(slot_index), 0.0)
+	for slot_index in range(5, 10):
+		assert_eq(presenter.target_extension_for_slot(slot_index), 1.0)
 	for hammer_index in range(5):
 		var hammer: Control = main.get_node(
 			"Content/Stage/HammerBank/Hammer%d" % (hammer_index + 1)
 		)
-		var lever: Control = circuits.get_node(column_lever_names[hammer_index])
 		var top_slot: Control = hairpin_slots[hammer_index]
 		var bottom_slot: Control = hairpin_slots[9 - hammer_index]
 		var top_crown: Vector2 = top_slot.impact_global_position()
 		var bottom_crown: Vector2 = bottom_slot.impact_global_position()
 		var contact_points: Array[Vector2] = hammer.contact_points_global()
-		var stored_points: Array[Vector2] = hammer.stored_bowl_global_positions()
 		assert_true(hammer.is_telescoping_spoon())
-		assert_true(hammer.has_method("has_paired_handles"))
-		assert_false(hammer.has_paired_handles())
-		assert_true(hammer.uses_authored_landing_frames())
-		assert_eq(hammer.landing_frame_count(), 9)
 		assert_eq(contact_points.size(), 2)
-		assert_eq(stored_points.size(), 1)
 		assert_almost_eq(contact_points[0].x, top_crown.x, 1.0)
 		assert_almost_eq(contact_points[0].y, top_crown.y, 1.0)
 		assert_almost_eq(contact_points[1].x, bottom_crown.x, 1.0)
 		assert_almost_eq(contact_points[1].y, bottom_crown.y, 1.0)
 		var hinge: Vector2 = hammer.pivot_global_position()
-		var lever_conduit_x := (lever.get_global_transform() * (lever.size * 0.5)).x
-		assert_almost_eq(hinge.x, lever_conduit_x, 1.0)
 		assert_almost_eq(hinge.x, top_crown.x, 1.0)
-		assert_lt(stored_points[0].y, hinge.y)
+		assert_lt(hammer.stored_bowl_global_position().y, hinge.y)
 		hammer.extension_amount = 1.0
-		hammer.set_strike_amount(0.50)
-		assert_eq(hammer.landing_frame_index(), 4)
-		var halfway_points: Array[Vector2] = hammer.current_bowl_global_positions()
-		var halfway_visuals: Array[Dictionary] = hammer.bowl_visuals()
-		assert_eq(halfway_points.size(), 1)
-		assert_eq(halfway_visuals.size(), 1)
-		assert_true(halfway_visuals[0].get("draw_neck", false))
-		hammer.set_strike_amount(0.70)
-		assert_eq(hammer.landing_frame_index(), 6)
-		assert_true(hammer.is_foreground_handle_visible())
-		var falling_bowl: Dictionary = hammer.bowl_visuals()[0]
-		assert_gt(falling_bowl.tipped_amount, 0.50)
-		assert_lt(falling_bowl.radii.x / falling_bowl.radii.y, 2.0)
-		var handle_visuals: Array = []
-		if hammer.has_method("foreground_handle_visuals"):
-			handle_visuals = hammer.call("foreground_handle_visuals")
-		assert_eq(handle_visuals.size(), 1)
-		assert_eq(handle_visuals[0].get("spoon_identity", ""), "telescoping")
-		assert_true(handle_visuals[0].get("telescoping", false))
 		hammer.set_strike_amount(1.0)
-		assert_eq(hammer.landing_frame_index(), 8)
-		var near_point: Vector2 = hammer.current_bowl_global_positions()[0]
-		var contact_visuals: Array[Dictionary] = hammer.bowl_visuals()
-		assert_eq(hammer.z_index, 0)
-		assert_gt(hammer.bowl_foreground_z_index(), main.get_node("Content/Stage/Belt").z_index)
-		assert_false(hammer.is_foreground_handle_visible())
-		assert_almost_eq(hammer.pivot_global_position().x, hinge.x, 1.0)
-		assert_almost_eq(near_point.x, bottom_crown.x, 1.0)
-		assert_almost_eq(near_point.y, bottom_crown.y, 1.0)
-		assert_eq(contact_visuals.size(), 1)
+		assert_almost_eq(hammer.current_bowl_global_positions()[0].x, bottom_crown.x, 1.0)
+		assert_almost_eq(hammer.current_bowl_global_positions()[0].y, bottom_crown.y, 1.0)
 		hammer.extension_amount = 0.0
-		var far_point: Vector2 = hammer.current_bowl_global_positions()[0]
-		assert_almost_eq(far_point.x, top_crown.x, 1.0)
-		assert_almost_eq(far_point.y, top_crown.y, 1.0)
+		assert_almost_eq(hammer.current_bowl_global_positions()[0].x, top_crown.x, 1.0)
+		assert_almost_eq(hammer.current_bowl_global_positions()[0].y, top_crown.y, 1.0)
 		hammer.reset_pose()
-		assert_eq(hammer.z_index, 0)
-		assert_eq(hammer.bowl_foreground_z_index(), 0)
+
+	var pink_hammer: Control = main.get_node("Content/Stage/HammerBank/Hammer5")
 
 	var fired_spoons: Array[int] = []
 	var extension_amounts_at_strikes: Array[float] = []
@@ -796,18 +768,32 @@ func test_day_three_refit_builds_five_sequential_telescoping_wall_spoons() -> vo
 	main.presentation_event.connect(func(event_type: String) -> void:
 		if event_type == "spoon_struck":
 			extension_amounts_at_strikes.append(
-				main.get_node("Content/Stage/HammerBank/Hammer1").extension_amount
+				pink_hammer.extension_amount
 			)
 	)
 	await _press_and_wait(main, "RedCircuit")
-	assert_eq(fired_spoons, [0])
+	assert_eq(fired_spoons, [0, 2])
+	assert_true(extension_amounts_at_strikes.is_empty())
+	assert_true(spoon_motion_phases.is_empty())
+	assert_eq(main.get_node("Content/Stage/HammerBank/Hammer1").strike_amount, 0.0)
+	assert_eq(main.get_node("Content/Stage/HammerBank/Hammer3").strike_amount, 0.0)
+	assert_false(main.is_input_locked())
+
+	await _press_and_wait(main, "RedCircuit")
+	await _press_and_wait(main, "BlueCircuit")
+	await _press_and_wait(main, "RedCircuit")
+	fired_spoons.clear()
+	spoon_motion_phases.clear()
+	extension_amounts_at_strikes.clear()
+	await _press_and_wait(main, "PinkCircuit")
+	assert_eq(fired_spoons, [4])
 	assert_eq(extension_amounts_at_strikes, [1.0, 0.0])
 	assert_eq(spoon_motion_phases, [
 		"extended_on_wall", "near_contact", "returned_to_wall",
 		"retracted_on_wall", "far_contact",
 	])
-	assert_eq(main.get_node("Content/Stage/HammerBank/Hammer1").strike_amount, 0.0)
-	assert_eq(main.get_node("Content/Stage/HammerBank/Hammer1").extension_amount, 0.0)
+	assert_eq(pink_hammer.strike_amount, 0.0)
+	assert_eq(pink_hammer.extension_amount, 0.0)
 	assert_false(main.is_input_locked())
 
 

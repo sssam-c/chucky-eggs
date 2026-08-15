@@ -14,7 +14,7 @@ Does turning two matching birds into one 50%-stronger bird make duplicate recrui
 - Successful days no longer compel a producer addition; flock growth occurs only through a deliberate shop purchase.
 - Recruitment, retirement, merging, and factory upgrades share one post-success shop. Recruitment, retirement, and factory upgrades cost cash; a merge consumes two matching birds.
 - Failed days grant neither cash nor shop access. The universal free Day 3 hairpin refit remains outside the shop.
-- Egg toughness, species effects, circuits, movement, hatching order, targets, cash payout, retries, and the Day 3 hairpin remain unchanged.
+- Pair merging does not alter egg toughness, species effects, circuit resolution, movement, hatching order, targets, cash payout, retries, or the Day 3 hairpin.
 - Daily randomness remains seeded and equal retries reproduce the same shuffle and hidden outcomes.
 - Presentation plays resolver-authored hatch and score facts without deciding whether an egg is a Double Yolker.
 
@@ -68,16 +68,16 @@ Complete a day and enter the unified shop. Inspect birds grouped by species and 
 - A 1280×720 running-game check verifies the unified shop remains readable with four merge offers, recruitment, retirement, factory stock, and leave action present together.
 - A short playtest asks: “Which duplicates did you pursue, when did you refuse a legal merge, and did the smaller flock feel more focused or simply weaker?”
 
-## Deferred slice — First positional spoon upgrade
+## Deferred slice — First positional spoon upgrade (requires redesign)
 
 ### Question
 
-Does buying one persistent, column-specific spoon upgrade from the unified shop, then using it against a tougher final demo day, make the factory side of the run feel like a build rather than a sequence of disconnected days?
+What should a persistent positional upgrade own now that four circuits use two physical spoons while Pink uses one spoon with two ordered contacts?
 
 ### Settled rules preserved
 
 - Days 1 and 2 use the five-bay line, and every run receives the free ten-bay hairpin refit before Day 3.
-- The hairpin keeps five independent telescoping spoons, near-then-far resolution, one conveyor advance, and one spent thwack per lever pull.
+- The hairpin uses simultaneous Red 1+3, Blue 2+4, Green 7+9, and Purple 8+10 paired spoons around Pink's sequential 5→6 bend extender. Every pull advances once and spends one thwack.
 - Cash still comes only from unused thwacks after a successful target-reaching action; failure awards no cash and preserves the run's existing balance.
 - Producer additions remain optional cash purchases in the same shop as factory upgrades.
 - Every producer lays exactly one egg per day; the 15-bird starting flock contains ten Chickens, three Cuckoos, and two Plovers.
@@ -85,48 +85,23 @@ Does buying one persistent, column-specific spoon upgrade from the unified shop,
 
 ### Hypothesis
 
-The hairpin becomes meaningful progression infrastructure when the player can permanently improve one of its five physical mechanisms. A deliberately simple first upgrade should isolate whether earning, spending, and choosing a position are satisfying before the prototype adds a catalogue: a Tempered Bowl sets both direct contacts from one chosen hairpin spoon to 2 damage. Pink's existing 2-damage Spoonbill strike does not stack beyond 2. Offering that purchase before a somewhat tougher Day 4 should make the chosen column affect planning immediately, while a clear Day 4 conclusion should give the short demo an arc and a payoff.
+The previous column-socket hypothesis no longer maps cleanly onto the current machine: Red, Blue, Green, and Purple each own two separate spoons, while Pink owns one spoon with two ordered contacts. Before this slice resumes, it needs a deliberate choice between upgrading one physical spoon, one complete colour circuit, or the exceptional Pink mechanism. No Tempered Bowl or positional upgrade is currently in the game.
 
-### Player-visible path
+### Blocker
 
-Complete Day 3 on the refitted hairpin and bank the unused-thwack payout. In the unified shop, inspect one £8 Tempered Bowl offer alongside the flock options, preview its exact effect, and select one of the five spoon columns before confirming the purchase; leave it or see a clear insufficient-funds state when appropriate. Start Day 4 with the upgraded spoon visibly distinct and its two affected bays exposed through focus and hover. Use its 2-damage contacts while pursuing a prototype 25-point target. On success, see a concise demo-complete summary of days cleared, flock, cash earned and spent, and the installed upgrade; on failure, retry Day 4 with the same flock, shuffle, cash, and upgrade.
+The upgrade target is not settled. Upgrading one physical spoon would give the four paired circuits half-strength upgrades; upgrading a whole colour circuit would affect two mechanisms but Pink only one; upgrading one contact would undermine the deliberately simple circuit grammar. Define that ownership and its player-facing consequence before specifying a purchase, price, damage value, Day 4 target, tests, or presentation. The earlier Tempered Bowl specification is withdrawn rather than treated as implemented scope.
 
-### In scope
+### Explicitly deferred
 
-- Session-owned persistent installed-upgrade state for at most one selected hairpin column.
-- One authored workshop offer after Day 3: Tempered Bowl at a prototype price of £8, with buy, skip, insufficient-funds, duplicate-purchase, and invalid-column outcomes.
-- A pre-purchase five-column socket selection that previews the affected 1+10, 2+9, 3+8, 4+7, or 5+6 pair before spending cash.
-- Resolver-authored 2 direct damage on both contacts from the installed spoon, preserving complete near resolution before the far strike and capping Pink-on-Spoonbill damage at 2.
-- Persistent visual and accessible identification of the upgraded spoon, including its effect and mapped bays during play.
-- A prototype Day 4 target of 25 and a Day 4 success summary that marks the end of the current demo.
-- Preservation of the installed upgrade and already-spent cash across a failed Day 4 retry.
+- Upgrade name, target, effect, price, availability, visual treatment, and stacking.
+- Day 4 target or demo-ending structure tied to a factory upgrade.
+- Socket selection, refunds, replacement, rarity, and random stock.
 
-### Implementation conveniences
-
-- The name Tempered Bowl, £8 price, 2-damage value, one-upgrade limit, Day 4 target, and four-day demo length are test values rather than settled economy or campaign rules.
-- Workshop stock is fixed and the player selects the installation column directly; random stock, rarity, and rerolls are unnecessary for this question.
-- Reuse the existing workshop boundary and result overlay. A short fitting beat and clear changed spoon silhouette are sufficient without a construction minigame or bespoke ending scene.
-
-### Outside this slice
-
-- Additional upgrade types, upgrade levels, multiple installed upgrades, replacement, refunds, resale, discounts, rarity, rerolls, or random shop stock.
-- Producer removal, selling, breeding, flock limits, or other ways to edit previously chosen producers.
-- New egg species, producers, conveyor layouts, machine milestones, currencies, meta-progression, unlock trees, or persistence between runs.
-- Final target curve, prices, economy pacing, campaign length, narrative ending, and broad content production.
-
-### Exit evidence
-
-- Domain tests prove only the selected hairpin column deals 2 direct damage, both sequential contacts use it, near-side consequences still affect the far strike, Pink's Spoonbill damage remains capped at 2, and unupgraded and five-bay circuits remain unchanged.
-- Session tests prove the offer timing, exact cash deduction, invalid and insufficient-funds rejection without mutation, one-install limit, persistence into Day 4, and retry preservation.
-- UI tests prove all five sockets expose their bay mappings before confirmation, the cost and effect remain visible without relying on colour, the installed spoon is identifiable during play, and workshop input cannot double-spend during transition playback.
-- A 1280×720 running-game check follows the full Day 3 reward → producer → purchase → Day 4 path and verifies that selection, fitting feedback, the upgraded spoon, and the demo summary do not obscure the hairpin or persistent HUD.
-- A short playtest asks: “Did you care how much cash you earned, why did you choose that spoon, and did the upgrade change any Day 4 decisions rather than merely make the numbers larger?”
-
-## Completed slice — Universal Day 3 hairpin
+## Completed slice — Mirrored Day 3 hairpin
 
 ### Question
 
-Does a mandatory ten-bay hairpin with five independent telescoping spoons make Day 3 feel like meaningful factory growth while keeping route direction, target ownership, and two-hit resolution understandable at a glance?
+Does mirroring the learned alternating spoon pattern across a ten-bay hairpin create more positional planning while keeping Pink's unique bend-spanning sequence understandable?
 
 ### Settled rules preserved
 
@@ -138,11 +113,11 @@ Does a mandatory ten-bay hairpin with five independent telescoping spoons make D
 
 ### Hypothesis
 
-Folding the conveyor into two touching five-bay runs before Day 3 should turn flock growth into a visible factory milestone without forcing the player to evaluate foundational topology as a shop upgrade. Replacing the three shared circuits with five independent telescoping spoons should make each lever's two targets physically obvious, retain the starting line's maximum two direct hits per thwack, and create five future whole-mechanism engine-building sockets. Resolving the near hit before the far hit may create satisfying two-stage combinations without making the board harder to parse.
+Folding the conveyor into two touching five-bay runs before Day 3 should turn flock growth into a visible factory milestone without forcing the player to evaluate foundational topology as a shop upgrade. Retaining Red 1+3 and Blue 2+4, then mirroring their alternation with Green 7+9 and Purple 8+10, should make an egg change circuit ownership repeatedly without teaching an unrelated targeting grammar. Pink's unique sequential 5→6 extender should make the bend strategically and physically special while every action retains a two-target ceiling.
 
 ### Player-visible path
 
-Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop announce a free mandatory refit. Start Day 3 and read the route as 1→5 across the top, through a tight target-free bend, then 6→10 returning left to the drop. Pull Red 1+10, Blue 2+9, Green 3+8, Purple 4+7, or Pink 5+6. Watch one upright spoon extend on the wall, thwack the lower near egg, return upright and retract, then thwack the upper far egg before the belt advances once.
+Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop announce a free mandatory refit. Start Day 3 and read the route as 1→5 across the top, through a tight target-free bend, then 6→10 returning left to the drop. Pull Red 1+3 or Blue 2+4 and watch two upper spoons fire together; pull Green 7+9 or Purple 8+10 and watch two mirrored lower spoons fire together. Pull Pink and watch its one upright spoon extend to lower slot 6, resolve, return and retract, then strike upper slot 5 before the belt advances once.
 
 ### In scope
 
@@ -150,8 +125,8 @@ Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop annou
 - The established workshop phase between producer selection and next-day flock loading.
 - Persistent five- or ten-slot day construction with resolver-authored control maps.
 - Ten saved-scene bays arranged into touching upper and lower runs, joined by an untargetable right-hand bend and ending at a left-side drop.
-- Five wall-hinged telescoping spoons mapped by aligned screen columns to ten logical strike positions, with one traceable bowl, one pivot, and no buckets or bend targets.
-- Resolver-authored near-then-far strike facts, with damage, echoes, hatches, and Plover movement completed after each contact against live state.
+- Five single-bowl telescoping rear-wall spoons: columns 1–4 make one short-reach upper hit for Red or Blue or one long-reach lower hit for Green or Purple, while Pink alone uses both reaches sequentially in one action, with no buckets or extra bend target.
+- Simultaneous resolver batches for Red, Blue, Green, and Purple; Pink alone emits near-then-far strike facts with damage, echoes, hatches, and Plover movement completed after each contact against live state.
 - Five independent hairpin levers and conduits replacing the starting machine's three shared circuit controls.
 - Resolver-owned screen-left Plover destinations for both top and bottom rows, including no retreat from slots 1 and 10.
 - Route-vector presentation for rightward, downward, and leftward conveyor movement and Plover swaps without moving rule ownership out of the resolver.
@@ -161,7 +136,7 @@ Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop annou
 
 - The refit occurs immediately on the Day 3 transition without a dedicated construction animation.
 - Day 3 retains the current 20-point later-day target; hairpin-specific difficulty tuning waits for playtest evidence.
-- The upper and lower conveyor casings touch as a compact double-decker machine. Five colour-and-symbol levers sit directly beneath their spoons, eggs sit directly on the belt, and each single bowl visibly visits both egg crowns in its column.
+- The upper and lower conveyor casings touch as a compact double-decker machine. Five rear-wall spoon positions preserve the starting layout, while five colour-and-symbol levers expose the misaligned circuits and target lengths; eggs sit directly on the belt, and only Pink visits both rows during one action.
 
 ### Outside this slice
 
@@ -172,11 +147,11 @@ Complete Days 1 and 2. After the Day 2 build opportunity, see the workshop annou
 
 ### Exit evidence
 
-- Domain tests prove the exact five-slot circuit and ten-slot paired-column maps, near-resolve-far ordering against live state, full Plover screen-left topology, adjacency, movement, and discard.
+- Domain tests prove the exact five-slot and mirrored ten-slot maps, simultaneous four-circuit batches, Pink's near-resolve-far ordering against live state, full Plover screen-left topology, adjacency, movement, and discard.
 - Session tests prove Days 1–2 remain at five slots, the workshop reports the due refit, Day 3 installs it exactly once for free, and resolved refit facts precede the new day.
-- UI tests prove all ten saved bays form two aligned rows, exactly five single-bowl telescoping mechanisms and five levers exist, every mechanism exposes both aligned crown-contact points, uses one bowl through the full sequence, and layers only its bowl in front at impact; every hairpin bay uses the bare-belt presentation, accessibility exposes all five mappings, a hairpin Red press fires its one physical mechanism once, and input unlocks after playback.
+- UI tests prove all ten saved bays form two aligned rows, exactly five single-bowl spoons exist, each spoon exposes its aligned upper and lower contact coordinates, upper slots select zero extension, lower slots select full extension, Red fires only its two selected spoons once each, Pink uses one mechanism through its ordered sequence, and input unlocks after playback.
 - A 1280×720 running-game render verifies the continuous hairpin, visible right/down/left route arrows, target-free bend, below-machine controls, left drop, and lack of overlap with the persistent HUD. A 1024×576 window check verifies the project's reference-canvas scaling path without clipping.
-- A short playtest asks: “Could you predict where each egg would move, see each spoon reach both rows, and tell where a Plover would retreat on either row?”
+- A short playtest asks: “Could you predict which colour would own an egg two moves from now, and did Pink's bend extender feel meaningfully different from the four paired circuits?”
 
 ## Completed slice — Unused-thwack payout
 

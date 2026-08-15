@@ -60,34 +60,39 @@ func test_day_exposes_the_three_fixed_spoon_circuits() -> void:
 	assert_eq(state.pipe[2].points, 4)
 
 
-func test_hairpin_machine_exposes_five_independent_paired_column_levers() -> void:
+func test_hairpin_mirrors_the_starting_circuits_around_a_pink_bend_extender() -> void:
 	var eggs: Array[String] = ["chicken", "chicken", "chicken"]
 	var day = ChickenDay.new(eggs, 15, 10)
 
 	assert_eq(day.snapshot().slots.size(), 10)
 	assert_eq(day.snapshot().circuits, [
-		{"id": "red", "slot_indices": [0, 9]},
-		{"id": "blue", "slot_indices": [1, 8]},
-		{"id": "green", "slot_indices": [2, 7]},
-		{"id": "purple", "slot_indices": [3, 6]},
+		{"id": "red", "slot_indices": [0, 2]},
+		{"id": "blue", "slot_indices": [1, 3]},
+		{"id": "green", "slot_indices": [6, 8]},
+		{"id": "purple", "slot_indices": [7, 9]},
 		{"id": "pink", "slot_indices": [4, 5]},
 	])
 	var events: Array[Dictionary] = day.resolve_circuit("red")
-	assert_eq(events[0].slot_indices, [0, 9])
+	assert_eq(events[0].slot_indices, [0, 2])
 	assert_eq(events[0].occupied_slot_indices, [0])
+	assert_false(events[0].sequential_strikes)
+	assert_true(events.all(func(event: Dictionary) -> bool:
+		return event.type != "spoon_struck"
+	))
 
 
 func test_hairpin_resolves_near_bay_completely_before_striking_far_bay() -> void:
-	# After these setup turns the Spoonbill is in near slot 6 and the Cuckoo is
-	# in far slot 5 on Pink's column. The Cuckoo has one toughness remaining.
+	# After these setup turns the Spoonbill is ready to hatch in near slot 6 and
+	# a surviving Spoonbill occupies far slot 5. Pink must finish the near hatch
+	# before its extender returns to strike the far egg.
 	var day = ChickenDay.new([
-		"spoonbill", "cuckoo", "chicken", "chicken", "chicken", "chicken",
+		"spoonbill", "spoonbill", "chicken", "chicken", "chicken", "chicken",
 	], 1, ChickenDay.HAIRPIN_SLOT_COUNT)
-	for circuit_id in ["red", "red", "blue", "green", "red"]:
+	for circuit_id in ["red", "blue", "blue", "blue", "red"]:
 		day.resolve_circuit(circuit_id)
 	assert_eq(day.snapshot().slots[5].kind, "spoonbill")
-	assert_eq(day.snapshot().slots[4].kind, "cuckoo")
-	assert_eq(day.snapshot().slots[4].toughness, 1)
+	assert_eq(day.snapshot().slots[5].toughness, 2)
+	assert_eq(day.snapshot().slots[4].kind, "spoonbill")
 
 	var events: Array[Dictionary] = day.resolve_circuit("pink")
 	var strike_events := events.filter(
@@ -102,10 +107,10 @@ func test_hairpin_resolves_near_bay_completely_before_striking_far_bay() -> void
 	])
 	assert_eq(strike_events.map(func(event: Dictionary) -> int: return event.slot_index), [5, 4])
 	assert_true(strike_events[0].occupied)
-	assert_false(strike_events[1].occupied)
+	assert_true(strike_events[1].occupied)
 	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.slot_index), [5, 4])
 	assert_eq(damage_events.map(func(event: Dictionary) -> String: return event.cause), [
-		"spoon", "cuckoo_echo",
+		"spoon", "spoon",
 	])
 	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.damage_amount), [2, 2])
 	var near_strike_index := events.find(strike_events[0])
@@ -129,7 +134,7 @@ func test_hairpin_near_plover_retreats_before_the_far_strike() -> void:
 	var day = ChickenDay.new([
 		"plover", "chicken", "chicken", "chicken", "chicken", "chicken",
 	], 99, ChickenDay.HAIRPIN_SLOT_COUNT)
-	for circuit_id in ["red", "red", "red", "red", "red"]:
+	for circuit_id in ["red", "red", "blue", "red", "blue"]:
 		day.resolve_circuit(circuit_id)
 
 	var events: Array[Dictionary] = day.resolve_circuit("pink")

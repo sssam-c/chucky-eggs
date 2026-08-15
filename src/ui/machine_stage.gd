@@ -100,8 +100,8 @@ func _draw_hairpin_machine() -> void:
 		_draw_route_arrow(Vector2(arrow_x, 408), Vector2.LEFT)
 	_draw_route_arrow(Vector2(1080, 325), Vector2.DOWN)
 
-	# Five independent conduits sit directly beneath their wall-hinged spoons.
-	# There is no shared bus after the refit: one lever owns one screen column.
+	# Five colour rails identify the circuit levers below the rear-wall spoon bank.
+	# Repeated symbols on the mechanisms carry each rail's identity to both spoons.
 	draw_line(Vector2(185, 435), Vector2(1075, 435), Color("090a0b"), 13.0, true)
 	var spoon_colors := [
 		Color("c43b36"), Color("287cbd"), Color("69a645"),

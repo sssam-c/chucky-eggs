@@ -25,6 +25,7 @@ var _pipe_slots: Array[Button] = []
 var _circuit_buttons: Array[Button] = []
 var _hammers: Array[Control] = []
 var _slot_hammer_indices: Array[int] = []
+var _slot_hammer_extension_amounts: Array[float] = []
 var _echo_trace: Control
 var _hatch_payoff: Control
 var _score_label: Label
@@ -78,6 +79,16 @@ func configure(
 
 func set_slot_hammer_indices(indices: Array) -> void:
 	_slot_hammer_indices.assign(indices)
+
+
+func set_slot_hammer_extension_amounts(amounts: Array) -> void:
+	_slot_hammer_extension_amounts.assign(amounts)
+
+
+func target_extension_for_slot(slot_index: int) -> float:
+	if slot_index < 0 or slot_index >= _slot_hammer_extension_amounts.size():
+		return 0.0
+	return _slot_hammer_extension_amounts[slot_index]
 
 
 func play_events(events: Array[Dictionary]) -> bool:
@@ -198,12 +209,14 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 	_play(_lever_player)
 	var fired_hammers: Array[Control] = []
 	var fired_hammer_indices: Array[int] = []
+	var fired_extension_amounts: Array[float] = []
 	for slot_index: int in event.slot_indices:
 		var hammer_index := _slot_hammer_indices[slot_index]
 		if hammer_index in fired_hammer_indices:
 			continue
 		fired_hammer_indices.append(hammer_index)
 		fired_hammers.append(_hammers[hammer_index])
+		fired_extension_amounts.append(target_extension_for_slot(slot_index))
 		hammer_fired.emit(hammer_index)
 	var holds_through_damage: bool = event.get("sequential_strikes", false)
 	if holds_through_damage:
@@ -230,7 +243,9 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 
 	if _reduced_motion:
 		circuit_button.set_press_amount(1.0)
-		for hammer: Control in fired_hammers:
+		for hammer_index in range(fired_hammers.size()):
+			var hammer: Control = fired_hammers[hammer_index]
+			hammer.extension_amount = fired_extension_amounts[hammer_index]
 			hammer.set_strike_amount(1.0)
 		circuit_button.reset_pose()
 		for hammer: Control in fired_hammers:
@@ -239,8 +254,15 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 
 	var anticipation := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	anticipation.tween_property(circuit_button, "press_amount", 0.38, 0.055)
-	for hammer: Control in fired_hammers:
+	for hammer_index in range(fired_hammers.size()):
+		var hammer: Control = fired_hammers[hammer_index]
 		anticipation.parallel().tween_property(hammer, "strike_amount", -0.10, 0.055)
+		anticipation.parallel().tween_property(
+			hammer,
+			"extension_amount",
+			fired_extension_amounts[hammer_index],
+			0.10
+		)
 	if not await _run_tween(anticipation, playback_generation):
 		return false
 	# Every spoon now shares the authored landing strip. Its poses already contain
@@ -264,6 +286,7 @@ func _present_circuit(event: Dictionary, playback_generation: int) -> bool:
 	recovery.tween_property(circuit_button, "press_amount", 0.0, 0.14)
 	for hammer: Control in fired_hammers:
 		recovery.parallel().tween_property(hammer, "strike_amount", 0.0, 0.14)
+		recovery.parallel().tween_property(hammer, "extension_amount", 0.0, 0.14)
 	return await _run_tween(recovery, playback_generation)
 
 
