@@ -144,14 +144,14 @@ func test_restart_replaces_the_day_with_initial_state() -> void:
 	assert_eq(session.state().slots[0].toughness, 3)
 
 
-func test_success_offers_three_free_birds_separately_from_removal_only_shop_stock() -> void:
+func test_success_opens_a_deterministic_bird_offer_before_the_shop() -> void:
 	var first = _successful_day_session()
 	var second = _successful_day_session()
 	_complete_successful_day(first)
 	_complete_successful_day(second)
 	var state: Dictionary = first.state()
 
-	assert_eq(state.phase, "shop")
+	assert_eq(state.phase, "bird_offer")
 	assert_eq(state.bird_offer, second.state().bird_offer)
 	assert_eq(state.bird_offer.size(), 3)
 	assert_true(state.bird_offer.all(func(offer: Dictionary) -> bool:
@@ -165,28 +165,30 @@ func test_success_offers_three_free_birds_separately_from_removal_only_shop_stoc
 	assert_true(state.bird_offer.any(func(offer: Dictionary) -> bool:
 		return int(offer.tier) > 0
 	), "the deterministic fixture proves offers are not limited to Standard quality")
-	assert_eq(state.shop_stock, {"removal": {"price": 3}})
+	assert_true(state.shop_stock.is_empty())
 	assert_false(state.bird_offer_claimed)
 
 
-func test_claiming_one_bird_offer_is_free_exactly_once_and_required_before_leaving() -> void:
+func test_claiming_one_free_bird_opens_the_separate_removal_shop_exactly_once() -> void:
 	var session = _successful_day_session()
 	_complete_successful_day(session)
 	var before: Dictionary = session.state()
 	var selected: Dictionary = before.bird_offer[1]
 
-	assert_eq(session.leave_shop(), [{"type": "shop_leave_rejected", "reason": "bird_offer_unclaimed"}])
-	assert_eq(session.remove_bird(0)[0].reason, "bird_offer_unclaimed")
+	assert_eq(session.leave_shop(), [{"type": "shop_leave_rejected", "reason": "wrong_phase"}])
+	assert_eq(session.remove_bird(0)[0].reason, "wrong_phase")
 	var events: Array[Dictionary] = session.claim_bird_offer(1)
 	var after: Dictionary = session.state()
 
 	assert_eq(events[0].type, "bird_offer_claimed")
 	assert_eq(events[0].producer, {"kind": selected.kind, "tier": selected.tier})
 	assert_eq(after.cash, before.cash)
+	assert_eq(after.phase, "shop")
+	assert_eq(after.shop_stock, {"removal": {"price": 3}})
 	assert_eq(after.producers.size(), before.producers.size() + 1)
 	assert_true(after.bird_offer.is_empty())
 	assert_true(after.bird_offer_claimed)
-	assert_eq(session.claim_bird_offer(0)[0].reason, "already_claimed")
+	assert_eq(session.claim_bird_offer(0)[0].reason, "wrong_phase")
 
 
 func test_removing_from_the_flock_overview_costs_three_pounds_and_targets_the_chosen_bird() -> void:
@@ -205,6 +207,29 @@ func test_removing_from_the_flock_overview_costs_three_pounds_and_targets_the_ch
 	assert_eq(events[0].price, 3)
 	assert_eq(after.cash, before.cash - 3)
 	assert_eq(after.producers.size(), before.producers.size() - 1)
+	assert_true(after.removal_used_tonight)
+
+
+func test_only_one_bird_can_be_removed_during_each_shop_visit() -> void:
+	var session = _funded_early_shop_session(6)
+	session.claim_bird_offer(0)
+	assert_false(session.state().removal_used_tonight)
+	session.remove_bird(0)
+	var after_first: Dictionary = session.state()
+
+	var rejected: Array[Dictionary] = session.remove_bird(0)
+
+	assert_eq(rejected, [{
+		"type": "shop_action_rejected",
+		"category": "removal",
+		"reason": "nightly_limit",
+	}])
+	assert_eq(session.state().cash, after_first.cash)
+	assert_eq(session.state().producers, after_first.producers)
+	assert_true(session.state().removal_used_tonight)
+
+	session.leave_shop()
+	assert_false(session.state().removal_used_tonight)
 
 
 func test_success_banks_one_pound_per_remaining_thwack_exactly_once() -> void:
@@ -240,7 +265,7 @@ func test_every_day_keeps_the_single_five_slot_track() -> void:
 	_complete_successful_day(session)
 
 	var shop: Dictionary = session.state()
-	assert_eq(shop.phase, "shop")
+	assert_eq(shop.phase, "bird_offer")
 	assert_eq(shop.day_number, 2)
 	var cash_before_day_three: int = shop.cash
 

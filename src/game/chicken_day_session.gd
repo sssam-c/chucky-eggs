@@ -22,6 +22,7 @@ var _day_number := 1
 var _phase := "day"
 var _bird_offer: Array[Dictionary] = []
 var _bird_offer_claimed := true
+var _removal_used_tonight := false
 var _cash := 0
 var _last_cash_awarded := 0
 var _starting_thwacks := ChickenDay.STARTING_THWACKS
@@ -49,6 +50,7 @@ func state() -> Dictionary:
 	current_state["phase"] = _phase
 	current_state["bird_offer"] = _bird_offer.duplicate(true)
 	current_state["bird_offer_claimed"] = _bird_offer_claimed
+	current_state["removal_used_tonight"] = _removal_used_tonight
 	current_state["shop_stock"] = _shop_stock()
 	current_state["quality_groups"] = _quality_groups_snapshot()
 	current_state["projected_flock_size"] = _flock.snapshot().size()
@@ -70,7 +72,7 @@ func submit_circuit(circuit_id: String) -> Array[Dictionary]:
 			continue
 		ended_event = event
 		if event.succeeded:
-			_phase = "shop"
+			_phase = "bird_offer"
 			_bird_offer = _create_bird_offer()
 			_bird_offer_claimed = false
 		else:
@@ -88,13 +90,13 @@ func submit_circuit(circuit_id: String) -> Array[Dictionary]:
 
 
 func restart() -> void:
-	if _phase == "shop":
+	if _phase in ["bird_offer", "shop"]:
 		return
 	_start_day()
 
 
 func claim_bird_offer(choice_index: int) -> Array[Dictionary]:
-	if _phase != "shop":
+	if _phase != "bird_offer":
 		return [_shop_action_rejected("bird_offer", "wrong_phase")]
 	if _bird_offer_claimed:
 		return [_shop_action_rejected("bird_offer", "already_claimed")]
@@ -105,6 +107,7 @@ func claim_bird_offer(choice_index: int) -> Array[Dictionary]:
 	var producer: Dictionary = _flock.add_producer(String(selected.kind), int(selected.tier))
 	_bird_offer.clear()
 	_bird_offer_claimed = true
+	_phase = "shop"
 	return [{
 		"type": "bird_offer_claimed",
 		"producer": producer.duplicate(true),
@@ -119,6 +122,8 @@ func remove_bird(producer_index: int) -> Array[Dictionary]:
 		return [_shop_action_rejected("removal", "wrong_phase")]
 	if not _bird_offer_claimed:
 		return [_shop_action_rejected("removal", "bird_offer_unclaimed")]
+	if _removal_used_tonight:
+		return [_shop_action_rejected("removal", "nightly_limit")]
 	if _flock.snapshot().size() <= 1:
 		return [_shop_action_rejected("removal", "last_bird")]
 	if producer_index < 0 or producer_index >= _flock.snapshot().size():
@@ -127,6 +132,7 @@ func remove_bird(producer_index: int) -> Array[Dictionary]:
 		return [_shop_action_rejected("removal", "insufficient_cash")]
 	var removed: Dictionary = _flock.remove_producer_at(producer_index)
 	_cash -= REMOVE_BIRD_PRICE
+	_removal_used_tonight = true
 	return [{
 		"type": "bird_removed",
 		"producer": removed,
@@ -162,6 +168,7 @@ func _start_day() -> void:
 	_phase = "day"
 	_bird_offer.clear()
 	_bird_offer_claimed = true
+	_removal_used_tonight = false
 	_last_cash_awarded = 0
 	var current_day_seed: int = _day_seed + _day_number - 1
 	var laid_eggs: Array[Dictionary] = _flock.lay_daily_eggs(

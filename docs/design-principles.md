@@ -14,9 +14,9 @@ Every producer contributes exactly one egg to the daily pool. Keep that one-bird
 
 Begin with eight eggs: three Chickens, two Cuckoos, and three Sparrows. One-hit Sparrows establish the hatch-and-score payoff immediately and their elevated Double Yolker chance introduces visible jackpots early. The pool extending beyond the five-slot track keeps new eggs arriving while the player learns to weigh quick Sparrow points, durable Chicken value, and Cuckoo echoes.
 
-Successful days now grow the flock by one bird. Preserve agency inside that compulsory growth by offering three legible alternatives, then let the player spend £3 to remove an exact bird from the complete flock overview. The overview should make the resulting daily pool understandable without routing removal through a separate species list.
+Successful days now grow the flock by one bird. Preserve agency inside that compulsory growth by offering three legible alternatives on a dedicated reward screen. After that decision is complete, let the player enter the separate shop and spend £3 to remove an exact bird from the complete flock overview. Keeping reward and correction in distinct screens gives each decision one clear job; the overview should make the resulting daily pool understandable without routing removal through a separate species list.
 
-Quality belongs to species-and-tier facts rather than named-bird progression. A day reward can arrive at any quality, so each candidate must expose its whole required damage, points, and percentage before commitment. Higher tiers continue to compound from exact internal values even though the player sees whole-number consequences.
+Quality belongs to species-and-tier facts rather than named-bird progression. A day reward can arrive at any quality, so each candidate must expose its whole required damage, points, and percentage before commitment. Keep Standard visually neutral, accent Prize in green, and accent Champion and higher in blue while retaining written quality labels. Higher tiers continue to compound from exact internal values even though the player sees whole-number consequences.
 
 Show whole-number consequences wherever the player makes or resolves a choice. Floor score values and displayed percentage chances, round maximum toughness up to the damage actually required, and compound later quality tiers from exact internal values. The interface should never imply that a displayed integer became the new mathematical base.
 
@@ -54,7 +54,7 @@ Seed randomness, inject time, and make state transitions replayable. A surprisin
 
 End the day automatically once a fully resolved thwack meets the target, then convert every unused thwack into cash. The ten-thwack budget keeps the eight-egg opening tense and prevents the compact starting flock from generating the oversized payouts of the former twenty-thwack day. This makes speed-to-target valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
 
-Keep the current shop deliberately narrow: removing a selected bird costs £3, may be repeated while affordable, and can never remove the last bird. Saving remains a valid choice. This makes cash a direct price on thinning the compulsory daily growth without introducing a second list that obscures which quality is being removed.
+Keep the current shop deliberately narrow: removing one selected bird costs £3, is limited to once per successful night, and can never remove the last bird. Saving remains a valid choice. This makes cash a measured correction to compulsory daily growth without allowing one rich visit to rebuild the whole flock, and avoids a second list that obscures which quality is being removed.
 
 ## Physicality follows causality
 

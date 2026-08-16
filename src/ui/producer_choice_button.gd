@@ -1,8 +1,13 @@
 class_name ProducerChoiceButton
 extends Button
 
-var producer_kind := ""
+const QualityPalette = preload("res://src/ui/quality_palette.gd")
 
+var producer_kind := ""
+var _rarity_color := Color(0, 0, 0, 0)
+
+@onready var _rarity_tint: ColorRect = %RarityTint
+@onready var _rarity_stripe: ColorRect = %RarityStripe
 @onready var _portrait: Control = %Portrait
 @onready var _name_label: Label = %Name
 @onready var _price_label: Label = %Price
@@ -21,6 +26,7 @@ func render_choice(choice: Dictionary) -> void:
 	var toughness := int(choice.get("toughness", 0))
 	var points := int(choice.get("points", 0))
 	var tier := int(choice.get("tier", 0))
+	_apply_rarity(tier)
 	var effect_description := _effect_description(String(choice.get("effect", "none")))
 	_portrait.set_bird_kind(producer_kind)
 	_name_label.text = "%s %s" % [_quality_name(tier), producer_kind.to_upper()]
@@ -67,6 +73,25 @@ func card_text() -> String:
 		_name_label.text, _price_label.text, _yield_label.text,
 		_stats_label.text, _effect_label.text,
 	])
+
+
+func rarity_color() -> Color:
+	return _rarity_color
+
+
+func has_rarity_tint() -> bool:
+	return _rarity_tint.visible
+
+
+func _apply_rarity(tier: int) -> void:
+	_rarity_color = QualityPalette.rarity_color(tier)
+	var accented := _rarity_color.a > 0.0
+	_rarity_tint.visible = accented
+	_rarity_stripe.visible = accented
+	if not accented:
+		return
+	_rarity_tint.color = Color(_rarity_color, 0.18)
+	_rarity_stripe.color = _rarity_color
 
 
 func _effect_description(effect: String) -> String:

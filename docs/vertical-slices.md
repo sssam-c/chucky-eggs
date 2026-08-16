@@ -10,7 +10,7 @@ Does choosing one of three free, potentially high-quality birds after each succe
 
 ### Status
 
-The deterministic and player-visible path now generates three free bird candidates after a successful day, preserves their seeded species and quality facts, requires exactly one selection, and then exposes every owned bird as its own £3 removal control in a scrollable flock overview. Recruitment purchases, pairing, merge queues, and factory upgrades are removed. Failed attempts still retry without between-day progression. The next worthwhile work is a human run through several rewards to observe whether flock growth, quality variance, and removal pricing create meaningful tension.
+The deterministic and player-visible path now opens a dedicated bird-offer screen after a successful day, presents three candidates with seeded species and quality facts, and requires exactly one selection. That selection closes the offer and opens a separate shop where every owned bird is its own £3 removal control in a scrollable flock overview, but only one bird can be removed during that visit. Standard cards have no rarity tint, Prize cards are green, and Champion-or-higher cards are blue with written tier names retained. Recruitment purchases, pairing, merge queues, and factory upgrades are removed. Failed attempts still retry without between-day progression. The next worthwhile work is a human run through several rewards to observe whether flock growth, quality variance, and removal pricing create meaningful tension.
 
 ### Settled rules preserved
 
@@ -19,7 +19,7 @@ The deterministic and player-visible path now generates three free bird candidat
 - Day 1 requires 10 points and each later day requires 9.
 - Red strikes slots 1+3, Blue strikes 2+4, and Pink strikes slot 5. All three remain available during an unlocked day, including when their complete circuit is empty. Pink still deals 2 direct damage to Spoonbills.
 - Cuckoo echoes, Plover retreat, simultaneous damage, hatch order, cash, retries, success-only shop access, and one request-to-resolver pathway remain unchanged.
-- Every successful day offers three free birds, exactly one must be chosen, and the only current shop action is removing a selected bird for £3.
+- Every successful day opens a dedicated three-bird offer, exactly one must be chosen before the separate shop opens, and the only current shop action is removing at most one selected bird for £3.
 - Daily randomness remains seeded and equal retries reproduce initial and recycled shuffles and hidden outcomes.
 
 ### Hypothesis
@@ -45,8 +45,8 @@ Offered quality should create occasional excitement without making high tiers ro
 - Existing hopper eggs feed normally, but the bin cannot reshuffle until the conveyor is empty; a recycled wave never joins eggs still travelling from the previous wave.
 - Quality uses exact `1.5^tier` multiplication for score, maximum toughness, and Double Yolker chance.
 - Gameplay score and displayed percentages floor to whole numbers. Maximum toughness rounds up to the whole amount of damage actually required. Later tiers retain exact values.
-- Three reward cards show species, quality, shell toughness, score, effect, and one daily egg before selection.
-- The flock overview shows every bird as an individual card with its species, quality, egg facts, and £3 removal action. The last bird and unaffordable removals are unavailable.
+- A dedicated reward screen shows three cards with species, quality, shell toughness, score, effect, and one daily egg before selection. It contains no shop or removal controls. Standard cards have no rarity tint, Prize cards use green, and Champion-or-higher cards use blue without replacing their text labels.
+- After selection, a separate shop screen shows the complete flock as individual cards with species, quality, egg facts, and £3 removal actions. After one removal, all remaining cards visibly report that the nightly removal was used. The last bird and unaffordable removals are also unavailable.
 - Existing production loading shows the scaled toughness of the egg each quality tier lays.
 - Every species uses one flat temporary colour across a generic egg and a simple bird silhouette throughout the belt, pipe, loading, reward, and flock-overview views. Species names sit outside the art. Occupied eggs use a magnifying-glass cursor to advertise inspection. A wrapped hover card top-aligns beside its egg, flips sides at the viewport edge, and presents the egg's name, prominent points and Double Yolker facts, and only its applicable effect sections. Generated raster experiments are excluded from the running game and exports; final production assets are deferred to an artist.
 - The default flock contains three Chickens, two Cuckoos, and three Sparrows, with ten starting thwacks, a 10-point Day 1 target, and a 9-point later target.
@@ -75,8 +75,8 @@ Offered quality should create occasional excitement without making high tiers ro
 ### Exit evidence
 
 - Domain tests prove damage-preserving bin transfer, clear-conveyor recycle gating, empty-circuit advancement and thwack spending, resolver event order, deterministic reshuffle, slot-1 refill, quality toughness scaling, and whole required-damage rounding.
-- Session tests prove the default eight-egg flock, ten-thwack budget, 10/9 targets, Sparrow probability, five slots and three circuits, deterministic three-bird offers, exact free selection, £3 targeted removal, and deterministic failure/retry behavior.
-- UI tests prove the reward cards expose free species-and-quality facts, the whole flock appears as individual removal controls, unaffordable actions disable, a selected bird disappears for £3, dynamic controls do not accumulate stale registrations, and cancellation/input-lock contracts still hold.
+- Session tests prove the default eight-egg flock, ten-thwack budget, 10/9 targets, Sparrow probability, five slots and three circuits, deterministic three-bird offers, exact free selection, one £3 targeted removal per shop visit, and deterministic failure/retry behavior.
+- UI tests prove the dedicated reward screen exposes free species-and-quality facts without flock controls, Standard/Prize/Champion cards carry neutral/green/blue rarity treatment, selecting a reward opens the separate shop, the whole flock appears there as individual removal controls, all removals disable after one selected bird disappears for £3, dynamic controls do not accumulate stale registrations, and cancellation/input-lock contracts still hold.
 - The 2026-08-16 automated strategy probe supplies an exact-search and heuristic baseline for the superseded five-egg opening. Run the same exact and heuristic sweep against the eight-egg Sparrow opening at targets 9, 10, and 11 before using it as balance evidence.
 - A running-game check at 1280×720 and 1024×576 must verify the bin reads as the conveyor destination, the bin and hopper counts remain legible and clickable, both content inspectors fit and scroll, recycled eggs visibly return through the pipe, and no removed hairpin controls leave empty or overlapping space.
 - Play one seeded run through at least three bird offers. Record whether candidate quality is understood, whether a clearly stronger quality dominates species choice, when the player first considers paying £3 to thin the flock, and whether removing from the full overview feels precise and trustworthy.

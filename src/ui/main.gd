@@ -12,10 +12,11 @@ const ChickenDay = preload("res://src/domain/chicken_day.gd")
 const MotionTokens = preload("res://src/presentation/motion_tokens.gd")
 const FlockBirdButtonScene = preload("res://src/ui/flock_bird_button.tscn")
 
+const SETTINGS_MUTE_AUDIO := 0
+const SETTINGS_REDUCED_MOTION := 1
+
 @onready var _score_label: Label = %Score
-@onready var _cash_label: Label = %Cash
 @onready var _thwacks_label: Label = %Thwacks
-@onready var _feedback_label: Label = %Feedback
 @onready var _result_overlay: Control = %ResultOverlay
 @onready var _result_card: PanelContainer = $ResultOverlay/Card
 @onready var _result_label: Label = %Result
@@ -27,21 +28,17 @@ const FlockBirdButtonScene = preload("res://src/ui/flock_bird_button.tscn")
 @onready var _result_reveal_controls: Array[Control] = [
 	%Result, %ResultScore, %CashPayout, %FlockSummary, %Summary, %Restart,
 ]
+@onready var _bird_offer_overlay: Control = %BirdOfferOverlay
+@onready var _bird_offer_summary_label: Label = %BirdOfferSummary
+@onready var _bird_offer_status_label: Label = %BirdOfferStatus
 @onready var _workshop_overlay: Control = %WorkshopOverlay
 @onready var _workshop_card: PanelContainer = $WorkshopOverlay/Card
 @onready var _workshop_balance_label: Label = %WorkshopBalance
 @onready var _workshop_summary_label: Label = %WorkshopSummary
 @onready var _workshop_status_label: Label = %WorkshopStatus
-@onready var _reward_panel: PanelContainer = %RewardPanel
-@onready var _reward_title: Label = %RewardTitle
-@onready var _reward_choices: HBoxContainer = %RewardChoices
-@onready var _flock_panel: PanelContainer = %FlockPanel
-@onready var _flock_overview_title: Label = %FlockOverviewTitle
-@onready var _flock_scroll: ScrollContainer = %FlockScroll
 @onready var _flock_grid: GridContainer = %FlockGrid
 @onready var _continue_workshop_button: Button = %ContinueWorkshop
-@onready var _mute_button: CheckButton = %Mute
-@onready var _reduced_motion_button: CheckButton = %ReducedMotion
+@onready var _settings_menu: MenuButton = %Settings
 @onready var _belt: Control = %Belt
 @onready var _machine_stage: Control = $Content/Stage/Workshop
 @onready var _workshop_ambience: Control = %Ambience
@@ -54,7 +51,6 @@ const FlockBirdButtonScene = preload("res://src/ui/flock_bird_button.tscn")
 @onready var _presenter: Node = %Presentation
 @onready var _ui_feedback: Node = %UIFeedback
 @onready var _production_loader: Control = %ProductionLoader
-@onready var _hopper_count_label: Label = %HopperCount
 @onready var _belt_slots: Array[Button] = [
 	%Slot1, %Slot2, %Slot3, %Slot4, %Slot5,
 ]
@@ -76,6 +72,7 @@ var _result_transition: Tween
 
 
 func _ready() -> void:
+	_configure_settings_menu()
 	for circuit_button: Button in _circuit_buttons:
 		circuit_button.connect("circuit_requested", _on_circuit_requested)
 		circuit_button.connect("preview_changed", _on_circuit_preview_changed)
@@ -87,15 +84,12 @@ func _ready() -> void:
 	microinteraction_controls.append_array(_producer_choice_buttons)
 	microinteraction_controls.append(_continue_workshop_button)
 	microinteraction_controls.append(_restart_button)
-	microinteraction_controls.append(_mute_button)
-	microinteraction_controls.append(_reduced_motion_button)
+	microinteraction_controls.append(_settings_menu)
 	microinteraction_controls.append(_hopper_inspect_button)
 	microinteraction_controls.append(_bin_inspect_button)
 	_ui_feedback.configure(microinteraction_controls)
 	_restart_button.pressed.connect(_on_restart_pressed)
 	_continue_workshop_button.pressed.connect(_on_leave_shop_pressed)
-	_mute_button.toggled.connect(set_muted)
-	_reduced_motion_button.toggled.connect(set_reduced_motion)
 	_hopper_inspect_button.pressed.connect(_on_hopper_inspect_pressed)
 	_bin_inspect_button.pressed.connect(_on_bin_inspect_pressed)
 	_presenter.event_presented.connect(_on_presentation_event)
@@ -177,7 +171,7 @@ func _on_bin_inspect_pressed() -> void:
 
 
 func _on_restart_pressed() -> void:
-	if String(_session.state().phase) == "shop":
+	if String(_session.state().phase) == "bird_offer":
 		_dismiss_success_result()
 		return
 	restart_day()
@@ -187,7 +181,7 @@ func _on_producer_choice_pressed(choice_index: int) -> void:
 	if _input_locked:
 		return
 	var state: Dictionary = _session.state()
-	if state.phase != "shop" or choice_index >= state.bird_offer.size():
+	if state.phase != "bird_offer" or choice_index >= state.bird_offer.size():
 		return
 	_render(_session.claim_bird_offer(choice_index))
 
@@ -291,7 +285,7 @@ func _replace_session(session, dev_day_number: int) -> void:
 func set_muted(muted: bool) -> void:
 	_presenter.set_muted(muted)
 	_ui_feedback.set_muted(muted)
-	_mute_button.set_pressed_no_signal(muted)
+	_set_settings_item_checked(SETTINGS_MUTE_AUDIO, muted)
 
 
 func is_muted() -> bool:
@@ -302,7 +296,7 @@ func set_reduced_motion(reduced: bool) -> void:
 	_presenter.set_reduced_motion(reduced)
 	_ui_feedback.set_reduced_motion(reduced)
 	_workshop_ambience.set_reduced_motion(reduced)
-	_reduced_motion_button.set_pressed_no_signal(reduced)
+	_set_settings_item_checked(SETTINGS_REDUCED_MOTION, reduced)
 
 
 func is_reduced_motion() -> bool:
@@ -321,14 +315,33 @@ func is_result_transition_active() -> bool:
 	return _result_transition != null and _result_transition.is_running()
 
 
-func _render(events: Array[Dictionary], fresh_day := false) -> void:
+func _configure_settings_menu() -> void:
+	var popup := _settings_menu.get_popup()
+	popup.add_check_item("MUTE AUDIO", SETTINGS_MUTE_AUDIO)
+	popup.add_check_item("REDUCE MOTION", SETTINGS_REDUCED_MOTION)
+	popup.id_pressed.connect(_on_settings_item_pressed)
+
+
+func _on_settings_item_pressed(item_id: int) -> void:
+	match item_id:
+		SETTINGS_MUTE_AUDIO:
+			set_muted(not is_muted())
+		SETTINGS_REDUCED_MOTION:
+			set_reduced_motion(not is_reduced_motion())
+
+
+func _set_settings_item_checked(item_id: int, checked: bool) -> void:
+	var popup := _settings_menu.get_popup()
+	var item_index := popup.get_item_index(item_id)
+	if item_index >= 0:
+		popup.set_item_checked(item_index, checked)
+
+
+func _render(events: Array[Dictionary], _fresh_day := false) -> void:
 	var state: Dictionary = _session.state()
 	_configure_machine(state.machine_slot_count, state.machine_circuits)
 	_score_label.text = "SCORE %d / %d" % [state.score, state.target_score]
-	_cash_label.text = "CASH £%d" % state.cash
-	_cash_label.accessibility_name = "Cash balance £%d" % state.cash
 	_thwacks_label.text = "THWACKS %d" % state.remaining_thwacks
-	_hopper_count_label.text = "HOPPER %d" % state.hopper_egg_count
 	_bin_label.text = "BIN %d" % state.bin_egg_count
 	_hopper_inspect_button.text = "HOPPER %d" % state.hopper_egg_count
 	_hopper_inspect_button.accessibility_name = "Inspect hopper: %d %s remaining" % [
@@ -363,32 +376,35 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 		circuit_button.set_target_descriptions(descriptions)
 		circuit_button.set_available(state.phase == "day" and not _input_locked)
 
+	var bird_offer_visible: bool = String(state.phase) == "bird_offer"
 	var shop_visible: bool = String(state.phase) == "shop"
-	var successful_result: bool = shop_visible and events.any(
+	var successful_result: bool = bird_offer_visible and events.any(
 		func(event: Dictionary) -> bool: return event.type == "cash_awarded"
 	)
 	var failed_result: bool = String(state.phase) == "failed"
+	if bird_offer_visible:
+		_render_bird_offer(state)
 	if shop_visible:
 		_render_shop(state, events)
 	if successful_result or failed_result:
+		_hide_bird_offer_immediately()
 		_hide_workshop_immediately()
 		_render_result(state, successful_result)
 		_show_result()
 		_restart_button.grab_focus.call_deferred()
 	else:
 		_hide_result_immediately()
-		if shop_visible:
+		if bird_offer_visible:
+			_hide_workshop_immediately()
+			_show_bird_offer()
+		elif shop_visible:
+			_hide_bird_offer_immediately()
 			_show_workshop()
+			_focus_first_shop_action.call_deferred()
 		else:
+			_hide_bird_offer_immediately()
 			_hide_workshop_immediately()
 
-	if fresh_day:
-		_feedback_label.text = "%sDAY %d  •  EMPTY STRIKES ARE WASTED" % [
-			"DEV MODE  •  " if is_dev_mode() else "",
-			state.day_number,
-		]
-	else:
-		_feedback_label.text = _feedback_for(events)
 	_present_resolved_ui_feedback(events)
 
 
@@ -486,8 +502,24 @@ func _dismiss_success_result() -> void:
 	if not _result_overlay.visible:
 		return
 	_hide_result_immediately()
-	_show_workshop()
-	_focus_first_shop_action.call_deferred()
+	_show_bird_offer()
+	_focus_first_bird_offer.call_deferred()
+
+
+func _render_bird_offer(state: Dictionary) -> void:
+	_bird_offer_summary_label.text = "DAY %d COMPLETE  •  DAY %d TARGET %d" % [
+		state.day_number,
+		state.day_number + 1,
+		state.next_day_target_score,
+	]
+	for choice_index in range(_producer_choice_buttons.size()):
+		var choice_button: Button = _producer_choice_buttons[choice_index]
+		choice_button.visible = choice_index < state.bird_offer.size()
+		if not choice_button.visible:
+			continue
+		choice_button.render_choice(state.bird_offer[choice_index])
+		choice_button.disabled = false
+	_bird_offer_status_label.text = "PICK ONE BIRD  •  THE FLOCK SHOP OPENS NEXT"
 
 
 func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
@@ -503,16 +535,6 @@ func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
 		]
 	)
 
-	var bird_offer: Array = state.bird_offer
-	_set_reward_offer_visible(not state.bird_offer_claimed)
-	for choice_index in range(_producer_choice_buttons.size()):
-		var choice_button: Button = _producer_choice_buttons[choice_index]
-		choice_button.visible = choice_index < bird_offer.size()
-		if not choice_button.visible:
-			continue
-		choice_button.render_choice(bird_offer[choice_index])
-		choice_button.disabled = false
-
 	for existing: Node in _flock_grid.get_children():
 		_ui_feedback.unconfigure([existing])
 		_flock_grid.remove_child(existing)
@@ -524,30 +546,34 @@ func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
 		bird_button.render_bird(
 			state.flock_overview[producer_index],
 			removal_price,
-			state.bird_offer_claimed
-			and state.producers.size() > 1
-			and state.cash >= removal_price
+			(
+				not state.removal_used_tonight
+				and state.producers.size() > 1
+				and state.cash >= removal_price
+			),
+			state.removal_used_tonight
 		)
 		bird_button.pressed.connect(_on_flock_bird_pressed.bind(producer_index))
 		_ui_feedback.configure([bird_button])
 
 	_continue_workshop_button.text = "LEAVE SHOP & START DAY %d" % (state.day_number + 1)
-	_continue_workshop_button.disabled = not state.bird_offer_claimed
-	_workshop_status_label.text = _shop_status(events)
+	_continue_workshop_button.disabled = false
+	_workshop_status_label.text = _shop_status(events, state.removal_used_tonight)
 	var rejected := not events.is_empty() and String(events[0].type) == "shop_action_rejected"
 	_workshop_status_label.add_theme_color_override(
 		"font_color", Color("ff9a60") if rejected else Color("91fff2")
 	)
 
 
-func _set_reward_offer_visible(visible: bool) -> void:
-	_reward_panel.visible = visible
-	_reward_title.visible = visible
-	_reward_choices.visible = visible
-	_flock_panel.offset_top = 382.0 if visible else 88.0
-	_flock_overview_title.offset_top = 390.0 if visible else 100.0
-	_flock_overview_title.offset_bottom = 420.0 if visible else 130.0
-	_flock_scroll.offset_top = 424.0 if visible else 138.0
+func _show_bird_offer() -> void:
+	if _bird_offer_overlay.visible:
+		return
+	_bird_offer_overlay.visible = true
+	_ui_feedback.panel_opened()
+
+
+func _hide_bird_offer_immediately() -> void:
+	_bird_offer_overlay.visible = false
 
 
 func _show_workshop() -> void:
@@ -658,17 +684,16 @@ func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
 					thwacks_presented = true
 			"conveyor_advanced", "bin_reshuffled", "egg_entered":
 				if not hopper_presented:
-					_ui_feedback.present_value(_hopper_count_label, "hopper", Color("66f5ed"))
+					_ui_feedback.present_value(_hopper_inspect_button, "hopper", Color("66f5ed"))
 					hopper_presented = true
 			"egg_binned":
 				_ui_feedback.present_value(_bin_label, "bin", Color("ffbf42"))
 			"cash_awarded":
 				if not cash_presented:
-					_ui_feedback.present_value(_cash_label, "cash", Color("ffbf42"))
+					_ui_feedback.present_value(_cash_payout_label, "cash", Color("ffbf42"))
 					cash_presented = true
 			"bird_removed":
 				if not cash_presented:
-					_ui_feedback.present_value(_cash_label, "cash", Color("ffbf42"))
 					_ui_feedback.present_value(
 						_workshop_balance_label, "balance", Color("ffbf42")
 					)
@@ -691,7 +716,7 @@ func _tier_name(tier: int) -> String:
 	return "TIER %d" % tier
 
 
-func _shop_status(events: Array[Dictionary]) -> String:
+func _shop_status(events: Array[Dictionary], removal_used: bool) -> String:
 	if not events.is_empty():
 		var event: Dictionary = events[0]
 		match String(event.type):
@@ -701,21 +726,26 @@ func _shop_status(events: Array[Dictionary]) -> String:
 					String(event.producer.kind).to_upper(),
 				]
 			"bird_removed":
-				return "%s %s REMOVED  •  £%d REMAINING" % [
+				return "%s %s REMOVED  •  £%d REMAINING  •  NIGHTLY REMOVAL USED" % [
 					_tier_name(int(event.producer.tier)),
 					String(event.producer.kind).to_upper(),
 					int(event.cash_total),
 				]
 			"shop_action_rejected":
 				return "ACTION DECLINED  •  %s" % String(event.reason).replace("_", " ").to_upper()
-	return "CHOOSE ONE FREE BIRD TO CONTINUE  •  REMOVING A BIRD COSTS £3"
+	if removal_used:
+		return "NIGHTLY REMOVAL USED  •  KEEP THE REST OF THE FLOCK"
+	return "REMOVE ONE BIRD FOR £3  •  OR KEEP THE COMPLETE FLOCK"
 
 
-func _focus_first_shop_action() -> void:
+func _focus_first_bird_offer() -> void:
 	for choice_button: Button in _producer_choice_buttons:
 		if choice_button.visible and not choice_button.disabled:
 			choice_button.grab_focus()
 			return
+
+
+func _focus_first_shop_action() -> void:
 	for bird_button: Button in _flock_grid.get_children():
 		if not bird_button.disabled:
 			bird_button.grab_focus()
@@ -850,64 +880,3 @@ func _event_of_type(events: Array[Dictionary], event_type: String) -> Dictionary
 		if event.type == event_type:
 			return event
 	return {}
-
-
-func _feedback_for(events: Array[Dictionary]) -> String:
-	var double_yolker_hatches := events.filter(
-		func(event: Dictionary) -> bool:
-			return event.type == "egg_hatched" and bool(event.get("double_yolker", false))
-	)
-	if double_yolker_hatches.size() == 1:
-		var double_hatch: Dictionary = double_yolker_hatches[0]
-		return "DOUBLE YOLKER! A %s hatched for %d points." % [
-			String(double_hatch.get("kind", "egg")).capitalize(),
-			double_hatch.points_awarded,
-		]
-	if double_yolker_hatches.size() > 1:
-		var double_points := 0
-		for double_hatch: Dictionary in double_yolker_hatches:
-			double_points += int(double_hatch.points_awarded)
-		return "DOUBLE YOLKERS! %d lucky eggs hatched for %d points." % [
-			double_yolker_hatches.size(),
-			double_points,
-		]
-	for event: Dictionary in events:
-		if event.type == "day_ended":
-			return "The final bell rings. Every unhatched egg is discarded."
-	var hatch_events := events.filter(
-		func(event: Dictionary) -> bool: return event.type == "egg_hatched"
-	)
-	if hatch_events.size() > 1:
-		var points_awarded := 0
-		for event: Dictionary in hatch_events:
-			points_awarded += event.points_awarded
-		return "Crack! %d eggs hatched for %d points." % [hatch_events.size(), points_awarded]
-	for event: Dictionary in events:
-		if event.type == "egg_hatched":
-			return "Crack! A %s hatched for %d %s." % [
-				String(event.get("kind", "egg")).capitalize(),
-				event.points_awarded,
-				"point" if event.points_awarded == 1 else "points",
-			]
-	for event: Dictionary in events:
-		if event.type == "eggs_swapped":
-			return "Scuttle! The Plover retreated one bay to the left."
-	for event: Dictionary in events:
-		if event.type == "bin_reshuffled":
-			return "Hopper empty! The bin was shuffled back into the pipe."
-	for event: Dictionary in events:
-		if event.type == "egg_binned":
-			return "An egg fell into the bin. It will return with its cracks intact."
-	for event: Dictionary in events:
-		if event.type == "egg_damaged" and event.get("damage_amount", 1) > 1:
-			return "Spark crack! Pink dealt 2 damage to the Spoonbill."
-	for event: Dictionary in events:
-		if event.type == "egg_damaged" and event.get("cause", "") == "cuckoo_echo":
-			return "Echo crack! The Cuckoo copied another egg's damage."
-	for event: Dictionary in events:
-		if event.type == "circuit_fired" and event.get("occupied_slot_indices", []).is_empty():
-			return "Empty strike! The belt advanced."
-	for event: Dictionary in events:
-		if event.type == "egg_damaged":
-			return "Thwack! The circuit landed. The belt moved."
-	return "Choose an egg on the belt."

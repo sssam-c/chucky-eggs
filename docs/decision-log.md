@@ -494,10 +494,30 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D031's optional flock growth, D032's unified multi-category cash shop, and D033/D038's pair-merging action, fee, reservation, and delayed-resolution rules. D040's quality scaling, the one-bird/one-egg relationship, success-only between-day progression, persistent cash, and failed-day retry behavior remain.
 
+## D051 — Separate the bird offer from the shop
+
+**Status:** accepted
+
+**Decision:** Present the mandatory three-bird reward on its own post-success screen. Choosing one bird closes that screen and then opens a separate shop containing the complete flock overview and its £3 removal controls. The bird-offer screen contains no shop or removal actions.
+
+**Reason:** Gaining a free bird and paying to correct the resulting flock serve different decisions. Giving each one a separate screen keeps the reward comparison focused, prevents removal controls from competing with the mandatory choice, and makes the transition from growth to optional thinning explicit.
+
+**Supersedes:** D050's implication that the reward and flock-removal shop may share one screen. D050's offer generation, mandatory free selection, removed purchase and pairing actions, £3 exact removal, success restriction, and failure behavior remain.
+
+## D052 — Limit removal to one bird and colour rarity
+
+**Status:** accepted
+
+**Decision:** Allow at most one £3 bird removal during each post-success shop visit. After a successful removal, disable every remaining removal action until the next successful night's shop. Give bird cards no rarity accent at Standard quality, a green accent at Prize quality, and a blue accent at Champion and every higher tier; continue to show the written quality name.
+
+**Reason:** A one-bird limit makes removal a deliberate nightly correction instead of allowing accumulated cash to restructure the whole flock at once. Consistent rarity accents make valuable offers and flock members quicker to scan, while the existing quality label preserves meaning for players who cannot distinguish the colours.
+
+**Supersedes:** D050's allowance for repeated affordable removals during one shop visit. Its £3 price, exact selected-bird targeting, last-bird protection, complete flock overview, and all reward rules remain.
+
 <!--
 Copy for the next entry:
 
-## D051 — Short decision title
+## D053 — Short decision title
 
 **Status:** proposed | accepted | superseded
 
