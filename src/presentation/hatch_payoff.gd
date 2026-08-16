@@ -121,6 +121,9 @@ func _set_shell_palette(kind: String) -> void:
 		"cuckoo":
 			_shell_color = Color("79aeb2")
 			_outline_color = Color("183c43")
+		"sparrow":
+			_shell_color = Color("d7ad79")
+			_outline_color = Color("5c321d")
 		"plover":
 			_shell_color = Color("b8c66e")
 			_outline_color = Color("354421")

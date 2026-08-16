@@ -64,6 +64,22 @@ text = "4"
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="Kind" type="Label" parent="EggContent"]
+unique_name_in_owner = true
+z_index = 4
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 1.0
+offset_bottom = 19.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.96, 0.93, 0.86, 1)
+theme_override_colors/font_shadow_color = Color(0.04, 0.03, 0.03, 1)
+theme_override_constants/shadow_outline_size = 2
+theme_override_font_sizes/font_size = 12
+horizontal_alignment = 1
+mouse_filter = 2
+
 [node name="Caption" type="Label" parent="."]
 unique_name_in_owner = true
 z_index = 4
@@ -81,3 +97,4 @@ theme_override_constants/shadow_outline_size = 2
 theme_override_font_sizes/font_size = 15
 text = "SLOT 1"
 horizontal_alignment = 1
+mouse_filter = 2

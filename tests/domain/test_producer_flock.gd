@@ -10,18 +10,20 @@ class EligibleEggsDoubleRoller:
 		return chance > 0.0
 
 
-func test_starting_flock_has_five_one_egg_producers() -> void:
+func test_starting_flock_has_eight_one_egg_producers_including_three_sparrows() -> void:
 	var flock = ProducerFlock.new()
 	var producers: Array[Dictionary] = flock.snapshot()
 	var egg_kinds: Array[String] = flock.lay_daily_egg_kinds()
 
-	assert_eq(producers.size(), 5)
+	assert_eq(producers.size(), 8)
 	assert_eq(_count_kind(producers, "chicken"), 3)
 	assert_eq(_count_kind(producers, "cuckoo"), 2)
+	assert_eq(_count_kind(producers, "sparrow"), 3)
 	assert_eq(_count_kind(producers, "plover"), 0)
-	assert_eq(egg_kinds.size(), 5)
+	assert_eq(egg_kinds.size(), 8)
 	assert_eq(egg_kinds.count("chicken"), 3)
 	assert_eq(egg_kinds.count("cuckoo"), 2)
+	assert_eq(egg_kinds.count("sparrow"), 3)
 	assert_eq(egg_kinds.count("plover"), 0)
 	assert_true(producers.all(func(producer: Dictionary) -> bool:
 		return producer.tier == 0
@@ -41,12 +43,22 @@ func test_starting_chickens_share_the_standard_quality_double_yolker_chance() ->
 	).size(), 3)
 	assert_eq(laid_eggs.filter(func(egg: Dictionary) -> bool:
 		return bool(egg.is_double_yolker)
-	).size(), 3)
+	).size(), 6)
 	assert_true(laid_eggs.all(func(egg: Dictionary) -> bool:
 		return egg.has_all([
 			"kind", "tier", "quality_multiplier", "double_yolk_chance", "is_double_yolker",
 		])
 	))
+
+
+func test_standard_sparrows_have_five_percent_double_yolker_chance() -> void:
+	var laid_eggs: Array[Dictionary] = ProducerFlock.new([
+		{"kind": "sparrow"},
+	]).lay_daily_eggs(EligibleEggsDoubleRoller.new())
+
+	assert_eq(laid_eggs.size(), 1)
+	assert_almost_eq(float(laid_eggs[0].double_yolk_chance), 0.05, 0.00001)
+	assert_true(laid_eggs[0].is_double_yolker)
 
 
 func test_every_producer_lays_exactly_one_egg() -> void:

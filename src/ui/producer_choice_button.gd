@@ -36,6 +36,7 @@ func render_choice(choice: Dictionary) -> void:
 		"toughness": toughness,
 		"max_toughness": toughness,
 		"points": points,
+		"double_yolk_chance": float(choice.get("double_yolk_chance", 0.0)),
 	}
 	_egg_preview.set_egg(egg, true)
 	accessibility_name = "%s producer, £%d" % [producer_kind.capitalize(), price]

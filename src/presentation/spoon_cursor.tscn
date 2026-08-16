@@ -1,17 +1,13 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://assets/generated/spoon.png" id="1_spoon"]
 [ext_resource type="Script" path="res://src/presentation/spoon_cursor.gd" id="2_script"]
 [ext_resource type="Script" path="res://src/presentation/spoon_hinge.gd" id="3_hinge"]
 
-[node name="Spoon" type="TextureRect"]
+[node name="Spoon" type="Control"]
 custom_minimum_size = Vector2(360, 360)
 offset_right = 360.0
 offset_bottom = 360.0
 mouse_filter = 2
-texture = ExtResource("1_spoon")
-expand_mode = 1
-stretch_mode = 5
 script = ExtResource("2_script")
 
 [node name="Hinge" type="Control" parent="."]

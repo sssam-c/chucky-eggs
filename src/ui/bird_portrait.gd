@@ -1,15 +1,7 @@
 class_name BirdPortrait
 extends Control
 
-const PORTRAIT_ATLAS: Texture2D = preload(
-	"res://assets/generated/bird_portraits_v1.png"
-)
-const PORTRAIT_REGIONS := {
-	"chicken": Rect2(0, 0, 611, 643),
-	"cuckoo": Rect2(611, 0, 612, 643),
-	"plover": Rect2(0, 643, 611, 643),
-	"spoonbill": Rect2(611, 643, 612, 643),
-}
+const PlaceholderStyle = preload("res://src/ui/species_placeholder_style.gd")
 
 var _kind := "chicken"
 
@@ -20,7 +12,7 @@ func _ready() -> void:
 
 
 func set_bird_kind(kind: String) -> void:
-	_kind = kind if PORTRAIT_REGIONS.has(kind) else "chicken"
+	_kind = kind if PlaceholderStyle.COLOURS.has(kind) else "chicken"
 	queue_redraw()
 
 
@@ -28,36 +20,87 @@ func bird_kind() -> String:
 	return _kind
 
 
-func artwork_region() -> Rect2:
-	return PORTRAIT_REGIONS.get(_kind, PORTRAIT_REGIONS.chicken)
+func placeholder_color() -> Color:
+	return PlaceholderStyle.colour(_kind)
+
+
+func placeholder_shape() -> String:
+	return PlaceholderStyle.shape(_kind)
 
 
 func _draw() -> void:
 	var center := size * 0.5
 	var radius := minf(size.x, size.y) * 0.47
-	draw_circle(center + Vector2(0, 2), radius + 3.0, Color(0, 0, 0, 0.42))
-	draw_circle(center, radius, Color("171516"))
-	draw_circle(center, radius - 3.0, _backdrop_color())
-	draw_arc(center, radius - 2.0, 0.0, TAU, 48, Color("e3a84b"), 3.0, true)
-
-	var source := artwork_region()
-	var available := Vector2(radius * 2.02, radius * 2.02)
-	var scale_factor := minf(available.x / source.size.x, available.y / source.size.y)
-	var artwork_size := source.size * scale_factor
-	var destination := Rect2(center - artwork_size * 0.5, artwork_size)
-	draw_texture_rect_region(PORTRAIT_ATLAS, destination, source)
-
-	# The restrained inner highlight joins the painted cutout to the existing
-	# brass medallion without covering species-defining feathers or beaks.
-	draw_arc(
-		center - Vector2(1, 1), radius - 5.0, PI * 1.04, PI * 1.78, 24,
-		Color(1.0, 0.88, 0.62, 0.42), 2.0, true
-	)
+	draw_circle(center + Vector2(0, 2), radius + 2.0, Color(0, 0, 0, 0.34))
+	draw_circle(center, radius, Color("202124"))
+	draw_circle(center, radius - 3.0, Color("ded8ca"))
+	_draw_placeholder_bird(center, radius * 0.72, placeholder_color())
 
 
-func _backdrop_color() -> Color:
-	match _kind:
-		"cuckoo": return Color("173b40")
-		"plover": return Color("34401d")
-		"spoonbill": return Color("4b2944")
-	return Color("55291b")
+func _draw_placeholder_bird(center: Vector2, scale_value: float, color: Color) -> void:
+	var body_center := center + Vector2(-scale_value * 0.08, scale_value * 0.05)
+	match placeholder_shape():
+		"long_tail":
+			_draw_shape(PackedVector2Array([
+				body_center + Vector2(-0.42, 0.05) * scale_value,
+				body_center + Vector2(-0.92, 0.48) * scale_value,
+				body_center + Vector2(-0.50, 0.27) * scale_value,
+			]), color)
+			_draw_ellipse(body_center, Vector2(0.55, 0.37) * scale_value, color)
+			_draw_head_and_beak(center + Vector2(0.36, -0.25) * scale_value, scale_value, color, 0.19)
+		"compact":
+			_draw_ellipse(body_center, Vector2(0.52, 0.43) * scale_value, color)
+			_draw_head_and_beak(center + Vector2(0.30, -0.24) * scale_value, scale_value, color, 0.21)
+		"long_legged":
+			_draw_ellipse(body_center + Vector2(0, -0.10) * scale_value, Vector2(0.53, 0.31) * scale_value, color)
+			_draw_head_and_beak(center + Vector2(0.35, -0.34) * scale_value, scale_value, color, 0.17)
+			for leg_x in [-0.18, 0.10]:
+				draw_line(
+					center + Vector2(leg_x, 0.20) * scale_value,
+					center + Vector2(leg_x - 0.04, 0.65) * scale_value,
+					color, maxf(2.0, scale_value * 0.09), true
+				)
+		"spoon_bill":
+			_draw_ellipse(body_center, Vector2(0.48, 0.36) * scale_value, color)
+			var head := center + Vector2(0.28, -0.27) * scale_value
+			draw_circle(head, scale_value * 0.18, color)
+			draw_line(head, head + Vector2(0.52, 0.02) * scale_value, color, maxf(4.0, scale_value * 0.15), true)
+			draw_circle(head + Vector2(0.54, 0.02) * scale_value, scale_value * 0.11, color)
+		_:
+			_draw_ellipse(body_center, Vector2(0.55, 0.42) * scale_value, color)
+			_draw_head_and_beak(center + Vector2(0.32, -0.28) * scale_value, scale_value, color, 0.22)
+			for comb_offset in [-0.13, 0.0, 0.13]:
+				draw_circle(
+					center + Vector2(0.22 + comb_offset, -0.53) * scale_value,
+					scale_value * 0.09, color
+				)
+
+
+func _draw_head_and_beak(
+	head: Vector2, scale_value: float, color: Color, head_radius: float
+) -> void:
+	draw_circle(head, scale_value * head_radius, color)
+	_draw_shape(PackedVector2Array([
+		head + Vector2(head_radius * 0.75, -0.05) * scale_value,
+		head + Vector2(head_radius * 1.55, 0.05) * scale_value,
+		head + Vector2(head_radius * 0.72, 0.14) * scale_value,
+	]), color)
+
+
+func _draw_ellipse(center: Vector2, radii: Vector2, color: Color) -> void:
+	_draw_shape(_ellipse_points(center, radii), color)
+
+
+func _ellipse_points(center: Vector2, radii: Vector2) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for point_index in range(28):
+		var angle := TAU * float(point_index) / 28.0
+		points.append(center + Vector2(cos(angle) * radii.x, sin(angle) * radii.y))
+	return points
+
+
+func _draw_shape(points: PackedVector2Array, color: Color) -> void:
+	draw_colored_polygon(points, color)
+	var outline := points.duplicate()
+	outline.append(points[0])
+	draw_polyline(outline, Color("303033"), 1.5, true)

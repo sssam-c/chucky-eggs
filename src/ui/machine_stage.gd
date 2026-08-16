@@ -1,8 +1,5 @@
 extends Control
 
-const DARK_TIMBER: Texture2D = preload("res://assets/generated/dark_timber_v1.png")
-const CAST_IRON: Texture2D = preload("res://assets/generated/cast_iron_v1.png")
-
 var _slot_circuit_ids: Array[String] = []
 var _slot_circuit_colors: Array[Color] = []
 var _highlighted_circuit_id := ""
@@ -10,13 +7,11 @@ var _highlighted_circuit_id := ""
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	queue_redraw()
 
 
 func material_texture_count() -> int:
-	return 2
+	return 0
 
 
 func set_slot_count(slot_count: int) -> void:
@@ -47,19 +42,12 @@ func highlighted_circuit_id() -> String:
 
 
 func _draw() -> void:
-	# Timber workshop wall.
+	# Flat temporary workshop wall. Final material treatment belongs to art.
 	draw_rect(Rect2(Vector2.ZERO, size), Color("080707"))
-	draw_texture_rect(
-		DARK_TIMBER, Rect2(Vector2.ZERO, size), true,
-		Color(0.78, 0.66, 0.59, 0.72)
-	)
 	for plank_y in range(0, int(size.y), 54):
-		var shade := Color(0.12, 0.06, 0.04, 0.25) if int(plank_y / 54) % 2 == 0 else Color(0.22, 0.11, 0.07, 0.18)
+		var shade := Color("201915") if int(plank_y / 54) % 2 == 0 else Color("271e19")
 		draw_rect(Rect2(0, plank_y, size.x, 52), shade)
-		draw_line(Vector2(0, plank_y + 52), Vector2(size.x, plank_y + 52), Color(0.02, 0.015, 0.014, 0.88), 4.0)
-		draw_line(Vector2(0, plank_y + 49), Vector2(size.x, plank_y + 49), Color(0.44, 0.24, 0.12, 0.20), 1.0)
-		for knot_x in range(90 + (plank_y % 83), int(size.x), 230):
-			draw_circle(Vector2(knot_x, plank_y + 25), 5.0, Color(0.04, 0.025, 0.02, 0.58))
+		draw_line(Vector2(0, plank_y + 52), Vector2(size.x, plank_y + 52), Color("0f0d0c"), 3.0)
 
 	# The ambience layer owns the soft workshop light; this durable component
 	# keeps only physical fixtures and materials.
@@ -181,9 +169,7 @@ func _draw_pipe(from: Vector2, to: Vector2, width: float) -> void:
 
 func _draw_iron_panel(rect: Rect2, border := Color("6d4026")) -> void:
 	_draw_contact_shadow(rect, 9.0)
-	draw_rect(rect, Color("0a0a0b"), true)
-	draw_texture_rect(CAST_IRON, rect, true, Color(0.76, 0.72, 0.67, 0.68))
-	draw_rect(rect, Color(0.02, 0.02, 0.025, 0.18), true)
+	draw_rect(rect, Color("252629"), true)
 	draw_rect(rect, border, false, 5.0)
 	draw_line(
 		rect.position + Vector2(6, 7), Vector2(rect.end.x - 6, rect.position.y + 7),

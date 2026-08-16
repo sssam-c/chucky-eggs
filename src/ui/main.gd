@@ -39,6 +39,7 @@ const MotionTokens = preload("res://src/presentation/motion_tokens.gd")
 @onready var _retirement_buttons: Dictionary = {
 	"chicken": %RetireChicken,
 	"cuckoo": %RetireCuckoo,
+	"sparrow": %RetireSparrow,
 	"plover": %RetirePlover,
 	"spoonbill": %RetireSpoonbill,
 }
@@ -551,7 +552,7 @@ func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
 		var available_count := int(retirement_group.get("available_count", 0))
 		var retirement_button: Button = _retirement_buttons[kind]
 		retirement_button.text = "%s %s\n×%d  •  £%d" % [
-			_tier_name(int(retirement_group.get("tier", 0))),
+			_tier_short_name(int(retirement_group.get("tier", 0))),
 			kind.to_upper(),
 			available_count,
 			retirement_price,
@@ -860,6 +861,17 @@ func _tier_name(tier: int) -> String:
 		2:
 			return "CHAMPION"
 	return "TIER %d" % tier
+
+
+func _tier_short_name(tier: int) -> String:
+	match tier:
+		0:
+			return "STD"
+		1:
+			return "PRIZE"
+		2:
+			return "CHAMP"
+	return "T%d" % tier
 
 
 func _offer_with_id(offers: Array, offer_id: String) -> Dictionary:

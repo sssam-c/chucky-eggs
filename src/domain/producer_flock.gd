@@ -1,8 +1,9 @@
 class_name ProducerFlock
 extends RefCounted
 
-const PRODUCER_KINDS: Array[String] = ["chicken", "cuckoo", "plover", "spoonbill"]
+const PRODUCER_KINDS: Array[String] = ["chicken", "cuckoo", "sparrow", "plover", "spoonbill"]
 const STARTING_DOUBLE_YOLK_CHANCE := 0.02
+const SPARROW_DOUBLE_YOLK_CHANCE := 0.05
 const QUALITY_STEP := 1.5
 const STARTING_PRODUCERS: Array[Dictionary] = [
 	{"kind": "chicken"},
@@ -10,10 +11,14 @@ const STARTING_PRODUCERS: Array[Dictionary] = [
 	{"kind": "chicken"},
 	{"kind": "cuckoo"},
 	{"kind": "cuckoo"},
+	{"kind": "sparrow"},
+	{"kind": "sparrow"},
+	{"kind": "sparrow"},
 ]
 const BASE_DOUBLE_YOLK_CHANCES := {
 	"chicken": STARTING_DOUBLE_YOLK_CHANCE,
 	"cuckoo": 0.0,
+	"sparrow": SPARROW_DOUBLE_YOLK_CHANCE,
 	"plover": 0.0,
 	"spoonbill": 0.0,
 }

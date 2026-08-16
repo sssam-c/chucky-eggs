@@ -4,11 +4,13 @@ extends RefCounted
 const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
 const STARTING_THWACKS := 10
-const DEFAULT_TARGET_SCORE := 8
+const DEFAULT_TARGET_SCORE := 10
 const CHICKEN_TOUGHNESS := 3
 const CHICKEN_POINTS := 3
 const CUCKOO_TOUGHNESS := 4
 const CUCKOO_POINTS := 1
+const SPARROW_TOUGHNESS := 1
+const SPARROW_POINTS := 1
 const PLOVER_TOUGHNESS := 6
 const PLOVER_POINTS := 4
 const SPOONBILL_TOUGHNESS := 5
@@ -362,6 +364,8 @@ static func egg_definition(kind: String) -> Dictionary:
 			return {"kind": kind, "toughness": CHICKEN_TOUGHNESS, "points": CHICKEN_POINTS, "effect": "none"}
 		"cuckoo":
 			return {"kind": kind, "toughness": CUCKOO_TOUGHNESS, "points": CUCKOO_POINTS, "effect": "adjacent_echo"}
+		"sparrow":
+			return {"kind": kind, "toughness": SPARROW_TOUGHNESS, "points": SPARROW_POINTS, "effect": "none"}
 		"plover":
 			return {"kind": kind, "toughness": PLOVER_TOUGHNESS, "points": PLOVER_POINTS, "effect": "screen_left"}
 		"spoonbill":

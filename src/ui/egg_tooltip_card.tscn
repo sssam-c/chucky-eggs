@@ -1,0 +1,276 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/ui/egg_tooltip_card.gd" id="1_card"]
+
+[sub_resource type="StyleBoxFlat" id="CardPanel"]
+bg_color = Color(0.105, 0.075, 0.058, 0.985)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.88, 0.66, 0.28, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.55)
+shadow_size = 8
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="Rule"]
+bg_color = Color(0.88, 0.66, 0.28, 0.42)
+
+[sub_resource type="StyleBoxFlat" id="FactPanel"]
+bg_color = Color(0.19, 0.15, 0.12, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.42, 0.36, 0.29, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="EffectPanel"]
+bg_color = Color(0.14, 0.11, 0.09, 1)
+border_width_left = 3
+border_color = Color(0.88, 0.66, 0.28, 0.8)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="EggTooltipCard" type="PanelContainer"]
+custom_minimum_size = Vector2(360, 0)
+mouse_filter = 2
+theme_override_styles/panel = SubResource("CardPanel")
+script = ExtResource("1_card")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 15
+
+[node name="Stack" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 9
+
+[node name="Header" type="HBoxContainer" parent="Margin/Stack"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 9
+
+[node name="SpeciesSwatch" type="ColorRect" parent="Margin/Stack/Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(8, 25)
+layout_mode = 2
+mouse_filter = 2
+color = Color(0.88, 0.66, 0.28, 1)
+
+[node name="Title" type="Label" parent="Margin/Stack/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_font_sizes/font_size = 20
+text = "CHICKEN."
+vertical_alignment = 1
+
+[node name="TitleRule" type="PanelContainer" parent="Margin/Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Rule")
+
+[node name="Facts" type="HBoxContainer" parent="Margin/Stack"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="PointsFact" type="PanelContainer" parent="Margin/Stack/Facts"]
+custom_minimum_size = Vector2(96, 66)
+layout_mode = 2
+mouse_filter = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("FactPanel")
+
+[node name="Margin" type="MarginContainer" parent="Margin/Stack/Facts/PointsFact"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 7
+
+[node name="Stack" type="VBoxContainer" parent="Margin/Stack/Facts/PointsFact/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 1
+
+[node name="PointsHeading" type="Label" parent="Margin/Stack/Facts/PointsFact/Margin/Stack"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.73, 0.70, 0.65, 1)
+theme_override_font_sizes/font_size = 11
+text = "POINTS"
+
+[node name="PointsValue" type="Label" parent="Margin/Stack/Facts/PointsFact/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_font_sizes/font_size = 24
+text = "3"
+
+[node name="ChanceFact" type="PanelContainer" parent="Margin/Stack/Facts"]
+custom_minimum_size = Vector2(208, 66)
+layout_mode = 2
+mouse_filter = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("FactPanel")
+
+[node name="Margin" type="MarginContainer" parent="Margin/Stack/Facts/ChanceFact"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 7
+
+[node name="Stack" type="VBoxContainer" parent="Margin/Stack/Facts/ChanceFact/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 1
+
+[node name="ChanceHeading" type="Label" parent="Margin/Stack/Facts/ChanceFact/Margin/Stack"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.73, 0.70, 0.65, 1)
+theme_override_font_sizes/font_size = 11
+text = "CHANCE OF DOUBLE YOLKER"
+autowrap_mode = 2
+
+[node name="ChanceValue" type="Label" parent="Margin/Stack/Facts/ChanceFact/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.91, 0.68, 1)
+theme_override_font_sizes/font_size = 24
+text = "2%"
+
+[node name="OnHitSection" type="PanelContainer" parent="Margin/Stack"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("EffectPanel")
+
+[node name="Margin" type="MarginContainer" parent="Margin/Stack/OnHitSection"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 11
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 11
+theme_override_constants/margin_bottom = 9
+
+[node name="Stack" type="VBoxContainer" parent="Margin/Stack/OnHitSection/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Heading" type="Label" parent="Margin/Stack/OnHitSection/Margin/Stack"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.88, 0.66, 0.28, 1)
+theme_override_font_sizes/font_size = 12
+text = "ON HIT EFFECTS"
+
+[node name="OnHitBody" type="Label" parent="Margin/Stack/OnHitSection/Margin/Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(304, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.92, 0.89, 0.82, 1)
+theme_override_font_sizes/font_size = 14
+text = "Retreat — after surviving a direct hit, moves one bay left."
+autowrap_mode = 2
+
+[node name="OtherSection" type="PanelContainer" parent="Margin/Stack"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("EffectPanel")
+
+[node name="Margin" type="MarginContainer" parent="Margin/Stack/OtherSection"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 11
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 11
+theme_override_constants/margin_bottom = 9
+
+[node name="Stack" type="VBoxContainer" parent="Margin/Stack/OtherSection/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Heading" type="Label" parent="Margin/Stack/OtherSection/Margin/Stack"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.88, 0.66, 0.28, 1)
+theme_override_font_sizes/font_size = 12
+text = "OTHER EFFECTS"
+
+[node name="OtherBody" type="Label" parent="Margin/Stack/OtherSection/Margin/Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(304, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.92, 0.89, 0.82, 1)
+theme_override_font_sizes/font_size = 14
+text = "Echo — copies damage dealt to an adjacent egg."
+autowrap_mode = 2
+
+[node name="AllOtherSection" type="PanelContainer" parent="Margin/Stack"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("EffectPanel")
+
+[node name="Margin" type="MarginContainer" parent="Margin/Stack/AllOtherSection"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 11
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 11
+theme_override_constants/margin_bottom = 9
+
+[node name="Stack" type="VBoxContainer" parent="Margin/Stack/AllOtherSection/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Heading" type="Label" parent="Margin/Stack/AllOtherSection/Margin/Stack"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.88, 0.66, 0.28, 1)
+theme_override_font_sizes/font_size = 12
+text = "ALL OTHER EFFECTS"
+
+[node name="AllOtherBody" type="Label" parent="Margin/Stack/AllOtherSection/Margin/Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(304, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.92, 0.89, 0.82, 1)
+theme_override_font_sizes/font_size = 14
+text = "Additional effect."
+autowrap_mode = 2

@@ -1,50 +1,62 @@
 extends Control
 
-const EGG_ATLAS: Texture2D = preload("res://assets/generated/egg_shells_v1.png")
-const EGG_REGIONS := {
-	"chicken": Rect2(145, 18, 430, 548),
-	"cuckoo": Rect2(720, 18, 510, 548),
-	"plover": Rect2(130, 630, 490, 550),
-	"spoonbill": Rect2(725, 630, 485, 550),
-}
+const PlaceholderStyle = preload("res://src/ui/species_placeholder_style.gd")
+const TOOLTIP_CARD_SCENE = preload("res://src/ui/egg_tooltip_card.tscn")
+const HOVER_POPOVER_SCENE = preload("res://src/ui/egg_hover_popover.tscn")
+const MAGNIFIER_CURSOR = preload("res://assets/ui/cursors/egg_inspect.svg")
+
+static var _magnifier_cursor_registered := false
 
 var _egg: Dictionary = {}
 var _preview := false
+var _hover_popover: PopupPanel
+
+
+func _ready() -> void:
+	_register_magnifier_cursor()
+	mouse_default_cursor_shape = Control.CURSOR_HELP
+	_hover_popover = HOVER_POPOVER_SCENE.instantiate()
+	add_child(_hover_popover)
+	mouse_entered.connect(show_hover_card)
+	mouse_exited.connect(hide_hover_card)
+	visibility_changed.connect(_on_visibility_changed)
+	_sync_hover_card()
+
+
+static func _register_magnifier_cursor() -> void:
+	if _magnifier_cursor_registered:
+		return
+	Input.set_custom_mouse_cursor(MAGNIFIER_CURSOR, Input.CURSOR_HELP, Vector2(12.0, 12.0))
+	_magnifier_cursor_registered = true
 
 
 func set_egg(egg: Dictionary, preview := false) -> void:
 	_egg = egg.duplicate(true)
 	_preview = preview
+	_sync_hover_card()
 	queue_redraw()
 
 
 func clear_egg() -> void:
 	_egg = {}
+	_sync_hover_card()
 	queue_redraw()
 
 
-func artwork_region() -> Rect2:
-	var kind := String(_egg.get("kind", "chicken"))
-	return EGG_REGIONS.get(kind, EGG_REGIONS.chicken)
+func placeholder_color() -> Color:
+	return PlaceholderStyle.colour(egg_kind())
 
 
 func _draw() -> void:
 	if _egg.is_empty():
 		return
 
-	var center := Vector2(size.x * 0.5, size.y * 0.51)
-	var radius_x := minf(size.x * 0.37, 52.0)
-	var radius_y := minf(size.y * 0.44, 68.0)
-	if _preview:
-		radius_x *= 0.70
-		radius_y *= 0.70
+	var center := _shell_center()
+	var radii := _shell_radii()
+	var radius_x := radii.x
+	var radius_y := radii.y
 
-	var source := artwork_region()
-	var destination := Rect2(
-		center - Vector2(radius_x * 1.08, radius_y * 1.05),
-		Vector2(radius_x * 2.16, radius_y * 2.10)
-	)
-	draw_texture_rect_region(EGG_ATLAS, destination, source)
+	_draw_placeholder_shell(center, radius_x, radius_y)
 	_draw_quality_rings(center, radius_x, radius_y)
 
 	var toughness: int = _egg.get("toughness", 4)
@@ -76,6 +88,114 @@ func _draw() -> void:
 
 	# Keep decision-critical marks above shell decoration and accumulated cracks.
 	_draw_information_marks(center, radius_y)
+
+
+func _sync_hover_card() -> void:
+	mouse_filter = (
+		Control.MOUSE_FILTER_PASS if not _egg.is_empty()
+		else Control.MOUSE_FILTER_IGNORE
+	)
+	tooltip_text = ""
+	if is_instance_valid(_hover_popover):
+		_hover_popover.configure(_egg)
+		if _egg.is_empty():
+			_hover_popover.cancel()
+
+
+func make_tooltip_card() -> Control:
+	var card := TOOLTIP_CARD_SCENE.instantiate()
+	card.configure(_egg)
+	return card
+
+
+func show_hover_card() -> void:
+	if _egg.is_empty() or not is_instance_valid(_hover_popover):
+		return
+	_hover_popover.configure(_egg)
+	_hover_popover.show_for(self)
+
+
+func hide_hover_card() -> void:
+	if is_instance_valid(_hover_popover):
+		_hover_popover.cancel()
+
+
+func hover_card_rect() -> Rect2:
+	if not is_instance_valid(_hover_popover):
+		return Rect2()
+	return _hover_popover.popup_rect()
+
+
+func is_hover_card_visible() -> bool:
+	return is_instance_valid(_hover_popover) and _hover_popover.visible
+
+
+func _on_visibility_changed() -> void:
+	if not is_visible_in_tree():
+		hide_hover_card()
+
+
+func _exit_tree() -> void:
+	hide_hover_card()
+
+
+func score_icon_local_position() -> Vector2:
+	return _shell_center() + Vector2(0.0, -_shell_radii().y * 0.61)
+
+
+func effect_icon_local_position() -> Vector2:
+	return _shell_center() + Vector2(0.0, _shell_radii().y * 0.48)
+
+
+func _shell_center() -> Vector2:
+	return Vector2(size.x * 0.5, size.y * 0.51)
+
+
+func _shell_radii() -> Vector2:
+	var radii := Vector2(
+		minf(size.x * 0.37, 52.0),
+		minf(size.y * 0.44, 68.0)
+	)
+	return radii * (0.70 if _preview else 1.0)
+
+
+func _mark_scale() -> float:
+	return 0.72 if _preview else 1.0
+
+
+func _draw_placeholder_shell(center: Vector2, radius_x: float, radius_y: float) -> void:
+	var shadow_points := _egg_points(
+		center + Vector2(2.5, 4.0), radius_x + 2.0, radius_y + 2.0
+	)
+	draw_colored_polygon(shadow_points, Color(0.0, 0.0, 0.0, 0.34))
+	var shell_points := _egg_points(center, radius_x, radius_y)
+	draw_colored_polygon(shell_points, placeholder_color())
+	var outline := shell_points.duplicate()
+	outline.append(shell_points[0])
+	draw_polyline(outline, Color("2b2c2f"), 2.5 if not _preview else 1.5, true)
+	draw_arc(
+		center - Vector2(radius_x * 0.20, radius_y * 0.05),
+		radius_x * 0.50,
+		PI * 1.05,
+		PI * 1.55,
+		12,
+		Color(1.0, 1.0, 1.0, 0.34),
+		2.0 if not _preview else 1.0,
+		true
+	)
+
+
+func _egg_points(center: Vector2, radius_x: float, radius_y: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for point_index in range(48):
+		var angle := TAU * float(point_index) / 48.0 - PI * 0.5
+		var vertical := sin(angle)
+		var taper := lerpf(0.70, 1.03, (vertical + 1.0) * 0.5)
+		points.append(center + Vector2(
+			cos(angle) * radius_x * taper,
+			vertical * radius_y
+		))
+	return points
 
 
 func score_seal_value() -> int:
@@ -126,9 +246,9 @@ func _draw_quality_rings(center: Vector2, radius_x: float, radius_y: float) -> v
 
 
 func _draw_information_marks(center: Vector2, radius_y: float) -> void:
-	var mark_scale := 0.72 if _preview else 1.0
-	_draw_score_seal(center + Vector2(0.0, -radius_y * 0.61), mark_scale)
-	var emblem_center := center + Vector2(0.0, radius_y * 0.48)
+	var mark_scale := _mark_scale()
+	_draw_score_seal(score_icon_local_position(), mark_scale)
+	var emblem_center := effect_icon_local_position()
 	match effect_emblem():
 		"echo":
 			_draw_echo_emblem(emblem_center, mark_scale)

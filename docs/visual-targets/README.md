@@ -4,6 +4,8 @@ Status: **design hypothesis**, not settled rule truth or implementation scope.
 
 These generated mockups explore a more cohesive presentation direction for the existing game. They preserve the current player loop and should be read alongside `docs/game-rules.md`, which remains authoritative whenever a visual detail conflicts with a rule.
 
+The current build intentionally does not use these mockups or any generated raster as production art. Birds are temporary geometric silhouettes; eggs use one generic temporary shell; each species shares one flat colour across both and is named outside the art. These images remain composition references only, while final asset style and execution are reserved for the commissioned artist.
+
 ## Targets
 
 - `day-1-gameplay-ui.png`: the five-bay Day 1 machine, redesigned as one integrated brass, enamel, cast-iron, and dark-timber cabinet.

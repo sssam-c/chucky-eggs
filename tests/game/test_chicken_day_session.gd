@@ -5,16 +5,11 @@ const ProducerFlock = preload("res://src/domain/producer_flock.gd")
 const SeededChanceRoller = preload("res://src/core/seeded_chance_roller.gd")
 
 const SUCCESSFUL_DAY_EGGS: Array[String] = [
-	"chicken", "cuckoo", "chicken", "spoonbill",
-	"cuckoo", "plover", "chicken", "chicken",
-	"chicken", "cuckoo", "chicken", "spoonbill",
-	"cuckoo", "plover", "chicken", "chicken",
-	"chicken", "cuckoo", "chicken", "spoonbill",
-	"cuckoo", "plover", "chicken", "chicken",
+	"chicken", "chicken", "chicken", "chicken", "chicken", "chicken", "chicken",
+	"cuckoo", "cuckoo", "plover", "plover", "spoonbill", "spoonbill",
 ]
 const EARLY_SUCCESS_PLAN: Array[String] = [
-	"red", "red", "red", "blue", "red", "red",
-	"red", "blue", "blue", "pink", "pink",
+	"red", "red", "red", "red", "blue", "red", "blue", "red",
 ]
 
 
@@ -28,16 +23,17 @@ class IdentityShuffler:
 		return values.duplicate(true)
 
 
-func test_session_builds_a_five_egg_ten_thwack_day_from_the_starting_flock() -> void:
+func test_session_builds_an_eight_egg_ten_thwack_day_from_the_starting_flock() -> void:
 	var state: Dictionary = ChickenDaySession.new(42).state()
 
 	assert_eq(state.day_number, 1)
-	assert_eq(state.target_score, 8)
+	assert_eq(state.target_score, 10)
 	assert_eq(state.cash, 0)
 	assert_eq(state.last_cash_awarded, 0)
-	assert_eq(state.producers.size(), 5)
-	assert_eq(state.daily_egg_count, 5)
-	assert_eq(state.hopper_egg_count, 4)
+	assert_eq(state.producers.size(), 8)
+	assert_eq(state.producers.count({"kind": "sparrow", "tier": 0}), 3)
+	assert_eq(state.daily_egg_count, 8)
+	assert_eq(state.hopper_egg_count, 7)
 	assert_eq(state.pipe.size(), 3)
 	assert_eq(state.starting_thwacks, 10)
 	assert_eq(state.remaining_thwacks, 10)
@@ -58,11 +54,16 @@ func test_starting_flock_exposes_species_level_double_yolk_progress() -> void:
 	var chicken_group: Dictionary = state.quality_groups.filter(
 		func(group: Dictionary) -> bool: return group.kind == "chicken" and group.tier == 0
 	)[0]
+	var sparrow_group: Dictionary = state.quality_groups.filter(
+		func(group: Dictionary) -> bool: return group.kind == "sparrow" and group.tier == 0
+	)[0]
 
 	assert_eq(chicken_group.bird_count, 3)
 	assert_eq(chicken_group.points, 3)
 	assert_eq(chicken_group.double_yolk_chance, 0.02)
 	assert_eq(chicken_group.display_double_yolk_percent, 2)
+	assert_eq(sparrow_group.bird_count, 3)
+	assert_eq(sparrow_group.display_double_yolk_percent, 5)
 	assert_true(state.producers.all(func(producer: Dictionary) -> bool:
 		return not producer.has("double_yolk_chance")
 	))
@@ -113,7 +114,9 @@ func test_session_can_initialize_day_three_on_the_single_track_for_dev_tools() -
 
 
 func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
-	var session = ChickenDaySession.new()
+	var session = ChickenDaySession.new(
+		42, ProducerFlock.new([{"kind": "chicken"}]), IdentityShuffler.new()
+	)
 	var exposed_state: Dictionary = session.state()
 	exposed_state.remaining_thwacks = 2
 	exposed_state.slots[0].toughness = 1
@@ -127,7 +130,9 @@ func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 
 
 func test_restart_replaces_the_day_with_initial_state() -> void:
-	var session = ChickenDaySession.new()
+	var session = ChickenDaySession.new(
+		42, ProducerFlock.new([{"kind": "chicken"}]), IdentityShuffler.new()
+	)
 	session.submit_circuit("red")
 
 	session.restart()
@@ -157,7 +162,7 @@ func test_success_opens_one_shop_with_deterministic_stock_and_bank_balance() -> 
 		[]
 	).size(), 3)
 	assert_true(offered_kinds.all(func(kind: String) -> bool:
-		return kind in ["chicken", "cuckoo", "plover", "spoonbill"]
+		return kind in ["chicken", "cuckoo", "sparrow", "plover", "spoonbill"]
 	))
 	assert_true(state.shop_stock.recruitment.all(func(offer: Dictionary) -> bool:
 		return offer.price == 3
@@ -386,31 +391,14 @@ func test_banked_cash_persists_into_day_two() -> void:
 
 
 func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> void:
-	var day_one_only_flock: Array[Dictionary] = [
-		{"kind": "chicken"}, {"kind": "chicken"},
-		{"kind": "cuckoo"}, {"kind": "cuckoo"},
-	]
-	var session = ChickenDaySession.new(
-		42, ProducerFlock.new(day_one_only_flock), IdentityShuffler.new()
-	)
-	for circuit_id in [
-		"red", "red", "red", "red", "blue", "red", "red", "red", "red", "red",
-	]:
-		session.submit_circuit(circuit_id)
-		if session.state().phase != "day":
-			break
-	assert_true(session.state().succeeded)
+	var session = _early_success_session()
+	_complete_early_successful_day(session)
 	var banked_cash := int(session.state().cash)
 	session.leave_shop()
 	var final_events: Array[Dictionary] = []
 
 	while session.state().phase == "day":
-		var state: Dictionary = session.state()
-		var circuit_id := "pink" if not state.slots[4].is_empty() else (
-			"red" if not state.slots[0].is_empty() or not state.slots[2].is_empty()
-			else "blue"
-		)
-		final_events = session.submit_circuit(circuit_id)
+		final_events = session.submit_circuit("pink")
 
 	assert_eq(session.state().phase, "failed")
 	assert_eq(session.state().cash, banked_cash)
@@ -518,12 +506,8 @@ func _funded_early_shop_session(minimum_cash: int):
 
 
 func _complete_successful_day(session) -> Array[Dictionary]:
-	var circuit_plan := [
-		"red", "blue", "red", "blue", "red", "blue", "red", "pink", "red", "blue",
-		"red", "blue", "red", "blue", "red", "pink", "red", "blue", "red", "blue",
-	]
 	var final_events: Array[Dictionary] = []
-	for circuit_id in circuit_plan:
+	for circuit_id in EARLY_SUCCESS_PLAN:
 		final_events = session.submit_circuit(circuit_id)
 		if session.state().phase != "day":
 			break

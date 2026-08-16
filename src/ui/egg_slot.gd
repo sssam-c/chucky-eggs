@@ -5,6 +5,7 @@ extends Button
 @onready var _content: Control = %EggContent
 @onready var _egg_visual: Control = %EggVisual
 @onready var _toughness_label: Label = %Toughness
+@onready var _kind_label: Label = %Kind
 @onready var _caption_label: Label = %Caption
 
 var _egg: Dictionary = {}
@@ -31,6 +32,7 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 		_egg_visual.clear_egg()
 		_egg_visual.visible = false
 		_toughness_label.visible = false
+		_kind_label.text = ""
 		_caption_label.text = "" if preview else "SLOT %d" % (slot_index + 1)
 		disabled = true
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -45,7 +47,9 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 	_egg_visual.set_egg(_egg, preview)
 	_toughness_label.visible = true
 	_toughness_label.text = str(_egg.toughness)
-	_caption_label.text = "" if preview else "SLOT %d" % (slot_index + 1)
+	var kind_name := String(_egg.kind).to_upper()
+	_kind_label.text = kind_name if preview else ""
+	_caption_label.text = "" if preview else "%s  •  SLOT %d" % [kind_name, slot_index + 1]
 	disabled = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE

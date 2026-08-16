@@ -14,8 +14,12 @@ const AUTHORED_DAILY_EGGS: Array[String] = [
 	"cuckoo", "plover", "chicken", "chicken",
 ]
 const EARLY_SUCCESS_CIRCUITS: Array[String] = [
-	"RedCircuit", "RedCircuit", "RedCircuit", "BlueCircuit", "RedCircuit", "RedCircuit",
-	"RedCircuit", "BlueCircuit", "BlueCircuit", "PinkCircuit", "PinkCircuit",
+	"RedCircuit", "RedCircuit", "RedCircuit", "RedCircuit",
+	"BlueCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
+]
+const AUTHORED_SUCCESS_CIRCUITS: Array[String] = [
+	"RedCircuit", "RedCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
+	"RedCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
 ]
 
 
@@ -29,43 +33,229 @@ class IdentityShuffler:
 		return values.duplicate(true)
 
 
-func test_each_species_selects_distinct_illustrated_portrait_and_egg_art() -> void:
+func test_each_species_uses_matching_placeholder_colour_and_distinct_bird_shape() -> void:
 	var portrait := BirdPortrait.new()
 	var egg_visual := EggVisual.new()
 	add_child_autofree(portrait)
 	add_child_autofree(egg_visual)
 
-	if not portrait.has_method("artwork_region") or not egg_visual.has_method("artwork_region"):
-		fail_test("Species visuals must expose their illustrated atlas selection.")
+	if not portrait.has_method("placeholder_color") or not egg_visual.has_method("placeholder_color"):
+		fail_test("Species placeholders must expose their shared colour.")
 		return
 
-	var portrait_regions: Array[Rect2] = []
-	var egg_regions: Array[Rect2] = []
-	for kind in ["chicken", "cuckoo", "plover", "spoonbill"]:
+	var species_colours: Array[Color] = []
+	var bird_shapes: Array[String] = []
+	for kind in ["chicken", "cuckoo", "sparrow", "plover", "spoonbill"]:
 		portrait.set_bird_kind(kind)
 		egg_visual.set_egg({"kind": kind, "toughness": 3, "max_toughness": 3, "points": 1})
-		var portrait_region: Rect2 = portrait.artwork_region()
-		var egg_region: Rect2 = egg_visual.artwork_region()
-		assert_true(portrait_region.has_area())
-		assert_true(egg_region.has_area())
-		assert_false(portrait_regions.has(portrait_region))
-		assert_false(egg_regions.has(egg_region))
-		portrait_regions.append(portrait_region)
-		egg_regions.append(egg_region)
+		assert_eq(portrait.placeholder_color(), egg_visual.placeholder_color())
+		assert_false(species_colours.has(portrait.placeholder_color()))
+		assert_false(bird_shapes.has(portrait.placeholder_shape()))
+		species_colours.append(portrait.placeholder_color())
+		bird_shapes.append(portrait.placeholder_shape())
 
-	assert_true(ResourceLoader.exists("res://assets/generated/bird_portraits_v1.png"))
-	assert_true(ResourceLoader.exists("res://assets/generated/egg_shells_v1.png"))
+	assert_false(portrait.has_method("artwork_texture"))
+	assert_false(egg_visual.has_method("artwork_texture"))
+	assert_false(egg_visual.has_method("placeholder_mark"))
 
 
-func test_machine_materials_and_ambience_respect_reduced_motion() -> void:
+func test_occupied_egg_hover_uses_a_custom_magnifying_glass_cursor() -> void:
+	var egg_visual := EggVisual.new()
+	add_child_autofree(egg_visual)
+	egg_visual.set_egg({"kind": "chicken", "points": 3})
+
+	assert_eq(egg_visual.mouse_default_cursor_shape, Control.CURSOR_HELP)
+	var cursor_path := "res://assets/ui/cursors/egg_inspect.svg"
+	assert_true(ResourceLoader.exists(cursor_path))
+	if not ResourceLoader.exists(cursor_path):
+		return
+	var cursor_texture := load(cursor_path) as Texture2D
+	assert_not_null(cursor_texture)
+	if cursor_texture != null:
+		assert_eq(cursor_texture.get_size(), Vector2(32.0, 32.0))
+
+
+func test_egg_name_stays_outside_shell_and_whole_egg_owns_anchored_information_card() -> void:
+	var slot = load("res://src/ui/egg_slot.tscn").instantiate()
+	slot.slot_index = 1
+	add_child_autofree(slot)
+	await get_tree().process_frame
+	var cuckoo := {
+		"kind": "cuckoo",
+		"toughness": 4,
+		"max_toughness": 4,
+		"points": 1,
+	}
+	slot.render_egg(cuckoo, false)
+
+	assert_eq(slot.get_node("Caption").text, "CUCKOO  •  SLOT 2")
+	assert_eq(slot.get_node("EggContent/Kind").text, "")
+	var egg_visual: Control = slot.get_node("EggContent/EggVisual")
+	assert_eq(egg_visual.mouse_filter, Control.MOUSE_FILTER_PASS)
+	assert_eq(egg_visual.tooltip_text, "")
+	assert_null(egg_visual.get_node_or_null("ScoreIconHover"))
+	assert_null(egg_visual.get_node_or_null("EffectIconHover"))
+	assert_true(egg_visual.has_method("show_hover_card"))
+	var card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(card)
+	assert_string_contains(card.card_text(), "POINTS\n1")
+	assert_string_contains(card.card_text(), "copies damage")
+
+	slot.render_egg(cuckoo, false, true)
+	assert_eq(slot.get_node("Caption").text, "")
+	assert_eq(slot.get_node("EggContent/Kind").text, "CUCKOO")
+
+
+func test_compact_egg_preview_uses_the_same_complete_anchored_hover_card() -> void:
+	var egg_visual := EggVisual.new()
+	egg_visual.size = Vector2(34.0, 48.0)
+	add_child_autofree(egg_visual)
+	egg_visual.set_egg({
+		"kind": "cuckoo",
+		"toughness": 4,
+		"max_toughness": 4,
+		"points": 1,
+	}, true)
+	await get_tree().process_frame
+
+	assert_eq(egg_visual.mouse_filter, Control.MOUSE_FILTER_PASS)
+	var card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(card)
+	assert_string_contains(card.card_text(), "CUCKOO.")
+	assert_string_contains(card.card_text(), "copies damage")
+
+
+func test_egg_hover_builds_a_clear_wrapped_information_card() -> void:
+	var egg_visual := EggVisual.new()
+	add_child_autofree(egg_visual)
+	egg_visual.set_egg({
+		"kind": "chicken",
+		"tier": 0,
+		"toughness": 3,
+		"max_toughness": 3,
+		"points": 3,
+		"double_yolk_chance": 0.02,
+	})
+	assert_true(egg_visual.has_method("make_tooltip_card"))
+	if not egg_visual.has_method("make_tooltip_card"):
+		return
+	var card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(card)
+
+	assert_string_contains(card.card_text(), "CHICKEN.")
+	assert_string_contains(card.card_text(), "POINTS\n3")
+	assert_string_contains(card.card_text(), "CHANCE OF DOUBLE YOLKER\n2%")
+	assert_eq(card.visible_effect_sections(), [])
+	assert_true(card.effect_bodies_use_word_wrap())
+	assert_true(card.has_node("Margin/Stack/Facts/PointsFact"))
+	assert_true(card.has_node("Margin/Stack/Facts/ChanceFact"))
+
+
+func test_egg_hover_card_includes_only_applicable_effect_sections() -> void:
+	var egg_visual := EggVisual.new()
+	add_child_autofree(egg_visual)
+	assert_true(egg_visual.has_method("make_tooltip_card"))
+	if not egg_visual.has_method("make_tooltip_card"):
+		return
+
+	egg_visual.set_egg({
+		"kind": "cuckoo", "points": 1, "double_yolk_chance": 0.0,
+	})
+	var cuckoo_card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(cuckoo_card)
+	assert_eq(cuckoo_card.visible_effect_sections(), ["OTHER EFFECTS"])
+	assert_string_contains(cuckoo_card.card_text(), "copies damage")
+
+	egg_visual.set_egg({
+		"kind": "plover", "points": 4, "double_yolk_chance": 0.0,
+	})
+	var plover_card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(plover_card)
+	assert_eq(plover_card.visible_effect_sections(), ["ON HIT EFFECTS"])
+	assert_string_contains(plover_card.card_text(), "moves one bay left")
+
+	egg_visual.set_egg({
+		"kind": "spoonbill", "points": 4, "double_yolk_chance": 0.0,
+	})
+	var spoonbill_card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(spoonbill_card)
+	assert_eq(spoonbill_card.visible_effect_sections(), ["ON HIT EFFECTS"])
+	assert_string_contains(spoonbill_card.card_text(), "Pink strike deals 2 damage")
+
+
+func test_main_stage_exposes_anchored_egg_hover_cards_without_blocking_levers() -> void:
+	var main := _add_main_for_ordered_eggs(["cuckoo"])
+	await get_tree().process_frame
+	var egg_visual: Control = main.get_node(
+		"Content/Stage/Belt/Slots/Slot1/EggContent/EggVisual"
+	)
+	var card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(card)
+	assert_string_contains(card.card_text(), "POINTS")
+	assert_string_contains(card.card_text(), "Echo")
+	assert_true(egg_visual.has_method("show_hover_card"))
+
+	var red_lever: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
+	assert_eq(red_lever.mouse_filter, Control.MOUSE_FILTER_STOP)
+	assert_eq(red_lever.tooltip_text, "")
+
+
+func test_egg_hover_card_top_aligns_with_egg_and_stays_inside_viewport() -> void:
+	var egg_visual := EggVisual.new()
+	egg_visual.position = Vector2(320.0, 220.0)
+	egg_visual.size = Vector2(132.0, 148.0)
+	add_child_autofree(egg_visual)
+	egg_visual.set_egg({
+		"kind": "plover",
+		"tier": 1,
+		"points": 6,
+		"double_yolk_chance": 0.075,
+	})
+	assert_true(egg_visual.has_method("show_hover_card"))
+	assert_true(egg_visual.has_method("hover_card_rect"))
+	if not egg_visual.has_method("show_hover_card") or not egg_visual.has_method("hover_card_rect"):
+		return
+
+	egg_visual.show_hover_card()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var card_rect: Rect2 = egg_visual.hover_card_rect()
+	var egg_rect := egg_visual.get_global_rect()
+	var viewport_rect := egg_visual.get_viewport().get_visible_rect()
+	assert_almost_eq(card_rect.position.y, egg_rect.position.y, 1.0)
+	assert_true(viewport_rect.encloses(card_rect))
+	assert_gt(card_rect.position.x, egg_rect.end.x)
+	var popover_card: Control = egg_visual.get_node("EggHoverPopover/Card")
+	assert_eq(card_rect.size, popover_card.get_combined_minimum_size())
+
+	egg_visual.hide_hover_card()
+	egg_visual.position.x = viewport_rect.end.x - egg_visual.size.x - 4.0
+	egg_visual.show_hover_card()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	card_rect = egg_visual.hover_card_rect()
+	egg_rect = egg_visual.get_global_rect()
+	assert_almost_eq(card_rect.position.y, egg_rect.position.y, 1.0)
+	assert_true(viewport_rect.encloses(card_rect))
+	assert_lt(card_rect.end.x, egg_rect.position.x)
+
+
+func test_flat_placeholder_machine_and_ambience_respect_reduced_motion() -> void:
 	var main := _add_main()
 	var stage: Control = main.get_node("Content/Stage/Workshop")
 	if not stage.has_method("material_texture_count"):
 		fail_test("The machine must expose its material texture integration.")
 		return
-	assert_eq(stage.material_texture_count(), 2)
-	assert_true(ResourceLoader.exists("res://assets/generated/dark_timber_v1.png"))
-	assert_true(ResourceLoader.exists("res://assets/generated/cast_iron_v1.png"))
+	assert_eq(stage.material_texture_count(), 0)
+
+	var cursor_spoon = load("res://src/presentation/spoon_cursor.tscn").instantiate()
+	add_child_autofree(cursor_spoon)
+	assert_true(cursor_spoon is Control)
+	assert_false(cursor_spoon is TextureRect)
 
 	var ambience = main.get_node_or_null("Content/Stage/Ambience")
 	assert_not_null(ambience)
@@ -83,19 +273,28 @@ func test_machine_materials_and_ambience_respect_reduced_motion() -> void:
 	assert_true(ambience.is_motion_active())
 
 
+func test_generated_raster_archive_is_excluded_from_game_exports() -> void:
+	var export_presets := ConfigFile.new()
+	assert_eq(export_presets.load("res://export_presets.cfg"), OK)
+	var excludes := String(export_presets.get_value("preset.0", "exclude_filter", ""))
+	assert_string_contains(excludes, "assets/generated/*")
+	assert_string_contains(excludes, "docs/*")
+
+
 func test_main_renders_initial_day_and_shell_information() -> void:
 	var main := _add_main()
 
-	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 8")
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 10")
 	assert_eq(main.get_node("Content/Header/Cash").text, "CASH £0")
 	assert_eq(main.get_node("Content/Header/Cash").accessibility_name, "Cash balance £0")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 10")
-	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER 4")
+	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER 7")
 	assert_eq(main.get_node("Content/Stage/Belt/Bin").text, "BIN 0")
 	var shell_legend: Label = main.get_node("Content/Header/ShellLegend")
-	assert_string_contains(shell_legend.text, "DOUBLE YOLK 2%")
-	assert_string_contains(shell_legend.text, "RIPPLE")
-	assert_string_contains(shell_legend.text, "RETREAT LEFT")
+	assert_string_contains(shell_legend.text, "CHICKEN 2%")
+	assert_string_contains(shell_legend.text, "SPARROW 5%")
+	assert_string_contains(shell_legend.text, "ECHO")
+	assert_string_contains(shell_legend.text, "RETREAT")
 	assert_string_contains(shell_legend.text, "PINK ×2")
 	assert_false(shell_legend.text.contains("\n"))
 	assert_false(
@@ -103,10 +302,11 @@ func test_main_renders_initial_day_and_shell_information() -> void:
 			main.get_node("Content/Header/HopperCount").get_global_rect()
 		)
 	)
-	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
+	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "SPARROW")
+	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 1")
 	assert_eq(main.get_node("Content/Stage/Pipe/Preview").get_child_count(), 3)
 	for preview in main.get_node("Content/Stage/Pipe/Preview").get_children():
-		assert_true(preview.egg_kind() in ["chicken", "cuckoo"])
+		assert_true(preview.egg_kind() in ["chicken", "cuckoo", "sparrow"])
 	assert_not_null(main.get_node("Content/Accessibility/Mute"))
 	assert_not_null(main.get_node("Content/Accessibility/ReducedMotion"))
 	assert_true(main.theme.has_stylebox("normal", "Button"))
@@ -341,13 +541,15 @@ func test_circuit_levers_have_no_hover_text_and_describe_connections_accessibly(
 	assert_eq(red.tooltip_text, "")
 	assert_eq(red.accessibility_name, "Red diamond lever")
 	assert_string_contains(red.accessibility_description, "slots 1 and 3")
-	assert_string_contains(red.accessibility_description, "Slot 1: Chicken egg")
+	assert_string_contains(red.accessibility_description, "Slot 1: Sparrow egg")
 	assert_string_contains(red.accessibility_description, "Slot 3: empty")
 	assert_eq(pink.accessibility_name, "Pink spark lever")
 
 
 func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
-	var main := _add_main()
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
 	main.set_reduced_motion(true)
 	var fired_slots: Array[int] = []
 	main.get_node("Presentation").hammer_fired.connect(
@@ -363,7 +565,9 @@ func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
 
 
 func test_empty_blue_strike_fires_advances_and_spends_a_thwack() -> void:
-	var main := _add_main()
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
 	main.set_reduced_motion(true)
 	var fired_slots: Array[int] = []
 	var presented: Array[String] = []
@@ -388,7 +592,9 @@ func test_empty_blue_strike_fires_advances_and_spends_a_thwack() -> void:
 
 
 func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> void:
-	var main := _add_main()
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
 	main.set_reduced_motion(true)
 	var presented: Array[String] = []
 	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
@@ -422,7 +628,9 @@ func test_original_spoon_rebounds_before_the_egg_damage_response() -> void:
 
 
 func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active() -> void:
-	var main := _add_main()
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
 	var red: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
 	var completion_count := [0]
 	main.playback_completed.connect(func() -> void: completion_count[0] += 1)
@@ -456,7 +664,7 @@ func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() ->
 		"egg_hatched",
 		"conveyor_advanced",
 	])
-	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 3 / 8")
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 3 / 10")
 
 
 func test_hatch_burst_carries_resolved_points_into_the_score_before_event_completion() -> void:
@@ -488,15 +696,15 @@ func test_hatch_burst_carries_resolved_points_into_the_score_before_event_comple
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_eq(score_when_burst_started[0], "SCORE 0 / 8")
+	assert_eq(score_when_burst_started[0], "SCORE 0 / 10")
 	assert_eq(point_text_when_burst_started[0], "+3")
 	assert_gte(payoff.fragment_count(), 12)
 	assert_eq(milestones, ["burst", "score:3:3", "event"])
-	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 3 / 8")
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 3 / 10")
 	assert_false(payoff.is_active())
 
 
-func test_double_yolk_eggs_look_identical_and_do_not_expose_parent_odds() -> void:
+func test_double_yolker_outcomes_remain_hidden_while_hover_card_shows_known_chance() -> void:
 	var flock = ProducerFlock.new([
 		{"kind": "chicken"},
 		{"kind": "chicken"},
@@ -512,6 +720,10 @@ func test_double_yolk_eggs_look_identical_and_do_not_expose_parent_odds() -> voi
 	assert_false(first_slot.egg_summary().contains("1 IN"))
 	assert_false(first_slot.egg_summary().contains("10%"))
 	assert_false(first_slot.egg_description().contains("Double Yolker"))
+	var first_card: Control = first_slot.get_node("EggContent/EggVisual").make_tooltip_card()
+	add_child_autofree(first_card)
+	assert_string_contains(first_card.card_text(), "CHANCE OF DOUBLE YOLKER\n2%")
+	assert_false(first_card.card_text().contains("IS DOUBLE YOLKER"))
 	var previews: Array[Node] = main.get_node("Content/Stage/Pipe/Preview").get_children()
 	assert_eq(float(previews[0].current_egg().double_yolk_chance), 0.02)
 	assert_eq(float(previews[1].current_egg().double_yolk_chance), 0.02)
@@ -565,7 +777,7 @@ func test_double_yolker_hatch_has_a_large_two_yolk_six_point_payoff() -> void:
 	await _press_and_wait(main, "RedCircuit")
 
 	assert_eq(reveal, ["DOUBLE YOLKER!", "+6", 2])
-	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 6 / 8")
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 6 / 10")
 	assert_eq(main.get_node("Content/Feedback").text, "DOUBLE YOLKER! A Chicken hatched for 6 points.")
 	assert_false(payoff.is_active())
 
@@ -592,7 +804,7 @@ func test_restart_clears_an_interrupted_hatch_payoff_without_committing_score() 
 	assert_false(payoff.is_active())
 	assert_eq(payoff.point_text(), "")
 	assert_eq(committed_scores, [])
-	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 8")
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 10")
 
 
 func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_payoff() -> void:
@@ -618,12 +830,14 @@ func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_payoff() ->
 		"egg_hatched", "conveyor_advanced",
 	])
 	assert_eq(points_landed, [1])
-	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 1 / 8")
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 1 / 10")
 	assert_eq(main.get_node("Content/Feedback").text, "Crack! A Cuckoo hatched for 1 point.")
 
 
 func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
-	var main := _add_main()
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
 	var completion_count := 0
 	main.playback_completed.connect(func() -> void: completion_count += 1)
 
@@ -673,7 +887,9 @@ func test_ui_feedback_uses_shared_motion_tokens_and_cancellable_control_motion()
 
 
 func test_resolved_hud_facts_trigger_non_blocking_ui_feedback() -> void:
-	var main := _add_main()
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
 	main.set_reduced_motion(false)
 	var feedback = main.get_node("Presentation/UIFeedback")
 	var kinds: Array[String] = []
@@ -752,7 +968,7 @@ func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void
 	)
 	assert_string_contains(
 		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
-		"BALANCE £2"
+		"BALANCE £1"
 	)
 	assert_string_contains(
 		main.get_node("ResultOverlay/Card/Content/FlockSummary").text,
@@ -826,14 +1042,14 @@ func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void
 	)
 	assert_eq(
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text,
-		"BALANCE £2"
+		"BALANCE £1"
 	)
 	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "0 MERGES QUEUED")
 	var chicken_source := _pairing_source_button(main, "chicken:0")
 	assert_not_null(chicken_source)
 	assert_string_contains(chicken_source.text, "STANDARD CHICKEN")
 	assert_string_contains(chicken_source.text, "PERFECT PAIRS")
-	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 2")
+	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 1")
 	await get_tree().process_frame
 	assert_true(main.get_node(
 		"WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop"
@@ -871,6 +1087,11 @@ func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void
 	).get_global_rect().encloses(
 		main.get_node("WorkshopOverlay/Card/Content/RetirementActions").get_global_rect()
 	))
+	for retirement_button: Button in main.get_node(
+		"WorkshopOverlay/Card/Content/RetirementActions"
+	).get_children():
+		assert_false(retirement_button.text.contains("STANDARD"))
+		assert_true(retirement_button.clip_text)
 
 
 func test_pairing_picker_greys_unmatched_sources_then_queues_the_chosen_match() -> void:
@@ -882,8 +1103,7 @@ func test_pairing_picker_greys_unmatched_sources_then_queues_the_chosen_match() 
 		42, ProducerFlock.new(producers), IdentityShuffler.new()
 	)
 	for circuit_id in [
-		"red", "red", "red", "blue", "red", "red",
-		"red", "blue", "blue", "pink", "pink",
+		"red", "red", "red", "red", "blue", "red", "blue", "red",
 	]:
 		session.submit_circuit(circuit_id)
 		if session.state().phase != "day":
@@ -1003,14 +1223,14 @@ func test_shop_allows_an_affordable_merge_then_leave_starts_day_two() -> void:
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_true(main.get_node("WorkshopOverlay").visible)
 	assert_true(first_choice.disabled)
-	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £2")
+	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £1")
 	_pairing_source_button(main, "chicken:0").pressed.emit()
 	await get_tree().process_frame
 	main.get_node(
 		"WorkshopOverlay/Card/Content/MergeActions/PairingPartners/PartnerScroll/PairingPartnerButtons"
 	).get_child(0).pressed.emit()
 	await get_tree().process_frame
-	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £1")
+	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £0")
 	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "1 MERGE QUEUED")
 	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "PAIR QUEUED")
 	var ui_feedback = main.get_node("Presentation/UIFeedback")
@@ -1115,7 +1335,7 @@ func test_replacing_the_session_cancels_an_active_production_loading_sequence() 
 	assert_false(main.get_node("ProductionLoader").visible)
 	assert_false(main.is_input_locked())
 	assert_eq(completion_count[0], 0)
-	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 8")
+	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 10")
 
 
 func _press_and_wait(main: Control, circuit_name: String) -> void:
@@ -1128,12 +1348,7 @@ func _press_and_wait(main: Control, circuit_name: String) -> void:
 
 
 func _complete_successful_day(main: Control, acknowledge_result := true) -> void:
-	for circuit_name in [
-		"RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
-		"BlueCircuit", "RedCircuit", "PinkCircuit", "RedCircuit", "BlueCircuit",
-		"RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
-		"PinkCircuit", "RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit",
-	]:
+	for circuit_name in AUTHORED_SUCCESS_CIRCUITS:
 		if main.get_node("Content/Stage/CircuitBank/%s" % circuit_name).disabled:
 			continue
 		await _press_and_wait(main, circuit_name)

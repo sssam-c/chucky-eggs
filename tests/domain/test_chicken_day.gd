@@ -25,6 +25,32 @@ func test_plover_is_a_four_point_high_commitment_egg() -> void:
 	assert_eq(ChickenDay.egg_definition("plover").effect, "screen_left")
 
 
+func test_sparrow_is_a_single_hit_single_point_egg() -> void:
+	assert_eq(ChickenDay.SPARROW_TOUGHNESS, 1)
+	assert_eq(ChickenDay.SPARROW_POINTS, 1)
+	assert_eq(ChickenDay.egg_definition("sparrow"), {
+		"kind": "sparrow", "toughness": 1, "points": 1, "effect": "none",
+	})
+
+
+func test_sparrow_hatches_on_its_first_hit_and_doubles_its_point_when_rolled() -> void:
+	var day = ChickenDay.new([{
+		"kind": "sparrow",
+		"double_yolk_chance": 0.05,
+		"is_double_yolker": true,
+	}], 10)
+
+	var events: Array[Dictionary] = day.resolve_circuit("red")
+	var hatch: Dictionary = events.filter(
+		func(event: Dictionary) -> bool: return event.type == "egg_hatched"
+	)[0]
+
+	assert_eq(hatch.kind, "sparrow")
+	assert_eq(hatch.base_points, 1)
+	assert_eq(hatch.points_awarded, 2)
+	assert_true(hatch.double_yolker)
+
+
 func test_daily_pool_exposes_only_the_next_three_hopper_eggs() -> void:
 	var state: Dictionary = ChickenDay.new([
 		"chicken", "cuckoo", "plover", "chicken", "cuckoo",
@@ -402,7 +428,7 @@ func test_tenth_valid_circuit_ends_day_and_rejects_further_requests() -> void:
 	assert_eq(rejected[0].reason, "day_ended")
 
 
-func test_day_succeeds_at_eight_or_more_points() -> void:
+func test_day_succeeds_at_ten_or_more_points() -> void:
 	var chicken_pool: Array[String] = []
 	chicken_pool.resize(24)
 	chicken_pool.fill("chicken")
@@ -420,9 +446,8 @@ func test_day_succeeds_at_eight_or_more_points() -> void:
 
 	assert_true(day.snapshot().ended)
 	assert_true(day.snapshot().succeeded)
-	assert_eq(day.snapshot().target_score, 8)
-	assert_gte(day.snapshot().score, 8)
-	assert_eq(day.snapshot().remaining_thwacks, 2)
+	assert_eq(day.snapshot().target_score, 10)
+	assert_gte(day.snapshot().score, 10)
 	assert_eq(_event_types(final_events).slice(-3), [
 		"thwack_spent", "day_remainder_discarded", "day_ended",
 	])

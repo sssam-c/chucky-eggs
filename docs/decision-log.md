@@ -424,10 +424,50 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D009's requirement that a circuit contain at least one egg before it is available. D009's fixed circuit mappings, simultaneous direct-damage batch, empty-bowl waste, and resolution order remain.
 
+## D044 — Open with three quick-payoff Sparrow eggs
+
+**Status:** accepted
+
+**Decision:** Add three Standard Sparrow producers to the starting flock. Each lays one Sparrow egg per day. A Standard Sparrow egg has 1 toughness, awards 1 point, has no additional egg effect, and has a 5% Double Yolker chance. Day 1 now targets 10 points in 10 thwacks; later days retain their 9-point target. The complete starting flock is three Chickens, two Cuckoos, and three Sparrows.
+
+**Reason:** Three one-hit eggs let the opening teach the complete strike-to-hatch-to-score payoff repeatedly instead of delaying every reward behind a multi-hit shell. Their higher jackpot chance introduces Double Yolkers through the simplest egg. Eight eggs also keep the pipe active beyond the five-bay machine, while a 10-point target offsets the additional three available points and preserves several candidate scoring routes. The exact difficulty, recycling frequency, and value of merging Sparrows remain playtest questions.
+
+**Supersedes:** D041's five-producer starting flock and 8-point Day 1 target. D041's ten-thwack budget, later-day target, one-bird/one-egg relationship, and all unrelated rules remain.
+
+## D045 — Show complete egg facts in native hover cards
+
+**Status:** accepted
+
+**Decision:** Give every occupied egg one native hover card. The card shows the egg's species and quality, points, and floored Double Yolker probability, followed by only the applicable `ON HIT EFFECTS`, `OTHER EFFECTS`, and `ALL OTHER EFFECTS` sections. Keep the actual `is_double_yolker` result hidden until hatching. Use a bounded, word-wrapped card rather than separate competing tooltip targets for the drawn egg icons.
+
+**Reason:** One consistently structured card makes the temporary score and effect marks understandable without covering the egg or forcing the player to discover multiple tiny hover targets. Showing the known probability makes the egg's complete decision-relevant properties available where the player is considering it, while preserving the jackpot reveal.
+
+**Supersedes:** The earlier presentation choice to omit Double Yolker probability from laid-egg hover information. D033's hidden Double Yolker result and exact internal roll remain unchanged.
+
+## D046 — Anchor hover cards beside their eggs
+
+**Status:** accepted
+
+**Decision:** Present egg information in a non-interactive `PopupPanel` that top-aligns with the hovered egg, sits 12 pixels beside it, flips from right to left when needed, and remains inside the current viewport. Group points and Double Yolker chance into prominent fact panels and place each applicable effect category in its own inset section. Keep one hover owner for the complete egg and close its popover when the pointer leaves, the egg clears, or its view is replaced.
+
+**Reason:** Godot's native tooltip API owns cursor-relative placement and provides no supported position hook. A deliberately anchored popover makes the relationship between card and egg stable, gives repeated facts a clearer visual hierarchy, and avoids unsupported offsets into the engine-owned tooltip window.
+
+**Supersedes:** D045's use of the native tooltip lifecycle and cursor-relative placement. D045's card contents, optional effect sections, whole-egg hover target, word wrapping, and hidden Double Yolker result remain.
+
+## D047 — Signal egg inspection with a magnifying-glass cursor
+
+**Status:** accepted
+
+**Decision:** Use a high-contrast 32-pixel magnifying-glass cursor over occupied eggs. Register it as the custom `CURSOR_HELP` image and assign that cursor shape only to `EggVisual`, leaving the normal pointer unchanged elsewhere. Empty eggs continue to ignore mouse input.
+
+**Reason:** The anchored information card is useful but otherwise undiscoverable. A magnifier communicates inspection rather than activation, while a local code-native SVG remains appropriate for the placeholder-art phase and can be replaced by the production artist later.
+
+**Supersedes:** Nothing. This adds a discovery cue to D046's anchored hover card.
+
 <!--
 Copy for the next entry:
 
-## D044 — Short decision title
+## D048 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

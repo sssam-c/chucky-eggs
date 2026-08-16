@@ -1,4 +1,4 @@
-extends TextureRect
+extends Control
 
 const HEAD_OFFSET := Vector2(75.0, 286.0)
 const HANDLE_OFFSET := Vector2(333.0, 23.0)
@@ -25,6 +25,31 @@ var swing_offset := 0.0:
 func _ready() -> void:
 	pivot_offset = HANDLE_OFFSET
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	queue_redraw()
+
+
+func _draw() -> void:
+	# Deliberately simple vector spoon until the final cursor asset exists.
+	draw_line(HANDLE_OFFSET, HEAD_OFFSET, Color("242529"), 17.0, true)
+	draw_line(HANDLE_OFFSET, HEAD_OFFSET, Color("a7aaad"), 11.0, true)
+	draw_line(
+		HANDLE_OFFSET - Vector2(2.0, 1.0),
+		HEAD_OFFSET - Vector2(2.0, 1.0),
+		Color(1.0, 1.0, 1.0, 0.48), 2.0, true
+	)
+	_draw_oval(HEAD_OFFSET, Vector2(36.0, 47.0), Color("242529"))
+	_draw_oval(HEAD_OFFSET, Vector2(30.0, 41.0), Color("b9bcbe"))
+	_draw_oval(HEAD_OFFSET + Vector2(2.0, 3.0), Vector2(21.0, 31.0), Color("7d8084"))
+	draw_circle(HANDLE_OFFSET, 13.0, Color("242529"))
+	draw_circle(HANDLE_OFFSET, 8.0, Color("a7aaad"))
+
+
+func _draw_oval(center: Vector2, radii: Vector2, color: Color) -> void:
+	var points := PackedVector2Array()
+	for point_index in range(32):
+		var angle := TAU * float(point_index) / 32.0
+		points.append(center + Vector2(cos(angle) * radii.x, sin(angle) * radii.y))
+	draw_colored_polygon(points, color)
 
 
 func _process(delta: float) -> void:

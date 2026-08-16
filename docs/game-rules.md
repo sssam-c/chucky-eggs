@@ -9,7 +9,7 @@ Choose which eggs deserve the spoon while every thwack carries the conveyor clos
 ## Objective and end states
 
 - A day lasts at most 10 thwacks and ends immediately after a resolved thwack meets the score target. It can also end earlier when every daily egg has hatched and no eggs remain in the hopper, conveyor, or bin.
-- Hatch eggs to meet the current day's target: 8 points on Day 1 and 9 points on each later day.
+- Hatch eggs to meet the current day's target: 10 points on Day 1 and 9 points on each later day.
 - A day succeeds at or above its target and fails below it.
 - When a successful day ends, gain £1 for each unused thwack remaining after the target-reaching thwack is spent. Add it to the run's persistent cash balance.
 - A failed day awards no cash.
@@ -24,20 +24,22 @@ After a successful day, bank the unused-thwack payout and enter one unified shop
 ## Setup and state
 
 - Every day uses five ordered conveyor slots. Slot 1 receives eggs and slot 5 sits beside the collection bin.
-- The starting flock has three Chicken producers and two Cuckoo producers.
-- Every producer lays exactly one egg per day, so the starting flock produces a daily pool of five eggs.
+- The starting flock has three Chicken producers, two Cuckoo producers, and three Sparrow producers.
+- Every producer lays exactly one egg per day, so the starting flock produces a daily pool of eight eggs.
 - Shuffle the complete daily pool and load its first egg into slot 1. Place the rest in the hopper.
 - An unhatched egg that moves past slot 5 falls into the bin and retains its remaining toughness and every other egg fact.
 - When both the hopper and conveyor are empty, shuffle every egg currently in the bin into a new hopper before loading. A non-empty conveyor prevents the bin from recycling, even when the hopper is empty.
 - A Chicken egg has 3 toughness and is worth 3 points when hatched.
 - A Cuckoo egg has 4 toughness and is worth 1 point when hatched.
+- A Sparrow egg has 1 toughness, is worth 1 point when hatched, and has no additional egg effect.
 - A Plover egg has 6 toughness and is worth 4 points when hatched.
 - A Spoonbill egg has 5 toughness, is worth 4 points when hatched, and takes 2 damage from a direct Pink strike instead of 1.
 - Every bird begins at Standard quality. Two birds of the same species and quality can be merged into one bird of the next quality tier. Queueing the merge costs £1 for a Prize output, £2 for Champion, and thereafter an amount equal to the numbered output tier.
 - Each quality tier multiplies that bird's exact egg score, exact maximum toughness, and exact Double Yolker chance by 1.5. Displayed and awarded scores and percentages round down; maximum toughness rounds up to the whole amount of damage required to hatch. Exact values are retained between tiers.
-- Standard Chicken eggs have a 2% Double Yolker chance. Standard Cuckoo, Plover, and Spoonbill eggs currently have no Double Yolker chance, so quality multiplication alone does not create one.
+- Standard Chicken eggs have a 2% Double Yolker chance and Standard Sparrow eggs have a 5% chance. Standard Cuckoo, Plover, and Spoonbill eggs currently have no Double Yolker chance, so quality multiplication alone does not create one.
 - The pipe shows up to the next three hopper eggs. After each non-final thwack, slot 1 receives the next existing hopper egg when one is available. The bin only becomes a new hopper after the existing hopper and conveyor have both cleared.
 - Egg toughness, current score, cash balance, remaining thwacks, hopper count, and bin count are always visible.
+- Hovering an egg shows a compact information card aligned beside that egg, with its species and quality, points, and floored Double Yolker chance. The card includes only the effect categories that apply to that egg. Whether the egg's hidden roll actually made it a Double Yolker is not revealed before hatching.
 - All optional between-day progression lives in the same shop. Recruitment, retirement, merging, and factory upgrades cost cash; merging also consumes two matching birds.
 - The merge picker lists every owned species-and-quality group. Groups without an eligible partner remain visible but unavailable. Choosing a group reveals its eligible partners; currently, only another bird of the same species and quality is eligible.
 - A merge fee is paid and both inputs are reserved when the pair is queued. Insufficient cash leaves the balance and birds unchanged. Queued merges resolve when the player leaves, before the next flock loads, and their outputs cannot become inputs again during the same shop visit.
@@ -83,7 +85,7 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 - **Discarded:** Removed without hatching or awarding points when the day ends.
 - **Producer:** A persistent flock member with a species and quality tier that lays exactly one fresh egg into the daily pool.
 - **Hopper:** The current shuffled sequence of eggs waiting to enter slot 1.
-- **Producer offer:** An optional opportunity to add one Chicken, Cuckoo, Plover, or Spoonbill producer to the flock. Choosing one adds exactly one bird and one egg to each subsequent daily pool.
+- **Producer offer:** An optional opportunity to add one Chicken, Cuckoo, Sparrow, Plover, or Spoonbill producer to the flock. Choosing one adds exactly one bird and one egg to each subsequent daily pool.
 - **Quality:** A bird's merge tier. Standard birds can become Prize, then Champion, followed by numbered higher tiers. Each step compounds exact score, maximum toughness, and Double Yolker chance by 1.5.
 - **Merge:** A shop action that consumes two birds of the same species and quality plus a fee equal to the output tier: £1 for Prize, £2 for Champion, then £3 for Tier 3 and so on. The pair is reserved and the fee is paid when queued; the output resolves on leaving and cannot be merged again in the same visit.
 - **Shop:** The single post-success home for optional flock and factory progression. Cash prices and merge inputs are shown before commitment; leaving preserves unspent cash.

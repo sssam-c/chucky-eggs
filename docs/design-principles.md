@@ -12,7 +12,7 @@ Show the state, cost, and likely consequence needed for a meaningful choice. Do 
 
 Every producer contributes exactly one egg to the daily pool. Keep that one-bird, one-egg relationship visible so flock size, pool size, additions, removals, and shuffle odds can be reasoned about directly. Producer offers must show the contributed egg's complete gameplay properties.
 
-Begin with one track's worth of eggs: three Chickens and two Cuckoos. The five-egg opening makes the complete starting composition inspectable, brings the recycler into play immediately, and concentrates the first strategic lesson on scoring versus Cuckoo echoes before other species enter through recruitment.
+Begin with eight eggs: three Chickens, two Cuckoos, and three Sparrows. One-hit Sparrows establish the hatch-and-score payoff immediately and their elevated Double Yolker chance introduces visible jackpots early. The pool extending beyond the five-slot track keeps new eggs arriving while the player learns to weigh quick Sparrow points, durable Chicken value, and Cuckoo echoes.
 
 Flock growth must be chosen rather than awarded compulsorily. Recruiting another bird should compete with merging or retiring birds, strengthening the factory, or saving cash, so a larger daily pool reflects the player's build direction rather than unavoidable accumulation.
 
@@ -52,7 +52,7 @@ Seed randomness, inject time, and make state transitions replayable. A surprisin
 
 ## Efficiency becomes future agency
 
-End the day automatically once a fully resolved thwack meets the target, then convert every unused thwack into cash. The ten-thwack budget keeps a five-egg recycler tense and prevents the smaller starting flock from generating the oversized payouts of the former twenty-thwack day. This makes speed-to-target valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
+End the day automatically once a fully resolved thwack meets the target, then convert every unused thwack into cash. The ten-thwack budget keeps the eight-egg opening tense and prevents the compact starting flock from generating the oversized payouts of the former twenty-thwack day. This makes speed-to-target valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
 
 Use one shop for optional run progression. Cash remains the shared opportunity cost for recruitment, retirement, merging, and factory upgrades. Permit multiple legal actions and allow the player to leave with unspent cash.
 
