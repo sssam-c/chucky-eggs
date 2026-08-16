@@ -25,8 +25,6 @@ func _draw() -> void:
 			1.5,
 			true
 		)
-		if handle.get("telescoping", false):
-			_draw_telescoping_collars(handle.from, handle.to, visibility)
 	for visual: Dictionary in spoon.bowl_visuals():
 		_draw_bowl(visual.center, visual.radii, visual.tipped_amount)
 		if visual.get("draw_neck", false):
@@ -39,16 +37,6 @@ func _draw() -> void:
 		var impact_emphasis: float = visual.get("impact_emphasis", 0.0)
 		if impact_emphasis > 0.001:
 			_draw_impact_marks(visual.center, visual.radii, impact_emphasis)
-
-
-func _draw_telescoping_collars(from: Vector2, to: Vector2, visibility: float) -> void:
-	for progress in [0.28, 0.48, 0.68]:
-		var center := from.lerp(to, progress)
-		var outer := Rect2(center - Vector2(11.0, 4.5), Vector2(22.0, 9.0))
-		var inner := Rect2(center - Vector2(8.0, 2.5), Vector2(16.0, 5.0))
-		draw_rect(outer, Color(0.13, 0.08, 0.03, visibility), true)
-		draw_rect(outer, Color(0.62, 0.36, 0.12, visibility), false, 2.0)
-		draw_rect(inner, Color(0.78, 0.48, 0.18, visibility), true)
 
 
 func _draw_impact_marks(center: Vector2, radii: Vector2, emphasis: float) -> void:

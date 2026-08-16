@@ -27,20 +27,6 @@ static func impact() -> AudioStreamWAV:
 	)
 
 
-static func double_clink() -> AudioStreamWAV:
-	# One deterministic stream keeps the tiny far-then-near separation purely
-	# presentational: it cannot alter resolver event order or split the damage batch.
-	return _build_stream(0.22, 317, func(t: float, sample_index: int) -> float:
-		var far_time := maxf(t - 0.100, 0.0)
-		var far_clink := sin(TAU * 1880.0 * far_time) * _pulse(t, 0.100, 0.070) * 0.24
-		var far_tick := _noise(sample_index, 317) * _pulse(t, 0.100, 0.018) * 0.20
-		var near_time := maxf(t - 0.132, 0.0)
-		var near_clink := sin(TAU * 1620.0 * near_time) * _pulse(t, 0.132, 0.075) * 0.28
-		var near_tick := _noise(sample_index, 353) * _pulse(t, 0.132, 0.020) * 0.23
-		return (far_clink + far_tick + near_clink + near_tick) * 0.76
-	)
-
-
 static func echo() -> AudioStreamWAV:
 	return _build_stream(0.20, 101, func(t: float, sample_index: int) -> float:
 		var sympathetic_ring := sin(TAU * 1180.0 * t) * exp(-15.0 * t) * 0.26

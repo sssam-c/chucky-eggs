@@ -28,17 +28,19 @@ class IdentityShuffler:
 		return values.duplicate(true)
 
 
-func test_session_builds_a_fifteen_egg_day_from_the_starting_flock() -> void:
+func test_session_builds_a_five_egg_ten_thwack_day_from_the_starting_flock() -> void:
 	var state: Dictionary = ChickenDaySession.new(42).state()
 
 	assert_eq(state.day_number, 1)
-	assert_eq(state.target_score, 15)
+	assert_eq(state.target_score, 8)
 	assert_eq(state.cash, 0)
 	assert_eq(state.last_cash_awarded, 0)
-	assert_eq(state.producers.size(), 15)
-	assert_eq(state.daily_egg_count, 15)
-	assert_eq(state.hopper_egg_count, 14)
+	assert_eq(state.producers.size(), 5)
+	assert_eq(state.daily_egg_count, 5)
+	assert_eq(state.hopper_egg_count, 4)
 	assert_eq(state.pipe.size(), 3)
+	assert_eq(state.starting_thwacks, 10)
+	assert_eq(state.remaining_thwacks, 10)
 	assert_false(state.slots[0].is_empty())
 
 
@@ -57,7 +59,7 @@ func test_starting_flock_exposes_species_level_double_yolk_progress() -> void:
 		func(group: Dictionary) -> bool: return group.kind == "chicken" and group.tier == 0
 	)[0]
 
-	assert_eq(chicken_group.bird_count, 10)
+	assert_eq(chicken_group.bird_count, 3)
 	assert_eq(chicken_group.points, 3)
 	assert_eq(chicken_group.double_yolk_chance, 0.02)
 	assert_eq(chicken_group.display_double_yolk_percent, 2)
@@ -86,25 +88,28 @@ func test_default_day_one_seed_replays_species_level_double_yolk_rolls() -> void
 	))
 
 
-func test_session_can_initialize_canonical_day_three_for_dev_tools() -> void:
+func test_session_can_initialize_day_three_on_the_single_track_for_dev_tools() -> void:
 	var session = ChickenDaySession.new(42, null, IdentityShuffler.new(), 3)
 	var state: Dictionary = session.state()
 
 	assert_eq(state.phase, "day")
 	assert_eq(state.day_number, 3)
-	assert_eq(state.target_score, 20)
-	assert_eq(state.machine_slot_count, 10)
-	assert_eq(state.slots.size(), 10)
-	assert_true(state.machine_refit_complete)
-	assert_false(state.machine_refit_due)
-	assert_eq(state.remaining_thwacks, 20)
+	assert_eq(state.target_score, 9)
+	assert_eq(state.machine_slot_count, 5)
+	assert_eq(state.slots.size(), 5)
+	assert_eq(state.machine_circuits, [
+		{"id": "red", "slot_indices": [0, 2]},
+		{"id": "blue", "slot_indices": [1, 3]},
+		{"id": "pink", "slot_indices": [4]},
+	])
+	assert_eq(state.remaining_thwacks, 10)
 
 	session.submit_circuit("red")
 	session.restart()
 
 	assert_eq(session.state().day_number, 3)
-	assert_eq(session.state().machine_slot_count, 10)
-	assert_eq(session.state().remaining_thwacks, 20)
+	assert_eq(session.state().machine_slot_count, 5)
+	assert_eq(session.state().remaining_thwacks, 10)
 
 
 func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
@@ -117,7 +122,7 @@ func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 	var actual_state: Dictionary = session.state()
 
 	assert_eq(events[0].type, "circuit_fired")
-	assert_eq(actual_state.remaining_thwacks, 19)
+	assert_eq(actual_state.remaining_thwacks, 9)
 	assert_eq(actual_state.slots[1].toughness, 2)
 
 
@@ -127,7 +132,7 @@ func test_restart_replaces_the_day_with_initial_state() -> void:
 
 	session.restart()
 
-	assert_eq(session.state().remaining_thwacks, 20)
+	assert_eq(session.state().remaining_thwacks, 10)
 	assert_eq(session.state().slots[0].toughness, 3)
 
 
@@ -142,7 +147,7 @@ func test_success_opens_one_shop_with_deterministic_stock_and_bank_balance() -> 
 
 	assert_eq(state.phase, "shop")
 	assert_eq(state.day_number, 1)
-	assert_eq(state.next_day_target_score, 20)
+	assert_eq(state.next_day_target_score, 9)
 	assert_eq(state.shop_stock.recruitment.size(), 3)
 	assert_eq(offered_kinds.duplicate().reduce(
 		func(unique: Array, kind: String) -> Array:
@@ -170,6 +175,9 @@ func test_success_opens_one_shop_with_deterministic_stock_and_bank_balance() -> 
 	assert_eq(chicken_merge.current_points, 3)
 	assert_eq(chicken_merge.next_points, 4)
 	assert_almost_eq(float(chicken_merge.next_exact_points), 4.5, 0.00001)
+	assert_eq(chicken_merge.current_toughness, 3)
+	assert_eq(chicken_merge.next_toughness, 5)
+	assert_almost_eq(float(chicken_merge.next_exact_toughness), 4.5, 0.00001)
 	assert_eq(chicken_merge.current_double_yolk_percent, 2)
 	assert_eq(chicken_merge.next_double_yolk_percent, 3)
 	assert_almost_eq(float(chicken_merge.next_double_yolk_chance), 0.03, 0.00001)
@@ -195,13 +203,12 @@ func test_pairing_catalog_lists_owned_groups_and_only_exact_match_partners() -> 
 	assert_eq(source.eligible_partners[0].tier, 0)
 	assert_eq(source.eligible_partners[0].price, 1)
 
-	for merge_index in range(3):
-		assert_eq(session.queue_merge("chicken", 0)[0].type, "producer_merge_queued")
+	assert_eq(session.queue_merge("chicken", 0)[0].type, "producer_merge_queued")
 
 	source = session.state().shop_stock.pairing_sources[0]
-	assert_eq(source.available_count, 1)
-	assert_eq(source.available_pair_count, 0)
-	assert_true(source.eligible_partners.is_empty())
+	assert_eq(source.available_count, 5)
+	assert_eq(source.available_pair_count, 2)
+	assert_eq(source.eligible_partners.size(), 1)
 
 
 func test_merge_fee_equals_output_tier_and_is_charged_once_when_queued() -> void:
@@ -215,8 +222,17 @@ func test_merge_fee_equals_output_tier_and_is_charged_once_when_queued() -> void
 	assert_eq(standard_events[0].cash_total, standard_cash_before - 1)
 	assert_eq(standard_session.state().cash, standard_cash_before - 1)
 
-	var prize_session = _early_success_session(1)
-	_complete_early_successful_day(prize_session)
+	var prize_producers: Array[Dictionary] = []
+	for kind: String in SUCCESSFUL_DAY_EGGS:
+		prize_producers.append({"kind": kind})
+	prize_producers.append_array([
+		{"kind": "chicken", "tier": 1},
+		{"kind": "chicken", "tier": 1},
+	])
+	var prize_session = ChickenDaySession.new(
+		42, ProducerFlock.new(prize_producers), IdentityShuffler.new()
+	)
+	_complete_successful_day(prize_session)
 	var prize_cash_before: int = prize_session.state().cash
 
 	var prize_events: Array[Dictionary] = prize_session.queue_merge("chicken", 1)
@@ -229,8 +245,6 @@ func test_merge_fee_equals_output_tier_and_is_charged_once_when_queued() -> void
 func test_unaffordable_merge_is_rejected_without_cash_or_pair_reservation() -> void:
 	var session = _early_success_session()
 	_complete_early_successful_day(session)
-	assert_eq(session.purchase_factory_upgrade("extra_thwack")[0].type, "factory_upgrade_purchased")
-	assert_eq(session.purchase_producer("chicken")[0].type, "producer_purchased")
 	assert_eq(session.purchase_retirement("chicken")[0].type, "producer_retired")
 	var before: Dictionary = session.state()
 
@@ -249,26 +263,26 @@ func test_success_banks_one_pound_per_remaining_thwack_exactly_once() -> void:
 	assert_eq(final_events.map(func(event: Dictionary) -> String: return event.type).slice(-3), [
 		"day_remainder_discarded", "day_ended", "cash_awarded",
 	])
-	assert_eq(final_events[-2].remaining_thwacks, 10)
+	assert_eq(final_events[-2].remaining_thwacks, 2)
 	assert_eq(final_events[-1], {
 		"type": "cash_awarded",
-		"amount": 10,
-		"cash_total": 10,
-		"remaining_thwacks": 10,
+		"amount": 2,
+		"cash_total": 2,
+		"remaining_thwacks": 2,
 	})
-	assert_eq(session.state().cash, 10)
-	assert_eq(session.state().last_cash_awarded, 10)
+	assert_eq(session.state().cash, 2)
+	assert_eq(session.state().last_cash_awarded, 2)
 
 	assert_eq(session.submit_circuit("red"), [{"type": "thwack_rejected", "reason": "wrong_phase"}])
-	assert_eq(session.state().cash, 10)
+	assert_eq(session.state().cash, 2)
 
 
-func test_shop_allows_multiple_affordable_flock_purchases_then_leave() -> void:
-	var session = _early_success_session()
-	_complete_early_successful_day(session)
+func test_shop_allows_multiple_saved_cash_purchases_then_leave() -> void:
+	var session = _funded_early_shop_session(6)
 	var before: Dictionary = session.state()
+	var recruited_kind := String(before.shop_stock.recruitment[0].kind)
 
-	var recruit_events: Array[Dictionary] = session.purchase_producer("chicken")
+	var recruit_events: Array[Dictionary] = session.purchase_producer(recruited_kind)
 	var merge_events: Array[Dictionary] = session.queue_merge("chicken", 0)
 	var retire_events: Array[Dictionary] = session.purchase_retirement("chicken")
 	var after_purchases: Dictionary = session.state()
@@ -277,7 +291,7 @@ func test_shop_allows_multiple_affordable_flock_purchases_then_leave() -> void:
 	assert_eq(merge_events[0].type, "producer_merge_queued")
 	assert_eq(retire_events[0].type, "producer_retired")
 	assert_eq(after_purchases.phase, "shop")
-	assert_eq(after_purchases.cash, 4)
+	assert_eq(after_purchases.cash, before.cash - 6)
 	assert_eq(after_purchases.producers.size(), before.producers.size())
 	assert_eq(after_purchases.projected_flock_size, before.producers.size() - 1)
 	assert_eq(after_purchases.pending_merges, [{"kind": "chicken", "tier": 0, "pair_count": 1}])
@@ -291,8 +305,8 @@ func test_shop_allows_multiple_affordable_flock_purchases_then_leave() -> void:
 	assert_eq(day_events[0].producer, {"kind": "chicken", "tier": 1})
 	assert_eq(day_events[1].production.size(), day_two.producers.size())
 	assert_eq(day_two.phase, "day")
-	assert_eq(day_two.day_number, 2)
-	assert_eq(day_two.cash, 4)
+	assert_eq(day_two.day_number, before.day_number + 1)
+	assert_eq(day_two.cash, before.cash - 6)
 	assert_eq(day_two.machine_slot_count, 5)
 	assert_true(day_two.slots.all(func(egg: Dictionary) -> bool:
 		return egg.is_empty() or egg.tier != 1 or (
@@ -302,14 +316,12 @@ func test_shop_allows_multiple_affordable_flock_purchases_then_leave() -> void:
 
 
 func test_shop_rejects_unaffordable_invalid_and_duplicate_purchases_without_mutation() -> void:
-	var session = _early_success_session()
-	_complete_early_successful_day(session)
+	var session = _funded_early_shop_session(5)
 
 	var factory_events: Array[Dictionary] = session.purchase_factory_upgrade("extra_thwack")
 	var after_factory: Dictionary = session.state()
 	assert_eq(factory_events[0].type, "factory_upgrade_purchased")
-	assert_eq(after_factory.cash, 5)
-	assert_eq(after_factory.starting_thwacks, 21)
+	assert_eq(after_factory.starting_thwacks, 11)
 
 	var duplicate: Array[Dictionary] = session.purchase_factory_upgrade("extra_thwack")
 	var unavailable_merge: Array[Dictionary] = session.queue_merge("spoonbill", 0)
@@ -325,23 +337,22 @@ func test_queued_outputs_cannot_chain_merge_until_a_later_shop() -> void:
 	var session = _early_success_session()
 	_complete_early_successful_day(session)
 
-	for merge_index in range(3):
-		assert_eq(session.queue_merge("chicken", 0)[0].type, "producer_merge_queued")
+	assert_eq(session.queue_merge("chicken", 0)[0].type, "producer_merge_queued")
 	var blocked: Array[Dictionary] = session.queue_merge("chicken", 1)
 	var state: Dictionary = session.state()
 
 	assert_eq(blocked[0].reason, "not_available")
 	assert_eq(state.producers.size(), 7)
-	assert_eq(state.projected_flock_size, 4)
-	assert_eq(state.pending_merges[0].pair_count, 3)
+	assert_eq(state.projected_flock_size, 6)
+	assert_eq(state.pending_merges[0].pair_count, 1)
 	var chicken_source: Dictionary = state.shop_stock.pairing_sources.filter(
 		func(source: Dictionary) -> bool: return source.kind == "chicken" and source.tier == 0
 	)[0]
-	assert_eq(chicken_source.available_count, 1)
-	assert_true(chicken_source.eligible_partners.is_empty())
+	assert_eq(chicken_source.available_count, 5)
+	assert_eq(chicken_source.eligible_partners.size(), 1)
 
 
-func test_day_three_mandatorily_refits_every_run_to_the_ten_slot_hairpin() -> void:
+func test_every_day_keeps_the_single_five_slot_track() -> void:
 	var session = _successful_day_session()
 	_complete_successful_day(session)
 	var day_two_events: Array[Dictionary] = session.leave_shop()
@@ -353,30 +364,15 @@ func test_day_three_mandatorily_refits_every_run_to_the_ten_slot_hairpin() -> vo
 	var shop: Dictionary = session.state()
 	assert_eq(shop.phase, "shop")
 	assert_eq(shop.day_number, 2)
-	assert_true(shop.machine_refit_due)
-	assert_false(shop.machine_refit_complete)
-	var cash_before_refit: int = shop.cash
+	var cash_before_day_three: int = shop.cash
 
 	var day_events: Array[Dictionary] = session.leave_shop()
 
-	assert_eq(day_events.map(func(event: Dictionary) -> String: return event.type), [
-		"machine_refitted", "day_started",
-	])
-	assert_eq(day_events[0].slot_count, 10)
-	assert_eq(day_events[0].circuits, [
-		{"id": "red", "slot_indices": [0, 2]},
-		{"id": "blue", "slot_indices": [1, 3]},
-		{"id": "green", "slot_indices": [6, 8]},
-		{"id": "purple", "slot_indices": [7, 9]},
-		{"id": "pink", "slot_indices": [4, 5]},
-	])
+	assert_eq(day_events.map(func(event: Dictionary) -> String: return event.type), ["day_started"])
 	assert_eq(day_events[0].day_number, 3)
-	assert_eq(day_events[1].day_number, 3)
-	assert_eq(day_events[1].slot_count, 10)
-	assert_eq(session.state().slots.size(), 10)
-	assert_eq(session.state().cash, cash_before_refit)
-	assert_true(session.state().machine_refit_complete)
-	assert_false(session.state().machine_refit_due)
+	assert_eq(day_events[0].slot_count, 5)
+	assert_eq(session.state().slots.size(), 5)
+	assert_eq(session.state().cash, cash_before_day_three)
 
 
 func test_banked_cash_persists_into_day_two() -> void:
@@ -385,13 +381,26 @@ func test_banked_cash_persists_into_day_two() -> void:
 	session.leave_shop()
 
 	assert_eq(session.state().day_number, 2)
-	assert_eq(session.state().cash, 10)
+	assert_eq(session.state().cash, 2)
 	assert_eq(session.state().last_cash_awarded, 0)
 
 
 func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> void:
-	var session = _early_success_session()
-	_complete_early_successful_day(session)
+	var day_one_only_flock: Array[Dictionary] = [
+		{"kind": "chicken"}, {"kind": "chicken"},
+		{"kind": "cuckoo"}, {"kind": "cuckoo"},
+	]
+	var session = ChickenDaySession.new(
+		42, ProducerFlock.new(day_one_only_flock), IdentityShuffler.new()
+	)
+	for circuit_id in [
+		"red", "red", "red", "red", "blue", "red", "red", "red", "red", "red",
+	]:
+		session.submit_circuit(circuit_id)
+		if session.state().phase != "day":
+			break
+	assert_true(session.state().succeeded)
+	var banked_cash := int(session.state().cash)
 	session.leave_shop()
 	var final_events: Array[Dictionary] = []
 
@@ -404,7 +413,7 @@ func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> voi
 		final_events = session.submit_circuit(circuit_id)
 
 	assert_eq(session.state().phase, "failed")
-	assert_eq(session.state().cash, 10)
+	assert_eq(session.state().cash, banked_cash)
 	assert_eq(session.state().last_cash_awarded, 0)
 	assert_false(final_events.any(func(event: Dictionary) -> bool:
 		return event.type == "cash_awarded"
@@ -414,10 +423,10 @@ func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> voi
 
 	assert_eq(session.state().phase, "day")
 	assert_eq(session.state().day_number, 2)
-	assert_eq(session.state().cash, 10)
+	assert_eq(session.state().cash, banked_cash)
 
 
-func test_restarting_day_two_preserves_its_twenty_point_target() -> void:
+func test_restarting_day_two_preserves_its_nine_point_target() -> void:
 	var session = _successful_day_session()
 	_complete_successful_day(session)
 	session.leave_shop()
@@ -426,9 +435,9 @@ func test_restarting_day_two_preserves_its_twenty_point_target() -> void:
 	session.restart()
 
 	assert_eq(session.state().day_number, 2)
-	assert_eq(session.state().target_score, 20)
+	assert_eq(session.state().target_score, 9)
 	assert_eq(session.state().score, 0)
-	assert_eq(session.state().remaining_thwacks, 20)
+	assert_eq(session.state().remaining_thwacks, 10)
 
 
 func test_unoffered_producer_cannot_be_purchased() -> void:
@@ -497,6 +506,15 @@ func _early_success_session(tier := 0):
 	for egg_index in range(7):
 		producers.append({"kind": "chicken", "tier": tier})
 	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new())
+
+
+func _funded_early_shop_session(minimum_cash: int):
+	var session = _early_success_session()
+	while true:
+		_complete_early_successful_day(session)
+		if int(session.state().cash) >= minimum_cash:
+			return session
+		session.leave_shop()
 
 
 func _complete_successful_day(session) -> Array[Dictionary]:

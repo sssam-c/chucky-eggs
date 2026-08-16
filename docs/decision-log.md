@@ -374,10 +374,60 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D033's cash-free merge rule and direct presentation of a complete pair as one shop action. D033's exact 1.5 quality multiplier, exact internal arithmetic, delayed output resolution, same-visit chaining restriction, hidden Double Yolker result, and deferral of hybrids remain.
 
+## D039 — Recycle fallen eggs through one permanent track
+
+**Status:** accepted
+
+**Decision:** Use the original five-slot conveyor and its Red 1+3, Blue 2+4, and Pink 5 circuits on every day. An unhatched egg that leaves slot 5 enters a visible bin with its remaining damage and other egg facts intact. Whenever slot 1 needs a new egg and the hopper is empty, shuffle the complete bin into a new hopper before loading. Eggs that hatch leave the day's pool. Seed every initial and recycled shuffle, include the bin in exhaustion and end-of-day cleanup, and keep the existing 20-thwack limit and targets for the first prototype.
+
+**Reason:** The single line is more fun and easier to read than the wrapped route. Recycling preserves the positional consequence of falling as lost time and changed order without permanently erasing an egg or prior damage. It also makes the flock behave as a cycling deck while the thwack limit prevents infinite recovery.
+
+**Supersedes:** D011's finite once-shuffled pool, permanent belt-end discard, and no-reshuffle rule; D021–D029 and D034–D037's Day 3 loop or hairpin topology, extra circuits, refit, and associated spoon presentation. The original five-slot mappings, seeded retries, egg effects, damage order, targets, cash payout, and shop progression remain.
+
+## D040 — Let quality multiply maximum toughness
+
+**Status:** accepted
+
+**Decision:** Each quality tier multiplies an egg's exact maximum toughness by the same 1.5 factor already applied to exact score and Double Yolker chance. Round maximum toughness up to the whole amount of damage required to hatch, while later tiers compound from the exact unrounded value. Show the resulting required damage in merge previews and every laid-egg view. Recycled eggs retain their current damage against that scaled maximum.
+
+**Reason:** Recycling makes a smaller flock cycle concentrated eggs more frequently. Scaling both value and shell keeps merging a density trade-off: two eggs with aggregate score and toughness of 2× become one at 1.5×, rather than producing an equally easy high-value egg. Rounding up makes the displayed toughness truthfully equal the damage the player must deal.
+
+**Supersedes:** D033's restriction of the 1.5 quality multiplier to score and Double Yolker chance, plus the active slice's former statement that merging never changes toughness. D033 and D038's pair requirements, exact compounding, score and percentage flooring, fee, reservations, delayed resolution, and same-visit chaining restriction remain.
+
+## D041 — Start with one track's worth of eggs
+
+**Status:** accepted
+
+**Decision:** Start each run with three Standard Chicken producers and two Standard Cuckoo producers. A day begins with 10 thwacks. Day 1 requires 8 points and each later day requires 9 points. The unused-thwack cash rule and all egg values remain unchanged.
+
+**Reason:** A five-egg starting pool matches the five-slot machine, exposes the complete opening composition, and makes the recycler relevant without a long hidden hopper. At 8 points, Day 1 can be won by hatching all three Chickens or by hatching two Chickens and both Cuckoos. The later 9-point target remains mathematically reachable after the obvious first Chicken merge: one 4-point Prize Chicken, one 3-point Standard Chicken, and two 1-point Cuckoos total 9. Reducing the budget alongside the pool prevents the smaller puzzle from producing the oversized cash payouts of a twenty-thwack day.
+
+**Supersedes:** D003's 20-thwack day length, D016's 15-point Day 1 and 20-point later targets, D030's ten-Chicken, three-Cuckoo, two-Plover starting flock, and D039's temporary preservation of those targets and thwack limit. One bird still lays one egg per day, and recruitment remains the route by which Plovers and Spoonbills enter the flock.
+
+## D042 — Recycle only after the conveyor clears
+
+**Status:** accepted
+
+**Decision:** Existing hopper eggs continue loading into slot 1 after non-final thwacks. When the hopper is empty, eggs in the bin remain there until the conveyor is also empty. Only then shuffle the complete bin into a new hopper and load its next egg. Include the waiting bin in exhaustion checks exactly as before.
+
+**Reason:** Recycling as soon as the hopper emptied let missed eggs join a still-moving conveyor one at a time, making the five-egg opening too easy to cycle and weakening the time cost of falling. Requiring a clear conveyor creates distinct waves while preserving the initial stream, paired spoon targets, and Cuckoo adjacency. It also makes five eggs a natural machine-capacity breakpoint: larger flocks delay recycling, while smaller flocks trade score slack and circuit density for a quicker clear.
+
+**Supersedes:** D039's instruction to recycle whenever slot 1 needs an egg and the hopper is empty. D039's visible bin, retained damage, seeded reshuffle, five-slot track, exhaustion rules, and all other behavior remain.
+
+## D043 — Keep every lever active during the day
+
+**Status:** accepted
+
+**Decision:** During an unlocked day, Red, Blue, and Pink remain available even when none of their linked bays contains an egg. Activating a completely empty circuit emits the normal circuit strike, fires every linked spoon, advances the conveyor once, and spends one thwack without dealing damage. Invalid controls, post-day requests, and requests made while presentation is locked remain unavailable or rejected.
+
+**Reason:** Occupancy-based disabling let the machine choose the player's legal actions and hid a useful positional cost. An always-active lever bank makes it possible to spend time deliberately to change future alignment, while the ten-thwack limit and normal conveyor movement keep an empty pull costly: it consumes 10% of the day and can push eggs closer to the bin without scoring.
+
+**Supersedes:** D009's requirement that a circuit contain at least one egg before it is available. D009's fixed circuit mappings, simultaneous direct-damage batch, empty-bowl waste, and resolution order remain.
+
 <!--
 Copy for the next entry:
 
-## D039 — Short decision title
+## D044 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

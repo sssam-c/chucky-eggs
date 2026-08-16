@@ -87,3 +87,27 @@ Append observed evidence. Keep observation, interpretation, and proposed respons
 **Interpretation:** The bend does not need to carry circuit balance. Excluding it restores a repeated five-column grammar and preserves Pink's relative reach at two targets against Red and Blue's four.
 
 **Proposed response:** Implement the universal Day 3 refit as a ten-bay hairpin with five enlarged single spoons, bare-belt eggs, a target-free bend, and literal screen-right Plover hops.
+
+## 2026-08-15 — Single-track legibility reconsidered
+
+**Question:** Is the wrapped Day 3 route adding more fun and readable planning than the original five-slot line?
+
+**Context:** Informal developer assessment after iterating and playing the single-line and wrapped-conveyor versions.
+
+**Observed:** The game was described as more fun and more legible when it used a single track.
+
+**Interpretation:** The hairpin's additional route and control grammar may be spending comprehension on topology rather than strengthening egg-position decisions. Letting fallen eggs return could preserve time pressure and flock texture without doubling the visible machine.
+
+**Proposed response:** Prototype one five-slot track on every day. Move unhatched fallen eggs into a visible bin with damage intact, and reshuffle the bin into the hopper whenever the hopper is empty. Test unchanged targets and thwack limits before tuning.
+
+## 2026-08-16 — Immediate recycling makes Day 1 too easy
+
+**Question:** Does the five-egg, ten-thwack opening make bin recovery costly enough?
+
+**Context:** Informal playtest after changing the starting flock to three Chickens and two Cuckoos, reducing the day to ten thwacks, and setting the opening target to 8.
+
+**Observed:** The smaller starting flock felt better, but Day 1 was still described as too easy to clear. Immediate bin-to-hopper recycling made it easy to cycle fallen eggs back into a conveyor that was still occupied, effectively returning them one at a time.
+
+**Interpretation:** Hopper exhaustion alone does not create a strong enough tempo boundary. The live conveyor lets a recycled egg rejoin the same wave before the previous one has resolved.
+
+**Proposed response:** Keep ordinary hopper feeding unchanged, but require both hopper and conveyor to be empty before reshuffling the bin into a new hopper. Test whether this creates a meaningful five-egg capacity breakpoint without making recovery irrelevant inside ten thwacks.

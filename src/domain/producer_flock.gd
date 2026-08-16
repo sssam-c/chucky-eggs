@@ -8,18 +8,8 @@ const STARTING_PRODUCERS: Array[Dictionary] = [
 	{"kind": "chicken"},
 	{"kind": "chicken"},
 	{"kind": "chicken"},
-	{"kind": "chicken"},
-	{"kind": "chicken"},
-	{"kind": "chicken"},
-	{"kind": "chicken"},
-	{"kind": "chicken"},
-	{"kind": "chicken"},
-	{"kind": "chicken"},
 	{"kind": "cuckoo"},
 	{"kind": "cuckoo"},
-	{"kind": "cuckoo"},
-	{"kind": "plover"},
-	{"kind": "plover"},
 ]
 const BASE_DOUBLE_YOLK_CHANCES := {
 	"chicken": STARTING_DOUBLE_YOLK_CHANCE,

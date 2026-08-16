@@ -7,13 +7,25 @@ const AUTHORED_PATTERN: Array[String] = [
 ]
 
 
+class ReverseShuffler:
+	extends RefCounted
+
+	var shuffled_bins: Array[Array] = []
+
+	func shuffle_dictionaries(values: Array[Dictionary]) -> Array[Dictionary]:
+		shuffled_bins.append(values.duplicate(true))
+		var shuffled := values.duplicate(true)
+		shuffled.reverse()
+		return shuffled
+
+
 func test_plover_is_a_four_point_high_commitment_egg() -> void:
 	assert_eq(ChickenDay.PLOVER_TOUGHNESS, 6)
 	assert_eq(ChickenDay.PLOVER_POINTS, 4)
 	assert_eq(ChickenDay.egg_definition("plover").effect, "screen_left")
 
 
-func test_finite_daily_pool_exposes_only_the_next_three_eggs() -> void:
+func test_daily_pool_exposes_only_the_next_three_hopper_eggs() -> void:
 	var state: Dictionary = ChickenDay.new([
 		"chicken", "cuckoo", "plover", "chicken", "cuckoo",
 	]).snapshot()
@@ -25,7 +37,7 @@ func test_finite_daily_pool_exposes_only_the_next_three_eggs() -> void:
 	assert_eq(state.hopper_egg_count, 4)
 
 
-func test_day_ends_when_the_finite_pool_and_conveyor_are_empty() -> void:
+func test_day_ends_when_every_egg_has_hatched() -> void:
 	var day = ChickenDay.new(["chicken"])
 	var final_events: Array[Dictionary] = []
 
@@ -34,13 +46,13 @@ func test_day_ends_when_the_finite_pool_and_conveyor_are_empty() -> void:
 
 	var state: Dictionary = day.snapshot()
 	assert_true(state.ended)
-	assert_eq(state.remaining_thwacks, 17)
+	assert_eq(state.remaining_thwacks, 7)
 	assert_true(state.pipe.is_empty())
 	assert_true(state.slots.all(func(egg: Dictionary) -> bool: return egg.is_empty()))
 	assert_eq(_event_types(final_events).slice(-3), [
 		"thwack_spent", "day_remainder_discarded", "day_ended",
 	])
-	assert_eq(final_events[-1].remaining_thwacks, 17)
+	assert_eq(final_events[-1].remaining_thwacks, 7)
 
 
 func test_day_exposes_the_three_fixed_spoon_circuits() -> void:
@@ -60,99 +72,65 @@ func test_day_exposes_the_three_fixed_spoon_circuits() -> void:
 	assert_eq(state.pipe[2].points, 4)
 
 
-func test_hairpin_mirrors_the_starting_circuits_around_a_pink_bend_extender() -> void:
-	var eggs: Array[String] = ["chicken", "chicken", "chicken"]
-	var day = ChickenDay.new(eggs, 15, 10)
+func test_fallen_egg_keeps_damage_and_recycles_when_the_hopper_is_empty() -> void:
+	var shuffler := ReverseShuffler.new()
+	var day = ChickenDay.new([{
+		"kind": "spoonbill",
+		"tier": 1,
+		"quality_multiplier": 1.5,
+	}], 99, 20, shuffler)
+	var final_events: Array[Dictionary] = []
 
-	assert_eq(day.snapshot().slots.size(), 10)
-	assert_eq(day.snapshot().circuits, [
-		{"id": "red", "slot_indices": [0, 2]},
-		{"id": "blue", "slot_indices": [1, 3]},
-		{"id": "green", "slot_indices": [6, 8]},
-		{"id": "purple", "slot_indices": [7, 9]},
-		{"id": "pink", "slot_indices": [4, 5]},
+	for circuit_id in ["red", "blue", "red", "blue", "pink"]:
+		final_events = day.resolve_circuit(circuit_id)
+
+	assert_eq(_event_types(final_events), [
+		"circuit_fired",
+		"egg_damaged",
+		"conveyor_advanced",
+		"egg_binned",
+		"thwack_spent",
+		"bin_reshuffled",
+		"egg_entered",
 	])
-	var events: Array[Dictionary] = day.resolve_circuit("red")
-	assert_eq(events[0].slot_indices, [0, 2])
-	assert_eq(events[0].occupied_slot_indices, [0])
-	assert_false(events[0].sequential_strikes)
-	assert_true(events.all(func(event: Dictionary) -> bool:
-		return event.type != "spoon_struck"
-	))
+	assert_eq(shuffler.shuffled_bins.size(), 1)
+	assert_eq(shuffler.shuffled_bins[0][0].kind, "spoonbill")
+	assert_eq(shuffler.shuffled_bins[0][0].toughness, 2)
+	var state: Dictionary = day.snapshot()
+	assert_eq(state.bin_egg_count, 0)
+	assert_eq(state.hopper_egg_count, 0)
+	assert_eq(state.slots[0].kind, "spoonbill")
+	assert_eq(state.slots[0].toughness, 2)
+	assert_eq(state.slots[0].max_toughness, 8)
+	assert_false(state.ended)
 
 
-func test_hairpin_resolves_near_bay_completely_before_striking_far_bay() -> void:
-	# After these setup turns the Spoonbill is ready to hatch in near slot 6 and
-	# a surviving Spoonbill occupies far slot 5. Pink must finish the near hatch
-	# before its extender returns to strike the far egg.
-	var day = ChickenDay.new([
-		"spoonbill", "spoonbill", "chicken", "chicken", "chicken", "chicken",
-	], 1, ChickenDay.HAIRPIN_SLOT_COUNT)
-	for circuit_id in ["red", "blue", "blue", "blue", "red"]:
-		day.resolve_circuit(circuit_id)
-	assert_eq(day.snapshot().slots[5].kind, "spoonbill")
-	assert_eq(day.snapshot().slots[5].toughness, 2)
+func test_bin_waits_for_the_conveyor_to_clear_before_reshuffling() -> void:
+	var shuffler := ReverseShuffler.new()
+	var day = ChickenDay.new(["spoonbill", "spoonbill"], 99, 10, shuffler)
+	var first_binned_events: Array[Dictionary] = []
+
+	for circuit_id in ["red", "red", "red", "red", "pink"]:
+		first_binned_events = day.resolve_circuit(circuit_id)
+
+	assert_true(_event_types(first_binned_events).has("egg_binned"))
+	assert_false(_event_types(first_binned_events).has("bin_reshuffled"))
+	assert_false(_event_types(first_binned_events).has("egg_entered"))
+	assert_eq(shuffler.shuffled_bins.size(), 0)
+	assert_eq(day.snapshot().bin_egg_count, 1)
+	assert_eq(day.snapshot().hopper_egg_count, 0)
 	assert_eq(day.snapshot().slots[4].kind, "spoonbill")
 
-	var events: Array[Dictionary] = day.resolve_circuit("pink")
-	var strike_events := events.filter(
-		func(event: Dictionary) -> bool: return event.type == "spoon_struck"
-	)
-	var damage_events := events.filter(
-		func(event: Dictionary) -> bool: return event.type == "egg_damaged"
-	)
+	var clear_events: Array[Dictionary] = day.resolve_circuit("pink")
 
-	assert_eq(strike_events.map(func(event: Dictionary) -> String: return event.phase), [
-		"near", "far",
+	assert_eq(_event_types(clear_events).slice(-4), [
+		"egg_binned", "thwack_spent", "bin_reshuffled", "egg_entered",
 	])
-	assert_eq(strike_events.map(func(event: Dictionary) -> int: return event.slot_index), [5, 4])
-	assert_true(strike_events[0].occupied)
-	assert_true(strike_events[1].occupied)
-	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.slot_index), [5, 4])
-	assert_eq(damage_events.map(func(event: Dictionary) -> String: return event.cause), [
-		"spoon", "spoon",
-	])
-	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.damage_amount), [2, 2])
-	var near_strike_index := events.find(strike_events[0])
-	var hatch_index := events.find(events.filter(
-		func(event: Dictionary) -> bool: return event.type == "egg_hatched"
-	)[0])
-	var far_strike_index := events.find(strike_events[1])
-	assert_lt(near_strike_index, hatch_index)
-	assert_lt(hatch_index, far_strike_index)
-	assert_eq(events.filter(
-		func(event: Dictionary) -> bool: return event.type == "conveyor_advanced"
-	).size(), 1)
-	assert_eq(events.filter(
-		func(event: Dictionary) -> bool: return event.type == "thwack_spent"
-	).size(), 1)
-	assert_true(day.snapshot().ended)
-	assert_true(day.snapshot().succeeded)
-
-
-func test_hairpin_near_plover_retreats_before_the_far_strike() -> void:
-	var day = ChickenDay.new([
-		"plover", "chicken", "chicken", "chicken", "chicken", "chicken",
-	], 99, ChickenDay.HAIRPIN_SLOT_COUNT)
-	for circuit_id in ["red", "red", "blue", "red", "blue"]:
-		day.resolve_circuit(circuit_id)
-
-	var events: Array[Dictionary] = day.resolve_circuit("pink")
-	var near_strike_index := -1
-	var retreat_index := -1
-	var far_strike_index := -1
-	for event_index in range(events.size()):
-		var event: Dictionary = events[event_index]
-		if event.type == "spoon_struck" and event.phase == "near":
-			near_strike_index = event_index
-		elif event.type == "eggs_swapped":
-			retreat_index = event_index
-		elif event.type == "spoon_struck" and event.phase == "far":
-			far_strike_index = event_index
-
-	assert_gte(near_strike_index, 0)
-	assert_gt(retreat_index, near_strike_index)
-	assert_gt(far_strike_index, retreat_index)
+	assert_eq(shuffler.shuffled_bins.size(), 1)
+	assert_eq(shuffler.shuffled_bins[0].size(), 2)
+	assert_eq(day.snapshot().bin_egg_count, 0)
+	assert_eq(day.snapshot().hopper_egg_count, 1)
+	assert_eq(day.snapshot().slots[0].kind, "spoonbill")
 
 
 func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
@@ -173,20 +151,29 @@ func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
 	assert_eq(events[0].occupied_slot_indices, [0])
 	assert_eq(events[1].slot_index, 0)
 	assert_eq(events[1].damage_amount, 1)
-	assert_eq(state.remaining_thwacks, 19)
+	assert_eq(state.remaining_thwacks, 9)
 	assert_eq(state.slots[1].kind, "chicken")
 	assert_eq(state.slots[1].toughness, 2)
 
 
-func test_circuit_is_rejected_only_when_all_of_its_slots_are_empty() -> void:
+func test_empty_circuit_spends_a_thwack_and_advances_without_damage() -> void:
 	var day = _new_authored_day()
-	var before: Dictionary = day.snapshot()
 
 	var events: Array[Dictionary] = day.resolve_circuit("blue")
+	var state: Dictionary = day.snapshot()
 
-	assert_eq(_event_types(events), ["thwack_rejected"])
-	assert_eq(events[0].reason, "empty_circuit")
-	assert_eq(day.snapshot(), before)
+	assert_eq(_event_types(events), [
+		"circuit_fired",
+		"conveyor_advanced",
+		"thwack_spent",
+		"egg_entered",
+	])
+	assert_eq(events[0].circuit_id, "blue")
+	assert_eq(events[0].slot_indices, [1, 3])
+	assert_eq(events[0].occupied_slot_indices, [])
+	assert_eq(state.remaining_thwacks, 9)
+	assert_eq(state.slots[1].kind, "chicken")
+	assert_eq(state.slots[1].toughness, 3)
 
 
 func test_unknown_circuit_is_rejected_without_spending_time() -> void:
@@ -297,9 +284,13 @@ func test_quality_uses_exact_multiplier_but_rounds_gameplay_score_down() -> void
 		"double_yolk_chance": 0.03,
 		"is_double_yolker": true,
 	}])
+	var initial_egg: Dictionary = day.snapshot().slots[0]
+	assert_eq(initial_egg.toughness, 5)
+	assert_eq(initial_egg.max_toughness, 5)
+	assert_almost_eq(float(initial_egg.exact_max_toughness), 4.5, 0.00001)
 
 	var events: Array[Dictionary] = []
-	for circuit_id in ["red", "blue", "red"]:
+	for circuit_id in ["red", "blue", "red", "blue", "pink"]:
 		events = day.resolve_circuit(circuit_id)
 	var hatch: Dictionary = events.filter(func(event: Dictionary) -> bool:
 		return event.type == "egg_hatched"
@@ -379,33 +370,26 @@ func test_surviving_directly_struck_plover_retreats_one_bay_to_screen_left() -> 
 	assert_eq(state.slots[1].toughness, 4)
 
 
-func test_hairpin_topology_defines_literal_screen_left_on_both_rows() -> void:
-	var destinations: Array[int] = []
-	for slot_index in range(10):
-		destinations.append(ChickenDay.screen_left_destination(slot_index, 10))
-
-	assert_eq(destinations, [-1, 0, 1, 2, 3, 6, 7, 8, 9, -1])
-
-
-func test_unhatched_egg_is_discarded_after_slot_five() -> void:
+func test_unhatched_egg_is_binned_after_slot_five() -> void:
 	var day = _new_authored_day()
 	var final_events: Array[Dictionary] = []
 
 	for turn in range(5):
 		final_events = day.resolve_circuit("red")
 
-	var discarded := final_events.filter(
-		func(event: Dictionary) -> bool: return event.type == "egg_discarded"
+	var binned := final_events.filter(
+		func(event: Dictionary) -> bool: return event.type == "egg_binned"
 	)
-	assert_eq(discarded.size(), 1)
-	assert_eq(discarded[0].reason, "belt_end")
-	assert_eq(discarded[0].remaining_toughness, 1)
+	assert_eq(binned.size(), 1)
+	assert_eq(binned[0].remaining_toughness, 1)
+	assert_eq(binned[0].bin_egg_count, 1)
+	assert_eq(day.snapshot().bin_egg_count, 1)
 
 
-func test_twentieth_valid_circuit_ends_day_and_rejects_further_requests() -> void:
+func test_tenth_valid_circuit_ends_day_and_rejects_further_requests() -> void:
 	var day = _new_authored_day()
 
-	for turn in range(20):
+	for turn in range(10):
 		var events: Array[Dictionary] = day.resolve_circuit("red")
 		assert_ne(events[0].type, "thwack_rejected")
 
@@ -418,7 +402,7 @@ func test_twentieth_valid_circuit_ends_day_and_rejects_further_requests() -> voi
 	assert_eq(rejected[0].reason, "day_ended")
 
 
-func test_day_succeeds_at_fifteen_or_more_points() -> void:
+func test_day_succeeds_at_eight_or_more_points() -> void:
 	var chicken_pool: Array[String] = []
 	chicken_pool.resize(24)
 	chicken_pool.fill("chicken")
@@ -431,12 +415,14 @@ func test_day_succeeds_at_fifteen_or_more_points() -> void:
 	for circuit_id in circuit_plan:
 		final_events = day.resolve_circuit(circuit_id)
 		assert_ne(final_events[0].type, "thwack_rejected")
+		if day.snapshot().ended:
+			break
 
 	assert_true(day.snapshot().ended)
 	assert_true(day.snapshot().succeeded)
-	assert_eq(day.snapshot().target_score, 15)
-	assert_gte(day.snapshot().score, 15)
-	assert_eq(day.snapshot().remaining_thwacks, 9)
+	assert_eq(day.snapshot().target_score, 8)
+	assert_gte(day.snapshot().score, 8)
+	assert_eq(day.snapshot().remaining_thwacks, 2)
 	assert_eq(_event_types(final_events).slice(-3), [
 		"thwack_spent", "day_remainder_discarded", "day_ended",
 	])
@@ -451,7 +437,7 @@ func test_day_fails_below_its_target() -> void:
 	var day = ChickenDay.new(spoonbill_pool, 20)
 	var final_events: Array[Dictionary] = []
 
-	for turn in range(20):
+	for turn in range(10):
 		final_events = day.resolve_circuit("red")
 
 	assert_true(day.snapshot().ended)

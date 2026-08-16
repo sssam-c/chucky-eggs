@@ -4,42 +4,41 @@ This file is the canonical player-facing rule truth. Keep it current and concise
 
 ## Game promise
 
-Choose which eggs deserve the spoon while every thwack carries the whole conveyor closer to the edge. Crack enough eggs to meet the day's target, knowing that saving every egg is impossible.
+Choose which eggs deserve the spoon while every thwack carries the conveyor closer to the bell. Eggs that escape into the bin will return in a new order with their cracks intact, but recovering them costs precious time.
 
 ## Objective and end states
 
-- A day lasts at most 20 thwacks and ends immediately after a resolved thwack meets the score target. It can also end earlier when no eggs remain in either the hopper or conveyor.
-- Hatch eggs to meet the current day's target: 15 points on Day 1 and 20 points on each later day.
+- A day lasts at most 10 thwacks and ends immediately after a resolved thwack meets the score target. It can also end earlier when every daily egg has hatched and no eggs remain in the hopper, conveyor, or bin.
+- Hatch eggs to meet the current day's target: 8 points on Day 1 and 9 points on each later day.
 - A day succeeds at or above its target and fails below it.
 - When a successful day ends, gain £1 for each unused thwack remaining after the target-reaching thwack is spent. Add it to the run's persistent cash balance.
 - A failed day awards no cash.
-- Whenever a day ends, all eggs left on the conveyor or in the hopper are discarded without scoring.
+- Whenever a day ends, all unhatched eggs left in the hopper, conveyor, or bin are discarded without scoring.
 
 ## Player loop
 
-Inspect the current conveyor route, the next three eggs in the pipe, the score, and the visible thwack countdown. Choose an available spoon control, balancing the eggs it can damage against how close every egg is to the end.
+Inspect the five-slot conveyor, the next three eggs in the pipe, the bin count, the score, and the visible thwack countdown. Choose any spoon control, balancing the eggs it can damage against their current positions and the time required to cycle missed eggs back through the hopper. An empty circuit can be used to advance the belt, but still costs one of the day's thwacks.
 
-After a successful day, bank the unused-thwack payout and enter one unified shop before the next flock loads. The player may recruit or retire birds, merge matching birds, purchase factory upgrades, or leave and save the cash. A failed day awards no cash or shop visit and is retried with the same flock and shuffle.
+After a successful day, bank the unused-thwack payout and enter one unified shop before the next flock loads. The player may recruit or retire birds, merge matching birds, purchase factory upgrades, or leave and save the cash. A failed day awards no cash or shop visit and is retried with the same flock and deterministic shuffle sequence.
 
 ## Setup and state
 
-- Days 1 and 2 use five ordered conveyor slots. Slot 1 receives eggs and slot 5 begins beside the drop.
-- Before Day 3, every run receives an automatic, free factory refit. It is a progression milestone rather than a shop purchase and remains installed for later days.
-- The refitted conveyor has ten ordered slots in a tight screen-width hairpin. Slots 1–5 travel left-to-right across the upper run, the untargetable bend carries eggs downward, and slots 6–10 return right-to-left underneath. The drop is beside slot 10.
-- The hairpin preserves the starting line's five single rear-wall spoons. Each spoon has one bowl and a segmented handle whose extension depends on the selected target. In columns 1–4, Red or Blue fires the spoon once at its upper-run position without extension, while Green or Purple fires that same physical spoon once at its lower-return position with extension. Pink uses the fifth spoon at both available lengths in its explicit lower-then-upper sequence. The belt section beneath each target carries its circuit colour; the shared spoons remain neutral. Eggs sit directly on the two touching conveyor runs; the bend contains no additional egg bay.
-- The starting flock has ten Chicken producers, three Cuckoo producers, and two Plover producers.
-- Every producer lays exactly one egg per day, so the starting flock produces a daily pool of 15 eggs.
-- Shuffle the complete daily pool once, load its first egg into slot 1, and place the rest in the finite hopper. Do not reshuffle during the day.
+- Every day uses five ordered conveyor slots. Slot 1 receives eggs and slot 5 sits beside the collection bin.
+- The starting flock has three Chicken producers and two Cuckoo producers.
+- Every producer lays exactly one egg per day, so the starting flock produces a daily pool of five eggs.
+- Shuffle the complete daily pool and load its first egg into slot 1. Place the rest in the hopper.
+- An unhatched egg that moves past slot 5 falls into the bin and retains its remaining toughness and every other egg fact.
+- When both the hopper and conveyor are empty, shuffle every egg currently in the bin into a new hopper before loading. A non-empty conveyor prevents the bin from recycling, even when the hopper is empty.
 - A Chicken egg has 3 toughness and is worth 3 points when hatched.
 - A Cuckoo egg has 4 toughness and is worth 1 point when hatched.
 - A Plover egg has 6 toughness and is worth 4 points when hatched.
 - A Spoonbill egg has 5 toughness, is worth 4 points when hatched, and takes 2 damage from a direct Pink strike instead of 1.
-- Every bird begins at Standard quality. Two birds of the same species and quality can be merged into one bird of the next quality tier. Queueing the merge costs £1 for a Prize output, £2 for Champion, and thereafter an amount equal to the numbered output tier. Each tier multiplies that bird's exact egg score and Double Yolker chance by 1.5.
-- Egg scores and Double Yolker percentages are always shown and awarded as whole numbers rounded down. The exact unfloored values are retained between quality tiers and used for Double Yolker rolls, so repeated merges compound from the real value rather than the displayed value.
+- Every bird begins at Standard quality. Two birds of the same species and quality can be merged into one bird of the next quality tier. Queueing the merge costs £1 for a Prize output, £2 for Champion, and thereafter an amount equal to the numbered output tier.
+- Each quality tier multiplies that bird's exact egg score, exact maximum toughness, and exact Double Yolker chance by 1.5. Displayed and awarded scores and percentages round down; maximum toughness rounds up to the whole amount of damage required to hatch. Exact values are retained between tiers.
 - Standard Chicken eggs have a 2% Double Yolker chance. Standard Cuckoo, Plover, and Spoonbill eggs currently have no Double Yolker chance, so quality multiplication alone does not create one.
-- The pipe shows up to the next three hopper eggs. After each non-final thwack, the next hopper egg drops into slot 1 if one remains.
-- Egg toughness, current score, cash balance, remaining thwacks, and the number of eggs left in the hopper are always visible.
-- All optional between-day progression lives in the same shop. Recruitment, retirement, merging, and factory upgrades cost cash; merging also consumes two matching birds. The universal free Day 3 hairpin refit remains a progression milestone rather than shop stock.
+- The pipe shows up to the next three hopper eggs. After each non-final thwack, slot 1 receives the next existing hopper egg when one is available. The bin only becomes a new hopper after the existing hopper and conveyor have both cleared.
+- Egg toughness, current score, cash balance, remaining thwacks, hopper count, and bin count are always visible.
+- All optional between-day progression lives in the same shop. Recruitment, retirement, merging, and factory upgrades cost cash; merging also consumes two matching birds.
 - The merge picker lists every owned species-and-quality group. Groups without an eligible partner remain visible but unavailable. Choosing a group reveals its eligible partners; currently, only another bird of the same species and quality is eligible.
 - A merge fee is paid and both inputs are reserved when the pair is queued. Insufficient cash leaves the balance and birds unchanged. Queued merges resolve when the player leaves, before the next flock loads, and their outputs cannot become inputs again during the same shop visit.
 - When recruitment is in stock, each producer offer identifies the animal with a portrait, previews the one egg it lays each day, and states that egg's toughness, points, and effect before selection.
@@ -48,44 +47,44 @@ After a successful day, bank the unused-thwack payout and enter one unified shop
 
 ## Actions and resolution
 
-Each turn, the player must activate one available spoon control:
+Each turn, the player must activate one spoon control:
 
-- On the starting line, Red fires the spoons over slots 1 and 3, Blue fires over slots 2 and 4, and Pink fires over slot 5.
-- On the ten-bay hairpin, Red fires slots 1 and 3, Blue fires 2 and 4, Green fires 7 and 9, Purple fires 8 and 10, and Pink fires slots 5 then 6.
+- Red fires the spoons over slots 1 and 3.
+- Blue fires the spoons over slots 2 and 4.
+- Pink fires the spoon over slot 5.
 - Each fired bowl normally deals 1 damage to the egg beneath it. Pink deals 2 direct damage to a Spoonbill. A bowl over an empty slot still fires but its damage is wasted.
-- A control is available when at least one of its linked bays contains an egg.
+- All three controls remain available during an unlocked day, even when every linked bay is empty. An empty circuit still fires, advances the conveyor, and spends one thwack.
 
 Resolve the thwack in this order:
 
-1. On the starting line, or for Red, Blue, Green, and Purple on the hairpin, fire every spoon in the chosen circuit and apply their direct damage as one simultaneous batch. Apply each resulting Cuckoo echo, hatch every egg that reached 0 toughness in conveyor order, then retreat each surviving directly struck Plover.
-2. For Pink on the hairpin, extend its single spoon to lower slot 6. Apply that direct damage and its Cuckoo echoes, resolve all resulting hatches, then retreat a surviving directly struck Plover. Return and retract the same bowl before striking upper slot 5 and resolving it against the resulting live state. Both taps occur even when empty, and reaching the target on the first hit never skips the second.
+1. Fire every spoon in the chosen circuit and apply their direct damage as one simultaneous batch.
+2. Apply each resulting Cuckoo echo, hatch every egg that reached 0 toughness in conveyor order, then retreat each surviving directly struck Plover.
 3. Cuckoo echo damage does not create further echoes. A Cuckoo beside a Pink-struck Spoonbill takes 2 echo damage.
 4. Advance every surviving conveyor egg one slot.
-5. Discard any egg that moves past the machine's final slot without scoring.
-6. Spend one of the day's 20 thwacks.
+5. Move any unhatched egg that passes slot 5 into the bin without restoring its toughness.
+6. Spend one of the day's thwacks.
 7. If the score now meets or exceeds the target, end the day immediately, discard every remaining egg without scoring, and bank £1 for each unused thwack.
-8. Otherwise, if thwacks remain, drop the next hopper egg into slot 1 if one remains and refill the visible pipe preview.
-9. End the day as a failure if no eggs remain in either the hopper or conveyor. Otherwise, continue until the twentieth thwack.
+8. Otherwise, if thwacks remain, drop the next existing hopper egg into slot 1. If the hopper is empty, wait until the conveyor is also empty before shuffling the bin into a new hopper, loading its next egg, and refilling the visible pipe preview.
+9. End the day as a failure if no eggs remain in the hopper, conveyor, or bin. Otherwise, continue until the final thwack.
 
-Hatching an egg never prevents the conveyor from advancing. Partially damaged eggs retain their remaining toughness until they hatch or are discarded.
+Hatching an egg never prevents the conveyor from advancing. Partially damaged eggs retain their remaining toughness until they hatch or the day ends, including while travelling through the bin and hopper.
 
 ## Exceptions and glossary
 
 - **Thwack:** The player's single action for a turn and the unit of day time.
 - **Spoon circuit:** A fixed group of one or more colour-matched spoons that always fire together.
-- **Telescoping spoon:** The Pink Day 3 mechanism with one bowl and an extending handle. Pulling its lever hits lower slot 6, fully resolves it, returns and retracts, then hits upper slot 5.
-- **Toughness:** The number of further thwacks an egg needs before it hatches.
-- **Adjacent:** Immediately ahead of or behind an egg in conveyor order. Visual proximity does not create adjacency.
+- **Toughness:** The amount of further damage an egg needs before it hatches.
+- **Adjacent:** Immediately ahead of or behind an egg in conveyor order.
 - **Behind:** One slot closer to the pipe in conveyor order.
 - **Echo damage:** Damage copied by a Cuckoo when an adjacent egg receives damage. Each damaged adjacent egg creates one echo on that Cuckoo; echo damage never echoes again.
 - **Spark weakness:** The four-point spark on a Spoonbill matches Pink's circuit symbol. A direct Pink strike deals 2 damage to it; Red, Blue, and echo damage still deal their normal amounts.
-- **Plover retreat:** A surviving Plover directly struck by a circuit swaps with the egg or empty bay immediately to its screen-left when one exists. This is intentionally a screen-space rule, not an ahead/behind rule: it moves toward lower slot numbers across the five-bay line and hairpin's upper run, but toward higher slot numbers across the lower return. Slots 1 and 10 at the left edges have no leftward destination. Cuckoo echoes use the positions from before any retreat, and the normal conveyor advance still follows.
-- **Discarded:** Removed without hatching or awarding points.
+- **Plover retreat:** A surviving Plover directly struck by a circuit swaps with the egg or empty bay immediately to its screen-left when one exists. Slot 1 has no leftward destination. Cuckoo echoes use the positions from before any retreat, and the normal conveyor advance still follows.
+- **Bin:** The visible collection of unhatched eggs that have fallen from slot 5. Its eggs retain damage and are shuffled back into the hopper only when both the current hopper and conveyor are empty.
+- **Discarded:** Removed without hatching or awarding points when the day ends.
 - **Producer:** A persistent flock member with a species and quality tier that lays exactly one fresh egg into the daily pool.
-- **Hopper:** The finite shuffled sequence of eggs that have not yet entered the conveyor.
+- **Hopper:** The current shuffled sequence of eggs waiting to enter slot 1.
 - **Producer offer:** An optional opportunity to add one Chicken, Cuckoo, Plover, or Spoonbill producer to the flock. Choosing one adds exactly one bird and one egg to each subsequent daily pool.
-- **Quality:** A bird's merge tier. Standard birds can become Prize, then Champion, followed by numbered higher tiers. Each step compounds exact egg score and Double Yolker chance by 1.5.
+- **Quality:** A bird's merge tier. Standard birds can become Prize, then Champion, followed by numbered higher tiers. Each step compounds exact score, maximum toughness, and Double Yolker chance by 1.5.
 - **Merge:** A shop action that consumes two birds of the same species and quality plus a fee equal to the output tier: £1 for Prize, £2 for Champion, then £3 for Tier 3 and so on. The pair is reserved and the fee is paid when queued; the output resolves on leaving and cannot be merged again in the same visit.
 - **Shop:** The single post-success home for optional flock and factory progression. Cash prices and merge inputs are shown before commitment; leaving preserves unspent cash.
 - **Cash:** Persistent whole-pound currency held for the current run, earned from unused thwacks, and spent on optional shop progression.
-- **Hairpin refit:** The universal, free ten-bay machine installed before Day 3. It is not a purchasable upgrade.

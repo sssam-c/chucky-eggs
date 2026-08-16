@@ -1,11 +1,10 @@
 class_name ChickenDay
 extends RefCounted
 
-const BASE_SLOT_COUNT := 5
-const HAIRPIN_SLOT_COUNT := 10
+const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
-const STARTING_THWACKS := 20
-const DEFAULT_TARGET_SCORE := 15
+const STARTING_THWACKS := 10
+const DEFAULT_TARGET_SCORE := 8
 const CHICKEN_TOUGHNESS := 3
 const CHICKEN_POINTS := 3
 const CUCKOO_TOUGHNESS := 4
@@ -16,6 +15,8 @@ const SPOONBILL_TOUGHNESS := 5
 const SPOONBILL_POINTS := 4
 var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
+var _bin: Array[Dictionary] = []
+var _recycle_shuffler
 var _remaining_thwacks := STARTING_THWACKS
 var _score := 0
 var _ended := false
@@ -28,17 +29,17 @@ var _circuits: Array[Dictionary] = []
 func _init(
 	daily_eggs: Array,
 	target_score := DEFAULT_TARGET_SCORE,
-	slot_count := BASE_SLOT_COUNT,
-	starting_thwacks := STARTING_THWACKS
+	starting_thwacks := STARTING_THWACKS,
+	recycle_shuffler = null
 ) -> void:
 	assert(not daily_eggs.is_empty(), "A day needs at least one laid egg.")
 	assert(target_score > 0, "A day needs a positive target score.")
-	assert(slot_count in [BASE_SLOT_COUNT, HAIRPIN_SLOT_COUNT], "Unsupported conveyor size.")
 	assert(starting_thwacks > 0, "A day needs at least one thwack.")
 	_remaining_thwacks = starting_thwacks
 	_target_score = target_score
-	_circuits = circuits_for_slot_count(slot_count)
-	for slot_index in range(slot_count):
+	_recycle_shuffler = recycle_shuffler
+	_circuits = circuits_for_slot_count(SLOT_COUNT)
+	for slot_index in range(SLOT_COUNT):
 		_slots.append({})
 	for laid_egg: Variant in daily_eggs:
 		_hopper.append(_new_egg(laid_egg))
@@ -51,6 +52,7 @@ func snapshot() -> Dictionary:
 		"slots": _slots.duplicate(true),
 		"pipe": _hopper.slice(0, PIPE_PREVIEW_COUNT).duplicate(true),
 		"hopper_egg_count": _hopper.size(),
+		"bin_egg_count": _bin.size(),
 		"daily_egg_count": _daily_egg_count,
 		"circuits": _circuits.duplicate(true),
 		"slot_count": _slots.size(),
@@ -75,21 +77,15 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		circuit_slot_indices.append(slot_index)
 		if not _slots[slot_index].is_empty():
 			occupied_slot_indices.append(slot_index)
-	if occupied_slot_indices.is_empty():
-		return [{"type": "thwack_rejected", "reason": "empty_circuit"}]
 
 	var events: Array[Dictionary] = [{
 		"type": "circuit_fired",
 		"circuit_id": circuit_id,
 		"slot_indices": circuit_slot_indices,
 		"occupied_slot_indices": occupied_slot_indices,
-		"sequential_strikes": _uses_sequential_strikes(circuit_id),
 	}]
-	if _uses_sequential_strikes(circuit_id):
-		_resolve_hairpin_strikes(circuit_slot_indices, circuit_id, events)
-	else:
-		_damage_eggs(occupied_slot_indices, circuit_id, events)
-		_retreat_surviving_plovers_left(occupied_slot_indices, events)
+	_damage_eggs(occupied_slot_indices, circuit_id, events)
+	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 	_advance_conveyor(events)
 	_spend_thwack(events)
 
@@ -97,41 +93,10 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		_end_day(events)
 	else:
 		_refill_belt(events)
-		if _hopper.is_empty() and _conveyor_is_empty():
+		if _hopper.is_empty() and _bin.is_empty() and _conveyor_is_empty():
 			_end_day(events)
 
 	return events
-
-
-func _uses_sequential_strikes(circuit_id: String) -> bool:
-	return _slots.size() == HAIRPIN_SLOT_COUNT and circuit_id == "pink"
-
-
-func _resolve_hairpin_strikes(
-	circuit_slot_indices: Array[int],
-	circuit_id: String,
-	events: Array[Dictionary]
-) -> void:
-	# The lower row is nearest the player. One telescoping spoon therefore hits
-	# the second circuit slot first, resolves that live state completely, then
-	# retracts to the upper-row slot. The second strike must not use the occupancy
-	# captured when the lever was pulled: the first strike may hatch or move eggs.
-	var strike_slots: Array[int] = [circuit_slot_indices[1], circuit_slot_indices[0]]
-	var phases: Array[String] = ["near", "far"]
-	for strike_index in range(strike_slots.size()):
-		var slot_index := strike_slots[strike_index]
-		var occupied := not _slots[slot_index].is_empty()
-		events.append({
-			"type": "spoon_struck",
-			"circuit_id": circuit_id,
-			"slot_index": slot_index,
-			"phase": phases[strike_index],
-			"occupied": occupied,
-		})
-		if not occupied:
-			continue
-		_damage_eggs([slot_index], circuit_id, events)
-		_retreat_surviving_plovers_left([slot_index], events)
 
 
 func _circuit(circuit_id: String) -> Dictionary:
@@ -243,15 +208,9 @@ func _retreat_surviving_plovers_left(slot_indices: Array[int], events: Array[Dic
 		})
 
 
-static func screen_left_destination(slot_index: int, slot_count: int) -> int:
-	if slot_count == BASE_SLOT_COUNT:
-		return slot_index - 1 if slot_index > 0 else -1
-	assert(slot_count == HAIRPIN_SLOT_COUNT, "Unsupported conveyor size.")
-	if slot_index in range(1, 5):
-		return slot_index - 1
-	if slot_index in range(5, 9):
-		return slot_index + 1
-	return -1
+static func screen_left_destination(slot_index: int, slot_count := SLOT_COUNT) -> int:
+	assert(slot_count == SLOT_COUNT, "The conveyor has exactly five slots.")
+	return slot_index - 1 if slot_index > 0 else -1
 
 
 func _advance_conveyor(events: Array[Dictionary]) -> void:
@@ -265,10 +224,12 @@ func _advance_conveyor(events: Array[Dictionary]) -> void:
 	})
 
 	if not fallen_egg.is_empty():
+		_bin.append(fallen_egg)
 		events.append({
-			"type": "egg_discarded",
-			"reason": "belt_end",
+			"type": "egg_binned",
+			"egg": fallen_egg.duplicate(true),
 			"remaining_toughness": fallen_egg.toughness,
+			"bin_egg_count": _bin.size(),
 		})
 
 
@@ -281,6 +242,8 @@ func _spend_thwack(events: Array[Dictionary]) -> void:
 
 
 func _refill_belt(events: Array[Dictionary]) -> void:
+	if _hopper.is_empty() and _conveyor_is_empty():
+		_recycle_bin(events)
 	if _hopper.is_empty():
 		return
 	_slots[0] = _hopper.pop_front()
@@ -288,6 +251,24 @@ func _refill_belt(events: Array[Dictionary]) -> void:
 		"type": "egg_entered",
 		"slot_index": 0,
 		"egg": _slots[0].duplicate(true),
+		"pipe": _hopper.slice(0, PIPE_PREVIEW_COUNT).duplicate(true),
+	})
+
+
+func _recycle_bin(events: Array[Dictionary]) -> void:
+	if _bin.is_empty():
+		return
+	var recyclable: Array[Dictionary] = _bin.duplicate(true)
+	_hopper = (
+		_recycle_shuffler.shuffle_dictionaries(recyclable)
+		if _recycle_shuffler != null
+		else recyclable
+	)
+	_bin.clear()
+	events.append({
+		"type": "bin_reshuffled",
+		"hopper_egg_count": _hopper.size(),
+		"bin_egg_count": 0,
 		"pipe": _hopper.slice(0, PIPE_PREVIEW_COUNT).duplicate(true),
 	})
 
@@ -302,10 +283,12 @@ func _end_day(events: Array[Dictionary]) -> void:
 		if not egg.is_empty():
 			discarded_count += 1
 	discarded_count += _hopper.size()
+	discarded_count += _bin.size()
 
 	for slot_index in range(_slots.size()):
 		_slots[slot_index] = {}
 	_hopper.clear()
+	_bin.clear()
 	_ended = true
 	_succeeded = _score >= _target_score
 	events.append({
@@ -322,19 +305,11 @@ func _end_day(events: Array[Dictionary]) -> void:
 
 
 static func circuits_for_slot_count(slot_count: int) -> Array[Dictionary]:
-	if slot_count == BASE_SLOT_COUNT:
-		return [
-			{"id": "red", "slot_indices": [0, 2]},
-			{"id": "blue", "slot_indices": [1, 3]},
-			{"id": "pink", "slot_indices": [4]},
-		]
-	assert(slot_count == HAIRPIN_SLOT_COUNT, "Unsupported conveyor size.")
+	assert(slot_count == SLOT_COUNT, "The conveyor has exactly five slots.")
 	return [
 		{"id": "red", "slot_indices": [0, 2]},
 		{"id": "blue", "slot_indices": [1, 3]},
-		{"id": "green", "slot_indices": [6, 8]},
-		{"id": "purple", "slot_indices": [7, 9]},
-		{"id": "pink", "slot_indices": [4, 5]},
+		{"id": "pink", "slot_indices": [4]},
 	]
 
 
@@ -366,11 +341,14 @@ func _new_egg(laid_egg: Variant) -> Dictionary:
 	assert(quality_multiplier >= 1.0, "An egg's quality multiplier cannot be below one.")
 	assert(double_yolk_chance >= 0.0 and double_yolk_chance <= 1.0, "Double Yolker chance must be between zero and one.")
 	var exact_base_points := float(definition.points) * quality_multiplier
+	var exact_max_toughness := float(definition.toughness) * quality_multiplier
+	var max_toughness := ceili(exact_max_toughness)
 	return {
 		"kind": definition.kind,
 		"tier": tier,
-		"toughness": definition.toughness,
-		"max_toughness": definition.toughness,
+		"toughness": max_toughness,
+		"max_toughness": max_toughness,
+		"exact_max_toughness": exact_max_toughness,
 		"points": floori(exact_base_points),
 		"exact_base_points": exact_base_points,
 		"double_yolk_chance": double_yolk_chance,

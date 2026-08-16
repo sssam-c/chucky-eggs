@@ -3,7 +3,6 @@ extends Control
 const DARK_TIMBER: Texture2D = preload("res://assets/generated/dark_timber_v1.png")
 const CAST_IRON: Texture2D = preload("res://assets/generated/cast_iron_v1.png")
 
-var _slot_count := 5
 var _slot_circuit_ids: Array[String] = []
 var _slot_circuit_colors: Array[Color] = []
 var _highlighted_circuit_id := ""
@@ -21,10 +20,7 @@ func material_texture_count() -> int:
 
 
 func set_slot_count(slot_count: int) -> void:
-	if _slot_count == slot_count:
-		return
-	_slot_count = slot_count
-	queue_redraw()
+	assert(slot_count == 5, "The machine has exactly five slots.")
 
 
 func set_belt_section_appearances(circuit_ids: Array, colors: Array) -> void:
@@ -67,13 +63,12 @@ func _draw() -> void:
 
 	# The ambience layer owns the soft workshop light; this durable component
 	# keeps only physical fixtures and materials.
-	if _slot_count != 10:
-		_draw_contact_shadow(Rect2(1092, 54, 105, 105), 8.0)
-		draw_rect(Rect2(1092, 54, 105, 105), Color("3a180e"), true)
-		draw_rect(Rect2(1100, 62, 89, 89), Color("b14818"), true)
-		for bar in [1144.0]:
-			draw_line(Vector2(bar, 62), Vector2(bar, 151), Color("40170f"), 6.0)
-			draw_line(Vector2(1100, 106), Vector2(1189, 106), Color("40170f"), 6.0)
+	_draw_contact_shadow(Rect2(1092, 54, 105, 105), 8.0)
+	draw_rect(Rect2(1092, 54, 105, 105), Color("3a180e"), true)
+	draw_rect(Rect2(1100, 62, 89, 89), Color("b14818"), true)
+	for bar in [1144.0]:
+		draw_line(Vector2(bar, 62), Vector2(bar, 151), Color("40170f"), 6.0)
+		draw_line(Vector2(1100, 106), Vector2(1189, 106), Color("40170f"), 6.0)
 
 	# Cyan supply pipe and three-egg chute.
 	_draw_spoon_mount_shadows()
@@ -87,10 +82,7 @@ func _draw() -> void:
 		draw_circle(Vector2(15, brace_y), 4.0, Color("c17831"))
 		draw_circle(Vector2(127, brace_y), 4.0, Color("c17831"))
 
-	if _slot_count == 10:
-		_draw_hairpin_machine()
-	else:
-		_draw_straight_machine()
+	_draw_straight_machine()
 
 
 func _draw_straight_machine() -> void:
@@ -104,6 +96,13 @@ func _draw_straight_machine() -> void:
 	_draw_rollers(196, 1200, 391)
 	draw_rect(Rect2(1199, 323, 35, 116), Color("070809"), true)
 	draw_line(Vector2(1215, 335), Vector2(1232, 425), Color("b35628"), 4.0)
+	# Fallen eggs land in this open collection bin and return through the hopper
+	# when its current sequence is exhausted.
+	draw_rect(Rect2(1128, 356, 94, 72), Color("120b06"), true)
+	draw_rect(Rect2(1135, 364, 80, 58), Color("6b3d1e"), true)
+	draw_line(Vector2(1134, 364), Vector2(1216, 364), Color("e0a044"), 6.0, true)
+	draw_line(Vector2(1144, 373), Vector2(1152, 416), Color("2a160c"), 4.0, true)
+	draw_line(Vector2(1206, 373), Vector2(1198, 416), Color("2a160c"), 4.0, true)
 
 	# Foreground three-circuit console rails.
 	_draw_iron_panel(Rect2(166, 430, 1050, 104), Color("754126"))
@@ -114,49 +113,6 @@ func _draw_straight_machine() -> void:
 	draw_line(Vector2(215, 438), Vector2(485, 438), Color("c43b36"), 4.0)
 	draw_line(Vector2(535, 438), Vector2(805, 438), Color("287cbd"), 4.0)
 	draw_line(Vector2(855, 438), Vector2(1125, 438), Color("cf4f8b"), 4.0)
-
-
-func _draw_hairpin_machine() -> void:
-	# A tight, target-free bend joins two touching five-bay runs.
-	var route := PackedVector2Array([
-		Vector2(174, 283), Vector2(1018, 283), Vector2(1052, 299),
-		Vector2(1068, 331), Vector2(1052, 359), Vector2(1018, 380), Vector2(174, 380),
-	])
-	draw_polyline(route, Color("4e2416"), 15.0, true)
-	draw_polyline(route, Color("ad6532"), 5.0, true)
-
-	# The two casings share a seam. The narrow right cheek is visibly a bend,
-	# not another egg station.
-	_draw_iron_panel(Rect2(166, 230, 910, 95))
-	_draw_iron_panel(Rect2(166, 325, 910, 95))
-	_draw_hairpin_belt_sections()
-	_draw_iron_panel(Rect2(1035, 249, 55, 152))
-	draw_arc(Vector2(1035, 325), 76.0, -PI * 0.5, PI * 0.5, 28, Color("6d4026"), 5.0, true)
-	_draw_rollers(196, 1000, 283)
-	_draw_rollers(196, 1000, 380)
-	# Put the direction marks on top of the conveyor casing so each leg reads
-	# independently: right across the upper run, down through Pink, then left.
-	for arrow_x in [346.0, 536.0, 726.0, 916.0]:
-		_draw_route_arrow(Vector2(arrow_x, 243), Vector2.RIGHT)
-		_draw_route_arrow(Vector2(arrow_x, 408), Vector2.LEFT)
-	_draw_route_arrow(Vector2(1080, 325), Vector2.DOWN)
-
-	# Five colour rails connect the circuit levers to the machine. Target identity
-	# is carried by the belt sections, while the shared spoons remain neutral.
-	draw_line(Vector2(185, 435), Vector2(1075, 435), Color("090a0b"), 13.0, true)
-	var spoon_colors := [
-		Color("c43b36"), Color("287cbd"), Color("69a645"),
-		Color("8f59b8"), Color("cf4f8b"),
-	]
-	for spoon_index in range(5):
-		var center_x := 251.0 + 190.0 * spoon_index
-		draw_line(Vector2(center_x - 62.0, 435), Vector2(center_x + 62.0, 435), spoon_colors[spoon_index], 5.0, true)
-		draw_circle(Vector2(center_x, 435), 7.0, Color("111316"))
-		draw_circle(Vector2(center_x, 435), 4.0, spoon_colors[spoon_index].lightened(0.2))
-
-	# The lower return exits at the left edge beside slot 10.
-	draw_rect(Rect2(142, 327, 30, 95), Color("070809"), true)
-	draw_line(Vector2(154, 335), Vector2(130, 409), Color("b35628"), 4.0)
 
 
 func _draw_rollers(from_x: int, to_x: int, roller_y: int) -> void:
@@ -179,20 +135,6 @@ func _draw_straight_belt_sections() -> void:
 				70.0
 			),
 			slot_index
-		)
-
-
-func _draw_hairpin_belt_sections() -> void:
-	var boundaries := [166.0, 346.0, 536.0, 726.0, 916.0, 1076.0]
-	for column_index in range(5):
-		var section_width: float = boundaries[column_index + 1] - boundaries[column_index] - 6.0
-		_draw_belt_section(
-			Rect2(boundaries[column_index] + 3.0, 235.0, section_width, 85.0),
-			column_index
-		)
-		_draw_belt_section(
-			Rect2(boundaries[column_index] + 3.0, 330.0, section_width, 85.0),
-			9 - column_index
 		)
 
 

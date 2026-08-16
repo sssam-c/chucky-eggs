@@ -10,19 +10,19 @@ class EligibleEggsDoubleRoller:
 		return chance > 0.0
 
 
-func test_starting_flock_has_fifteen_one_egg_producers() -> void:
+func test_starting_flock_has_five_one_egg_producers() -> void:
 	var flock = ProducerFlock.new()
 	var producers: Array[Dictionary] = flock.snapshot()
 	var egg_kinds: Array[String] = flock.lay_daily_egg_kinds()
 
-	assert_eq(producers.size(), 15)
-	assert_eq(_count_kind(producers, "chicken"), 10)
-	assert_eq(_count_kind(producers, "cuckoo"), 3)
-	assert_eq(_count_kind(producers, "plover"), 2)
-	assert_eq(egg_kinds.size(), 15)
-	assert_eq(egg_kinds.count("chicken"), 10)
-	assert_eq(egg_kinds.count("cuckoo"), 3)
-	assert_eq(egg_kinds.count("plover"), 2)
+	assert_eq(producers.size(), 5)
+	assert_eq(_count_kind(producers, "chicken"), 3)
+	assert_eq(_count_kind(producers, "cuckoo"), 2)
+	assert_eq(_count_kind(producers, "plover"), 0)
+	assert_eq(egg_kinds.size(), 5)
+	assert_eq(egg_kinds.count("chicken"), 3)
+	assert_eq(egg_kinds.count("cuckoo"), 2)
+	assert_eq(egg_kinds.count("plover"), 0)
 	assert_true(producers.all(func(producer: Dictionary) -> bool:
 		return producer.tier == 0
 	))
@@ -38,10 +38,10 @@ func test_starting_chickens_share_the_standard_quality_double_yolker_chance() ->
 	))
 	assert_eq(laid_eggs.filter(func(egg: Dictionary) -> bool:
 		return egg.kind == "chicken" and is_equal_approx(float(egg.double_yolk_chance), 0.02)
-	).size(), 10)
+	).size(), 3)
 	assert_eq(laid_eggs.filter(func(egg: Dictionary) -> bool:
 		return bool(egg.is_double_yolker)
-	).size(), 10)
+	).size(), 3)
 	assert_true(laid_eggs.all(func(egg: Dictionary) -> bool:
 		return egg.has_all([
 			"kind", "tier", "quality_multiplier", "double_yolk_chance", "is_double_yolker",
@@ -65,7 +65,7 @@ func test_adding_a_producer_adds_one_bird_and_one_daily_egg() -> void:
 	var added: Dictionary = flock.add_producer("spoonbill")
 
 	assert_eq(added, {"kind": "spoonbill", "tier": 0})
-	assert_eq(flock.snapshot().size(), 16)
+	assert_eq(flock.snapshot().size(), original_daily_output + 1)
 	assert_eq(flock.lay_daily_egg_kinds().size(), original_daily_output + 1)
 	assert_eq(flock.lay_daily_egg_kinds().count("spoonbill"), 1)
 

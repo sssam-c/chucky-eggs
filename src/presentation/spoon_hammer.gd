@@ -8,7 +8,6 @@ extends Control
 const DEFAULT_SINGLE_CONTACT := Vector2(85.0, 170.0)
 const SINGLE_HINGE_TO_CONTACT := 16.0
 const SINGLE_STORED_RISE := 96.0
-const WALL_EXTENSION_PROJECTION := 26.0
 const STORED_BOWL_RADII := Vector2(31.0, 43.0)
 const CONTACT_BOWL_RADII := Vector2(48.0, 15.0)
 const SINGLE_FRAME_BOWL_SCALE := Vector2(
@@ -38,16 +37,8 @@ var strike_amount := 0.0:
 		_sync_bowl_layer()
 		queue_redraw()
 
-var extension_amount := 0.0:
-	set(value):
-		extension_amount = clampf(value, 0.0, 1.0)
-		_sync_bowl_layer()
-		queue_redraw()
-
 var _bowl_size_scale := 1.0
 var _circuit_marked := true
-var _has_telescoping_spoon := false
-var _telescoping_targets: Array[Vector2] = []
 var _single_contact_target := DEFAULT_SINGLE_CONTACT
 
 
@@ -63,7 +54,6 @@ func set_strike_amount(amount: float) -> void:
 
 func reset_pose() -> void:
 	strike_amount = 0.0
-	extension_amount = 0.0
 
 
 func pivot_global_position() -> Vector2:
@@ -87,12 +77,7 @@ func contact_bowl_global_position() -> Vector2:
 
 
 func contact_points_global() -> Array[Vector2]:
-	if not _has_telescoping_spoon:
-		return [contact_bowl_global_position()]
-	var points: Array[Vector2] = []
-	for target: Vector2 in _telescoping_targets:
-		points.append(get_global_transform() * target)
-	return points
+	return [contact_bowl_global_position()]
 
 
 func set_bowl_scale(value: float) -> void:
@@ -117,10 +102,7 @@ func is_circuit_marked() -> bool:
 
 
 func configure_wall_spoon(contact_target: Vector2) -> void:
-	_has_telescoping_spoon = false
-	_telescoping_targets.clear()
 	_single_contact_target = contact_target
-	extension_amount = 0.0
 	z_index = 0
 	_sync_bowl_layer()
 	queue_redraw()
@@ -136,29 +118,6 @@ func stored_bowl_screen_size() -> Vector2:
 
 func contact_bowl_screen_size() -> Vector2:
 	return CONTACT_BOWL_RADII * 2.0 * _bowl_size_scale
-
-
-func configure_telescoping_spoon(far_target: Vector2, near_target: Vector2) -> void:
-	_has_telescoping_spoon = true
-	_telescoping_targets.assign([far_target, near_target])
-	_single_contact_target = far_target
-	extension_amount = 0.0
-	z_index = 0
-	_sync_bowl_layer()
-	queue_redraw()
-
-
-func clear_telescoping_spoon() -> void:
-	_has_telescoping_spoon = false
-	_telescoping_targets.clear()
-	extension_amount = 0.0
-	z_index = 0
-	_sync_bowl_layer()
-	queue_redraw()
-
-
-func is_telescoping_spoon() -> bool:
-	return _has_telescoping_spoon
 
 
 func has_paired_handles() -> bool:
@@ -203,10 +162,9 @@ func foreground_handle_visuals() -> Array[Dictionary]:
 	return [{
 		"from": _single_hinge(),
 		"to": _single_bowl_position(strike_amount),
-		"spoon_identity": "telescoping" if _has_telescoping_spoon else "single",
+		"spoon_identity": "single",
 		"visibility": visibility,
 		"width_scale": 1.0,
-		"telescoping": _has_telescoping_spoon,
 	}]
 
 
@@ -255,9 +213,6 @@ func _draw_wall_spoon() -> void:
 		draw_line(hinge, head, Color("0b0c0e"), 15.0, true)
 		draw_line(hinge, head, Color("9da09e"), 9.0, true)
 		draw_line(hinge - Vector2(2.0, 0.0), head - Vector2(2.0, 0.0), Color(1.0, 0.95, 0.84, 0.48), 2.0, true)
-		if _has_telescoping_spoon:
-			_draw_telescoping_collars(hinge, head)
-
 	# Circuit identity now lives on the belt sections. The shared spoon keeps a
 	# plain brass fastener instead of implying that it belongs to one circuit.
 	draw_line(hinge - Vector2(24.0, 0.0), hinge + Vector2(24.0, 0.0), Color("0b0c0e"), 17.0, true)
@@ -275,10 +230,7 @@ func _single_hinge() -> Vector2:
 
 
 func _single_stored_bowl() -> Vector2:
-	var projected_extension := 0.0
-	if _has_telescoping_spoon:
-		projected_extension = WALL_EXTENSION_PROJECTION * extension_amount
-	return _single_hinge() - Vector2(0.0, SINGLE_STORED_RISE + projected_extension)
+	return _single_hinge() - Vector2(0.0, SINGLE_STORED_RISE)
 
 
 func _single_bowl_position(amount: float) -> Vector2:
@@ -290,36 +242,11 @@ func _single_bowl_position(amount: float) -> Vector2:
 	if offset.y < 0.0:
 		offset.y *= SINGLE_STORED_RISE / 50.0
 	var anticipation_lift := Vector2(0.0, amount * 18.0) if amount < 0.0 else Vector2.ZERO
-	var extension_shift := Vector2.ZERO
-	if _has_telescoping_spoon and _telescoping_targets.size() == 2:
-		var row_reach := _telescoping_targets[0].distance_to(_telescoping_targets[1])
-		var projected_length := lerpf(
-			WALL_EXTENSION_PROJECTION,
-			row_reach,
-			smoothstep(0.45, 1.0, frame.tipped_amount)
-		)
-		# The extra length is foreshortened to zero as the spoon faces edge-on,
-		# then appears below the pivot as the underside turns toward the player.
-		extension_shift.y = (
-			-cos(PI * frame.tipped_amount) * projected_length * extension_amount
-		)
-	return _single_hinge() + offset + extension_shift + anticipation_lift
+	return _single_hinge() + offset + anticipation_lift
 
 
 func _active_contact_target() -> Vector2:
-	if not _has_telescoping_spoon or _telescoping_targets.size() != 2:
-		return _single_contact_target
-	return _telescoping_targets[0].lerp(_telescoping_targets[1], extension_amount)
-
-
-func _draw_telescoping_collars(from: Vector2, to: Vector2) -> void:
-	for progress in [0.28, 0.48, 0.68]:
-		var center := from.lerp(to, progress)
-		var outer := Rect2(center - Vector2(11.0, 4.5), Vector2(22.0, 9.0))
-		var inner := Rect2(center - Vector2(8.0, 2.5), Vector2(16.0, 5.0))
-		draw_rect(outer, Color("211308"), true)
-		draw_rect(outer, Color("9e5c1e"), false, 2.0)
-		draw_rect(inner, Color("c47a2d"), true)
+	return _single_contact_target
 
 
 func _sync_bowl_layer() -> void:

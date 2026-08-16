@@ -8,9 +8,8 @@ const SeededShuffler = preload("res://src/core/seeded_shuffler.gd")
 const DEFAULT_DAY_SEED := 20260813
 const REWARD_SEED_STEP := 1009
 const DOUBLE_YOLK_SEED_STEP := 9
-const DAY_ONE_TARGET := 15
-const LATER_DAY_TARGET := 20
-const HAIRPIN_REFIT_DAY := 3
+const DAY_ONE_TARGET := 8
+const LATER_DAY_TARGET := 9
 const RECRUIT_PRICE := 3
 const RETIRE_PRICE := 2
 const EXTRA_THWACK_PRICE := 5
@@ -25,7 +24,6 @@ var _shop_recruitment: Array[Dictionary] = []
 var _pending_merges: Dictionary = {}
 var _cash := 0
 var _last_cash_awarded := 0
-var _machine_slot_count := ChickenDay.BASE_SLOT_COUNT
 var _starting_thwacks := ChickenDay.STARTING_THWACKS
 var _factory_upgrades: Dictionary = {"extra_thwack": false}
 
@@ -40,11 +38,6 @@ func _init(
 	_flock = flock if flock != null else ProducerFlock.new()
 	_shuffler = shuffler
 	_day_number = maxi(int(initial_day_number), 1)
-	_machine_slot_count = (
-		ChickenDay.HAIRPIN_SLOT_COUNT
-		if _day_number >= HAIRPIN_REFIT_DAY
-		else ChickenDay.BASE_SLOT_COUNT
-	)
 	_start_day()
 
 
@@ -60,16 +53,10 @@ func state() -> Dictionary:
 	current_state["projected_flock_size"] = _flock.snapshot().size() - _pending_merge_count()
 	current_state["cash"] = _cash
 	current_state["last_cash_awarded"] = _last_cash_awarded
-	current_state["machine_slot_count"] = _machine_slot_count
+	current_state["machine_slot_count"] = ChickenDay.SLOT_COUNT
 	current_state["starting_thwacks"] = _starting_thwacks
 	current_state["factory_upgrades"] = _factory_upgrades.duplicate(true)
-	current_state["machine_circuits"] = ChickenDay.circuits_for_slot_count(_machine_slot_count)
-	current_state["machine_refit_due"] = (
-		_phase == "shop"
-		and _day_number + 1 == HAIRPIN_REFIT_DAY
-		and _machine_slot_count == ChickenDay.BASE_SLOT_COUNT
-	)
-	current_state["machine_refit_complete"] = _machine_slot_count == ChickenDay.HAIRPIN_SLOT_COUNT
+	current_state["machine_circuits"] = ChickenDay.circuits_for_slot_count(ChickenDay.SLOT_COUNT)
 	return current_state
 
 
@@ -204,21 +191,13 @@ func leave_shop() -> Array[Dictionary]:
 	var events: Array[Dictionary] = _apply_pending_merges()
 	var daily_egg_count: int = _flock.lay_daily_egg_kinds().size()
 	_day_number += 1
-	if _day_number == HAIRPIN_REFIT_DAY and _machine_slot_count == ChickenDay.BASE_SLOT_COUNT:
-		_machine_slot_count = ChickenDay.HAIRPIN_SLOT_COUNT
-		events.append({
-			"type": "machine_refitted",
-			"day_number": _day_number,
-			"slot_count": _machine_slot_count,
-			"circuits": ChickenDay.circuits_for_slot_count(_machine_slot_count),
-		})
 	_start_day()
 	events.append({
 		"type": "day_started",
 		"day_number": _day_number,
 		"target_score": _day.snapshot().target_score,
 		"daily_egg_count": daily_egg_count,
-		"slot_count": _machine_slot_count,
+		"slot_count": ChickenDay.SLOT_COUNT,
 		"production": _production_snapshot(),
 	})
 	return events
@@ -238,8 +217,8 @@ func _start_day() -> void:
 	_day = ChickenDay.new(
 		shuffled_eggs,
 		_target_for_day(_day_number),
-		_machine_slot_count,
-		_starting_thwacks
+		_starting_thwacks,
+		day_shuffler
 	)
 
 
@@ -308,8 +287,11 @@ func _quality_groups_snapshot() -> Array[Dictionary]:
 	for group: Dictionary in groups:
 		var definition := ChickenDay.egg_definition(String(group.kind))
 		var exact_points := float(definition.points) * float(group.quality_multiplier)
+		var exact_toughness := float(definition.toughness) * float(group.quality_multiplier)
 		group["exact_points"] = exact_points
 		group["points"] = floori(exact_points)
+		group["exact_toughness"] = exact_toughness
+		group["toughness"] = ceili(exact_toughness)
 		group["display_double_yolk_percent"] = floori(float(group.double_yolk_chance) * 100.0)
 		group["reserved_count"] = _reserved_bird_count(String(group.kind), int(group.tier))
 	return groups
@@ -321,6 +303,8 @@ func _merge_offer(kind: String, tier: int) -> Dictionary:
 	var next_multiplier := ProducerFlock.quality_multiplier(tier + 1)
 	var current_chance := ProducerFlock.double_yolk_chance(kind, tier)
 	var next_chance := ProducerFlock.double_yolk_chance(kind, tier + 1)
+	var current_exact_toughness := float(definition.toughness) * current_multiplier
+	var next_exact_toughness := float(definition.toughness) * next_multiplier
 	return {
 		"id": "%s_%d" % [kind, tier],
 		"kind": kind,
@@ -331,6 +315,10 @@ func _merge_offer(kind: String, tier: int) -> Dictionary:
 		"current_points": floori(float(definition.points) * current_multiplier),
 		"next_exact_points": float(definition.points) * next_multiplier,
 		"next_points": floori(float(definition.points) * next_multiplier),
+		"current_exact_toughness": current_exact_toughness,
+		"current_toughness": ceili(current_exact_toughness),
+		"next_exact_toughness": next_exact_toughness,
+		"next_toughness": ceili(next_exact_toughness),
 		"current_double_yolk_chance": current_chance,
 		"current_double_yolk_percent": floori(current_chance * 100.0),
 		"next_double_yolk_chance": next_chance,
@@ -410,6 +398,8 @@ func _production_snapshot() -> Array[Dictionary]:
 		var tier := int(producer.tier)
 		var multiplier := ProducerFlock.quality_multiplier(tier)
 		produced_egg["tier"] = tier
+		produced_egg["exact_toughness"] = float(produced_egg.toughness) * multiplier
+		produced_egg["toughness"] = ceili(float(produced_egg.toughness) * multiplier)
 		produced_egg["exact_points"] = float(produced_egg.points) * multiplier
 		produced_egg["points"] = floori(float(produced_egg.points) * multiplier)
 		produced_egg["double_yolk_chance"] = ProducerFlock.double_yolk_chance(
