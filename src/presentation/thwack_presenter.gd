@@ -370,7 +370,7 @@ func _present_conveyor(event: Dictionary, playback_generation: int) -> bool:
 		_render_belt(event.slots)
 		return true
 
-	var move := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	var move := create_tween().set_parallel(true)
 	var has_motion := false
 	var active_slot_count: int = mini(event.slots.size(), _belt_slots.size())
 	for slot_index in range(active_slot_count):
@@ -386,10 +386,9 @@ func _present_conveyor(event: Dictionary, playback_generation: int) -> bool:
 				- (slot.global_position + slot.size * 0.5) + Vector2(0.0, 55.0)
 		)
 		var target := content.position + route_step
-		move.parallel().tween_property(content, "position", target, 0.17)
+		_add_momentum_motion(move, content, content.position, target, 0.20, 0.12)
 		if slot_index == active_slot_count - 1:
-			move.parallel().tween_property(content, "rotation", 0.14 if route_step.x >= 0.0 else -0.14, 0.17)
-			move.parallel().tween_property(content, "modulate:a", 0.35, 0.17)
+			move.tween_property(content, "modulate:a", 0.35, 0.20)
 	if has_motion and not await _run_tween(move, playback_generation):
 		return false
 	_render_belt(event.slots)
@@ -432,14 +431,24 @@ func _present_pipe_entry(event: Dictionary, playback_generation: int) -> bool:
 		_render_pipe(event.pipe)
 		return true
 
-	var feed := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 	var next_content: Control = _pipe_slots[0].motion_content()
-	var entry_step := (
-		_belt_slots[0].global_position - _pipe_slots[0].global_position
-		+ Vector2(0.0, 18.0)
+	var next_origin := next_content.position
+	var entry_step: Vector2 = (
+		_belt_slots[0].hatch_global_position()
+		- _pipe_slots[0].hatch_global_position()
 	)
-	feed.tween_property(next_content, "position", next_content.position + entry_step, 0.18)
-	feed.parallel().tween_property(next_content, "modulate:a", 0.22, 0.18)
+	# The lift first raises the queue to belt height. Only after that vertical
+	# motion settles does the pusher hand the top egg sideways onto the track.
+	var lift := create_tween().set_parallel(true)
+	_add_momentum_motion(
+		lift,
+		next_content,
+		next_origin,
+		next_origin + Vector2(0.0, entry_step.y),
+		0.15,
+		0.10,
+		1.0
+	)
 	for preview_index in range(1, _pipe_slots.size()):
 		var content: Control = _pipe_slots[preview_index].motion_content()
 		if _pipe_slots[preview_index].current_egg().is_empty():
@@ -448,12 +457,97 @@ func _present_pipe_entry(event: Dictionary, playback_generation: int) -> bool:
 			_pipe_slots[preview_index - 1].global_position
 			- _pipe_slots[preview_index].global_position
 		)
-		feed.parallel().tween_property(content, "position", content.position + queue_step, 0.18)
+		_add_momentum_motion(
+			lift,
+			content,
+			content.position,
+			content.position + queue_step,
+			0.15,
+			0.075,
+			-1.0 if preview_index % 2 == 0 else 1.0
+		)
+	if not await _run_tween(lift, playback_generation):
+		return false
+
+	next_content.z_index = 5
+	var feed := create_tween().set_parallel(true)
+	_add_momentum_motion(
+		feed,
+		next_content,
+		next_content.position,
+		next_origin + entry_step,
+		0.21,
+		0.17
+	)
+	feed.tween_property(next_content, "modulate:a", 0.22, 0.21)
 	if not await _run_tween(feed, playback_generation):
 		return false
 	_belt_slots[0].render_egg(event.egg, false, false)
 	_render_pipe(event.pipe)
 	return true
+
+
+func _add_momentum_motion(
+	tween: Tween,
+	content: Control,
+	origin: Vector2,
+	target: Vector2,
+	duration: float,
+	sway_amount: float,
+	fallback_direction := 1.0
+) -> void:
+	var route := target - origin
+	var sway_direction := signf(route.x)
+	if is_zero_approx(sway_direction):
+		sway_direction = fallback_direction
+	var motion := tween.tween_method(
+		_apply_momentum_motion.bind(
+			content,
+			origin,
+			target,
+			content.rotation,
+			sway_amount,
+			sway_direction
+		),
+		0.0,
+		1.0,
+		duration
+	)
+	motion.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+
+
+func _apply_momentum_motion(
+	progress: float,
+	content: Control,
+	origin: Vector2,
+	target: Vector2,
+	origin_rotation: float,
+	sway_amount: float,
+	sway_direction: float
+) -> void:
+	if not is_instance_valid(content):
+		return
+	content.position = origin.lerp(target, progress)
+	# Spend the first part of travel in a clear backward lean. During braking,
+	# cross upright and wobble around it with rapidly diminishing amplitude.
+	var lean_end := 0.58
+	var rotation_offset := 0.0
+	if progress < lean_end:
+		var lean_progress := progress / lean_end
+		rotation_offset = (
+			-sway_direction * sway_amount * sin(lean_progress * PI)
+		)
+	else:
+		var wobble_progress := (progress - lean_end) / (1.0 - lean_end)
+		var damping := 1.0 - wobble_progress
+		rotation_offset = (
+			sway_direction
+			* sway_amount
+			* 0.72
+			* sin(wobble_progress * TAU * 1.5)
+			* damping
+		)
+	content.rotation = origin_rotation + rotation_offset
 
 
 func _present_day_discard(playback_generation: int) -> bool:
@@ -511,7 +605,7 @@ func _reset_mechanisms() -> void:
 	for hammer: Control in _hammers:
 		if is_instance_valid(hammer):
 			hammer.reset_pose()
-	for slot: Button in _belt_slots:
+	for slot: Button in _belt_slots + _pipe_slots:
 		if is_instance_valid(slot):
 			slot.reset_motion()
 

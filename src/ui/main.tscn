@@ -208,18 +208,18 @@ script = ExtResource("15_ambience")
 [node name="Pipe" type="Control" parent="Content/Stage"]
 layout_mode = 0
 offset_left = 12.0
-offset_top = 70.0
+offset_top = 370.0
 offset_right = 202.0
-offset_bottom = 380.0
+offset_bottom = 688.0
 mouse_filter = 2
 
 [node name="HopperInspect" type="Button" parent="Content/Stage/Pipe"]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = -4.0
-offset_top = -58.0
+offset_top = 276.0
 offset_right = 206.0
-offset_bottom = -8.0
+offset_bottom = 318.0
 mouse_default_cursor_shape = 2
 theme_override_font_sizes/font_size = 13
 text = "HOPPER 7"
@@ -239,27 +239,27 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(170, 120)
 layout_mode = 0
 offset_left = 10.0
-offset_top = 180.0
+offset_top = 0.0
 offset_right = 180.0
-offset_bottom = 300.0
+offset_bottom = 120.0
 
 [node name="Next2" parent="Content/Stage/Pipe/Preview" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(170, 120)
 layout_mode = 0
 offset_left = 10.0
-offset_top = 90.0
+offset_top = 82.0
 offset_right = 180.0
-offset_bottom = 210.0
+offset_bottom = 202.0
 
 [node name="Next3" parent="Content/Stage/Pipe/Preview" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(170, 120)
 layout_mode = 0
 offset_left = 10.0
-offset_top = 0.0
+offset_top = 164.0
 offset_right = 180.0
-offset_bottom = 120.0
+offset_bottom = 284.0
 
 [node name="HammerBank" type="Control" parent="Content/Stage"]
 layout_mode = 1
@@ -272,12 +272,12 @@ mouse_filter = 2
 
 [node name="Hammer1" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(170, 330)
+custom_minimum_size = Vector2(170, 370)
 layout_mode = 0
-offset_left = 198.0
-offset_top = 24.0
-offset_right = 368.0
-offset_bottom = 354.0
+offset_left = 192.0
+offset_top = 10.0
+offset_right = 362.0
+offset_bottom = 380.0
 slot_index = 0
 circuit_id = "red"
 circuit_color = Color(0.77, 0.23, 0.21, 1)
@@ -285,12 +285,12 @@ circuit_symbol = "diamond"
 
 [node name="Hammer2" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(170, 330)
+custom_minimum_size = Vector2(170, 370)
 layout_mode = 0
-offset_left = 333.0
-offset_top = 24.0
-offset_right = 503.0
-offset_bottom = 354.0
+offset_left = 330.0
+offset_top = 10.0
+offset_right = 500.0
+offset_bottom = 380.0
 slot_index = 1
 circuit_id = "blue"
 circuit_color = Color(0.16, 0.49, 0.74, 1)
@@ -298,12 +298,12 @@ circuit_symbol = "circle"
 
 [node name="Hammer3" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(170, 330)
+custom_minimum_size = Vector2(170, 370)
 layout_mode = 0
 offset_left = 468.0
-offset_top = 24.0
+offset_top = 10.0
 offset_right = 638.0
-offset_bottom = 354.0
+offset_bottom = 380.0
 slot_index = 2
 circuit_id = "red"
 circuit_color = Color(0.77, 0.23, 0.21, 1)
@@ -311,12 +311,12 @@ circuit_symbol = "diamond"
 
 [node name="Hammer4" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(170, 330)
+custom_minimum_size = Vector2(170, 370)
 layout_mode = 0
-offset_left = 603.0
-offset_top = 24.0
-offset_right = 773.0
-offset_bottom = 354.0
+offset_left = 606.0
+offset_top = 10.0
+offset_right = 776.0
+offset_bottom = 380.0
 slot_index = 3
 circuit_id = "blue"
 circuit_color = Color(0.16, 0.49, 0.74, 1)
@@ -324,12 +324,12 @@ circuit_symbol = "circle"
 
 [node name="Hammer5" parent="Content/Stage/HammerBank" instance=ExtResource("6_hammer")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(170, 330)
+custom_minimum_size = Vector2(170, 370)
 layout_mode = 0
-offset_left = 738.0
-offset_top = 24.0
-offset_right = 908.0
-offset_bottom = 354.0
+offset_left = 744.0
+offset_top = 10.0
+offset_right = 914.0
+offset_bottom = 380.0
 slot_index = 4
 circuit_id = "pink"
 circuit_color = Color(0.81, 0.31, 0.55, 1)
@@ -356,61 +356,61 @@ mouse_filter = 2
 
 [node name="Slot1" parent="Content/Stage/Belt/Slots" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(134, 190)
+custom_minimum_size = Vector2(138, 200)
 layout_mode = 0
-offset_left = 216.0
-offset_top = 235.0
-offset_right = 350.0
-offset_bottom = 425.0
+offset_left = 208.0
+offset_top = 260.0
+offset_right = 346.0
+offset_bottom = 460.0
 slot_index = 0
 
 [node name="Slot2" parent="Content/Stage/Belt/Slots" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(134, 190)
+custom_minimum_size = Vector2(138, 200)
 layout_mode = 0
-offset_left = 351.0
-offset_top = 235.0
-offset_right = 485.0
-offset_bottom = 425.0
+offset_left = 346.0
+offset_top = 260.0
+offset_right = 484.0
+offset_bottom = 460.0
 slot_index = 1
 
 [node name="Slot3" parent="Content/Stage/Belt/Slots" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(134, 190)
+custom_minimum_size = Vector2(138, 200)
 layout_mode = 0
-offset_left = 486.0
-offset_top = 235.0
-offset_right = 620.0
-offset_bottom = 425.0
+offset_left = 484.0
+offset_top = 260.0
+offset_right = 622.0
+offset_bottom = 460.0
 slot_index = 2
 
 [node name="Slot4" parent="Content/Stage/Belt/Slots" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(134, 190)
+custom_minimum_size = Vector2(138, 200)
 layout_mode = 0
-offset_left = 621.0
-offset_top = 235.0
-offset_right = 755.0
-offset_bottom = 425.0
+offset_left = 622.0
+offset_top = 260.0
+offset_right = 760.0
+offset_bottom = 460.0
 slot_index = 3
 
 [node name="Slot5" parent="Content/Stage/Belt/Slots" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(134, 190)
+custom_minimum_size = Vector2(138, 200)
 layout_mode = 0
-offset_left = 756.0
-offset_top = 235.0
-offset_right = 890.0
-offset_bottom = 425.0
+offset_left = 760.0
+offset_top = 260.0
+offset_right = 898.0
+offset_bottom = 460.0
 slot_index = 4
 
 [node name="Bin" type="Label" parent="Content/Stage/Belt"]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 806.0
-offset_top = 520.0
+offset_top = 532.0
 offset_right = 946.0
-offset_bottom = 552.0
+offset_bottom = 564.0
 theme_override_colors/font_color = Color(0.94, 0.7, 0.28, 1)
 theme_override_colors/font_shadow_color = Color(0.07, 0.04, 0.01, 1)
 theme_override_constants/shadow_outline_size = 3
@@ -422,7 +422,7 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 806.0
-offset_top = 500.0
+offset_top = 512.0
 offset_right = 946.0
 offset_bottom = 688.0
 mouse_default_cursor_shape = 2
@@ -455,7 +455,7 @@ mouse_filter = 2
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 218.0
-offset_top = 500.0
+offset_top = 516.0
 offset_right = 390.0
 offset_bottom = 688.0
 circuit_id = "red"
@@ -467,7 +467,7 @@ circuit_symbol = "diamond"
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 416.0
-offset_top = 500.0
+offset_top = 516.0
 offset_right = 588.0
 offset_bottom = 688.0
 circuit_id = "blue"
@@ -479,7 +479,7 @@ circuit_symbol = "circle"
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 614.0
-offset_top = 500.0
+offset_top = 516.0
 offset_right = 786.0
 offset_bottom = 688.0
 circuit_id = "pink"

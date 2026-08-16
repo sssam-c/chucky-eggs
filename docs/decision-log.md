@@ -544,10 +544,40 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D054's instruction to compress the belt bays and controls within the remaining width. D054's right-hand Grandma rail, grouped information, left-expanding dialogue, unchanged circuit mappings, and unchanged gameplay ownership remain accepted.
 
+## D056 — Raise the hopper queue from a shared machine deck
+
+**Status:** accepted
+
+**Decision:** Present the hopper preview as a bottom-anchored lift whose deck aligns with the collection bin's base. Stack its three preview eggs upward, with the next egg at the top beside a short sideways exit at conveyor height. Enlarge the eggs in the five central lanes slightly and give the stored spoons more vertical presence without changing their targets, timing, damage, or controls.
+
+**Reason:** The bottom-fed lift uses the full stage height for an existing play object, makes the hopper and bin read as the machine's deck and discard pile, and gives the central decision area greater visual priority. Upward preview motion and a top exit make the egg transfer physically coherent while preserving the same three known previews and five-lane rules.
+
+**Supersedes:** D055's hopper geometry and relative play-object scale only. Its lowered conveyor, post-slot-five curve, larger bin, compact existing controls, and prohibition on invented functionality remain accepted.
+
+## D057 — Put hopper interaction and motion on the lift
+
+**Status:** accepted
+
+**Decision:** Place the hopper's clickable count on the lift's bottom loading deck. Present each resolved hopper entry as two physical stages: raise the visible queue to conveyor height, then push the top egg sideways onto slot one. Give moving eggs a slight direction-aware lean during acceleration and counter-lean during braking, returning every egg upright after movement or cancellation. Reduced motion continues to resolve the same presentation immediately.
+
+**Reason:** The old top label floated outside the hopper while a single diagonal tween made eggs appear to fly through the machine. Attaching inspection to the loading deck and separating lift motion from lateral transfer makes the same existing queue and entry facts read as one credible mechanism. Small inertial sway gives rigid placeholder eggs weight without delaying or influencing resolver order.
+
+**Supersedes:** D056's placement of hopper inspection only implicitly at the physical container and its unspecified transfer animation. D056's bottom-anchored lift, topmost-next order, shared hopper/bin deck line, and unchanged gameplay remain accepted.
+
+## D058 — Make egg inertia readable at play scale
+
+**Status:** accepted
+
+**Decision:** Increase moving eggs from a subtle sway to a clearly readable backward lean followed by a damped multi-beat counter-wobble. Apply the stronger motion to conveyor travel, hopper lift movement, and the sideways hopper hand-off, then return to an exactly upright pose. Preserve the immediate reduced-motion path and cancellation reset.
+
+**Reason:** The first inertial pass measured only a few degrees and disappeared at normal play scale, especially in the constrained viewport. A distinct lean phase followed by a decaying wobble gives the eggs visible weight and personality while remaining brief enough not to obscure the machine's event order.
+
+**Supersedes:** D057's instruction that the inertial sway remain slight. Its two-stage lift-and-push transfer, bottom hopper control, upright completion, reduced-motion behavior, and unchanged gameplay ownership remain accepted.
+
 <!--
 Copy for the next entry:
 
-## D056 — Short decision title
+## D059 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

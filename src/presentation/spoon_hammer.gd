@@ -7,7 +7,7 @@ extends Control
 
 const DEFAULT_SINGLE_CONTACT := Vector2(85.0, 170.0)
 const SINGLE_HINGE_TO_CONTACT := 16.0
-const SINGLE_STORED_RISE := 96.0
+const SINGLE_STORED_RISE := 116.0
 const STORED_BOWL_RADII := Vector2(31.0, 43.0)
 const CONTACT_BOWL_RADII := Vector2(48.0, 15.0)
 const SINGLE_FRAME_BOWL_SCALE := Vector2(

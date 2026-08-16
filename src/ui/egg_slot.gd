@@ -14,6 +14,7 @@ var _content_origin := Vector2.ZERO
 var _bare_belt_mode := false
 var _circuit_id := ""
 var _circuit_color := Color("bd7742")
+var _stage_content_scale := 1.0
 
 
 func _ready() -> void:
@@ -69,6 +70,15 @@ func set_bare_belt_mode(enabled: bool) -> void:
 
 func is_bare_belt_mode() -> bool:
 	return _bare_belt_mode
+
+
+func set_stage_content_scale(value: float) -> void:
+	_stage_content_scale = maxf(value, 1.0)
+	reset_motion()
+
+
+func stage_content_scale() -> float:
+	return _stage_content_scale
 
 
 func set_circuit_appearance(circuit_id: String, color: Color, _symbol: String) -> void:
@@ -164,7 +174,11 @@ func reset_motion() -> void:
 	_content.position = _content_origin
 	_content.pivot_offset = _content.size * 0.5
 	_content.rotation = 0.0
-	_content.scale = PREVIEW_CONTENT_SCALE if _preview else Vector2.ONE
+	_content.scale = (
+		PREVIEW_CONTENT_SCALE
+		if _preview
+		else Vector2.ONE * _stage_content_scale
+	)
 	_content.modulate = Color.WHITE
 	_content.z_index = 0
 

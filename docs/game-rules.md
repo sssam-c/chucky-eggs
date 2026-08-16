@@ -17,7 +17,7 @@ Choose which eggs deserve the spoon while every thwack carries the conveyor clos
 
 ## Player loop
 
-Inspect the five-slot conveyor, the next three eggs in the pipe, the hopper and bin counts, Grandma's appetite, and the visible thwack countdown. Click the hopper to inspect every egg it contains without revealing their queue positions, or click the bin to inspect every stored egg. Choose any spoon control, balancing the eggs it can damage against their current positions and the time required to cycle missed eggs back through the hopper. An empty circuit can be used to advance the belt, but still costs one of the day's thwacks.
+Inspect the five-slot conveyor, the next three eggs rising through the hopper lift, the hopper and bin counts, Grandma's appetite, and the visible thwack countdown. The top preview is the next egg to exit sideways onto the conveyor. Click the hopper to inspect every egg it contains without revealing their other queue positions, or click the bin to inspect every stored egg. Choose any spoon control, balancing the eggs it can damage against their current positions and the time required to cycle missed eggs back through the hopper. An empty circuit can be used to advance the belt, but still costs one of the day's thwacks.
 
 After a successful day, bank the unused-thwack payout and enter a dedicated bird-offer screen to choose one of three free birds. The offered birds may be any quality. Choosing one closes the offer and opens the separate shop, where the complete flock can be reviewed and at most one bird may be removed for £3 before the next flock loads. A failed day awards no cash, bird offer, or shop visit and is retried with the same flock and deterministic shuffle sequence.
 

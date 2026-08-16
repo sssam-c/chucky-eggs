@@ -800,19 +800,20 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 	for slot_index in range(_belt_slots.size()):
 		_belt_slots[slot_index].visible = true
 		_belt_slots[slot_index].scale = Vector2.ONE
-		_belt_slots[slot_index].custom_minimum_size = Vector2(134.0, 190.0)
+		_belt_slots[slot_index].custom_minimum_size = Vector2(138.0, 200.0)
 		# Eggs sit directly on the moving belt; individual cups make the track read
 		# as five separate machines instead of one flow.
 		_belt_slots[slot_index].set_bare_belt_mode(true)
-		_belt_slots[slot_index].position = Vector2(216.0 + 135.0 * slot_index, 235.0)
+		_belt_slots[slot_index].set_stage_content_scale(1.08)
+		_belt_slots[slot_index].position = Vector2(208.0 + 138.0 * slot_index, 260.0)
 
 	for hammer_index in range(_hammers.size()):
 		_hammers[hammer_index].visible = true
 		_hammers[hammer_index].scale = Vector2.ONE
-		_hammers[hammer_index].set_bowl_scale(1.0)
-		_hammers[hammer_index].custom_minimum_size = Vector2(170.0, 330.0)
-		_hammers[hammer_index].position = Vector2(198.0 + 135.0 * hammer_index, 24.0)
-		_hammers[hammer_index].size = Vector2(170.0, 330.0)
+		_hammers[hammer_index].set_bowl_scale(1.08)
+		_hammers[hammer_index].custom_minimum_size = Vector2(170.0, 370.0)
+		_hammers[hammer_index].position = Vector2(192.0 + 138.0 * hammer_index, 10.0)
+		_hammers[hammer_index].size = Vector2(170.0, 370.0)
 		var slot: Control = _belt_slots[hammer_index]
 		var contact_global: Vector2 = slot.impact_global_position()
 		var contact_local: Vector2 = (
@@ -840,12 +841,12 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 		hammer.set_neutral_appearance()
 	_presenter.set_slot_hammer_indices([0, 1, 2, 3, 4])
 	for button_index in range(_circuit_buttons.size()):
-		_circuit_buttons[button_index].position = Vector2(218.0 + 198.0 * button_index, 500.0)
-		_circuit_buttons[button_index].size = Vector2(172.0, 188.0)
-	_bin_label.position = Vector2(806.0, 520.0)
+		_circuit_buttons[button_index].position = Vector2(218.0 + 198.0 * button_index, 516.0)
+		_circuit_buttons[button_index].size = Vector2(172.0, 172.0)
+	_bin_label.position = Vector2(806.0, 532.0)
 	_bin_label.size = Vector2(140.0, 32.0)
-	_bin_inspect_button.position = Vector2(806.0, 500.0)
-	_bin_inspect_button.size = Vector2(140.0, 188.0)
+	_bin_inspect_button.position = Vector2(806.0, 512.0)
+	_bin_inspect_button.size = Vector2(140.0, 176.0)
 
 
 func _circuit_appearance(circuit_id: String) -> Dictionary:

@@ -399,13 +399,24 @@ func test_reduced_motion_stops_grandma_idle_animation() -> void:
 	assert_true(grandma.is_idle_motion_active())
 
 
-func test_hopper_queue_places_the_next_egg_closest_to_its_lower_outlet() -> void:
+func test_hopper_lift_places_the_next_egg_closest_to_its_upper_exit() -> void:
 	var main := _add_main()
 	var previews: Array[Node] = main.get_node("Content/Stage/Pipe/Preview").get_children()
+	var hopper_inspect: Button = main.get_node("Content/Stage/Pipe/HopperInspect")
+	var bin_inspect: Button = main.get_node("Content/Stage/Belt/BinInspect")
 
 	assert_eq(previews.size(), 3)
-	assert_gt((previews[0] as Control).position.y, (previews[1] as Control).position.y)
-	assert_gt((previews[1] as Control).position.y, (previews[2] as Control).position.y)
+	assert_lt((previews[0] as Control).position.y, (previews[1] as Control).position.y)
+	assert_lt((previews[1] as Control).position.y, (previews[2] as Control).position.y)
+	assert_gt(
+		hopper_inspect.get_global_rect().get_center().y,
+		(previews[2] as Control).get_global_rect().get_center().y
+	)
+	assert_almost_eq(
+		hopper_inspect.get_global_rect().end.y,
+		bin_inspect.get_global_rect().end.y,
+		6.0
+	)
 
 
 func test_hopper_preview_eggs_are_compact_and_open_anchored_popovers() -> void:
@@ -441,7 +452,7 @@ func test_hopper_preview_eggs_are_compact_and_open_anchored_popovers() -> void:
 	assert_gt(card_rect.position.x, egg_visual.get_global_rect().end.x)
 
 
-func test_hopper_top_displays_count_and_opens_an_unordered_egg_collection() -> void:
+func test_hopper_deck_displays_count_and_opens_an_unordered_egg_collection() -> void:
 	var main := _add_main_for_ordered_eggs([
 		"chicken", "spoonbill", "plover", "cuckoo", "sparrow",
 	])
@@ -526,13 +537,21 @@ func test_mature_machine_layout_uses_the_stage_for_play_and_existing_controls() 
 	var machine = main.get_node("Content/Stage/Workshop")
 	var pipe: Control = main.get_node("Content/Stage/Pipe")
 	var first_slot: Control = main.get_node("Content/Stage/Belt/Slots/Slot1")
+	var first_hammer: Control = main.get_node("Content/Stage/HammerBank/Hammer1")
 	var bin_button: Control = main.get_node("Content/Stage/Belt/BinInspect")
 	assert_true(machine.uses_curved_bin_exit())
 	assert_eq(machine.hopper_outlet_global_position(), machine.conveyor_entry_global_position())
 	assert_gte(pipe.size.x, 185.0)
 	assert_gte(pipe.size.y, 300.0)
+	assert_almost_eq(pipe.get_global_rect().end.y, bin_button.get_global_rect().end.y, 1.0)
 	assert_gt(first_slot.position.x, pipe.get_global_rect().end.x - stage.global_position.x)
-	assert_gte(first_slot.position.y, 220.0)
+	assert_gte(first_slot.position.y, 250.0)
+	assert_gt(first_slot.stage_content_scale(), 1.0)
+	assert_gte(
+		first_hammer.pivot_global_position().y
+			- first_hammer.stored_bowl_global_position().y,
+		110.0
+	)
 	assert_gte(bin_button.size.x, 130.0)
 	assert_gte(bin_button.size.y, 170.0)
 	for circuit_button: Control in main.get_node("Content/Stage/CircuitBank").get_children():
@@ -799,7 +818,7 @@ func test_empty_blue_strike_fires_advances_and_spends_a_thwack() -> void:
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 3")
 
 
-func test_pipe_queue_descends_while_the_next_egg_feeds_the_belt() -> void:
+func test_hopper_lift_rises_while_the_next_egg_feeds_the_belt() -> void:
 	var main := _add_main_for_ordered_eggs([
 		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
 	])
@@ -823,12 +842,101 @@ func test_pipe_queue_descends_while_the_next_egg_feeds_the_belt() -> void:
 		return
 	await get_tree().process_frame
 
-	assert_gt(previews[1].motion_content().position.y, second_origin_y)
-	assert_gt(previews[2].motion_content().position.y, third_origin_y)
+	assert_lt(previews[1].motion_content().position.y, second_origin_y)
+	assert_lt(previews[2].motion_content().position.y, third_origin_y)
 	await main.playback_completed
 	await get_tree().process_frame
 	assert_eq(previews[1].motion_content().position, Vector2.ZERO)
 	assert_eq(previews[2].motion_content().position, Vector2.ZERO)
+
+
+func test_moving_eggs_sway_and_the_hopper_feed_lifts_before_pushing_sideways() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
+	main.set_reduced_motion(false)
+	var next_content: Control = main.get_node(
+		"Content/Stage/Pipe/Preview/Next1"
+	).motion_content()
+	var belt_contents: Array[Control] = []
+	for slot: Button in main.get_node("Content/Stage/Belt/Slots").get_children():
+		belt_contents.append(slot.motion_content())
+	var circuit_presented := [false]
+	var conveyor_presented := [false]
+	var entry_presented := [false]
+	var saw_belt_sway := false
+	var saw_lift_before_push := false
+	var saw_feed_sway := false
+	var strongest_belt_lean := 0.0
+	var feed_backward_lean := 0.0
+	var feed_counter_wobble := 0.0
+	main.presentation_event.connect(func(event_type: String) -> void:
+		if event_type == "circuit_fired":
+			circuit_presented[0] = true
+		elif event_type == "conveyor_advanced":
+			conveyor_presented[0] = true
+		elif event_type == "egg_entered":
+			entry_presented[0] = true
+	)
+
+	main.get_node("Content/Stage/CircuitBank/BlueCircuit").pressed.emit()
+	for _frame_index in range(240):
+		await get_tree().process_frame
+		if circuit_presented[0] and not conveyor_presented[0]:
+			saw_belt_sway = saw_belt_sway or belt_contents.any(
+				func(content: Control) -> bool: return absf(content.rotation) > 0.004
+			)
+			for content: Control in belt_contents:
+				strongest_belt_lean = maxf(strongest_belt_lean, absf(content.rotation))
+		if conveyor_presented[0] and not entry_presented[0]:
+			var feed_offset := next_content.position
+			feed_backward_lean = minf(feed_backward_lean, next_content.rotation)
+			feed_counter_wobble = maxf(feed_counter_wobble, next_content.rotation)
+			saw_lift_before_push = saw_lift_before_push or (
+				feed_offset.y < -5.0 and absf(feed_offset.x) < 4.0
+			)
+			saw_feed_sway = saw_feed_sway or (
+				feed_offset.x > 8.0 and absf(next_content.rotation) > 0.004
+			)
+		if entry_presented[0]:
+			break
+
+	assert_true(saw_belt_sway)
+	assert_true(saw_lift_before_push)
+	assert_true(saw_feed_sway)
+	assert_gt(strongest_belt_lean, 0.075)
+	assert_lt(feed_backward_lean, -0.09)
+	assert_gt(feed_counter_wobble, 0.045)
+	assert_true(entry_presented[0])
+	await get_tree().process_frame
+	assert_false(main.is_input_locked())
+	assert_eq(next_content.position, Vector2.ZERO)
+	assert_eq(next_content.rotation, 0.0)
+
+
+func test_replacing_the_session_cancels_hopper_feed_sway_without_a_stale_pose() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
+	main.set_reduced_motion(false)
+	var next_content: Control = main.get_node(
+		"Content/Stage/Pipe/Preview/Next1"
+	).motion_content()
+	var saw_feed_sway := false
+
+	main.get_node("Content/Stage/CircuitBank/BlueCircuit").pressed.emit()
+	for _frame_index in range(240):
+		await get_tree().process_frame
+		if next_content.position.x > 8.0 and absf(next_content.rotation) > 0.004:
+			saw_feed_sway = true
+			break
+
+	assert_true(saw_feed_sway)
+	main.replace_session(ChickenDaySession.new())
+	await get_tree().process_frame
+	assert_false(main.is_input_locked())
+	assert_eq(next_content.position, Vector2.ZERO)
+	assert_eq(next_content.rotation, 0.0)
 
 
 func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> void:
