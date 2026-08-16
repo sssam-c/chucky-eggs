@@ -20,7 +20,11 @@ Quality belongs to species-and-tier facts rather than named-bird progression. A 
 
 Show whole-number consequences wherever the player makes or resolves a choice. Floor score values and displayed percentage chances, round maximum toughness up to the damage actually required, and compound later quality tiers from exact internal values. The interface should never imply that a displayed integer became the new mathematical base.
 
-Show the next day's target with the bird reward and flock overview. Use the transition between days to demonstrate where the next hopper comes from: each owned bird contributes exactly one egg.
+Show the next day's appetite with the bird reward and flock overview. Use the transition between days to demonstrate where the next hopper comes from: each owned bird contributes exactly one egg.
+
+Give the abstract daily target a visible recipient. Present awarded egg points as proportional progress toward Grandma's appetite, while retaining the exact numeric value for overflow and non-colour readability. Group Grandma, appetite progress, thwacks, and settings in one right-hand machine rail so persistent character and operational information occupy a single place without taking a band from the playfield. The rail owns only presentation: the session remains the canonical owner of score, target, and day-end resolution. Reserve her portrait area for replaceable animation, status, and dialogue without letting those timings decide gameplay.
+
+Spend the workshop's permanent screen area on existing play objects rather than decorative machinery or invented readouts. Give the three-egg hopper preview, five spoon lanes, and inspectable bin enough physical presence to explain the machine at a glance. Align the hopper outlet with the conveyor entrance, and curve the track only after slot five into the bin; this routing visualizes existing movement without suggesting another slot or score-delivery system.
 
 ## Rules resolve once
 

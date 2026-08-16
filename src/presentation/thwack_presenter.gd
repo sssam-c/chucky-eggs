@@ -25,7 +25,7 @@ var _hammers: Array[Control] = []
 var _slot_hammer_indices: Array[int] = []
 var _echo_trace: Control
 var _hatch_payoff: Control
-var _score_label: Label
+var _appetite_display: Control
 var _thwacks_label: Label
 var _bin_label: Label
 var _generation := 0
@@ -56,7 +56,7 @@ func configure(
 	hammers: Array[Control],
 	echo_trace: Control,
 	hatch_payoff: Control,
-	score_label: Label,
+	appetite_display: Control,
 	thwacks_label: Label,
 	bin_label: Label
 ) -> void:
@@ -66,7 +66,7 @@ func configure(
 	_hammers = hammers
 	_echo_trace = echo_trace
 	_hatch_payoff = hatch_payoff
-	_score_label = score_label
+	_appetite_display = appetite_display
 	_thwacks_label = thwacks_label
 	_bin_label = bin_label
 
@@ -267,7 +267,7 @@ func _present_echo_damage(slot: Button, event: Dictionary, playback_generation: 
 func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	var slot: Button = _belt_slots[event.slot_index]
 	var is_double_yolker := bool(event.get("double_yolker", false))
-	var score_target := _score_label.global_position + _score_label.size * Vector2(0.72, 0.5)
+	var score_target: Vector2 = _appetite_display.score_target_global_position()
 	_hatch_payoff.begin(
 		slot.hatch_global_position(),
 		score_target,
@@ -307,13 +307,14 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 		return false
 
 	_commit_score(event)
-	_score_label.pivot_offset = _score_label.size * 0.5
+	var appetite_feedback: Control = _appetite_display.feedback_control()
+	appetite_feedback.pivot_offset = appetite_feedback.size * 0.5
 	var arrival := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	arrival.tween_property(_hatch_payoff, "arrival_progress", 1.0, 0.20)
-	arrival.parallel().tween_property(_score_label, "scale", Vector2(1.48, 1.48) if is_double_yolker else Vector2(1.28, 1.28), 0.075)
-	arrival.parallel().tween_property(_score_label, "modulate", Color(1.0, 0.88, 0.32, 1.0), 0.075)
-	arrival.tween_property(_score_label, "scale", Vector2.ONE, 0.125)
-	arrival.parallel().tween_property(_score_label, "modulate", Color.WHITE, 0.125)
+	arrival.parallel().tween_property(appetite_feedback, "scale", Vector2(1.24, 1.24) if is_double_yolker else Vector2(1.12, 1.12), 0.075)
+	arrival.parallel().tween_property(appetite_feedback, "modulate", Color(1.0, 0.88, 0.32, 1.0), 0.075)
+	arrival.tween_property(appetite_feedback, "scale", Vector2.ONE, 0.125)
+	arrival.parallel().tween_property(appetite_feedback, "modulate", Color.WHITE, 0.125)
 	if not await _run_tween(arrival, playback_generation):
 		return false
 	_hatch_payoff.reset_effect()
@@ -321,7 +322,7 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 
 
 func _commit_score(event: Dictionary) -> void:
-	_score_label.text = "SCORE %d / %d" % [event.score, event.get("target_score", 15)]
+	_appetite_display.render_appetite(event.score, event.get("target_score", 15))
 	_play(_score_player)
 	score_committed.emit(event.points_awarded, event.score)
 
@@ -500,9 +501,10 @@ func _reset_mechanisms() -> void:
 		_echo_trace.clear_connection()
 	if is_instance_valid(_hatch_payoff):
 		_hatch_payoff.reset_effect()
-	if is_instance_valid(_score_label):
-		_score_label.scale = Vector2.ONE
-		_score_label.modulate = Color.WHITE
+	if is_instance_valid(_appetite_display):
+		var appetite_feedback: Control = _appetite_display.feedback_control()
+		appetite_feedback.scale = Vector2.ONE
+		appetite_feedback.modulate = Color.WHITE
 	for circuit_button: Button in _circuit_buttons:
 		if is_instance_valid(circuit_button):
 			circuit_button.reset_pose()

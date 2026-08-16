@@ -15,7 +15,7 @@ const FlockBirdButtonScene = preload("res://src/ui/flock_bird_button.tscn")
 const SETTINGS_MUTE_AUDIO := 0
 const SETTINGS_REDUCED_MOTION := 1
 
-@onready var _score_label: Label = %Score
+@onready var _grandma_scorer: Control = %GrandmaScorer
 @onready var _thwacks_label: Label = %Thwacks
 @onready var _result_overlay: Control = %ResultOverlay
 @onready var _result_card: PanelContainer = $ResultOverlay/Card
@@ -104,7 +104,7 @@ func _ready() -> void:
 		_hammers,
 		_echo_trace,
 		_hatch_payoff,
-		_score_label,
+		_grandma_scorer,
 		_thwacks_label,
 		_bin_label
 	)
@@ -296,6 +296,7 @@ func set_reduced_motion(reduced: bool) -> void:
 	_presenter.set_reduced_motion(reduced)
 	_ui_feedback.set_reduced_motion(reduced)
 	_workshop_ambience.set_reduced_motion(reduced)
+	_grandma_scorer.set_reduced_motion(reduced)
 	_set_settings_item_checked(SETTINGS_REDUCED_MOTION, reduced)
 
 
@@ -340,7 +341,7 @@ func _set_settings_item_checked(item_id: int, checked: bool) -> void:
 func _render(events: Array[Dictionary], _fresh_day := false) -> void:
 	var state: Dictionary = _session.state()
 	_configure_machine(state.machine_slot_count, state.machine_circuits)
-	_score_label.text = "SCORE %d / %d" % [state.score, state.target_score]
+	_grandma_scorer.render_appetite(state.score, state.target_score)
 	_thwacks_label.text = "THWACKS %d" % state.remaining_thwacks
 	_bin_label.text = "BIN %d" % state.bin_egg_count
 	_hopper_inspect_button.text = "HOPPER %d" % state.hopper_egg_count
@@ -420,7 +421,7 @@ func _render_result(state: Dictionary, successful: bool) -> void:
 	if successful:
 		_result_label.text = "DAY %d COMPLETE" % state.day_number
 		_result_label.add_theme_color_override("font_color", Color("ffb934"))
-		_result_score_label.text = "TARGET MET  •  %d / %d POINTS" % [
+		_result_score_label.text = "APPETITE MET  •  %d / %d POINTS" % [
 			state.score, state.target_score,
 		]
 		_result_score_label.add_theme_color_override("font_color", Color("8dfff0"))
@@ -432,7 +433,7 @@ func _render_result(state: Dictionary, successful: bool) -> void:
 		return
 	_result_label.text = "DAY FAILED"
 	_result_label.add_theme_color_override("font_color", Color("ff8a3d"))
-	_result_score_label.text = "TARGET MISSED  •  %d / %d POINTS" % [
+	_result_score_label.text = "APPETITE UNMET  •  %d / %d POINTS" % [
 		state.score, state.target_score,
 	]
 	_result_score_label.add_theme_color_override("font_color", Color("ffb76b"))
@@ -507,7 +508,7 @@ func _dismiss_success_result() -> void:
 
 
 func _render_bird_offer(state: Dictionary) -> void:
-	_bird_offer_summary_label.text = "DAY %d COMPLETE  •  DAY %d TARGET %d" % [
+	_bird_offer_summary_label.text = "DAY %d COMPLETE  •  DAY %d APPETITE %d" % [
 		state.day_number,
 		state.day_number + 1,
 		state.next_day_target_score,
@@ -525,7 +526,7 @@ func _render_bird_offer(state: Dictionary) -> void:
 func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
 	_workshop_balance_label.text = "BALANCE £%d" % state.cash
 	_workshop_summary_label.text = (
-		"DAY %d COMPLETE  •  £%d BANKED\nDAY %d TARGET %d  •  FLOCK %d"
+		"DAY %d COMPLETE  •  £%d BANKED\nDAY %d APPETITE %d  •  FLOCK %d"
 		% [
 			state.day_number,
 			state.last_cash_awarded,
@@ -799,17 +800,19 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 	for slot_index in range(_belt_slots.size()):
 		_belt_slots[slot_index].visible = true
 		_belt_slots[slot_index].scale = Vector2.ONE
+		_belt_slots[slot_index].custom_minimum_size = Vector2(134.0, 190.0)
 		# Eggs sit directly on the moving belt; individual cups make the track read
 		# as five separate machines instead of one flow.
 		_belt_slots[slot_index].set_bare_belt_mode(true)
-		_belt_slots[slot_index].position = Vector2(200.0 + 190.0 * slot_index, 170.0)
+		_belt_slots[slot_index].position = Vector2(216.0 + 135.0 * slot_index, 235.0)
 
 	for hammer_index in range(_hammers.size()):
 		_hammers[hammer_index].visible = true
 		_hammers[hammer_index].scale = Vector2.ONE
 		_hammers[hammer_index].set_bowl_scale(1.0)
-		_hammers[hammer_index].position = Vector2(200.0 + 190.0 * hammer_index, 20.0)
-		_hammers[hammer_index].size = Vector2(185.0, 250.0)
+		_hammers[hammer_index].custom_minimum_size = Vector2(170.0, 330.0)
+		_hammers[hammer_index].position = Vector2(198.0 + 135.0 * hammer_index, 24.0)
+		_hammers[hammer_index].size = Vector2(170.0, 330.0)
 		var slot: Control = _belt_slots[hammer_index]
 		var contact_global: Vector2 = slot.impact_global_position()
 		var contact_local: Vector2 = (
@@ -837,9 +840,12 @@ func _configure_machine(slot_count: int, circuits: Array) -> void:
 		hammer.set_neutral_appearance()
 	_presenter.set_slot_hammer_indices([0, 1, 2, 3, 4])
 	for button_index in range(_circuit_buttons.size()):
-		_circuit_buttons[button_index].position = Vector2(210.0 + 320.0 * button_index, 416.0)
-		_circuit_buttons[button_index].size = Vector2(280.0, 112.0)
-	_bin_label.position = Vector2(1130.0, 326.0)
+		_circuit_buttons[button_index].position = Vector2(218.0 + 198.0 * button_index, 500.0)
+		_circuit_buttons[button_index].size = Vector2(172.0, 188.0)
+	_bin_label.position = Vector2(806.0, 520.0)
+	_bin_label.size = Vector2(140.0, 32.0)
+	_bin_inspect_button.position = Vector2(806.0, 500.0)
+	_bin_inspect_button.size = Vector2(140.0, 188.0)
 
 
 func _circuit_appearance(circuit_id: String) -> Dictionary:

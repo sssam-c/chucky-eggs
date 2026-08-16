@@ -50,6 +50,8 @@ Offered quality should create occasional excitement without making high tiers ro
 - Existing production loading shows the scaled toughness of the egg each quality tier lays.
 - Every species uses one flat temporary colour across a generic egg and a simple bird silhouette throughout the belt, pipe, loading, reward, and flock-overview views. Species names sit outside the art. Occupied eggs use a magnifying-glass cursor to advertise inspection. A wrapped hover card top-aligns beside its egg, flips sides at the viewport edge, and presents the egg's name, prominent points and Double Yolker facts, and only its applicable effect sections. Generated raster experiments are excluded from the running game and exports; final production assets are deferred to an artist.
 - The default flock contains three Chickens, two Cuckoos, and three Sparrows, with ten starting thwacks, a 10-point Day 1 target, and a 9-point later target.
+- A full-height information rail to the right of the belt presents the unchanged score and target as Grandma's appetite, alongside remaining thwacks and settings. Awarded points fill a yolk meter proportionally, overflow remains numeric, reduced motion stops her placeholder idle animation, and the reusable scene reserves status and left-expanding dialogue regions without yet authoring dialogue behavior.
+- The workshop spends its remaining area on the existing machine: a wider three-egg hopper feeds a lowered five-lane playfield, the conveyor curves once after slot five into a larger clickable bin, and the same three circuit controls occupy a compact bottom fascia. The hopper throat ends within the conveyor profile, and no decorative yolk pipe or additional readout implies new functionality.
 
 ### Balancing constraints
 
@@ -89,7 +91,7 @@ Does directing hatched eggs into one visible hungry character make the daily obj
 
 ### Status
 
-Proposed hypothesis only. The current score target, hatch terminology, egg values, and egg effects remain canonical until this direction is deliberately accepted. Complete the active Sparrow-and-quality balance probe before treating this candidate as a replacement slice.
+The Grandma appetite presentation subset is accepted and implemented without changing score storage, egg values, or day-end rules. The Appetiser effect, feeding-language changes beyond the objective HUD, and this candidate's controlled comparison playtest remain proposed. The active Sparrow-and-quality balance probe is still the current gameplay validation slice.
 
 ### Settled rules to preserve
 
@@ -116,7 +118,7 @@ Begin one controlled ten-thwack day with the normal conveyor and a visible hungr
 
 ### Explicitly deferred
 
-- Multiple recipients, rotating appetites, dislikes, allergies, personalities, dialogue, and relationship progression.
+- Multiple recipients, rotating appetites, dislikes, allergies, personalities, authored dialogue triggers, and relationship progression. The Grandma scene reserves presentation space for later statuses and dialogue only.
 - Slow feeding over several thwacks, Feeding Frenzy, effect stacking, effect inheritance through quality, and interactions between several new egg effects.
 - A permanent new bird species, day-end reward offer, bespoke production art, or rebalance of the starting flock and targets.
 - Deciding whether eggs are narratively hatched, cracked, cooked, or otherwise prepared for the recipient.

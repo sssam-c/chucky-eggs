@@ -514,10 +514,40 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D050's allowance for repeated affordable removals during one shop visit. Its £3 price, exact selected-bird targeting, last-bird protection, complete flock overview, and all reward rules remain.
 
+## D053 — Present the daily target as Grandma's appetite
+
+**Status:** accepted
+
+**Decision:** Replace player-facing score and target presentation with one visible Grandma and her daily appetite. Each awarded egg point fills a yellow-yolk meter in direct proportion to the unchanged score target. Cap the visual fill at full while retaining the exact numeric value when score exceeds the target. Place the reusable scorer in the top-right HUD with a temporary code-native idle portrait, appetite status, reduced-motion support, and reserved dialogue space. Do not change score storage, egg values, resolver order, success timing, payout, or retry behavior, and do not add dialogue triggers or new egg effects in this change.
+
+**Reason:** A visible hungry recipient gives the abstract target a character and a physical payoff without expanding the deterministic rules slice. Keeping the existing score facts and commit event canonical makes this presentation reversible and lets later animation, reactions, statuses, and dialogue be tested independently.
+
+**Supersedes:** The candidate slice's deferral of character-based score presentation. Its proposed Appetiser rule, comparison playtest, and other feeding mechanics remain hypotheses; all existing score and target mechanics remain unchanged beneath the appetite presentation.
+
+## D054 — Make Grandma the machine's right-hand information rail
+
+**Status:** accepted
+
+**Decision:** Place Grandma in a dedicated full-height rail immediately to the right of the conveyor. Group her portrait, exact appetite progress, yolk meter, appetite status, remaining thwacks, and settings in that rail. Keep the collection bin at the conveyor's exit beside the rail, and let occasional dialogue expand left over the playfield temporarily rather than reserving permanent horizontal space. Compress the five belt bays and three circuit controls within the remaining machine width without changing their count, mappings, input behavior, or resolution.
+
+**Reason:** The earlier corner scorer and lower station either consumed a broad top band or left unrelated information spread across the screen. A single machine-attached rail makes Grandma persistent, keeps score and operational facts in one predictable place, and preserves the playfield's vertical space while maintaining a physical belt-to-bin-to-recipient sequence.
+
+**Supersedes:** D053's top-right HUD placement only. Its proportional appetite presentation, exact overflow value, temporary code-native character, reduced-motion behavior, reserved dialogue capacity, and unchanged gameplay ownership remain accepted.
+
+## D055 — Give the existing machine the remaining workshop space
+
+**Status:** accepted
+
+**Decision:** Enlarge the three-egg hopper preview and the central five spoon lanes, lower the conveyor, and use one visible quarter-turn after slot five to feed a materially larger clickable bin beside Grandma's rail. Align the hopper throat with the conveyor entrance so no funnel extends beneath the belt. Put the unchanged Red, Blue, and Pink controls in a compact bottom fascia. Do not add circuit maps, target previews, gauges, score-delivery pipes, or other implied functionality; Grandma's appetite meter remains an independent presentation of the canonical score facts.
+
+**Reason:** Earlier attempts filled unused space with cabinet faces or decorative machinery while leaving the actual play objects compressed. Spending that area on the hopper, egg lanes, controls, and bin improves legibility and makes the existing input-to-belt-to-bin path physically coherent without expanding the rules or information model.
+
+**Supersedes:** D054's instruction to compress the belt bays and controls within the remaining width. D054's right-hand Grandma rail, grouped information, left-expanding dialogue, unchanged circuit mappings, and unchanged gameplay ownership remain accepted.
+
 <!--
 Copy for the next entry:
 
-## D053 — Short decision title
+## D056 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

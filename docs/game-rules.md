@@ -8,16 +8,16 @@ Choose which eggs deserve the spoon while every thwack carries the conveyor clos
 
 ## Objective and end states
 
-- A day lasts at most 10 thwacks and ends immediately after a resolved thwack meets the score target. It can also end earlier when every daily egg has hatched and no eggs remain in the hopper, conveyor, or bin.
-- Hatch eggs to meet the current day's target: 10 points on Day 1 and 9 points on each later day.
-- A day succeeds at or above its target and fails below it.
+- A day lasts at most 10 thwacks and ends immediately after a resolved thwack meets Grandma's appetite. It can also end earlier when every daily egg has hatched and no eggs remain in the hopper, conveyor, or bin.
+- Hatch eggs to meet Grandma's appetite: 10 points on Day 1 and 9 points on each later day. Every awarded egg point fills the appetite meter proportionally.
+- A day succeeds when Grandma's appetite is met or exceeded and fails below it.
 - When a successful day ends, gain £1 for each unused thwack remaining after the target-reaching thwack is spent. Add it to the run's persistent cash balance.
 - A failed day awards no cash.
 - Whenever a day ends, all unhatched eggs left in the hopper, conveyor, or bin are discarded without scoring.
 
 ## Player loop
 
-Inspect the five-slot conveyor, the next three eggs in the pipe, the hopper and bin counts, the score, and the visible thwack countdown. Click the hopper to inspect every egg it contains without revealing their queue positions, or click the bin to inspect every stored egg. Choose any spoon control, balancing the eggs it can damage against their current positions and the time required to cycle missed eggs back through the hopper. An empty circuit can be used to advance the belt, but still costs one of the day's thwacks.
+Inspect the five-slot conveyor, the next three eggs in the pipe, the hopper and bin counts, Grandma's appetite, and the visible thwack countdown. Click the hopper to inspect every egg it contains without revealing their queue positions, or click the bin to inspect every stored egg. Choose any spoon control, balancing the eggs it can damage against their current positions and the time required to cycle missed eggs back through the hopper. An empty circuit can be used to advance the belt, but still costs one of the day's thwacks.
 
 After a successful day, bank the unused-thwack payout and enter a dedicated bird-offer screen to choose one of three free birds. The offered birds may be any quality. Choosing one closes the offer and opens the separate shop, where the complete flock can be reviewed and at most one bird may be removed for £3 before the next flock loads. A failed day awards no cash, bird offer, or shop visit and is retried with the same flock and deterministic shuffle sequence.
 
@@ -39,13 +39,14 @@ After a successful day, bank the unused-thwack payout and enter a dedicated bird
 - Each quality tier multiplies that bird's exact egg score, exact maximum toughness, and exact Double Yolker chance by 1.5. Displayed and awarded scores and percentages round down; maximum toughness rounds up to the whole amount of damage required to hatch. Exact values are retained between tiers.
 - Standard Chicken eggs have a 2% Double Yolker chance and Standard Sparrow eggs have a 5% chance. Standard Cuckoo, Plover, and Spoonbill eggs currently have no Double Yolker chance, so quality multiplication alone does not create one.
 - The pipe shows up to the next three hopper eggs in queue order. Clicking the hopper shows every remaining hopper egg as a non-positional collection; it does not reveal the order beyond the pipe preview. After each non-final thwack, slot 1 receives the next existing hopper egg when one is available. The bin only becomes a new hopper after the existing hopper and conveyor have both cleared.
+- The visible hopper throat meets the conveyor entrance. After slot 5, the conveyor curves into the inspectable bin; the curve is only the existing belt-end route and adds no extra slot or action.
 - Clicking the bin shows every stored egg and its retained toughness. The bin's future return order remains unknown until its seeded reshuffle occurs.
-- Egg toughness, current score, cash balance, remaining thwacks, hopper count, and bin count are always visible. The hopper count is also displayed on its clickable top.
+- Egg toughness, Grandma's current appetite, cash balance, remaining thwacks, hopper count, and bin count are always visible. A dedicated information rail to the right of the belt groups Grandma, her yolk-filled appetite meter, remaining thwacks, and settings; the numeric appetite remains visible when the meter is full or exceeded. The hopper count is also displayed on its clickable top.
 - Hovering an egg shows a compact information card aligned beside that egg, with its species and quality, points, and floored Double Yolker chance. The card includes only the effect categories that apply to that egg. Whether the egg's hidden roll actually made it a Double Yolker is not revealed before hatching.
 - After every successful day, exactly three free bird candidates are generated from the five current species. Each offer identifies the animal and quality with a portrait, previews the one egg it lays each day, and states that egg's toughness, points, and effect.
 - The player must choose exactly one offered bird on the dedicated bird-offer screen before entering the shop or starting the next day. Choosing it adds one bird and therefore one egg to each subsequent daily pool without spending cash.
 - The separate shop is the complete flock overview and shows every owned bird individually. Selecting a bird there removes that exact flock entry for £3. Only one bird may be removed per shop visit; after that removal, every remaining removal action is unavailable until the next successful night. Removal is also unavailable when cash is insufficient or only one bird remains.
-- The dedicated bird-offer screen and the later flock-overview shop both show the next day's target.
+- The dedicated bird-offer screen and the later flock-overview shop both show the next day's appetite.
 - Before each later day begins, the complete flock is shown loading one egg per bird into the new daily hopper.
 
 ## Actions and resolution
@@ -66,7 +67,7 @@ Resolve the thwack in this order:
 4. Advance every surviving conveyor egg one slot.
 5. Move any unhatched egg that passes slot 5 into the bin without restoring its toughness.
 6. Spend one of the day's thwacks.
-7. If the score now meets or exceeds the target, end the day immediately, discard every remaining egg without scoring, and bank £1 for each unused thwack.
+7. If the awarded points now meet or exceed Grandma's appetite, end the day immediately, discard every remaining egg without scoring, and bank £1 for each unused thwack.
 8. Otherwise, if thwacks remain, drop the next existing hopper egg into slot 1. If the hopper is empty, wait until the conveyor is also empty before shuffling the bin into a new hopper, loading its next egg, and refilling the visible pipe preview.
 9. End the day as a failure if no eggs remain in the hopper, conveyor, or bin. Otherwise, continue until the final thwack.
 

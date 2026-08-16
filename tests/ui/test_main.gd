@@ -330,11 +330,31 @@ func test_generated_raster_archive_is_excluded_from_game_exports() -> void:
 	assert_string_contains(excludes, "docs/*")
 
 
-func test_main_renders_initial_day_without_screen_bars() -> void:
+func test_main_renders_initial_day_with_grandma_appetite_scorer() -> void:
 	var main := _add_main()
 
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 0 / 10")
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 10")
+	var grandma = main.get_node_or_null("Content/HUD/GrandmaScorer")
+	assert_not_null(grandma)
+	if grandma == null:
+		return
+	assert_eq(grandma.get_node("Layout/Appetite/Score").text, "APPETITE 0 / 10")
+	assert_eq(grandma.appetite_ratio(), 0.0)
+	assert_true(grandma.has_status_space())
+	assert_true(grandma.has_dialogue_space())
+	assert_true(grandma.is_idle_motion_active())
+	var hud: Control = main.get_node("Content/HUD")
+	var stage: Control = main.get_node("Content/Stage")
+	var thwacks: Label = main.get_node("Content/HUD/Thwacks")
+	var settings: MenuButton = main.get_node("Content/HUD/Settings")
+	assert_lte(stage.position.y, 16.0)
+	assert_gte(grandma.size.x, 260.0)
+	assert_lte(grandma.size.x, 320.0)
+	assert_gte(grandma.size.y, 650.0)
+	assert_gt(grandma.get_global_rect().get_center().x, stage.get_global_rect().get_center().x)
+	assert_true(grandma.get_global_rect().encloses(thwacks.get_global_rect()))
+	assert_true(grandma.get_global_rect().encloses(settings.get_global_rect()))
+	assert_true(hud.get_global_rect().encloses(grandma.get_global_rect()))
+	assert_eq(thwacks.text, "THWACKS 10")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 7")
 	assert_eq(main.get_node("Content/Stage/Belt/Bin").text, "BIN 0")
 	assert_false(main.has_node("Content/Header"))
@@ -349,6 +369,34 @@ func test_main_renders_initial_day_without_screen_bars() -> void:
 		assert_true(preview.egg_kind() in ["chicken", "cuckoo", "sparrow"])
 	assert_true(main.theme.has_stylebox("normal", "Button"))
 	assert_true(main.theme.has_stylebox("checked", "CheckButton"))
+
+
+func test_grandma_appetite_fill_is_proportional_and_caps_at_full() -> void:
+	var grandma = load("res://src/ui/grandma_scorer.tscn").instantiate()
+	add_child_autofree(grandma)
+	await get_tree().process_frame
+
+	grandma.render_appetite(3, 10)
+	assert_eq(grandma.get_node("Layout/Appetite/Score").text, "APPETITE 3 / 10")
+	assert_almost_eq(grandma.appetite_ratio(), 0.3, 0.00001)
+	assert_almost_eq(
+		grandma.get_node("Layout/GrandmaPortrait").hunger_ratio(),
+		0.3,
+		0.00001
+	)
+	grandma.render_appetite(12, 10)
+	assert_eq(grandma.get_node("Layout/Appetite/Score").text, "APPETITE 12 / 10")
+	assert_eq(grandma.appetite_ratio(), 1.0)
+
+
+func test_reduced_motion_stops_grandma_idle_animation() -> void:
+	var main := _add_main()
+	var grandma = main.get_node("Content/HUD/GrandmaScorer")
+
+	main.set_reduced_motion(true)
+	assert_false(grandma.is_idle_motion_active())
+	main.set_reduced_motion(false)
+	assert_true(grandma.is_idle_motion_active())
 
 
 func test_hopper_queue_places_the_next_egg_closest_to_its_lower_outlet() -> void:
@@ -401,7 +449,7 @@ func test_hopper_top_displays_count_and_opens_an_unordered_egg_collection() -> v
 	var inspector = main.get_node("ContainerInspector")
 
 	assert_eq(hopper_button.text, "HOPPER 4")
-	assert_gte(hopper_button.size.x, 148.0)
+	assert_gte(hopper_button.size.x, 200.0)
 	assert_gte(hopper_button.size.y, 40.0)
 	assert_false(hopper_button.tooltip_text.to_upper().contains("ORDER"))
 	assert_eq(hopper_button.accessibility_name, "Inspect hopper: 4 eggs remaining")
@@ -462,7 +510,7 @@ func test_empty_bin_remains_clickable_and_reports_that_it_is_empty() -> void:
 	assert_eq(inspector.empty_text(), "THE BIN IS EMPTY")
 
 
-func test_barless_hud_keeps_day_three_controls_clear() -> void:
+func test_mature_machine_layout_uses_the_stage_for_play_and_existing_controls() -> void:
 	var main := _add_main()
 	assert_true(main.start_dev_day(3))
 	await get_tree().process_frame
@@ -472,11 +520,28 @@ func test_barless_hud_keeps_day_three_controls_clear() -> void:
 	assert_false(main.has_node("Content/Header"))
 	assert_false(main.has_node("Content/FooterPlate"))
 	assert_false(main.has_node("Content/Feedback"))
-	assert_false(hud.get_global_rect().intersects(stage.get_global_rect()))
+	assert_true(hud.get_global_rect().intersects(stage.get_global_rect()))
 	assert_gt(stage.get_global_rect().end.y, 700.0)
+	var grandma: Control = main.get_node("Content/HUD/GrandmaScorer")
+	var machine = main.get_node("Content/Stage/Workshop")
+	var pipe: Control = main.get_node("Content/Stage/Pipe")
+	var first_slot: Control = main.get_node("Content/Stage/Belt/Slots/Slot1")
+	var bin_button: Control = main.get_node("Content/Stage/Belt/BinInspect")
+	assert_true(machine.uses_curved_bin_exit())
+	assert_eq(machine.hopper_outlet_global_position(), machine.conveyor_entry_global_position())
+	assert_gte(pipe.size.x, 185.0)
+	assert_gte(pipe.size.y, 300.0)
+	assert_gt(first_slot.position.x, pipe.get_global_rect().end.x - stage.global_position.x)
+	assert_gte(first_slot.position.y, 220.0)
+	assert_gte(bin_button.size.x, 130.0)
+	assert_gte(bin_button.size.y, 170.0)
 	for circuit_button: Control in main.get_node("Content/Stage/CircuitBank").get_children():
 		if circuit_button.visible:
 			assert_true(stage.get_global_rect().encloses(circuit_button.get_global_rect()))
+			assert_false(grandma.get_global_rect().intersects(circuit_button.get_global_rect()))
+			assert_gte(circuit_button.size.y, 170.0)
+			assert_lte(circuit_button.size.y, 210.0)
+			assert_gt(circuit_button.get_global_rect().end.y, 670.0)
 
 
 func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
@@ -487,7 +552,7 @@ func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
 
 	assert_true(main.is_dev_mode())
 	assert_eq(main.dev_day_number(), 3)
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 0 / 9")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
 	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 10")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots").get_child_count(), 5)
 	assert_eq(main.get_node("Content/Stage/CircuitBank").get_child_count(), 3)
@@ -495,7 +560,7 @@ func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
 	main.restart_day()
 
 	assert_eq(main.dev_day_number(), 3)
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 0 / 9")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
 
 
 func test_plover_shell_information_shows_the_four_point_payoff() -> void:
@@ -843,7 +908,7 @@ func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() ->
 		"egg_hatched",
 		"conveyor_advanced",
 	])
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 3 / 10")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 3 / 10")
 
 
 func test_hatch_burst_carries_resolved_points_into_the_score_before_event_completion() -> void:
@@ -859,7 +924,7 @@ func test_hatch_burst_carries_resolved_points_into_the_score_before_event_comple
 	var point_text_when_burst_started := [""]
 	presenter.hatch_payoff_started.connect(
 		func(_slot_index: int, _points_awarded: int) -> void:
-			score_when_burst_started[0] = main.get_node("Content/HUD/Score").text
+			score_when_burst_started[0] = main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text
 			point_text_when_burst_started[0] = payoff.point_text()
 			milestones.append("burst")
 	)
@@ -875,11 +940,11 @@ func test_hatch_burst_carries_resolved_points_into_the_score_before_event_comple
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_eq(score_when_burst_started[0], "SCORE 0 / 10")
+	assert_eq(score_when_burst_started[0], "APPETITE 0 / 10")
 	assert_eq(point_text_when_burst_started[0], "+3")
 	assert_gte(payoff.fragment_count(), 12)
 	assert_eq(milestones, ["burst", "score:3:3", "event"])
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 3 / 10")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 3 / 10")
 	assert_false(payoff.is_active())
 
 
@@ -956,7 +1021,7 @@ func test_double_yolker_hatch_has_a_large_two_yolk_six_point_payoff() -> void:
 	await _press_and_wait(main, "RedCircuit")
 
 	assert_eq(reveal, ["DOUBLE YOLKER!", "+6", 2])
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 6 / 10")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 6 / 10")
 	assert_false(payoff.is_active())
 
 
@@ -982,7 +1047,7 @@ func test_restart_clears_an_interrupted_hatch_payoff_without_committing_score() 
 	assert_false(payoff.is_active())
 	assert_eq(payoff.point_text(), "")
 	assert_eq(committed_scores, [])
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 0 / 10")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 10")
 
 
 func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_payoff() -> void:
@@ -1008,7 +1073,7 @@ func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_payoff() ->
 		"egg_hatched", "conveyor_advanced",
 	])
 	assert_eq(points_landed, [1])
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 1 / 10")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 1 / 10")
 
 
 func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
@@ -1142,7 +1207,7 @@ func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY 1 COMPLETE")
 	assert_string_contains(
 		main.get_node("ResultOverlay/Card/Content/ResultScore").text,
-		"TARGET MET"
+		"APPETITE MET"
 	)
 	assert_string_contains(
 		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
@@ -1216,7 +1281,7 @@ func test_success_opens_three_free_quality_offers_on_a_separate_screen() -> void
 	).size(), 3)
 	assert_string_contains(
 		main.get_node("BirdOfferOverlay/Card/Content/BirdOfferSummary").text,
-		"DAY 2 TARGET 9"
+		"DAY 2 APPETITE 9"
 	)
 	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 1")
 	await get_tree().process_frame
@@ -1386,7 +1451,7 @@ func test_claiming_a_free_bird_then_leaving_starts_day_two_with_the_larger_flock
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_false(main.get_node("ProductionLoader").visible)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER %d" % (expected_flock_size - 1))
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 0 / 9")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
 	assert_false(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().is_empty())
 	assert_false(main.has_node("Content/Stage/Belt/Slots/Slot6"))
 	for hammer_index in range(1, 6):
@@ -1468,7 +1533,7 @@ func test_replacing_the_session_cancels_an_active_production_loading_sequence() 
 	assert_false(main.get_node("ProductionLoader").visible)
 	assert_false(main.is_input_locked())
 	assert_eq(completion_count[0], 0)
-	assert_eq(main.get_node("Content/HUD/Score").text, "SCORE 0 / 10")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 10")
 
 
 func _press_and_wait(main: Control, circuit_name: String) -> void:

@@ -9,7 +9,10 @@ func test_main_scene_can_be_instantiated() -> void:
 	add_child_autofree(main)
 	assert_eq(main.name, "Main")
 	assert_null(main.get_node_or_null("Content/Header"))
-	assert_not_null(main.get_node_or_null("Content/HUD/Score"))
+	assert_not_null(main.get_node_or_null("Content/HUD/GrandmaScorer"))
+	assert_not_null(main.get_node_or_null(
+		"Content/HUD/GrandmaScorer/Layout/Appetite/Score"
+	))
 	assert_not_null(main.get_node_or_null("Content/HUD/Thwacks"))
 	assert_not_null(main.get_node_or_null("Content/HUD/Settings"))
 	assert_not_null(main.get_node_or_null("Content/Stage/Belt/Slots/Slot1"))
