@@ -111,3 +111,29 @@ Append observed evidence. Keep observation, interpretation, and proposed respons
 **Interpretation:** Hopper exhaustion alone does not create a strong enough tempo boundary. The live conveyor lets a recycled egg rejoin the same wave before the previous one has resolved.
 
 **Proposed response:** Keep ordinary hopper feeding unchanged, but require both hopper and conveyor to be empty before reshuffling the bin into a new hopper. Test whether this creates a meaningful five-egg capacity breakpoint without making recovery irrelevant inside ten thwacks.
+
+## 2026-08-16 — Automated all-lever strategy probe
+
+**Question:** Does keeping every lever active create useful positional agency without making empty pulls dominant, and which Day 1 tuning lever best addresses the observed ease of the five-egg opening?
+
+**Context:** Automated resolver-level study, not a human fun or comprehension test. Exact search evaluated every reachable action route across 50 seeds for each configuration. Four policies then played 2,000 seeded runs per configuration: an occupied-target greedy policy, random selection among occupied circuits, unrestricted random selection, and a two-ply tactical policy with perfect seed and hidden-outcome information. The configurations were the current 8-point/10-thwack Day 1, the same flock at a 9-point target, the four-egg post-Chicken-merge flock at 9 points, +1 toughness on every starting Chicken and Cuckoo at 8 points, and the current 8-point flock with 9 thwacks.
+
+**Observed:**
+
+| Configuration | Exact wins | Fastest-win range | Occupied greedy | Random occupied | Perfect-info two-ply |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Current Day 1: target 8, 10 thwacks | 50/50 | 6–8 pulls | 100.0% | 89.0% | 100.0% |
+| Current shells: target 9, 10 thwacks | 50/50 | 6–9 pulls | 71.9% | 54.3% | 100.0% |
+| Post-merge flock: target 9, 10 thwacks | 50/50 | 7–10 pulls | 66.4% | 51.4% | 100.0% |
+| +1 starting toughness: target 8, 10 thwacks | 50/50 | 6–10 pulls | 17.4% | 11.6% | 50.7% |
+| Current Day 1: target 8, 9 thwacks | 50/50 | 6–8 pulls | 80.7% | 65.2% | 100.0% |
+
+Across all 250 exact seed/configuration cases, an empty pull never shortened the fastest win and was never required by every fastest route. It could appear in an equally fast route in 25/50 current Day 1 seeds, 30/50 target-9 seeds, 36/50 post-merge seeds, 14/50 tougher-shell seeds, and 25/50 nine-thwack seeds. Red's occupied opening was always at least tied for the fastest route; opening with empty Blue or Pink was never strictly better. Representative equal-speed routes used an empty pull to change alignment before creating later paired hits and Cuckoo echo batches. Unrestricted random play won only 7.9% of current Day 1 runs, confirming that repeated empty pulls consume the budget rapidly rather than creating free cycling.
+
+The current Day 1 exact routes always retained at least two thwacks. At target 9, 23/50 fastest routes used nine pulls. In the post-merge case, 17/50 fastest routes required the final tenth pull. With +1 starting toughness, 32/50 fastest routes needed nine or ten pulls.
+
+**Interpretation:** The always-active lever rule appears strategically safe in this sample. Empty pulls expand the set of viable routes but do not create a faster dominant strategy; their value is expressive and positional rather than economic. The opening choice remains weakly biased toward Red, so the rule does not by itself create a compelling first-turn dilemma.
+
+The current 8-point opening is a forgiving tutorial and is consistent with the prior human observation that Day 1 feels easy. Raising every starting shell by one is likely the wrong response: it suppresses ordinary-policy success sharply and delays hatches, while the post-merge flock is already tight enough that one third of exact samples need all ten pulls. A 9-point target creates a stronger but still completely solvable puzzle with the existing hatch cadence. A 9-thwack opening is a gentler alternative that preserves both 8-point scoring routes, but giving the opening day less time than later days is harder to explain and causes successful tactical play to bypass recycling more often. These are balance and strategic-potential inferences; no automated policy establishes whether the choices feel fun or legible to a new player.
+
+**Proposed response:** Keep all levers active and do not increase starting or merged-egg toughness. Human-test the current 8-point opening against a 9-point opening under the same ten-thwack budget, watching whether the higher target improves tension without collapsing the perceived scoring routes into “hatch all three Chickens.” If an immediate numeric prototype is needed, target 9 has stronger support than tougher shells; retain the 8-point version as the control.
