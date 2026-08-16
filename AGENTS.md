@@ -34,6 +34,7 @@ Before editing, identify the relevant source of truth, code entry point, and exi
 
 Run checks proportionate to the change:
 
+- When launching the game for agent-led testing or visual verification, mute it before interacting; do not change the default audio state used for normal player runs.
 - deterministic behavior: relevant GUT specs, then the complete suite;
 - UI or scene composition: GUT invariants plus an editor or running-game check;
 - animation or timing: sequencing-contract review plus cancellation/replacement checks;

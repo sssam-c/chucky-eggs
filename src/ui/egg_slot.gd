@@ -1,12 +1,12 @@
 extends Button
 
+const PREVIEW_CONTENT_SCALE := Vector2(0.82, 0.82)
+
 @export var slot_index := -1
 
 @onready var _content: Control = %EggContent
 @onready var _egg_visual: Control = %EggVisual
 @onready var _toughness_label: Label = %Toughness
-@onready var _kind_label: Label = %Kind
-@onready var _caption_label: Label = %Caption
 
 var _egg: Dictionary = {}
 var _preview := false
@@ -32,8 +32,6 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 		_egg_visual.clear_egg()
 		_egg_visual.visible = false
 		_toughness_label.visible = false
-		_kind_label.text = ""
-		_caption_label.text = "" if preview else "SLOT %d" % (slot_index + 1)
 		disabled = true
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
 		focus_mode = Control.FOCUS_NONE
@@ -47,9 +45,6 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 	_egg_visual.set_egg(_egg, preview)
 	_toughness_label.visible = true
 	_toughness_label.text = str(_egg.toughness)
-	var kind_name := String(_egg.kind).to_upper()
-	_kind_label.text = kind_name if preview else ""
-	_caption_label.text = "" if preview else "%s  •  SLOT %d" % [kind_name, slot_index + 1]
 	disabled = true
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
@@ -79,8 +74,6 @@ func is_bare_belt_mode() -> bool:
 func set_circuit_appearance(circuit_id: String, color: Color, _symbol: String) -> void:
 	_circuit_id = circuit_id
 	_circuit_color = color
-	if is_instance_valid(_caption_label):
-		_caption_label.add_theme_color_override("font_color", color.lightened(0.28))
 	queue_redraw()
 
 
@@ -169,8 +162,9 @@ func reset_motion() -> void:
 	if not is_node_ready():
 		return
 	_content.position = _content_origin
+	_content.pivot_offset = _content.size * 0.5
 	_content.rotation = 0.0
-	_content.scale = Vector2.ONE
+	_content.scale = PREVIEW_CONTENT_SCALE if _preview else Vector2.ONE
 	_content.modulate = Color.WHITE
 	_content.z_index = 0
 

@@ -58,17 +58,10 @@ func _draw() -> void:
 		draw_line(Vector2(bar, 62), Vector2(bar, 151), Color("40170f"), 6.0)
 		draw_line(Vector2(1100, 106), Vector2(1189, 106), Color("40170f"), 6.0)
 
-	# Cyan supply pipe and three-egg chute.
+	# Gravity hopper and three-egg magazine. The lowest visible egg is next,
+	# matching the downward queue motion before it reaches the conveyor.
 	_draw_spoon_mount_shadows()
-	_draw_pipe(Vector2(34, 8), Vector2(34, 278), 42.0)
-	_draw_pipe(Vector2(34, 18), Vector2(148, 18), 42.0)
-	draw_rect(Rect2(13, 54, 116, 246), Color(0.05, 0.15, 0.16, 0.86), true)
-	draw_rect(Rect2(13, 54, 116, 246), Color("2d7d7e"), false, 5.0)
-	for brace_y in [54.0, 132.0, 210.0, 294.0]:
-		draw_rect(Rect2(6, brace_y - 7, 130, 14), Color("192327"), true)
-		draw_line(Vector2(8, brace_y - 5), Vector2(134, brace_y - 5), Color("4ba5a1"), 3.0)
-		draw_circle(Vector2(15, brace_y), 4.0, Color("c17831"))
-		draw_circle(Vector2(127, brace_y), 4.0, Color("c17831"))
+	_draw_supply_hopper()
 
 	_draw_straight_machine()
 
@@ -161,10 +154,64 @@ func _draw_route_arrow(center: Vector2, direction: Vector2) -> void:
 	]), Color("f0a23f"))
 
 
-func _draw_pipe(from: Vector2, to: Vector2, width: float) -> void:
-	draw_line(from, to, Color("101416"), width + 10.0, true)
-	draw_line(from, to, Color("236164"), width, true)
-	draw_line(from - Vector2(width * 0.18, 0), to - Vector2(width * 0.18, 0), Color(0.35, 0.76, 0.74, 0.35), 5.0, true)
+func _draw_supply_hopper() -> void:
+	var hopper_bounds := Rect2(7, 4, 150, 304)
+	_draw_contact_shadow(hopper_bounds, 8.0)
+
+	# Wide receiving bowl, tapered into a glass-fronted gravity magazine.
+	var bowl := PackedVector2Array([
+		Vector2(8, 12), Vector2(158, 12), Vector2(139, 78),
+		Vector2(124, 95), Vector2(42, 95), Vector2(27, 78),
+	])
+	draw_colored_polygon(bowl, Color("252629"))
+	var bowl_inner := PackedVector2Array([
+		Vector2(20, 25), Vector2(146, 25), Vector2(131, 68),
+		Vector2(118, 82), Vector2(48, 82), Vector2(35, 68),
+	])
+	draw_colored_polygon(bowl_inner, Color("17383a"))
+	draw_polyline(
+		PackedVector2Array([
+			Vector2(8, 12), Vector2(158, 12), Vector2(139, 78),
+			Vector2(124, 95), Vector2(42, 95), Vector2(27, 78), Vector2(8, 12),
+		]),
+		Color("8b512e"),
+		5.0,
+		true
+	)
+	draw_line(Vector2(17, 21), Vector2(149, 21), Color("e0a044"), 4.0, true)
+
+	var magazine := Rect2(35, 78, 96, 211)
+	draw_rect(magazine, Color("111719"), true)
+	draw_rect(magazine.grow(-5.0), Color(0.07, 0.31, 0.32, 0.64), true)
+	draw_line(Vector2(47, 87), Vector2(47, 278), Color(0.35, 0.76, 0.74, 0.30), 4.0, true)
+	draw_rect(magazine, Color("2d7d7e"), false, 5.0)
+
+	# A narrow elbow makes the relationship to the first belt bay explicit.
+	var outlet := PackedVector2Array([
+		Vector2(35, 283), Vector2(131, 283), Vector2(151, 304),
+		Vector2(190, 304), Vector2(190, 328), Vector2(139, 328),
+		Vector2(112, 302), Vector2(54, 302),
+	])
+	draw_colored_polygon(outlet, Color("252629"))
+	draw_polyline(
+		PackedVector2Array([
+			Vector2(35, 283), Vector2(131, 283), Vector2(151, 304),
+			Vector2(190, 304), Vector2(190, 328), Vector2(139, 328),
+			Vector2(112, 302), Vector2(54, 302), Vector2(35, 283),
+		]),
+		Color("8b512e"),
+		5.0,
+		true
+	)
+	draw_line(Vector2(143, 313), Vector2(180, 313), Color("e0a044"), 3.0, true)
+
+	# Downward chevrons reinforce queue direction without competing with egg labels.
+	for arrow_y in [116.0, 194.0, 272.0]:
+		_draw_route_arrow(Vector2(143, arrow_y), Vector2.DOWN)
+
+	for bolt in [Vector2(42, 86), Vector2(124, 86), Vector2(42, 282), Vector2(124, 282)]:
+		draw_circle(bolt, 4.0, Color("c17831"))
+		draw_circle(bolt - Vector2(1, 1), 1.2, Color(1.0, 0.79, 0.47, 0.52))
 
 
 func _draw_iron_panel(rect: Rect2, border := Color("6d4026")) -> void:

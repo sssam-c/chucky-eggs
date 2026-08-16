@@ -9,7 +9,7 @@ static var _magnifier_cursor_registered := false
 
 var _egg: Dictionary = {}
 var _preview := false
-var _hover_popover: PopupPanel
+var _hover_popover: Control
 
 
 func _ready() -> void:

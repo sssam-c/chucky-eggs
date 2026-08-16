@@ -38,7 +38,7 @@ Quality should make one egg denser rather than simply better. Two same-tier eggs
 
 - One five-slot conveyor and the same three circuits on every day; the Day 3 hairpin and refit are removed.
 - Every visible lever is usable throughout an unlocked day. A completely empty circuit fires its linked spoons, advances the conveyor, and spends one thwack without damage.
-- A visible bin count beside the final slot.
+- Visible hopper and bin counts at their physical containers. Clicking the hopper opens a non-positional egg collection without revealing queue order beyond the three pipe previews; clicking the bin opens every stored egg with retained toughness and states that return order will shuffle.
 - Resolver events for an egg entering the bin, the complete bin reshuffling into an empty hopper, and the next egg entering slot 1.
 - Binned eggs retain remaining toughness, tier, score, Double Yolker result, and every other egg fact.
 - The injected shuffler owns every recycle order, preserving deterministic retries.
@@ -79,7 +79,7 @@ Quality should make one egg denser rather than simply better. Two same-tier eggs
 - Session tests prove the default eight-egg flock, ten-thwack budget, 10/9 targets, Sparrow probability, five slots and three circuits, saved-cash shop progression, scaled merge offers, and deterministic failure/retry behavior.
 - UI tests prove all five bird species use distinct placeholder colours and shapes, each egg exactly matches its bird colour, Sparrow odds are legible, the starting pool and day budget are visible, all three levers remain available during unlocked day play, a one-hit hatch plays in resolver order, the bin is visible, merged shells show their required damage, and cancellation/input-lock contracts still hold.
 - The 2026-08-16 automated strategy probe supplies an exact-search and heuristic baseline for the superseded five-egg opening. Run the same exact and heuristic sweep against the eight-egg Sparrow opening at targets 9, 10, and 11 before using it as balance evidence.
-- A running-game check at 1280×720 and 1024×576 must verify the bin reads as the conveyor destination, the bin and hopper counts remain legible, recycled eggs visibly return through the pipe, and no removed hairpin controls leave empty or overlapping space.
+- A running-game check at 1280×720 and 1024×576 must verify the bin reads as the conveyor destination, the bin and hopper counts remain legible and clickable, both content inspectors fit and scroll, recycled eggs visibly return through the pipe, and no removed hairpin controls leave empty or overlapping space.
 - Play one seeded run through at least two shop decisions and Day 3. Record whether the first Sparrow makes hatching and scoring immediately clear, whether the player notices a Sparrow Double Yolker, which scoring route they pursue, whether recycling appears at all, which legal merges they accept or refuse, and whether a Sparrow merge reads as an opportunity or a trap.
 
 ## Candidate next validation slice — Feed a character, not a score

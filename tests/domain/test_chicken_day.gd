@@ -51,15 +51,19 @@ func test_sparrow_hatches_on_its_first_hit_and_doubles_its_point_when_rolled() -
 	assert_true(hatch.double_yolker)
 
 
-func test_daily_pool_exposes_only_the_next_three_hopper_eggs() -> void:
+func test_daily_pool_exposes_three_preview_eggs_and_non_positional_hopper_contents() -> void:
 	var state: Dictionary = ChickenDay.new([
-		"chicken", "cuckoo", "plover", "chicken", "cuckoo",
+		"chicken", "spoonbill", "plover", "cuckoo", "sparrow",
 	]).snapshot()
 
 	assert_eq(state.slots[0].kind, "chicken")
 	assert_eq(state.pipe.map(func(egg: Dictionary) -> String: return egg.kind), [
-		"cuckoo", "plover", "chicken",
+		"spoonbill", "plover", "cuckoo",
 	])
+	assert_eq(state.hopper_contents.map(func(egg: Dictionary) -> String: return egg.kind), [
+		"cuckoo", "plover", "sparrow", "spoonbill",
+	])
+	assert_false("hopper" in state)
 	assert_eq(state.hopper_egg_count, 4)
 
 
@@ -409,7 +413,11 @@ func test_unhatched_egg_is_binned_after_slot_five() -> void:
 	assert_eq(binned.size(), 1)
 	assert_eq(binned[0].remaining_toughness, 1)
 	assert_eq(binned[0].bin_egg_count, 1)
-	assert_eq(day.snapshot().bin_egg_count, 1)
+	var state: Dictionary = day.snapshot()
+	assert_eq(state.bin_egg_count, 1)
+	assert_eq(state.bin.size(), 1)
+	assert_eq(state.bin[0].kind, "chicken")
+	assert_eq(state.bin[0].toughness, 1)
 
 
 func test_tenth_valid_circuit_ends_day_and_rejects_further_requests() -> void:

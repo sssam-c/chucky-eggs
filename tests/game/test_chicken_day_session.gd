@@ -115,11 +115,12 @@ func test_session_can_initialize_day_three_on_the_single_track_for_dev_tools() -
 
 func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 	var session = ChickenDaySession.new(
-		42, ProducerFlock.new([{"kind": "chicken"}]), IdentityShuffler.new()
+		42, ProducerFlock.new([{"kind": "chicken"}, {"kind": "cuckoo"}]), IdentityShuffler.new()
 	)
 	var exposed_state: Dictionary = session.state()
 	exposed_state.remaining_thwacks = 2
 	exposed_state.slots[0].toughness = 1
+	exposed_state.hopper_contents[0].toughness = 1
 
 	var events: Array[Dictionary] = session.submit_circuit("red")
 	var actual_state: Dictionary = session.state()
@@ -127,6 +128,8 @@ func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 	assert_eq(events[0].type, "circuit_fired")
 	assert_eq(actual_state.remaining_thwacks, 9)
 	assert_eq(actual_state.slots[1].toughness, 2)
+	assert_eq(actual_state.slots[0].kind, "cuckoo")
+	assert_eq(actual_state.slots[0].toughness, 4)
 
 
 func test_restart_replaces_the_day_with_initial_state() -> void:

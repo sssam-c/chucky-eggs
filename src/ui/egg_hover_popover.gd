@@ -1,5 +1,5 @@
 class_name EggHoverPopover
-extends PopupPanel
+extends PanelContainer
 
 const EDGE_MARGIN := 8.0
 const EGG_GAP := 12.0
@@ -35,7 +35,7 @@ func cancel() -> void:
 
 
 func popup_rect() -> Rect2:
-	return Rect2(Vector2(position), Vector2(size))
+	return get_global_rect()
 
 
 func _place_and_show(request: int) -> void:
@@ -49,9 +49,11 @@ func _place_and_show(request: int) -> void:
 	var initial_size := Vector2i(
 		maxi(1, int(initial_minimum.x)), maxi(1, int(initial_minimum.y))
 	)
-	popup(_bounds_for(target_rect, viewport_rect, initial_size))
+	var initial_bounds := _bounds_for(target_rect, viewport_rect, initial_size)
+	size = Vector2(initial_bounds.size)
+	global_position = Vector2(initial_bounds.position)
+	show()
 
-	# A hidden Window does not settle visibility-dependent container minimums.
 	# Give the transparent card one visible layout pass, then reveal the fitted result.
 	await get_tree().process_frame
 	if request != _show_request or not is_instance_valid(_target):
@@ -66,8 +68,8 @@ func _place_and_show(request: int) -> void:
 	)
 	_card.size = settled_minimum
 	var settled_bounds := _bounds_for(target_rect, viewport_rect, settled_size)
-	size = settled_bounds.size
-	position = settled_bounds.position
+	size = Vector2(settled_bounds.size)
+	global_position = Vector2(settled_bounds.position)
 	_card.modulate = Color.WHITE
 
 

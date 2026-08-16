@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://src/ui/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
@@ -14,6 +14,7 @@
 [ext_resource type="FontFile" path="res://addons/gut/fonts/LobsterTwo-Bold.ttf" id="13_display"]
 [ext_resource type="Script" path="res://src/presentation/ui_feedback.gd" id="14_feedback"]
 [ext_resource type="Script" path="res://src/presentation/workshop_ambience.gd" id="15_ambience"]
+[ext_resource type="PackedScene" path="res://src/ui/egg_container_popup.tscn" id="16_container"]
 
 [sub_resource type="StyleBoxFlat" id="TitlePlate"]
 bg_color = Color(0.075, 0.048, 0.038, 0.99)
@@ -376,6 +377,19 @@ offset_left = 6.0
 offset_top = 42.0
 offset_right = 142.0
 offset_bottom = 314.0
+mouse_filter = 2
+
+[node name="HopperInspect" type="Button" parent="Content/Stage/Pipe"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 2.0
+offset_top = -30.0
+offset_right = 152.0
+offset_bottom = 15.0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 13
+text = "HOPPER 7"
+tooltip_text = "Inspect every egg in the hopper"
 
 [node name="Preview" type="Control" parent="Content/Stage/Pipe"]
 layout_mode = 1
@@ -384,14 +398,15 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="Next1" parent="Content/Stage/Pipe/Preview" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 3.0
-offset_top = -5.0
+offset_top = 151.0
 offset_right = 133.0
-offset_bottom = 95.0
+offset_bottom = 251.0
 
 [node name="Next2" parent="Content/Stage/Pipe/Preview" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
@@ -405,9 +420,9 @@ offset_bottom = 173.0
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 3.0
-offset_top = 151.0
+offset_top = -5.0
 offset_right = 133.0
-offset_bottom = 251.0
+offset_bottom = 95.0
 
 [node name="HammerBank" type="Control" parent="Content/Stage"]
 layout_mode = 1
@@ -495,6 +510,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 
 [node name="Slot1" parent="Content/Stage/Belt/Slots" instance=ExtResource("2_egg")]
 unique_name_in_owner = true
@@ -554,6 +570,17 @@ theme_override_constants/shadow_outline_size = 3
 theme_override_font_sizes/font_size = 16
 text = "BIN 0"
 horizontal_alignment = 1
+
+[node name="BinInspect" type="Button" parent="Content/Stage/Belt"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1128.0
+offset_top = 322.0
+offset_right = 1234.0
+offset_bottom = 430.0
+mouse_default_cursor_shape = 2
+flat = true
+tooltip_text = "Inspect every egg stored in the bin"
 
 [node name="EchoTrace" type="Control" parent="Content/Stage"]
 unique_name_in_owner = true
@@ -719,6 +746,9 @@ volume_db = -7.0
 [node name="Loss" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
 [node name="Pipe" type="AudioStreamPlayer" parent="Presentation/Audio"]
+
+[node name="ContainerInspector" parent="." instance=ExtResource("16_container")]
+unique_name_in_owner = true
 
 [node name="ResultOverlay" type="Control" parent="."]
 unique_name_in_owner = true

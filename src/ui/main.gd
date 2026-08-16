@@ -50,6 +50,9 @@ const MotionTokens = preload("res://src/presentation/motion_tokens.gd")
 @onready var _machine_stage: Control = $Content/Stage/Workshop
 @onready var _workshop_ambience: Control = %Ambience
 @onready var _bin_label: Label = %Bin
+@onready var _hopper_inspect_button: Button = %HopperInspect
+@onready var _bin_inspect_button: Button = %BinInspect
+@onready var _container_inspector = %ContainerInspector
 @onready var _echo_trace: Control = %EchoTrace
 @onready var _hatch_payoff: Control = %HatchPayoff
 @onready var _presenter: Node = %Presentation
@@ -96,11 +99,15 @@ func _ready() -> void:
 	microinteraction_controls.append(_restart_button)
 	microinteraction_controls.append(_mute_button)
 	microinteraction_controls.append(_reduced_motion_button)
+	microinteraction_controls.append(_hopper_inspect_button)
+	microinteraction_controls.append(_bin_inspect_button)
 	_ui_feedback.configure(microinteraction_controls)
 	_restart_button.pressed.connect(_on_restart_pressed)
 	_continue_workshop_button.pressed.connect(_on_leave_shop_pressed)
 	_mute_button.toggled.connect(set_muted)
 	_reduced_motion_button.toggled.connect(set_reduced_motion)
+	_hopper_inspect_button.pressed.connect(_on_hopper_inspect_pressed)
+	_bin_inspect_button.pressed.connect(_on_bin_inspect_pressed)
 	_presenter.event_presented.connect(_on_presentation_event)
 	_production_loader.loading_started.connect(
 		func(producer_count: int, egg_count: int) -> void:
@@ -136,6 +143,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_circuit_requested(circuit_id: String) -> void:
 	if _input_locked:
 		return
+	_container_inspector.dismiss()
 
 	var events: Array[Dictionary] = _session.submit_circuit(circuit_id)
 	if events.is_empty() or events[0].type == "thwack_rejected":
@@ -145,6 +153,7 @@ func _on_circuit_requested(circuit_id: String) -> void:
 	_request_generation += 1
 	var request_generation := _request_generation
 	_set_circuit_interaction(false)
+	_set_container_inspection_enabled(false)
 	playback_started.emit()
 	var completed: bool = await _presenter.play_events(events)
 	if not completed or request_generation != _request_generation:
@@ -153,6 +162,28 @@ func _on_circuit_requested(circuit_id: String) -> void:
 	_input_locked = false
 	_render(events)
 	playback_completed.emit()
+
+
+func _on_hopper_inspect_pressed() -> void:
+	if _input_locked:
+		return
+	var state: Dictionary = _session.state()
+	if String(state.phase) != "day":
+		return
+	_container_inspector.show_contents(
+		"hopper", state.hopper_contents, _hopper_inspect_button
+	)
+	_ui_feedback.panel_opened()
+
+
+func _on_bin_inspect_pressed() -> void:
+	if _input_locked:
+		return
+	var state: Dictionary = _session.state()
+	if String(state.phase) != "day":
+		return
+	_container_inspector.show_contents("bin", state.bin, _bin_inspect_button)
+	_ui_feedback.panel_opened()
 
 
 func _on_restart_pressed() -> void:
@@ -256,6 +287,7 @@ func restart_day() -> void:
 	_cancel_workshop_motion()
 	_cancel_result_motion()
 	_ui_feedback.cancel_all()
+	_container_inspector.dismiss()
 	_input_locked = false
 	_session.restart()
 	_render([], true)
@@ -298,6 +330,7 @@ func _replace_session(session, dev_day_number: int) -> void:
 	_cancel_workshop_motion()
 	_cancel_result_motion()
 	_ui_feedback.cancel_all()
+	_container_inspector.dismiss()
 	_input_locked = false
 	_session = session
 	_dev_day_number = dev_day_number
@@ -348,6 +381,16 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 	_thwacks_label.text = "THWACKS %d" % state.remaining_thwacks
 	_hopper_count_label.text = "HOPPER %d" % state.hopper_egg_count
 	_bin_label.text = "BIN %d" % state.bin_egg_count
+	_hopper_inspect_button.text = "HOPPER %d" % state.hopper_egg_count
+	_hopper_inspect_button.accessibility_name = "Inspect hopper: %d %s remaining" % [
+		state.hopper_egg_count,
+		"egg" if int(state.hopper_egg_count) == 1 else "eggs",
+	]
+	_bin_inspect_button.accessibility_name = "Inspect bin: %d %s stored" % [
+		state.bin_egg_count,
+		"egg" if int(state.bin_egg_count) == 1 else "eggs",
+	]
+	_set_container_inspection_enabled(String(state.phase) == "day" and not _input_locked)
 
 	for slot_index in range(_belt_slots.size()):
 		var slot_egg: Dictionary = state.slots[slot_index] if slot_index < state.slots.size() else {}
@@ -925,6 +968,11 @@ func _set_circuit_interaction(enabled: bool) -> void:
 			circuit_button.set_available(false)
 			continue
 		circuit_button.set_available(enabled)
+
+
+func _set_container_inspection_enabled(enabled: bool) -> void:
+	_hopper_inspect_button.disabled = not enabled
+	_bin_inspect_button.disabled = not enabled
 
 
 func _focus_first_available_lever() -> void:

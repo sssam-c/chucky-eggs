@@ -75,7 +75,7 @@ func test_occupied_egg_hover_uses_a_custom_magnifying_glass_cursor() -> void:
 		assert_eq(cursor_texture.get_size(), Vector2(32.0, 32.0))
 
 
-func test_egg_name_stays_outside_shell_and_whole_egg_owns_anchored_information_card() -> void:
+func test_stage_egg_names_are_available_in_hover_cards_without_visible_labels() -> void:
 	var slot = load("res://src/ui/egg_slot.tscn").instantiate()
 	slot.slot_index = 1
 	add_child_autofree(slot)
@@ -88,8 +88,8 @@ func test_egg_name_stays_outside_shell_and_whole_egg_owns_anchored_information_c
 	}
 	slot.render_egg(cuckoo, false)
 
-	assert_eq(slot.get_node("Caption").text, "CUCKOO  •  SLOT 2")
-	assert_eq(slot.get_node("EggContent/Kind").text, "")
+	assert_null(slot.get_node_or_null("Caption"))
+	assert_null(slot.get_node_or_null("EggContent/Kind"))
 	var egg_visual: Control = slot.get_node("EggContent/EggVisual")
 	assert_eq(egg_visual.mouse_filter, Control.MOUSE_FILTER_PASS)
 	assert_eq(egg_visual.tooltip_text, "")
@@ -102,8 +102,11 @@ func test_egg_name_stays_outside_shell_and_whole_egg_owns_anchored_information_c
 	assert_string_contains(card.card_text(), "copies damage")
 
 	slot.render_egg(cuckoo, false, true)
-	assert_eq(slot.get_node("Caption").text, "")
-	assert_eq(slot.get_node("EggContent/Kind").text, "CUCKOO")
+	assert_null(slot.get_node_or_null("Caption"))
+	assert_null(slot.get_node_or_null("EggContent/Kind"))
+	var preview_card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(preview_card)
+	assert_string_contains(preview_card.card_text(), "CUCKOO.")
 
 
 func test_compact_egg_preview_uses_the_same_complete_anchored_hover_card() -> void:
@@ -123,6 +126,23 @@ func test_compact_egg_preview_uses_the_same_complete_anchored_hover_card() -> vo
 	add_child_autofree(card)
 	assert_string_contains(card.card_text(), "CUCKOO.")
 	assert_string_contains(card.card_text(), "copies damage")
+
+
+func test_hopper_preview_hover_card_stays_in_the_same_canvas() -> void:
+	var main := _add_main()
+	var egg_visual: Control = main.get_node(
+		"Content/Stage/Pipe/Preview/Next1/EggContent/EggVisual"
+	)
+	var popover: Node = egg_visual.get_node("EggHoverPopover")
+
+	assert_false(popover is Window)
+	if popover is Window:
+		return
+	assert_eq((popover as Control).mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	egg_visual.show_hover_card()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_true(egg_visual.is_hover_card_visible())
 
 
 func test_egg_hover_builds_a_clear_wrapped_information_card() -> void:
@@ -311,6 +331,117 @@ func test_main_renders_initial_day_and_shell_information() -> void:
 	assert_not_null(main.get_node("Content/Accessibility/ReducedMotion"))
 	assert_true(main.theme.has_stylebox("normal", "Button"))
 	assert_true(main.theme.has_stylebox("checked", "CheckButton"))
+
+
+func test_hopper_queue_places_the_next_egg_closest_to_its_lower_outlet() -> void:
+	var main := _add_main()
+	var previews: Array[Node] = main.get_node("Content/Stage/Pipe/Preview").get_children()
+
+	assert_eq(previews.size(), 3)
+	assert_gt((previews[0] as Control).position.y, (previews[1] as Control).position.y)
+	assert_gt((previews[1] as Control).position.y, (previews[2] as Control).position.y)
+
+
+func test_hopper_preview_eggs_are_compact_and_open_anchored_popovers() -> void:
+	var main := _add_main()
+	var preview: Control = main.get_node("Content/Stage/Pipe/Preview/Next1")
+	var preview_content: Control = preview.get_node("EggContent")
+	var belt_content: Control = main.get_node(
+		"Content/Stage/Belt/Slots/Slot1/EggContent"
+	)
+	var egg_visual: Control = preview.get_node("EggContent/EggVisual")
+
+	assert_lt(preview_content.scale.x, belt_content.scale.x)
+	assert_lt(preview_content.scale.y, belt_content.scale.y)
+	assert_eq(main.get_node("Content/Stage/Pipe").mouse_filter, Control.MOUSE_FILTER_IGNORE)
+	assert_eq(
+		main.get_node("Content/Stage/Pipe/Preview").mouse_filter,
+		Control.MOUSE_FILTER_IGNORE
+	)
+	assert_eq(
+		main.get_node("Content/Stage/Belt/Slots").mouse_filter,
+		Control.MOUSE_FILTER_IGNORE
+	)
+	assert_eq(egg_visual.mouse_filter, Control.MOUSE_FILTER_PASS)
+
+	egg_visual.show_hover_card()
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_true(egg_visual.is_hover_card_visible())
+	var card_rect: Rect2 = egg_visual.hover_card_rect()
+	assert_true(egg_visual.get_viewport().get_visible_rect().encloses(card_rect))
+	assert_gt(card_rect.position.x, egg_visual.get_global_rect().end.x)
+
+
+func test_hopper_top_displays_count_and_opens_an_unordered_egg_collection() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "spoonbill", "plover", "cuckoo", "sparrow",
+	])
+	var hopper_button: Button = main.get_node("Content/Stage/Pipe/HopperInspect")
+	var inspector = main.get_node("ContainerInspector")
+
+	assert_eq(hopper_button.text, "HOPPER 4")
+	assert_gte(hopper_button.size.x, 148.0)
+	assert_gte(hopper_button.size.y, 40.0)
+	assert_false(hopper_button.tooltip_text.to_upper().contains("ORDER"))
+	assert_eq(hopper_button.accessibility_name, "Inspect hopper: 4 eggs remaining")
+	hopper_button.pressed.emit()
+	await get_tree().process_frame
+
+	assert_true(inspector.visible)
+	assert_eq(inspector.container_kind(), "hopper")
+	assert_eq(inspector.egg_count(), 4)
+	assert_eq(inspector.egg_kinds(), ["cuckoo", "plover", "sparrow", "spoonbill"])
+	assert_eq(inspector.position_labels(), [])
+	assert_eq(inspector.hopper_tile_count(), 4)
+	assert_string_contains(inspector.heading_text(), "HOPPER • 4 EGGS")
+	assert_eq(inspector.guidance_text(), "")
+	assert_false(inspector.all_visible_text().contains("NEXT"))
+	assert_false(inspector.all_visible_text().contains("ORDER"))
+	assert_true(inspector.get_node("Panel/Margin/Stack/Close").has_focus())
+	inspector.close_requested.emit()
+	await get_tree().process_frame
+	assert_false(inspector.visible)
+	assert_true(hopper_button.has_focus())
+
+
+func test_bin_click_opens_every_stored_egg_with_retained_toughness() -> void:
+	var main := _add_main_for_ordered_eggs(["spoonbill", "spoonbill"])
+	main.set_reduced_motion(true)
+	for circuit_name in ["RedCircuit", "RedCircuit", "RedCircuit", "RedCircuit", "PinkCircuit"]:
+		await _press_and_wait(main, circuit_name)
+	var bin_button: Button = main.get_node("Content/Stage/Belt/BinInspect")
+	var inspector = main.get_node("ContainerInspector")
+
+	assert_eq(main.get_node("Content/Stage/Belt/Bin").text, "BIN 1")
+	assert_eq(bin_button.accessibility_name, "Inspect bin: 1 egg stored")
+	bin_button.pressed.emit()
+	await get_tree().process_frame
+
+	assert_true(inspector.visible)
+	assert_eq(inspector.container_kind(), "bin")
+	assert_eq(inspector.egg_count(), 1)
+	assert_eq(inspector.egg_kinds(), ["spoonbill"])
+	assert_eq(inspector.egg_at(0).toughness, 1)
+	assert_eq(inspector.position_labels(), ["STORED 1"])
+	assert_string_contains(inspector.guidance_text(), "RETURN ORDER SHUFFLES")
+	assert_false(inspector.all_visible_text().contains("IS DOUBLE YOLKER"))
+
+
+func test_empty_bin_remains_clickable_and_reports_that_it_is_empty() -> void:
+	var main := _add_main()
+	var bin_button: Button = main.get_node("Content/Stage/Belt/BinInspect")
+	var inspector = main.get_node("ContainerInspector")
+
+	assert_false(bin_button.disabled)
+	bin_button.pressed.emit()
+	await get_tree().process_frame
+
+	assert_true(inspector.visible)
+	assert_eq(inspector.egg_count(), 0)
+	assert_eq(inspector.empty_text(), "THE BIN IS EMPTY")
 
 
 func test_integrated_header_and_footer_keep_day_three_controls_clear() -> void:
@@ -591,6 +722,38 @@ func test_empty_blue_strike_fires_advances_and_spends_a_thwack() -> void:
 	assert_string_contains(main.get_node("Content/Feedback").text, "Empty strike")
 
 
+func test_pipe_queue_descends_while_the_next_egg_feeds_the_belt() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+	])
+	main.set_reduced_motion(false)
+	var previews: Array[Node] = main.get_node("Content/Stage/Pipe/Preview").get_children()
+	var second_origin_y: float = previews[1].motion_content().position.y
+	var third_origin_y: float = previews[2].motion_content().position.y
+	var conveyor_presented := [false]
+	main.presentation_event.connect(func(event_type: String) -> void:
+		if event_type == "conveyor_advanced":
+			conveyor_presented[0] = true
+	)
+
+	main.get_node("Content/Stage/CircuitBank/BlueCircuit").pressed.emit()
+	for _frame_index in range(120):
+		if conveyor_presented[0]:
+			break
+		await get_tree().process_frame
+	assert_true(conveyor_presented[0])
+	if not conveyor_presented[0]:
+		return
+	await get_tree().process_frame
+
+	assert_gt(previews[1].motion_content().position.y, second_origin_y)
+	assert_gt(previews[2].motion_content().position.y, third_origin_y)
+	await main.playback_completed
+	await get_tree().process_frame
+	assert_eq(previews[1].motion_content().position, Vector2.ZERO)
+	assert_eq(previews[2].motion_content().position, Vector2.ZERO)
+
+
 func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> void:
 	var main := _add_main_for_ordered_eggs([
 		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
@@ -639,10 +802,14 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	red.pressed.emit()
 
 	assert_true(main.is_input_locked())
+	assert_true(main.get_node("Content/Stage/Pipe/HopperInspect").disabled)
+	assert_true(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 	await main.playback_completed
 	await get_tree().process_frame
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 9")
 	assert_eq(completion_count[0], 1)
+	assert_false(main.get_node("Content/Stage/Pipe/HopperInspect").disabled)
+	assert_false(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 
 
 func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() -> void:

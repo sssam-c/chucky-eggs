@@ -17,7 +17,7 @@ Choose which eggs deserve the spoon while every thwack carries the conveyor clos
 
 ## Player loop
 
-Inspect the five-slot conveyor, the next three eggs in the pipe, the bin count, the score, and the visible thwack countdown. Choose any spoon control, balancing the eggs it can damage against their current positions and the time required to cycle missed eggs back through the hopper. An empty circuit can be used to advance the belt, but still costs one of the day's thwacks.
+Inspect the five-slot conveyor, the next three eggs in the pipe, the hopper and bin counts, the score, and the visible thwack countdown. Click the hopper to inspect every egg it contains without revealing their queue positions, or click the bin to inspect every stored egg. Choose any spoon control, balancing the eggs it can damage against their current positions and the time required to cycle missed eggs back through the hopper. An empty circuit can be used to advance the belt, but still costs one of the day's thwacks.
 
 After a successful day, bank the unused-thwack payout and enter one unified shop before the next flock loads. The player may recruit or retire birds, merge matching birds, purchase factory upgrades, or leave and save the cash. A failed day awards no cash or shop visit and is retried with the same flock and deterministic shuffle sequence.
 
@@ -37,8 +37,9 @@ After a successful day, bank the unused-thwack payout and enter one unified shop
 - Every bird begins at Standard quality. Two birds of the same species and quality can be merged into one bird of the next quality tier. Queueing the merge costs £1 for a Prize output, £2 for Champion, and thereafter an amount equal to the numbered output tier.
 - Each quality tier multiplies that bird's exact egg score, exact maximum toughness, and exact Double Yolker chance by 1.5. Displayed and awarded scores and percentages round down; maximum toughness rounds up to the whole amount of damage required to hatch. Exact values are retained between tiers.
 - Standard Chicken eggs have a 2% Double Yolker chance and Standard Sparrow eggs have a 5% chance. Standard Cuckoo, Plover, and Spoonbill eggs currently have no Double Yolker chance, so quality multiplication alone does not create one.
-- The pipe shows up to the next three hopper eggs. After each non-final thwack, slot 1 receives the next existing hopper egg when one is available. The bin only becomes a new hopper after the existing hopper and conveyor have both cleared.
-- Egg toughness, current score, cash balance, remaining thwacks, hopper count, and bin count are always visible.
+- The pipe shows up to the next three hopper eggs in queue order. Clicking the hopper shows every remaining hopper egg as a non-positional collection; it does not reveal the order beyond the pipe preview. After each non-final thwack, slot 1 receives the next existing hopper egg when one is available. The bin only becomes a new hopper after the existing hopper and conveyor have both cleared.
+- Clicking the bin shows every stored egg and its retained toughness. The bin's future return order remains unknown until its seeded reshuffle occurs.
+- Egg toughness, current score, cash balance, remaining thwacks, hopper count, and bin count are always visible. The hopper count is also displayed on its clickable top.
 - Hovering an egg shows a compact information card aligned beside that egg, with its species and quality, points, and floored Double Yolker chance. The card includes only the effect categories that apply to that egg. Whether the egg's hidden roll actually made it a Double Yolker is not revealed before hatching.
 - All optional between-day progression lives in the same shop. Recruitment, retirement, merging, and factory upgrades cost cash; merging also consumes two matching birds.
 - The merge picker lists every owned species-and-quality group. Groups without an eligible partner remain visible but unavailable. Choosing a group reveals its eligible partners; currently, only another bird of the same species and quality is eligible.

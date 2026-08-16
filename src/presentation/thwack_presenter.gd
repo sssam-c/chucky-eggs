@@ -412,9 +412,7 @@ func _present_bin(event: Dictionary, playback_generation: int) -> bool:
 func _present_bin_reshuffle(event: Dictionary, playback_generation: int) -> bool:
 	_play(_shuffle_player)
 	_bin_label.text = "BIN %d" % int(event.bin_egg_count)
-	for preview_index in range(_pipe_slots.size()):
-		var egg: Dictionary = event.pipe[preview_index] if preview_index < event.pipe.size() else {}
-		_pipe_slots[preview_index].render_egg(egg, false, true)
+	_render_pipe(event.pipe)
 	if _reduced_motion:
 		return true
 	_bin_label.pivot_offset = _bin_label.size * 0.5
@@ -428,22 +426,33 @@ func _present_bin_reshuffle(event: Dictionary, playback_generation: int) -> bool
 
 func _present_pipe_entry(event: Dictionary, playback_generation: int) -> bool:
 	_play(_pipe_player)
-	_belt_slots[0].render_egg(event.egg, false, false)
-	for preview_index in range(_pipe_slots.size()):
-		var egg: Dictionary = event.pipe[preview_index] if preview_index < event.pipe.size() else {}
-		_pipe_slots[preview_index].render_egg(egg, false, true)
 	if _reduced_motion:
+		_belt_slots[0].render_egg(event.egg, false, false)
+		_render_pipe(event.pipe)
 		return true
 
-	var drop := create_tween().set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-	var entry_content: Control = _belt_slots[0].motion_content()
-	entry_content.position.y -= 34.0
-	drop.parallel().tween_property(entry_content, "position:y", 0.0, 0.16)
-	for preview: Button in _pipe_slots:
-		var content: Control = preview.motion_content()
-		content.position.y -= 12.0
-		drop.parallel().tween_property(content, "position:y", 0.0, 0.16)
-	return await _run_tween(drop, playback_generation)
+	var feed := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	var next_content: Control = _pipe_slots[0].motion_content()
+	var entry_step := (
+		_belt_slots[0].global_position - _pipe_slots[0].global_position
+		+ Vector2(0.0, 18.0)
+	)
+	feed.tween_property(next_content, "position", next_content.position + entry_step, 0.18)
+	feed.parallel().tween_property(next_content, "modulate:a", 0.22, 0.18)
+	for preview_index in range(1, _pipe_slots.size()):
+		var content: Control = _pipe_slots[preview_index].motion_content()
+		if _pipe_slots[preview_index].current_egg().is_empty():
+			continue
+		var queue_step := (
+			_pipe_slots[preview_index - 1].global_position
+			- _pipe_slots[preview_index].global_position
+		)
+		feed.parallel().tween_property(content, "position", content.position + queue_step, 0.18)
+	if not await _run_tween(feed, playback_generation):
+		return false
+	_belt_slots[0].render_egg(event.egg, false, false)
+	_render_pipe(event.pipe)
+	return true
 
 
 func _present_day_discard(playback_generation: int) -> bool:
@@ -471,6 +480,12 @@ func _render_belt(slots: Array) -> void:
 	for slot_index in range(_belt_slots.size()):
 		var egg: Dictionary = slots[slot_index] if slot_index < slots.size() else {}
 		_belt_slots[slot_index].render_egg(egg, false, false)
+
+
+func _render_pipe(eggs: Array) -> void:
+	for preview_index in range(_pipe_slots.size()):
+		var egg: Dictionary = eggs[preview_index] if preview_index < eggs.size() else {}
+		_pipe_slots[preview_index].render_egg(egg, false, true)
 
 
 func _clear_all_eggs() -> void:

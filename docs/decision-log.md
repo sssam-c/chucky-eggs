@@ -464,10 +464,30 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** Nothing. This adds a discovery cue to D046's anchored hover card.
 
+## D048 — Reveal complete container contents on demand
+
+**Status:** accepted
+
+**Decision:** Keep the three-egg pipe preview, and make the physical hopper top display its remaining count and open a read-only inspector for the complete hopper in exact next-first order. Make the collection bin open the same inspector for every stored egg, including retained toughness. State explicitly that the bin's future return order is not known until its seeded reshuffle. Show all known egg facts but keep the hidden Double Yolker result concealed until hatching.
+
+**Reason:** Counts and a three-egg preview communicate machine flow, but they do not support exact longer-horizon planning or let the player verify which damaged eggs are waiting to return. On-demand inspectors provide complete decision-relevant state without permanently crowding the machine, while preserving the uncertainty that belongs to the later bin reshuffle and jackpot reveal.
+
+**Supersedes:** The earlier information limit in which only the next three hopper eggs and the bin count were inspectable. The three-egg physical preview, D042's bin reshuffle timing, D045's known egg facts, and the hidden Double Yolker result remain.
+
+## D049 — Present hopper contents without queue positions
+
+**Status:** accepted
+
+**Decision:** Keep the clickable hopper count and reveal every remaining hopper egg on demand, but present those eggs as a left-to-right wrapping collection with no positional labels or order language. Expose a non-positional contents snapshot to UI instead of the resolver's queue. Keep the three physical pipe previews as the only view of near-term hopper order. The bin inspector remains a stored-egg list with retained toughness and an explicit warning that its return order will shuffle.
+
+**Reason:** The hopper should read as a container of eggs rather than a planning spreadsheet. A pure egg collection lets the player verify its composition while preserving uncertainty beyond the immediate pipe preview and avoids accidentally coupling presentation to resolver order.
+
+**Supersedes:** D048's exact next-first hopper inspector. D048's complete hopper composition, clickable container counts, bin inspector, known egg facts, and hidden Double Yolker result remain.
+
 <!--
 Copy for the next entry:
 
-## D048 — Short decision title
+## D050 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

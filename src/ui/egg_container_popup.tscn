@@ -1,0 +1,123 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/ui/egg_container_popup.gd" id="1_popup"]
+[ext_resource type="Theme" path="res://src/ui/workshop_theme.tres" id="2_theme"]
+
+[sub_resource type="StyleBoxFlat" id="PopupPanel"]
+bg_color = Color(0.055, 0.038, 0.032, 0.995)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 7
+border_color = Color(0.57, 0.36, 0.16, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+shadow_color = Color(0, 0, 0, 0.72)
+shadow_size = 16
+shadow_offset = Vector2(0, 7)
+
+[sub_resource type="StyleBoxFlat" id="Rule"]
+bg_color = Color(0.88, 0.66, 0.28, 0.45)
+
+[node name="EggContainerPopup" type="PopupPanel"]
+title = "Egg container contents"
+initial_position = 2
+size = Vector2i(640, 500)
+unresizable = true
+exclusive = true
+wrap_controls = false
+theme = ExtResource("2_theme")
+theme_override_styles/panel = SubResource("PopupPanel")
+script = ExtResource("1_popup")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("PopupPanel")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="Stack" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Heading" type="Label" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(1, 0.74, 0.23, 1)
+theme_override_font_sizes/font_size = 25
+text = "HOPPER • 7 EGGS"
+
+[node name="Guidance" type="Label" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
+theme_override_font_sizes/font_size = 13
+
+[node name="Rule" type="PanelContainer" parent="Panel/Margin/Stack"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("Rule")
+
+[node name="Scroll" type="ScrollContainer" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(592, 340)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Contents" type="VBoxContainer" parent="Panel/Margin/Stack/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="HopperEggs" type="HFlowContainer" parent="Panel/Margin/Stack/Scroll/Contents"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 8
+alignment = 1
+
+[node name="Rows" type="VBoxContainer" parent="Panel/Margin/Stack/Scroll/Contents"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 7
+
+[node name="Empty" type="Label" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 340)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.68, 0.65, 0.60, 1)
+theme_override_font_sizes/font_size = 18
+text = "THE BIN IS EMPTY"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Close" type="Button" parent="Panel/Margin/Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+text = "CLOSE"

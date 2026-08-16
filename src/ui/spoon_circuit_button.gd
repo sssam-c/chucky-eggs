@@ -159,29 +159,6 @@ func _draw() -> void:
 	draw_circle(handle - Vector2(5, 5), 4.0, Color(1.0, 0.88, 0.72, 0.40))
 	_draw_symbol(handle, Color("fff0cf") if _available else Color("8e8377"))
 
-	# Put the mapping on the physical control so the footer does not need to
-	# repeat every circuit. The plate remains readable without circuit colour.
-	var mapping := mapping_text()
-	if not mapping.is_empty():
-		var plate_width := maxf(54.0, 28.0 + float(mapping.length()) * 9.0)
-		var plate := Rect2(
-			Vector2(pivot.x - plate_width * 0.5, size.y - 25.0),
-			Vector2(plate_width, 23.0)
-		)
-		draw_rect(Rect2(plate.position + Vector2(2, 3), plate.size), Color(0, 0, 0, 0.48), true)
-		draw_rect(plate, Color("d6b675") if _available else Color("62594b"), true)
-		draw_rect(plate, Color("fff0cf") if highlighted else Color("6b3d1e"), false, 2.0)
-		draw_string(
-			ThemeDB.fallback_font,
-			Vector2(plate.position.x, plate.position.y + 17.0),
-			mapping,
-			HORIZONTAL_ALIGNMENT_CENTER,
-			plate.size.x,
-			14,
-			Color("3a1b12") if _available else Color("292421")
-		)
-
-
 func _lever_pivot() -> Vector2:
 	return Vector2(size.x * 0.5, size.y - 36.0)
 

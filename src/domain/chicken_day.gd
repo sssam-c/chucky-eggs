@@ -53,6 +53,8 @@ func snapshot() -> Dictionary:
 	return {
 		"slots": _slots.duplicate(true),
 		"pipe": _hopper.slice(0, PIPE_PREVIEW_COUNT).duplicate(true),
+		"hopper_contents": _hopper_contents_snapshot(),
+		"bin": _bin.duplicate(true),
 		"hopper_egg_count": _hopper.size(),
 		"bin_egg_count": _bin.size(),
 		"daily_egg_count": _daily_egg_count,
@@ -64,6 +66,25 @@ func snapshot() -> Dictionary:
 		"ended": _ended,
 		"succeeded": _succeeded,
 	}
+
+
+func _hopper_contents_snapshot() -> Array[Dictionary]:
+	var contents := _hopper.duplicate(true)
+	contents.sort_custom(_egg_content_precedes)
+	return contents
+
+
+func _egg_content_precedes(first: Dictionary, second: Dictionary) -> bool:
+	var first_kind := String(first.get("kind", ""))
+	var second_kind := String(second.get("kind", ""))
+	if first_kind != second_kind:
+		return first_kind < second_kind
+	for key in ["tier", "toughness", "max_toughness", "points"]:
+		var first_value := float(first.get(key, 0.0))
+		var second_value := float(second.get(key, 0.0))
+		if not is_equal_approx(first_value, second_value):
+			return first_value < second_value
+	return false
 
 
 func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
