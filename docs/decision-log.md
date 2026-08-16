@@ -484,10 +484,20 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D048's exact next-first hopper inspector. D048's complete hopper composition, clickable container counts, bin inspector, known egg facts, and hidden Double Yolker result remain.
 
+## D050 — Replace bird purchases and pairing with a free day reward
+
+**Status:** accepted
+
+**Decision:** After every successful day, offer three free birds and require the player to choose exactly one before the next day begins. A candidate may be any current species and any quality tier. Remove recruitment purchases, pair merging, and factory upgrades from the shop for now. The remaining shop action is removing an exact bird from the complete flock overview for £3; removal cannot leave the flock empty. Failed attempts continue to retry without a reward or shop visit.
+
+**Reason:** Separating acquisition from cash makes the end of each successful day deliver a clear build choice, while a whole-flock removal action lets the player pay to correct or thin that compulsory growth with full visibility of species and quality. Restricting the shop to one paid action creates a smaller progression slice whose flock-size pressure and quality variance can be evaluated before other economies return.
+
+**Supersedes:** D031's optional flock growth, D032's unified multi-category cash shop, and D033/D038's pair-merging action, fee, reservation, and delayed-resolution rules. D040's quality scaling, the one-bird/one-egg relationship, success-only between-day progression, persistent cash, and failed-day retry behavior remain.
+
 <!--
 Copy for the next entry:
 
-## D050 — Short decision title
+## D051 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

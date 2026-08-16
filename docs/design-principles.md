@@ -10,17 +10,17 @@ Prototype the smallest interaction that can answer a design question. Add conten
 
 Show the state, cost, and likely consequence needed for a meaningful choice. Do not conceal essential rules behind animation, flavor text, or uninspectable randomness.
 
-Every producer contributes exactly one egg to the daily pool. Keep that one-bird, one-egg relationship visible so flock size, pool size, additions, removals, and shuffle odds can be reasoned about directly. Producer offers must show the contributed egg's complete gameplay properties.
+Every producer contributes exactly one egg to the daily pool. Keep that one-bird, one-egg relationship visible so flock size, pool size, additions, removals, and shuffle odds can be reasoned about directly. Bird offers and flock cards must show the contributed egg's complete gameplay properties.
 
 Begin with eight eggs: three Chickens, two Cuckoos, and three Sparrows. One-hit Sparrows establish the hatch-and-score payoff immediately and their elevated Double Yolker chance introduces visible jackpots early. The pool extending beyond the five-slot track keeps new eggs arriving while the player learns to weigh quick Sparrow points, durable Chicken value, and Cuckoo echoes.
 
-Flock growth must be chosen rather than awarded compulsorily. Recruiting another bird should compete with merging or retiring birds, strengthening the factory, or saving cash, so a larger daily pool reflects the player's build direction rather than unavoidable accumulation.
+Successful days now grow the flock by one bird. Preserve agency inside that compulsory growth by offering three legible alternatives, then let the player spend £3 to remove an exact bird from the complete flock overview. The overview should make the resulting daily pool understandable without routing removal through a separate species list.
 
-Quality belongs to interchangeable species-and-tier groups, not named individuals. A merge must expose everything that improves and everything consumed: two matching daily eggs become one egg with 1.5 times their exact individual score, maximum toughness, and Double Yolker chance, while cash equal to the output tier is spent. Show the output's whole required damage, points, and percentage before commitment. Queue merges until the player leaves so a new output cannot immediately erase the intermediate decision cadence.
+Quality belongs to species-and-tier facts rather than named-bird progression. A day reward can arrive at any quality, so each candidate must expose its whole required damage, points, and percentage before commitment. Higher tiers continue to compound from exact internal values even though the player sees whole-number consequences.
 
 Show whole-number consequences wherever the player makes or resolves a choice. Floor score values and displayed percentage chances, round maximum toughness up to the damage actually required, and compound later quality tiers from exact internal values. The interface should never imply that a displayed integer became the new mathematical base.
 
-Show the next day's target whenever recruitment is offered. Use the transition between days to demonstrate where the next hopper comes from: each owned bird contributes exactly one egg.
+Show the next day's target with the bird reward and flock overview. Use the transition between days to demonstrate where the next hopper comes from: each owned bird contributes exactly one egg.
 
 ## Rules resolve once
 
@@ -54,9 +54,7 @@ Seed randomness, inject time, and make state transitions replayable. A surprisin
 
 End the day automatically once a fully resolved thwack meets the target, then convert every unused thwack into cash. The ten-thwack budget keeps the eight-egg opening tense and prevents the compact starting flock from generating the oversized payouts of the former twenty-thwack day. This makes speed-to-target valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
 
-Use one shop for optional run progression. Cash remains the shared opportunity cost for recruitment, retirement, merging, and factory upgrades. Permit multiple legal actions and allow the player to leave with unspent cash.
-
-Merging is density, not a free upgrade. Two eggs with aggregate exact score and toughness of `2V` and `2T` become one with `1.5V` and `1.5T`. The smaller flock cycles concentrated eggs more frequently but loses total score, total shell, and effect frequency. Guard against both universally dominant merges and species-quality combinations that are obvious traps.
+Keep the current shop deliberately narrow: removing a selected bird costs £3, may be repeated while affordable, and can never remove the last bird. Saving remains a valid choice. This makes cash a direct price on thinning the compulsory daily growth without introducing a second list that obscures which quality is being removed.
 
 ## Physicality follows causality
 

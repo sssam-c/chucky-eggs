@@ -10,6 +10,7 @@ signal workshop_transition_settled(token: int, completed: bool)
 const ChickenDaySession = preload("res://src/game/chicken_day_session.gd")
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
 const MotionTokens = preload("res://src/presentation/motion_tokens.gd")
+const FlockBirdButtonScene = preload("res://src/ui/flock_bird_button.tscn")
 
 @onready var _score_label: Label = %Score
 @onready var _cash_label: Label = %Cash
@@ -31,18 +32,13 @@ const MotionTokens = preload("res://src/presentation/motion_tokens.gd")
 @onready var _workshop_balance_label: Label = %WorkshopBalance
 @onready var _workshop_summary_label: Label = %WorkshopSummary
 @onready var _workshop_status_label: Label = %WorkshopStatus
-@onready var _merge_summary_label: Label = %MergeSummary
-@onready var _pairing_source_buttons: VBoxContainer = %PairingSourceButtons
-@onready var _pairing_partner_buttons: VBoxContainer = %PairingPartnerButtons
-@onready var _pairing_prompt_label: Label = %PairingPrompt
-@onready var _extra_thwack_button: Button = %ExtraThwack
-@onready var _retirement_buttons: Dictionary = {
-	"chicken": %RetireChicken,
-	"cuckoo": %RetireCuckoo,
-	"sparrow": %RetireSparrow,
-	"plover": %RetirePlover,
-	"spoonbill": %RetireSpoonbill,
-}
+@onready var _reward_panel: PanelContainer = %RewardPanel
+@onready var _reward_title: Label = %RewardTitle
+@onready var _reward_choices: HBoxContainer = %RewardChoices
+@onready var _flock_panel: PanelContainer = %FlockPanel
+@onready var _flock_overview_title: Label = %FlockOverviewTitle
+@onready var _flock_scroll: ScrollContainer = %FlockScroll
+@onready var _flock_grid: GridContainer = %FlockGrid
 @onready var _continue_workshop_button: Button = %ContinueWorkshop
 @onready var _mute_button: CheckButton = %Mute
 @onready var _reduced_motion_button: CheckButton = %ReducedMotion
@@ -77,7 +73,6 @@ var _workshop_transition: Tween
 var _workshop_transition_serial := 0
 var _active_workshop_transition_token := 0
 var _result_transition: Tween
-var _selected_pairing_source_id := ""
 
 
 func _ready() -> void:
@@ -88,13 +83,8 @@ func _ready() -> void:
 		_producer_choice_buttons[choice_index].pressed.connect(
 			_on_producer_choice_pressed.bind(choice_index)
 		)
-	_extra_thwack_button.pressed.connect(_on_factory_upgrade_pressed.bind("extra_thwack"))
-	for kind: String in _retirement_buttons:
-		_retirement_buttons[kind].pressed.connect(_on_retirement_pressed.bind(kind))
 	var microinteraction_controls: Array = []
 	microinteraction_controls.append_array(_producer_choice_buttons)
-	microinteraction_controls.append(_extra_thwack_button)
-	microinteraction_controls.append_array(_retirement_buttons.values())
 	microinteraction_controls.append(_continue_workshop_button)
 	microinteraction_controls.append(_restart_button)
 	microinteraction_controls.append(_mute_button)
@@ -197,55 +187,15 @@ func _on_producer_choice_pressed(choice_index: int) -> void:
 	if _input_locked:
 		return
 	var state: Dictionary = _session.state()
-	if state.phase != "shop" or choice_index >= state.shop_stock.recruitment.size():
+	if state.phase != "shop" or choice_index >= state.bird_offer.size():
 		return
-	var selected: Dictionary = state.shop_stock.recruitment[choice_index]
-	var events: Array[Dictionary] = _session.purchase_producer(selected.kind)
-	_render(events)
+	_render(_session.claim_bird_offer(choice_index))
 
 
-func _on_pairing_source_pressed(button: Button) -> void:
+func _on_flock_bird_pressed(producer_index: int) -> void:
 	if _input_locked:
 		return
-	var state: Dictionary = _session.state()
-	if state.phase != "shop":
-		return
-	var source_id := String(button.get_meta("pairing_source_id", ""))
-	var source := _pairing_source_with_id(state.shop_stock.pairing_sources, source_id)
-	if source.is_empty() or source.eligible_partners.is_empty():
-		return
-	_selected_pairing_source_id = source_id
-	_render_pairing_picker(state)
-	_workshop_status_label.text = "CHOOSE A PERFECT MATCH FOR %s %s" % [
-		_tier_name(int(source.tier)), String(source.kind).to_upper(),
-	]
-	_workshop_status_label.add_theme_color_override("font_color", Color("91fff2"))
-	for partner_button: Button in _pairing_partner_buttons.get_children():
-		if partner_button.visible and not partner_button.disabled:
-			partner_button.grab_focus()
-			return
-
-
-func _on_pairing_partner_pressed(button: Button) -> void:
-	if _input_locked:
-		return
-	var kind := String(button.get_meta("pairing_kind", ""))
-	var tier := int(button.get_meta("pairing_tier", -1))
-	if kind.is_empty() or tier < 0:
-		return
-	_render(_session.queue_merge(kind, tier))
-
-
-func _on_factory_upgrade_pressed(upgrade_id: String) -> void:
-	if _input_locked:
-		return
-	_render(_session.purchase_factory_upgrade(upgrade_id))
-
-
-func _on_retirement_pressed(kind: String) -> void:
-	if _input_locked:
-		return
-	_render(_session.purchase_retirement(kind))
+	_render(_session.remove_bird(producer_index))
 
 
 func _on_leave_shop_pressed() -> void:
@@ -334,7 +284,6 @@ func _replace_session(session, dev_day_number: int) -> void:
 	_input_locked = false
 	_session = session
 	_dev_day_number = dev_day_number
-	_selected_pairing_source_id = ""
 	_render([], true)
 	_focus_first_available_lever()
 
@@ -421,8 +370,6 @@ func _render(events: Array[Dictionary], fresh_day := false) -> void:
 	var failed_result: bool = String(state.phase) == "failed"
 	if shop_visible:
 		_render_shop(state, events)
-	else:
-		_selected_pairing_source_id = ""
 	if successful_result or failed_result:
 		_hide_workshop_immediately()
 		_render_result(state, successful_result)
@@ -464,10 +411,8 @@ func _render_result(state: Dictionary, successful: bool) -> void:
 		_cash_payout_label.text = "+£%d FROM UNUSED THWACKS  •  BALANCE £%d" % [
 			state.last_cash_awarded, state.cash,
 		]
-		_result_summary_label.text = (
-			"GENERAL STORE OPEN  •  UNSPENT CASH CARRIES FORWARD"
-		)
-		_restart_button.text = "ENTER THE GENERAL STORE"
+		_result_summary_label.text = "CHOOSE ONE FREE BIRD  •  THEN REVIEW YOUR FLOCK"
+		_restart_button.text = "VIEW BIRD OFFER"
 		return
 	_result_label.text = "DAY FAILED"
 	_result_label.add_theme_color_override("font_color", Color("ff8a3d"))
@@ -548,78 +493,61 @@ func _dismiss_success_result() -> void:
 func _render_shop(state: Dictionary, events: Array[Dictionary]) -> void:
 	_workshop_balance_label.text = "BALANCE £%d" % state.cash
 	_workshop_summary_label.text = (
-		"DAY %d COMPLETE  •  £%d BANKED\nDAY %d TARGET %d  •  FLOCK %d → %d"
+		"DAY %d COMPLETE  •  £%d BANKED\nDAY %d TARGET %d  •  FLOCK %d"
 		% [
 			state.day_number,
 			state.last_cash_awarded,
 			state.day_number + 1,
 			state.next_day_target_score,
 			state.producers.size(),
-			state.projected_flock_size,
 		]
 	)
 
-	var recruitment: Array = state.shop_stock.recruitment
+	var bird_offer: Array = state.bird_offer
+	_set_reward_offer_visible(not state.bird_offer_claimed)
 	for choice_index in range(_producer_choice_buttons.size()):
 		var choice_button: Button = _producer_choice_buttons[choice_index]
-		choice_button.visible = choice_index < recruitment.size()
+		choice_button.visible = choice_index < bird_offer.size()
 		if not choice_button.visible:
 			continue
-		choice_button.render_choice(recruitment[choice_index])
-		choice_button.disabled = state.cash < int(recruitment[choice_index].price)
+		choice_button.render_choice(bird_offer[choice_index])
+		choice_button.disabled = false
 
-	_merge_summary_label.text = (
-		"PICK OF THE LITTER  •  %d MERGE%s QUEUED  •  PICK BIRD, THEN MATCH"
-		% [
-			_pending_pair_count(state.pending_merges),
-			"" if _pending_pair_count(state.pending_merges) == 1 else "S",
-		]
-	)
-	_render_pairing_picker(state)
-	var factory_offer := _offer_with_id(state.shop_stock.factory_upgrades, "extra_thwack")
-	_render_shop_offer_button(
-		_extra_thwack_button,
-		factory_offer,
-		"STARTING THWACKS %d → %d  •  £%d" if not factory_offer.is_empty() else "EXTRA STARTING THWACK  •  BOUGHT",
-		state.cash,
-		[
-			int(factory_offer.get("current_starting_thwacks", 0)),
-			int(factory_offer.get("next_starting_thwacks", 0)),
-			int(factory_offer.get("price", 0)),
-		]
-	)
-
-	var retirement_price := int(state.shop_stock.retirement.price)
-	for kind: String in _retirement_buttons:
-		var retirement_group := _lowest_unreserved_quality_group(state.quality_groups, kind)
-		var available_count := int(retirement_group.get("available_count", 0))
-		var retirement_button: Button = _retirement_buttons[kind]
-		retirement_button.text = "%s %s\n×%d  •  £%d" % [
-			_tier_short_name(int(retirement_group.get("tier", 0))),
-			kind.to_upper(),
-			available_count,
-			retirement_price,
-		]
-		retirement_button.accessibility_description = (
-			"Retire one %s %s bird for %d pounds."
-			% [
-				_tier_name(int(retirement_group.get("tier", 0))).to_lower(),
-				kind.capitalize(),
-				retirement_price,
-			]
+	for existing: Node in _flock_grid.get_children():
+		_ui_feedback.unconfigure([existing])
+		_flock_grid.remove_child(existing)
+		existing.queue_free()
+	var removal_price := int(state.shop_stock.removal.price)
+	for producer_index in range(state.flock_overview.size()):
+		var bird_button: Button = FlockBirdButtonScene.instantiate()
+		_flock_grid.add_child(bird_button)
+		bird_button.render_bird(
+			state.flock_overview[producer_index],
+			removal_price,
+			state.bird_offer_claimed
+			and state.producers.size() > 1
+			and state.cash >= removal_price
 		)
-		retirement_button.disabled = (
-			available_count == 0
-			or state.projected_flock_size <= 1
-			or state.cash < retirement_price
-		)
+		bird_button.pressed.connect(_on_flock_bird_pressed.bind(producer_index))
+		_ui_feedback.configure([bird_button])
 
 	_continue_workshop_button.text = "LEAVE SHOP & START DAY %d" % (state.day_number + 1)
+	_continue_workshop_button.disabled = not state.bird_offer_claimed
 	_workshop_status_label.text = _shop_status(events)
-	var rejected := not events.is_empty() and String(events[0].type) == "shop_purchase_rejected"
+	var rejected := not events.is_empty() and String(events[0].type) == "shop_action_rejected"
 	_workshop_status_label.add_theme_color_override(
 		"font_color", Color("ff9a60") if rejected else Color("91fff2")
 	)
+
+
+func _set_reward_offer_visible(visible: bool) -> void:
+	_reward_panel.visible = visible
+	_reward_title.visible = visible
+	_reward_choices.visible = visible
+	_flock_panel.offset_top = 382.0 if visible else 88.0
+	_flock_overview_title.offset_top = 390.0 if visible else 100.0
+	_flock_overview_title.offset_bottom = 420.0 if visible else 130.0
+	_flock_scroll.offset_top = 424.0 if visible else 138.0
 
 
 func _show_workshop() -> void:
@@ -738,7 +666,7 @@ func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
 				if not cash_presented:
 					_ui_feedback.present_value(_cash_label, "cash", Color("ffbf42"))
 					cash_presented = true
-			"producer_purchased", "producer_retired", "producer_merge_queued", "factory_upgrade_purchased":
+			"bird_removed":
 				if not cash_presented:
 					_ui_feedback.present_value(_cash_label, "cash", Color("ffbf42"))
 					_ui_feedback.present_value(
@@ -746,153 +674,10 @@ func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
 					)
 					cash_presented = true
 				_ui_feedback.confirm(_workshop_status_label)
-			"shop_purchase_rejected":
+			"bird_offer_claimed":
+				_ui_feedback.confirm(_workshop_status_label)
+			"shop_action_rejected":
 				_ui_feedback.reject(_workshop_status_label)
-
-
-func _render_shop_offer_button(
-	button: Button,
-	offer: Dictionary,
-	label_format: String,
-	cash: int,
-	values: Array
-) -> void:
-	button.text = label_format % values if not offer.is_empty() else label_format
-	button.disabled = offer.is_empty() or cash < int(offer.get("price", 0))
-
-
-func _render_pairing_picker(state: Dictionary) -> void:
-	var sources: Array = state.shop_stock.pairing_sources
-	var selected_source := _pairing_source_with_id(sources, _selected_pairing_source_id)
-	if not selected_source.is_empty() and selected_source.eligible_partners.is_empty():
-		_selected_pairing_source_id = ""
-		selected_source = {}
-
-	_ensure_pairing_button_count(_pairing_source_buttons, sources.size(), true)
-	for source_index in range(_pairing_source_buttons.get_child_count()):
-		var button := _pairing_source_buttons.get_child(source_index) as Button
-		button.visible = source_index < sources.size()
-		if not button.visible:
-			continue
-		var source: Dictionary = sources[source_index]
-		var pair_count := int(source.available_pair_count)
-		button.set_meta("pairing_source_id", String(source.id))
-		button.text = (
-			"%s %s ×%d\n%d PERFECT PAIR%s"
-			% [
-				_tier_name(int(source.tier)),
-				String(source.kind).to_upper(),
-				int(source.available_count),
-				pair_count,
-				"" if pair_count == 1 else "S",
-			]
-			if pair_count > 0
-			else "%s %s ×%d\nNO PERFECT MATCH" % [
-				_tier_name(int(source.tier)),
-				String(source.kind).to_upper(),
-				int(source.available_count),
-			]
-		)
-		button.disabled = source.eligible_partners.is_empty()
-		button.set_pressed_no_signal(String(source.id) == _selected_pairing_source_id)
-		button.accessibility_name = "%s %s pairing source" % [
-			_tier_name(int(source.tier)).to_lower(), String(source.kind).capitalize(),
-		]
-		button.accessibility_description = (
-			"%d perfect pairs available. Choose to inspect eligible matches."
-			% pair_count
-			if pair_count > 0
-			else "No unreserved bird of the same species and quality is available."
-		)
-
-	var partners: Array = (
-		selected_source.eligible_partners if not selected_source.is_empty() else []
-	)
-	_pairing_prompt_label.text = (
-		"2  •  MATCH FOR %s %s" % [
-			_tier_name(int(selected_source.tier)), String(selected_source.kind).to_upper(),
-		]
-		if not selected_source.is_empty()
-		else "2  •  PICK A MATCH"
-	)
-	_ensure_pairing_button_count(_pairing_partner_buttons, partners.size(), false)
-	for partner_index in range(_pairing_partner_buttons.get_child_count()):
-		var button := _pairing_partner_buttons.get_child(partner_index) as Button
-		button.visible = partner_index < partners.size()
-		if not button.visible:
-			continue
-		var partner: Dictionary = partners[partner_index]
-		var price := int(partner.price)
-		button.set_meta("pairing_kind", String(partner.kind))
-		button.set_meta("pairing_tier", int(partner.tier))
-		button.text = "PERFECT MATCH  •  %s %s\n£%d → %s  •  %d PTS / %d SHELL / %d%%" % [
-			_tier_name(int(partner.tier)),
-			String(partner.kind).to_upper(),
-			price,
-			_tier_name(int(partner.output_tier)),
-			int(partner.next_points),
-			int(partner.next_toughness),
-			int(partner.next_double_yolk_percent),
-		]
-		button.disabled = state.cash < price
-		button.accessibility_name = "Pair with another %s %s bird" % [
-			_tier_name(int(partner.tier)).to_lower(), String(partner.kind).capitalize(),
-		]
-		button.accessibility_description = (
-			"Costs %s. Produces one %s bird whose egg has %d toughness, is worth %d points, and has %d percent Double Yolker chance.%s"
-			% [
-				_cash_phrase(price),
-				_tier_name(int(partner.output_tier)).to_lower(),
-				int(partner.next_toughness),
-				int(partner.next_points),
-				int(partner.next_double_yolk_percent),
-				" Insufficient cash." if button.disabled else "",
-			]
-		)
-
-
-func _ensure_pairing_button_count(container: VBoxContainer, count: int, source: bool) -> void:
-	while container.get_child_count() < count:
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(226.0, 48.0 if source else 68.0)
-		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		button.add_theme_font_size_override("font_size", 11)
-		button.toggle_mode = source
-		container.add_child(button)
-		if source:
-			button.pressed.connect(_on_pairing_source_pressed.bind(button))
-		else:
-			button.pressed.connect(_on_pairing_partner_pressed.bind(button))
-		_ui_feedback.configure([button])
-
-
-func _pairing_source_with_id(sources: Array, source_id: String) -> Dictionary:
-	for source: Dictionary in sources:
-		if String(source.id) == source_id:
-			return source
-	return {}
-
-
-func _cash_phrase(price: int) -> String:
-	return "one pound" if price == 1 else "%d pounds" % price
-
-
-func _pending_pair_count(pending_merges: Array) -> int:
-	var total := 0
-	for pending: Dictionary in pending_merges:
-		total += int(pending.pair_count)
-	return total
-
-
-func _lowest_unreserved_quality_group(groups: Array, kind: String) -> Dictionary:
-	for group: Dictionary in groups:
-		var available_count := int(group.bird_count) - int(group.reserved_count)
-		if group.kind == kind and available_count > 0:
-			return {
-				"tier": int(group.tier),
-				"available_count": available_count,
-			}
-	return {}
 
 
 func _tier_name(tier: int) -> String:
@@ -906,58 +691,34 @@ func _tier_name(tier: int) -> String:
 	return "TIER %d" % tier
 
 
-func _tier_short_name(tier: int) -> String:
-	match tier:
-		0:
-			return "STD"
-		1:
-			return "PRIZE"
-		2:
-			return "CHAMP"
-	return "T%d" % tier
-
-
-func _offer_with_id(offers: Array, offer_id: String) -> Dictionary:
-	for offer: Dictionary in offers:
-		if offer.id == offer_id:
-			return offer
-	return {}
-
-
 func _shop_status(events: Array[Dictionary]) -> String:
 	if not events.is_empty():
 		var event: Dictionary = events[0]
 		match String(event.type):
-			"producer_purchased":
-				return "%s RECRUITED  •  £%d REMAINING" % [
-					String(event.producer.kind).to_upper(), event.cash_total,
-				]
-			"producer_retired":
-				return "ONE %s %s RETIRED  •  £%d REMAINING" % [
+			"bird_offer_claimed":
+				return "%s %s JOINED YOUR FLOCK  •  NO CHARGE" % [
 					_tier_name(int(event.producer.tier)),
 					String(event.producer.kind).to_upper(),
-					event.cash_total,
 				]
-			"producer_merge_queued":
-				return "%s %s PAIR QUEUED → %s  •  £%d PAID  •  £%d REMAINING  •  FLOCK %d" % [
-					String(event.kind).to_upper(),
-					_tier_name(int(event.tier)),
-					_tier_name(int(event.output_tier)),
-					int(event.price),
+			"bird_removed":
+				return "%s %s REMOVED  •  £%d REMAINING" % [
+					_tier_name(int(event.producer.tier)),
+					String(event.producer.kind).to_upper(),
 					int(event.cash_total),
-					int(event.projected_flock_size),
 				]
-			"factory_upgrade_purchased":
-				return "EXTRA STARTING THWACK INSTALLED  •  £%d REMAINING" % event.cash_total
-			"shop_purchase_rejected":
-				return "PURCHASE DECLINED  •  %s" % String(event.reason).replace("_", " ").to_upper()
-	return "PICK A BIRD, THEN AN ELIGIBLE MATCH  •  OR SAVE YOUR CASH"
+			"shop_action_rejected":
+				return "ACTION DECLINED  •  %s" % String(event.reason).replace("_", " ").to_upper()
+	return "CHOOSE ONE FREE BIRD TO CONTINUE  •  REMOVING A BIRD COSTS £3"
 
 
 func _focus_first_shop_action() -> void:
 	for choice_button: Button in _producer_choice_buttons:
 		if choice_button.visible and not choice_button.disabled:
 			choice_button.grab_focus()
+			return
+	for bird_button: Button in _flock_grid.get_children():
+		if not bird_button.disabled:
+			bird_button.grab_focus()
 			return
 	_continue_workshop_button.grab_focus()
 

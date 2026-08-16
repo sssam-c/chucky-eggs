@@ -7,12 +7,12 @@ const SeededChanceRoller = preload("res://src/core/seeded_chance_roller.gd")
 const SeededShuffler = preload("res://src/core/seeded_shuffler.gd")
 const DEFAULT_DAY_SEED := 20260813
 const REWARD_SEED_STEP := 1009
+const REWARD_QUALITY_SEED_STEP := 37
 const DOUBLE_YOLK_SEED_STEP := 9
 const DAY_ONE_TARGET := 10
 const LATER_DAY_TARGET := 9
-const RECRUIT_PRICE := 3
-const RETIRE_PRICE := 2
-const EXTRA_THWACK_PRICE := 5
+const REMOVE_BIRD_PRICE := 3
+const QUALITY_ADVANCE_CHANCE := 0.25
 
 var _day
 var _flock
@@ -20,12 +20,11 @@ var _day_seed: int
 var _shuffler
 var _day_number := 1
 var _phase := "day"
-var _shop_recruitment: Array[Dictionary] = []
-var _pending_merges: Dictionary = {}
+var _bird_offer: Array[Dictionary] = []
+var _bird_offer_claimed := true
 var _cash := 0
 var _last_cash_awarded := 0
 var _starting_thwacks := ChickenDay.STARTING_THWACKS
-var _factory_upgrades: Dictionary = {"extra_thwack": false}
 
 
 func _init(
@@ -44,18 +43,19 @@ func _init(
 func state() -> Dictionary:
 	var current_state: Dictionary = _day.snapshot()
 	current_state["producers"] = _flock.snapshot()
+	current_state["flock_overview"] = _production_snapshot()
 	current_state["day_number"] = _day_number
 	current_state["next_day_target_score"] = _target_for_day(_day_number + 1)
 	current_state["phase"] = _phase
+	current_state["bird_offer"] = _bird_offer.duplicate(true)
+	current_state["bird_offer_claimed"] = _bird_offer_claimed
 	current_state["shop_stock"] = _shop_stock()
 	current_state["quality_groups"] = _quality_groups_snapshot()
-	current_state["pending_merges"] = _pending_merges_snapshot()
-	current_state["projected_flock_size"] = _flock.snapshot().size() - _pending_merge_count()
+	current_state["projected_flock_size"] = _flock.snapshot().size()
 	current_state["cash"] = _cash
 	current_state["last_cash_awarded"] = _last_cash_awarded
 	current_state["machine_slot_count"] = ChickenDay.SLOT_COUNT
 	current_state["starting_thwacks"] = _starting_thwacks
-	current_state["factory_upgrades"] = _factory_upgrades.duplicate(true)
 	current_state["machine_circuits"] = ChickenDay.circuits_for_slot_count(ChickenDay.SLOT_COUNT)
 	return current_state
 
@@ -71,8 +71,8 @@ func submit_circuit(circuit_id: String) -> Array[Dictionary]:
 		ended_event = event
 		if event.succeeded:
 			_phase = "shop"
-			_shop_recruitment = _create_recruitment_stock()
-			_pending_merges.clear()
+			_bird_offer = _create_bird_offer()
+			_bird_offer_claimed = false
 		else:
 			_phase = "failed"
 	if not ended_event.is_empty() and ended_event.succeeded:
@@ -93,102 +93,57 @@ func restart() -> void:
 	_start_day()
 
 
-func purchase_producer(kind: String) -> Array[Dictionary]:
+func claim_bird_offer(choice_index: int) -> Array[Dictionary]:
 	if _phase != "shop":
-		return [_purchase_rejected("recruitment", kind, "wrong_phase")]
-	if not _shop_recruitment.any(
-		func(choice: Dictionary) -> bool: return choice.kind == kind
-	):
-		return [_purchase_rejected("recruitment", kind, "not_offered")]
-	if _cash < RECRUIT_PRICE:
-		return [_purchase_rejected("recruitment", kind, "insufficient_cash")]
+		return [_shop_action_rejected("bird_offer", "wrong_phase")]
+	if _bird_offer_claimed:
+		return [_shop_action_rejected("bird_offer", "already_claimed")]
+	if choice_index < 0 or choice_index >= _bird_offer.size():
+		return [_shop_action_rejected("bird_offer", "not_offered")]
 
-	var producer: Dictionary = _flock.add_producer(kind)
-	_cash -= RECRUIT_PRICE
-	_shop_recruitment = _shop_recruitment.filter(
-		func(choice: Dictionary) -> bool: return choice.kind != kind
-	)
+	var selected: Dictionary = _bird_offer[choice_index]
+	var producer: Dictionary = _flock.add_producer(String(selected.kind), int(selected.tier))
+	_bird_offer.clear()
+	_bird_offer_claimed = true
 	return [{
-		"type": "producer_purchased",
+		"type": "bird_offer_claimed",
 		"producer": producer.duplicate(true),
-		"price": RECRUIT_PRICE,
 		"cash_total": _cash,
 		"flock_size": _flock.snapshot().size(),
 		"daily_egg_count": _flock.lay_daily_egg_kinds().size(),
 	}]
 
 
-func purchase_retirement(kind: String) -> Array[Dictionary]:
+func remove_bird(producer_index: int) -> Array[Dictionary]:
 	if _phase != "shop":
-		return [_purchase_rejected("retirement", kind, "wrong_phase")]
-	var tier := _lowest_unreserved_tier(kind)
-	if kind not in ProducerFlock.PRODUCER_KINDS or tier < 0:
-		return [_purchase_rejected("retirement", kind, "not_available")]
+		return [_shop_action_rejected("removal", "wrong_phase")]
+	if not _bird_offer_claimed:
+		return [_shop_action_rejected("removal", "bird_offer_unclaimed")]
 	if _flock.snapshot().size() <= 1:
-		return [_purchase_rejected("retirement", kind, "last_bird")]
-	if _cash < RETIRE_PRICE:
-		return [_purchase_rejected("retirement", kind, "insufficient_cash")]
-	var retired: Dictionary = _flock.remove_producer(kind, tier)
-	_cash -= RETIRE_PRICE
+		return [_shop_action_rejected("removal", "last_bird")]
+	if producer_index < 0 or producer_index >= _flock.snapshot().size():
+		return [_shop_action_rejected("removal", "not_available")]
+	if _cash < REMOVE_BIRD_PRICE:
+		return [_shop_action_rejected("removal", "insufficient_cash")]
+	var removed: Dictionary = _flock.remove_producer_at(producer_index)
+	_cash -= REMOVE_BIRD_PRICE
 	return [{
-		"type": "producer_retired",
-		"producer": retired,
-		"price": RETIRE_PRICE,
+		"type": "bird_removed",
+		"producer": removed,
+		"price": REMOVE_BIRD_PRICE,
 		"cash_total": _cash,
 		"flock_size": _flock.snapshot().size(),
 		"daily_egg_count": _flock.lay_daily_egg_kinds().size(),
-	}]
-
-
-func queue_merge(kind: String, tier: int) -> Array[Dictionary]:
-	if _phase != "shop":
-		return [_purchase_rejected("merge", "%s_%d" % [kind, tier], "wrong_phase")]
-	if _unreserved_count(kind, tier) < 2:
-		return [_purchase_rejected("merge", "%s_%d" % [kind, tier], "not_available")]
-	var offer := _merge_offer(kind, tier)
-	var price := int(offer.price)
-	if _cash < price:
-		return [_purchase_rejected("merge", "%s_%d" % [kind, tier], "insufficient_cash")]
-	_cash -= price
-	var key := _merge_key(kind, tier)
-	_pending_merges[key] = int(_pending_merges.get(key, 0)) + 1
-	return [{
-		"type": "producer_merge_queued",
-		"kind": kind,
-		"tier": tier,
-		"output_tier": tier + 1,
-		"price": price,
-		"pair_count": int(_pending_merges[key]),
-		"projected_flock_size": _flock.snapshot().size() - _pending_merge_count(),
-		"cash_total": _cash,
-		"output": offer,
-	}]
-
-
-func purchase_factory_upgrade(upgrade_id: String) -> Array[Dictionary]:
-	if _phase != "shop":
-		return [_purchase_rejected("factory_upgrade", upgrade_id, "wrong_phase")]
-	if upgrade_id != "extra_thwack" or bool(_factory_upgrades.extra_thwack):
-		return [_purchase_rejected("factory_upgrade", upgrade_id, "not_available")]
-	if _cash < EXTRA_THWACK_PRICE:
-		return [_purchase_rejected("factory_upgrade", upgrade_id, "insufficient_cash")]
-	_cash -= EXTRA_THWACK_PRICE
-	_factory_upgrades["extra_thwack"] = true
-	_starting_thwacks += 1
-	return [{
-		"type": "factory_upgrade_purchased",
-		"upgrade_id": upgrade_id,
-		"price": EXTRA_THWACK_PRICE,
-		"cash_total": _cash,
-		"starting_thwacks": _starting_thwacks,
 	}]
 
 
 func leave_shop() -> Array[Dictionary]:
 	if _phase != "shop":
 		return [{"type": "shop_leave_rejected", "reason": "wrong_phase"}]
+	if not _bird_offer_claimed:
+		return [{"type": "shop_leave_rejected", "reason": "bird_offer_unclaimed"}]
 
-	var events: Array[Dictionary] = _apply_pending_merges()
+	var events: Array[Dictionary] = []
 	var daily_egg_count: int = _flock.lay_daily_egg_kinds().size()
 	_day_number += 1
 	_start_day()
@@ -205,8 +160,8 @@ func leave_shop() -> Array[Dictionary]:
 
 func _start_day() -> void:
 	_phase = "day"
-	_shop_recruitment.clear()
-	_pending_merges.clear()
+	_bird_offer.clear()
+	_bird_offer_claimed = true
 	_last_cash_awarded = 0
 	var current_day_seed: int = _day_seed + _day_number - 1
 	var laid_eggs: Array[Dictionary] = _flock.lay_daily_eggs(
@@ -226,60 +181,39 @@ func _target_for_day(day_number: int) -> int:
 	return DAY_ONE_TARGET if day_number == 1 else LATER_DAY_TARGET
 
 
-func _create_recruitment_stock() -> Array[Dictionary]:
+func _create_bird_offer() -> Array[Dictionary]:
 	var reward_seed := _day_seed + _day_number * REWARD_SEED_STEP
 	var ordered_kinds: Array[String] = SeededShuffler.new(reward_seed).shuffle_strings(
 		ProducerFlock.PRODUCER_KINDS
 	)
+	var quality_roller = SeededChanceRoller.new(reward_seed + REWARD_QUALITY_SEED_STEP)
 	var choices: Array[Dictionary] = []
 	for kind: String in ordered_kinds.slice(0, 3):
-		var choice := ProducerFlock.producer_for_kind(kind)
-		choice.merge(ChickenDay.egg_definition(kind))
-		choice["price"] = RECRUIT_PRICE
-		choices.append(choice)
+		var tier := 0
+		while quality_roller.roll(QUALITY_ADVANCE_CHANCE):
+			tier += 1
+		choices.append(_producer_offer(kind, tier))
 	return choices
+
+
+func _producer_offer(kind: String, tier: int) -> Dictionary:
+	var choice := ProducerFlock.producer_for_kind(kind, tier)
+	var definition := ChickenDay.egg_definition(kind)
+	var multiplier := ProducerFlock.quality_multiplier(tier)
+	choice.merge(definition)
+	choice["tier"] = tier
+	choice["exact_toughness"] = float(definition.toughness) * multiplier
+	choice["toughness"] = ceili(float(choice.exact_toughness))
+	choice["exact_points"] = float(definition.points) * multiplier
+	choice["points"] = floori(float(choice.exact_points))
+	choice["double_yolk_chance"] = ProducerFlock.double_yolk_chance(kind, tier)
+	return choice
 
 
 func _shop_stock() -> Dictionary:
 	if _phase != "shop":
 		return {}
-	var recruitment := _shop_recruitment.duplicate(true)
-	var factory_offers: Array[Dictionary] = []
-	if not bool(_factory_upgrades.extra_thwack):
-		factory_offers.append({
-			"id": "extra_thwack",
-			"price": EXTRA_THWACK_PRICE,
-			"current_starting_thwacks": _starting_thwacks,
-			"next_starting_thwacks": _starting_thwacks + 1,
-		})
-	return {
-		"recruitment": recruitment,
-		"retirement": {"price": RETIRE_PRICE},
-		"pairing_sources": _pairing_sources(),
-		"factory_upgrades": factory_offers,
-	}
-
-
-func _pairing_sources() -> Array[Dictionary]:
-	var sources: Array[Dictionary] = []
-	for group: Dictionary in _flock.quality_groups_snapshot():
-		var kind := String(group.kind)
-		var tier := int(group.tier)
-		var available_count := _unreserved_count(kind, tier)
-		var eligible_partners: Array[Dictionary] = []
-		if available_count >= 2:
-			var partner := _merge_offer(kind, tier)
-			partner["available_count"] = available_count - 1
-			eligible_partners.append(partner)
-		sources.append({
-			"id": _merge_key(kind, tier),
-			"kind": kind,
-			"tier": tier,
-			"available_count": available_count,
-			"available_pair_count": floori(available_count / 2.0),
-			"eligible_partners": eligible_partners,
-		})
-	return sources
+	return {"removal": {"price": REMOVE_BIRD_PRICE}}
 
 
 func _quality_groups_snapshot() -> Array[Dictionary]:
@@ -293,100 +227,13 @@ func _quality_groups_snapshot() -> Array[Dictionary]:
 		group["exact_toughness"] = exact_toughness
 		group["toughness"] = ceili(exact_toughness)
 		group["display_double_yolk_percent"] = floori(float(group.double_yolk_chance) * 100.0)
-		group["reserved_count"] = _reserved_bird_count(String(group.kind), int(group.tier))
 	return groups
 
 
-func _merge_offer(kind: String, tier: int) -> Dictionary:
-	var definition := ChickenDay.egg_definition(kind)
-	var current_multiplier := ProducerFlock.quality_multiplier(tier)
-	var next_multiplier := ProducerFlock.quality_multiplier(tier + 1)
-	var current_chance := ProducerFlock.double_yolk_chance(kind, tier)
-	var next_chance := ProducerFlock.double_yolk_chance(kind, tier + 1)
-	var current_exact_toughness := float(definition.toughness) * current_multiplier
-	var next_exact_toughness := float(definition.toughness) * next_multiplier
+func _shop_action_rejected(category: String, reason: String) -> Dictionary:
 	return {
-		"id": "%s_%d" % [kind, tier],
-		"kind": kind,
-		"tier": tier,
-		"output_tier": tier + 1,
-		"price": tier + 1,
-		"current_exact_points": float(definition.points) * current_multiplier,
-		"current_points": floori(float(definition.points) * current_multiplier),
-		"next_exact_points": float(definition.points) * next_multiplier,
-		"next_points": floori(float(definition.points) * next_multiplier),
-		"current_exact_toughness": current_exact_toughness,
-		"current_toughness": ceili(current_exact_toughness),
-		"next_exact_toughness": next_exact_toughness,
-		"next_toughness": ceili(next_exact_toughness),
-		"current_double_yolk_chance": current_chance,
-		"current_double_yolk_percent": floori(current_chance * 100.0),
-		"next_double_yolk_chance": next_chance,
-		"next_double_yolk_percent": floori(next_chance * 100.0),
-	}
-
-
-func _pending_merges_snapshot() -> Array[Dictionary]:
-	var result: Array[Dictionary] = []
-	for kind: String in ProducerFlock.PRODUCER_KINDS:
-		for group: Dictionary in _flock.quality_groups_snapshot():
-			if group.kind != kind:
-				continue
-			var tier := int(group.tier)
-			var pair_count := int(_pending_merges.get(_merge_key(kind, tier), 0))
-			if pair_count > 0:
-				result.append({"kind": kind, "tier": tier, "pair_count": pair_count})
-	return result
-
-
-func _pending_merge_count() -> int:
-	var total := 0
-	for pair_count: int in _pending_merges.values():
-		total += pair_count
-	return total
-
-
-func _reserved_bird_count(kind: String, tier: int) -> int:
-	return int(_pending_merges.get(_merge_key(kind, tier), 0)) * 2
-
-
-func _unreserved_count(kind: String, tier: int) -> int:
-	return _flock.count_producers(kind, tier) - _reserved_bird_count(kind, tier)
-
-
-func _lowest_unreserved_tier(kind: String) -> int:
-	for group: Dictionary in _flock.quality_groups_snapshot():
-		if group.kind == kind and _unreserved_count(kind, int(group.tier)) > 0:
-			return int(group.tier)
-	return -1
-
-
-func _merge_key(kind: String, tier: int) -> String:
-	return "%s:%d" % [kind, tier]
-
-
-func _apply_pending_merges() -> Array[Dictionary]:
-	var events: Array[Dictionary] = []
-	for pending: Dictionary in _pending_merges_snapshot():
-		for pair_index in range(int(pending.pair_count)):
-			var producer: Dictionary = _flock.merge_producers(pending.kind, pending.tier)
-			assert(not producer.is_empty(), "A queued merge must remain valid until shop exit.")
-			events.append({
-				"type": "producer_merged",
-				"kind": pending.kind,
-				"input_tier": pending.tier,
-				"producer": producer,
-				"quality": _merge_offer(pending.kind, pending.tier),
-			})
-	_pending_merges.clear()
-	return events
-
-
-func _purchase_rejected(category: String, item_id: String, reason: String) -> Dictionary:
-	return {
-		"type": "shop_purchase_rejected",
+		"type": "shop_action_rejected",
 		"category": category,
-		"item_id": item_id,
 		"reason": reason,
 	}
 

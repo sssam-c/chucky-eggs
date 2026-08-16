@@ -144,123 +144,67 @@ func test_restart_replaces_the_day_with_initial_state() -> void:
 	assert_eq(session.state().slots[0].toughness, 3)
 
 
-func test_success_opens_one_shop_with_deterministic_stock_and_bank_balance() -> void:
-	var session = _successful_day_session()
-
-	var final_events: Array[Dictionary] = _complete_successful_day(session)
-	var state: Dictionary = session.state()
-	var offered_kinds: Array = state.shop_stock.recruitment.map(
-		func(choice: Dictionary) -> String: return choice.kind
-	)
+func test_success_offers_three_free_birds_separately_from_removal_only_shop_stock() -> void:
+	var first = _successful_day_session()
+	var second = _successful_day_session()
+	_complete_successful_day(first)
+	_complete_successful_day(second)
+	var state: Dictionary = first.state()
 
 	assert_eq(state.phase, "shop")
-	assert_eq(state.day_number, 1)
-	assert_eq(state.next_day_target_score, 9)
-	assert_eq(state.shop_stock.recruitment.size(), 3)
-	assert_eq(offered_kinds.duplicate().reduce(
-		func(unique: Array, kind: String) -> Array:
-			if kind not in unique:
-				unique.append(kind)
-			return unique,
-		[]
-	).size(), 3)
-	assert_true(offered_kinds.all(func(kind: String) -> bool:
-		return kind in ["chicken", "cuckoo", "sparrow", "plover", "spoonbill"]
+	assert_eq(state.bird_offer, second.state().bird_offer)
+	assert_eq(state.bird_offer.size(), 3)
+	assert_true(state.bird_offer.all(func(offer: Dictionary) -> bool:
+		return (
+			offer.kind in ProducerFlock.PRODUCER_KINDS
+			and int(offer.tier) >= 0
+			and not offer.has("price")
+			and offer.has_all(["toughness", "points", "double_yolk_chance"])
+		)
 	))
-	assert_true(state.shop_stock.recruitment.all(func(offer: Dictionary) -> bool:
-		return offer.price == 3
-	))
-	assert_eq(state.shop_stock.retirement.price, 2)
-	assert_eq(state.shop_stock.pairing_sources.size(), 4)
-	assert_true(state.shop_stock.pairing_sources.all(func(source: Dictionary) -> bool:
-		return source.available_pair_count >= 1 and source.eligible_partners.size() == 1
-	))
-	var chicken_source: Dictionary = state.shop_stock.pairing_sources.filter(
-		func(source: Dictionary) -> bool: return source.kind == "chicken" and source.tier == 0
-	)[0]
-	var chicken_merge: Dictionary = chicken_source.eligible_partners[0]
-	assert_eq(chicken_merge.price, 1)
-	assert_eq(chicken_merge.current_points, 3)
-	assert_eq(chicken_merge.next_points, 4)
-	assert_almost_eq(float(chicken_merge.next_exact_points), 4.5, 0.00001)
-	assert_eq(chicken_merge.current_toughness, 3)
-	assert_eq(chicken_merge.next_toughness, 5)
-	assert_almost_eq(float(chicken_merge.next_exact_toughness), 4.5, 0.00001)
-	assert_eq(chicken_merge.current_double_yolk_percent, 2)
-	assert_eq(chicken_merge.next_double_yolk_percent, 3)
-	assert_almost_eq(float(chicken_merge.next_double_yolk_chance), 0.03, 0.00001)
-	assert_eq(state.shop_stock.factory_upgrades.size(), 1)
-	assert_eq(final_events[-1].type, "cash_awarded")
-	assert_gt(final_events[-1].amount, 0)
-	assert_eq(final_events[-1].amount, final_events[-1].remaining_thwacks)
-	assert_eq(final_events[-1].cash_total, final_events[-1].amount)
+	assert_true(state.bird_offer.any(func(offer: Dictionary) -> bool:
+		return int(offer.tier) > 0
+	), "the deterministic fixture proves offers are not limited to Standard quality")
+	assert_eq(state.shop_stock, {"removal": {"price": 3}})
+	assert_false(state.bird_offer_claimed)
 
 
-func test_pairing_catalog_lists_owned_groups_and_only_exact_match_partners() -> void:
-	var session = _early_success_session()
-	_complete_early_successful_day(session)
-
-	var source: Dictionary = session.state().shop_stock.pairing_sources[0]
-
-	assert_eq(source.kind, "chicken")
-	assert_eq(source.tier, 0)
-	assert_eq(source.available_count, 7)
-	assert_eq(source.available_pair_count, 3)
-	assert_eq(source.eligible_partners.size(), 1)
-	assert_eq(source.eligible_partners[0].kind, "chicken")
-	assert_eq(source.eligible_partners[0].tier, 0)
-	assert_eq(source.eligible_partners[0].price, 1)
-
-	assert_eq(session.queue_merge("chicken", 0)[0].type, "producer_merge_queued")
-
-	source = session.state().shop_stock.pairing_sources[0]
-	assert_eq(source.available_count, 5)
-	assert_eq(source.available_pair_count, 2)
-	assert_eq(source.eligible_partners.size(), 1)
-
-
-func test_merge_fee_equals_output_tier_and_is_charged_once_when_queued() -> void:
-	var standard_session = _early_success_session()
-	_complete_early_successful_day(standard_session)
-	var standard_cash_before: int = standard_session.state().cash
-
-	var standard_events: Array[Dictionary] = standard_session.queue_merge("chicken", 0)
-
-	assert_eq(standard_events[0].price, 1)
-	assert_eq(standard_events[0].cash_total, standard_cash_before - 1)
-	assert_eq(standard_session.state().cash, standard_cash_before - 1)
-
-	var prize_producers: Array[Dictionary] = []
-	for kind: String in SUCCESSFUL_DAY_EGGS:
-		prize_producers.append({"kind": kind})
-	prize_producers.append_array([
-		{"kind": "chicken", "tier": 1},
-		{"kind": "chicken", "tier": 1},
-	])
-	var prize_session = ChickenDaySession.new(
-		42, ProducerFlock.new(prize_producers), IdentityShuffler.new()
-	)
-	_complete_successful_day(prize_session)
-	var prize_cash_before: int = prize_session.state().cash
-
-	var prize_events: Array[Dictionary] = prize_session.queue_merge("chicken", 1)
-
-	assert_eq(prize_events[0].price, 2)
-	assert_eq(prize_events[0].cash_total, prize_cash_before - 2)
-	assert_eq(prize_session.state().cash, prize_cash_before - 2)
-
-
-func test_unaffordable_merge_is_rejected_without_cash_or_pair_reservation() -> void:
-	var session = _early_success_session()
-	_complete_early_successful_day(session)
-	assert_eq(session.purchase_retirement("chicken")[0].type, "producer_retired")
+func test_claiming_one_bird_offer_is_free_exactly_once_and_required_before_leaving() -> void:
+	var session = _successful_day_session()
+	_complete_successful_day(session)
 	var before: Dictionary = session.state()
+	var selected: Dictionary = before.bird_offer[1]
 
-	var events: Array[Dictionary] = session.queue_merge("chicken", 0)
+	assert_eq(session.leave_shop(), [{"type": "shop_leave_rejected", "reason": "bird_offer_unclaimed"}])
+	assert_eq(session.remove_bird(0)[0].reason, "bird_offer_unclaimed")
+	var events: Array[Dictionary] = session.claim_bird_offer(1)
+	var after: Dictionary = session.state()
 
-	assert_eq(events[0].type, "shop_purchase_rejected")
-	assert_eq(events[0].reason, "insufficient_cash")
-	assert_eq(session.state(), before)
+	assert_eq(events[0].type, "bird_offer_claimed")
+	assert_eq(events[0].producer, {"kind": selected.kind, "tier": selected.tier})
+	assert_eq(after.cash, before.cash)
+	assert_eq(after.producers.size(), before.producers.size() + 1)
+	assert_true(after.bird_offer.is_empty())
+	assert_true(after.bird_offer_claimed)
+	assert_eq(session.claim_bird_offer(0)[0].reason, "already_claimed")
+
+
+func test_removing_from_the_flock_overview_costs_three_pounds_and_targets_the_chosen_bird() -> void:
+	var session = _funded_early_shop_session(3)
+	var offer_events: Array[Dictionary] = session.claim_bird_offer(0)
+	assert_eq(offer_events[0].type, "bird_offer_claimed")
+	var before: Dictionary = session.state()
+	assert_gte(before.cash, 3)
+	var selected: Dictionary = before.producers[2]
+
+	var events: Array[Dictionary] = session.remove_bird(2)
+	var after: Dictionary = session.state()
+
+	assert_eq(events[0].type, "bird_removed")
+	assert_eq(events[0].producer, selected)
+	assert_eq(events[0].price, 3)
+	assert_eq(after.cash, before.cash - 3)
+	assert_eq(after.producers.size(), before.producers.size() - 1)
 
 
 func test_success_banks_one_pound_per_remaining_thwack_exactly_once() -> void:
@@ -285,84 +229,10 @@ func test_success_banks_one_pound_per_remaining_thwack_exactly_once() -> void:
 	assert_eq(session.state().cash, 2)
 
 
-func test_shop_allows_multiple_saved_cash_purchases_then_leave() -> void:
-	var session = _funded_early_shop_session(6)
-	var before: Dictionary = session.state()
-	var recruited_kind := String(before.shop_stock.recruitment[0].kind)
-
-	var recruit_events: Array[Dictionary] = session.purchase_producer(recruited_kind)
-	var merge_events: Array[Dictionary] = session.queue_merge("chicken", 0)
-	var retire_events: Array[Dictionary] = session.purchase_retirement("chicken")
-	var after_purchases: Dictionary = session.state()
-
-	assert_eq(recruit_events[0].type, "producer_purchased")
-	assert_eq(merge_events[0].type, "producer_merge_queued")
-	assert_eq(retire_events[0].type, "producer_retired")
-	assert_eq(after_purchases.phase, "shop")
-	assert_eq(after_purchases.cash, before.cash - 6)
-	assert_eq(after_purchases.producers.size(), before.producers.size())
-	assert_eq(after_purchases.projected_flock_size, before.producers.size() - 1)
-	assert_eq(after_purchases.pending_merges, [{"kind": "chicken", "tier": 0, "pair_count": 1}])
-
-	var day_events: Array[Dictionary] = session.leave_shop()
-	var day_two: Dictionary = session.state()
-
-	assert_eq(day_events.map(func(event: Dictionary) -> String: return event.type), [
-		"producer_merged", "day_started",
-	])
-	assert_eq(day_events[0].producer, {"kind": "chicken", "tier": 1})
-	assert_eq(day_events[1].production.size(), day_two.producers.size())
-	assert_eq(day_two.phase, "day")
-	assert_eq(day_two.day_number, before.day_number + 1)
-	assert_eq(day_two.cash, before.cash - 6)
-	assert_eq(day_two.machine_slot_count, 5)
-	assert_true(day_two.slots.all(func(egg: Dictionary) -> bool:
-		return egg.is_empty() or egg.tier != 1 or (
-			egg.points == 4 and is_equal_approx(egg.double_yolk_chance, 0.03)
-		)
-	))
-
-
-func test_shop_rejects_unaffordable_invalid_and_duplicate_purchases_without_mutation() -> void:
-	var session = _funded_early_shop_session(5)
-
-	var factory_events: Array[Dictionary] = session.purchase_factory_upgrade("extra_thwack")
-	var after_factory: Dictionary = session.state()
-	assert_eq(factory_events[0].type, "factory_upgrade_purchased")
-	assert_eq(after_factory.starting_thwacks, 11)
-
-	var duplicate: Array[Dictionary] = session.purchase_factory_upgrade("extra_thwack")
-	var unavailable_merge: Array[Dictionary] = session.queue_merge("spoonbill", 0)
-	var unstocked: Array[Dictionary] = session.purchase_producer("dragon")
-
-	assert_eq(duplicate[0].reason, "not_available")
-	assert_eq(unavailable_merge[0].reason, "not_available")
-	assert_eq(unstocked[0].reason, "not_offered")
-	assert_eq(session.state(), after_factory)
-
-
-func test_queued_outputs_cannot_chain_merge_until_a_later_shop() -> void:
-	var session = _early_success_session()
-	_complete_early_successful_day(session)
-
-	assert_eq(session.queue_merge("chicken", 0)[0].type, "producer_merge_queued")
-	var blocked: Array[Dictionary] = session.queue_merge("chicken", 1)
-	var state: Dictionary = session.state()
-
-	assert_eq(blocked[0].reason, "not_available")
-	assert_eq(state.producers.size(), 7)
-	assert_eq(state.projected_flock_size, 6)
-	assert_eq(state.pending_merges[0].pair_count, 1)
-	var chicken_source: Dictionary = state.shop_stock.pairing_sources.filter(
-		func(source: Dictionary) -> bool: return source.kind == "chicken" and source.tier == 0
-	)[0]
-	assert_eq(chicken_source.available_count, 5)
-	assert_eq(chicken_source.eligible_partners.size(), 1)
-
-
 func test_every_day_keeps_the_single_five_slot_track() -> void:
 	var session = _successful_day_session()
 	_complete_successful_day(session)
+	session.claim_bird_offer(0)
 	var day_two_events: Array[Dictionary] = session.leave_shop()
 	assert_eq(day_two_events.map(func(event: Dictionary) -> String: return event.type), ["day_started"])
 	assert_eq(session.state().machine_slot_count, 5)
@@ -374,6 +244,7 @@ func test_every_day_keeps_the_single_five_slot_track() -> void:
 	assert_eq(shop.day_number, 2)
 	var cash_before_day_three: int = shop.cash
 
+	session.claim_bird_offer(0)
 	var day_events: Array[Dictionary] = session.leave_shop()
 
 	assert_eq(day_events.map(func(event: Dictionary) -> String: return event.type), ["day_started"])
@@ -386,6 +257,7 @@ func test_every_day_keeps_the_single_five_slot_track() -> void:
 func test_banked_cash_persists_into_day_two() -> void:
 	var session = _early_success_session()
 	_complete_early_successful_day(session)
+	session.claim_bird_offer(0)
 	session.leave_shop()
 
 	assert_eq(session.state().day_number, 2)
@@ -397,6 +269,7 @@ func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> voi
 	var session = _early_success_session()
 	_complete_early_successful_day(session)
 	var banked_cash := int(session.state().cash)
+	session.claim_bird_offer(0)
 	session.leave_shop()
 	var final_events: Array[Dictionary] = []
 
@@ -420,6 +293,7 @@ func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> voi
 func test_restarting_day_two_preserves_its_nine_point_target() -> void:
 	var session = _successful_day_session()
 	_complete_successful_day(session)
+	session.claim_bird_offer(0)
 	session.leave_shop()
 	session.submit_circuit("red")
 
@@ -429,24 +303,6 @@ func test_restarting_day_two_preserves_its_nine_point_target() -> void:
 	assert_eq(session.state().target_score, 9)
 	assert_eq(session.state().score, 0)
 	assert_eq(session.state().remaining_thwacks, 10)
-
-
-func test_unoffered_producer_cannot_be_purchased() -> void:
-	var session = _successful_day_session()
-	_complete_successful_day(session)
-	var before: Dictionary = session.state()
-	var unoffered_kind := ""
-	for kind in ["chicken", "cuckoo", "plover", "spoonbill"]:
-		if not before.shop_stock.recruitment.any(
-			func(choice: Dictionary) -> bool: return choice.kind == kind
-		):
-			unoffered_kind = kind
-
-	var events: Array[Dictionary] = session.purchase_producer(unoffered_kind)
-
-	assert_eq(events[0].type, "shop_purchase_rejected")
-	assert_eq(events[0].reason, "not_offered")
-	assert_eq(session.state(), before)
 
 
 func test_restart_cannot_bypass_the_success_shop() -> void:
@@ -505,6 +361,7 @@ func _funded_early_shop_session(minimum_cash: int):
 		_complete_early_successful_day(session)
 		if int(session.state().cash) >= minimum_cash:
 			return session
+		session.claim_bird_offer(0)
 		session.leave_shop()
 
 

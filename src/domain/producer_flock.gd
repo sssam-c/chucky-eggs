@@ -82,65 +82,24 @@ func lay_daily_eggs(chance_roller) -> Array[Dictionary]:
 	return eggs
 
 
-func add_producer(kind: String) -> Dictionary:
-	var producer := producer_for_kind(kind)
+func add_producer(kind: String, tier := 0) -> Dictionary:
+	var producer := producer_for_kind(kind, tier)
 	if producer.is_empty():
 		return {}
 	_producers.append(producer)
 	return producer.duplicate(true)
 
 
-func remove_producer(kind: String, tier := -1) -> Dictionary:
-	if _producers.size() <= 1:
+func remove_producer_at(producer_index: int) -> Dictionary:
+	if _producers.size() <= 1 or producer_index < 0 or producer_index >= _producers.size():
 		return {}
-	var selected_tier := int(tier)
-	if selected_tier < 0:
-		selected_tier = lowest_tier(kind)
-	for producer_index in range(_producers.size()):
-		if (
-			String(_producers[producer_index].kind) != kind
-			or int(_producers[producer_index].tier) != selected_tier
-		):
-			continue
-		return _producers.pop_at(producer_index).duplicate(true)
-	return {}
-
-
-func merge_producers(kind: String, tier: int) -> Dictionary:
-	if not can_merge(kind, tier):
-		return {}
-	var removed := 0
-	for producer_index in range(_producers.size() - 1, -1, -1):
-		var producer: Dictionary = _producers[producer_index]
-		if producer.kind != kind or int(producer.tier) != tier:
-			continue
-		_producers.remove_at(producer_index)
-		removed += 1
-		if removed == 2:
-			break
-	var merged := {"kind": kind, "tier": tier + 1}
-	_producers.append(merged)
-	return merged.duplicate(true)
-
-
-func can_merge(kind: String, tier: int) -> bool:
-	return kind in PRODUCER_KINDS and tier >= 0 and count_producers(kind, tier) >= 2
+	return _producers.pop_at(producer_index).duplicate(true)
 
 
 func count_producers(kind: String, tier := -1) -> int:
 	return _producers.filter(func(producer: Dictionary) -> bool:
 		return producer.kind == kind and (tier < 0 or int(producer.tier) == tier)
 	).size()
-
-
-func lowest_tier(kind: String) -> int:
-	var result := -1
-	for producer: Dictionary in _producers:
-		if producer.kind != kind:
-			continue
-		var tier := int(producer.tier)
-		result = tier if result < 0 else mini(result, tier)
-	return result
 
 
 static func quality_multiplier(tier: int) -> float:
@@ -154,10 +113,10 @@ static func double_yolk_chance(kind: String, tier: int) -> float:
 	return minf(float(BASE_DOUBLE_YOLK_CHANCES[kind]) * quality_multiplier(tier), 1.0)
 
 
-static func producer_for_kind(kind: String) -> Dictionary:
-	if kind not in PRODUCER_KINDS:
+static func producer_for_kind(kind: String, tier := 0) -> Dictionary:
+	if kind not in PRODUCER_KINDS or tier < 0:
 		return {}
 	return {
 		"kind": kind,
-		"tier": 0,
+		"tier": tier,
 	}

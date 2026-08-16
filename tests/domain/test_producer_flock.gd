@@ -90,32 +90,11 @@ func test_chicken_addition_contributes_one_egg() -> void:
 	assert_eq(flock.lay_daily_egg_kinds(), ["chicken"])
 
 
-func test_two_matching_birds_merge_into_one_next_tier_bird() -> void:
-	var flock = ProducerFlock.new([
-		{"kind": "chicken"}, {"kind": "chicken"}, {"kind": "plover"},
-	])
+func test_adding_an_offered_quality_preserves_that_birds_tier() -> void:
+	var flock = ProducerFlock.new([])
 
-	var merged: Dictionary = flock.merge_producers("chicken", 0)
-
-	assert_eq(merged, {"kind": "chicken", "tier": 1})
-	assert_eq(flock.snapshot(), [
-		{"kind": "plover", "tier": 0}, {"kind": "chicken", "tier": 1},
-	])
-	assert_false(flock.can_merge("chicken", 0))
-
-
-func test_merge_requires_two_birds_of_the_same_species_and_tier() -> void:
-	var flock = ProducerFlock.new([
-		{"kind": "chicken", "tier": 0},
-		{"kind": "chicken", "tier": 1},
-		{"kind": "plover", "tier": 0},
-	])
-	var before: Array[Dictionary] = flock.snapshot()
-
-	assert_false(flock.can_merge("chicken", 0))
-	assert_true(flock.merge_producers("chicken", 0).is_empty())
-	assert_true(flock.merge_producers("dragon", 0).is_empty())
-	assert_eq(flock.snapshot(), before)
+	assert_eq(flock.add_producer("plover", 3), {"kind": "plover", "tier": 3})
+	assert_eq(flock.snapshot(), [{"kind": "plover", "tier": 3}])
 
 
 func test_quality_compounds_exactly_while_laid_eggs_keep_the_real_values() -> void:
@@ -131,14 +110,14 @@ func test_quality_compounds_exactly_while_laid_eggs_keep_the_real_values() -> vo
 	assert_eq(eggs[1].double_yolk_chance, 0.0)
 
 
-func test_retiring_removes_one_bird_without_creating_individual_identity() -> void:
+func test_removing_by_overview_position_targets_that_exact_flock_entry() -> void:
 	var flock = ProducerFlock.new([
 		{"kind": "chicken", "tier": 1}, {"kind": "chicken"}, {"kind": "plover"},
 	])
 
-	assert_eq(flock.remove_producer("chicken"), {"kind": "chicken", "tier": 0})
+	assert_eq(flock.remove_producer_at(0), {"kind": "chicken", "tier": 1})
 	assert_eq(flock.lay_daily_egg_kinds(), ["chicken", "plover"])
-	assert_true(flock.remove_producer("cuckoo").is_empty())
+	assert_true(flock.remove_producer_at(9).is_empty())
 	assert_eq(flock.snapshot().size(), 2)
 	assert_true(flock.snapshot().all(func(producer: Dictionary) -> bool:
 		return producer.has_all(["kind", "tier"])

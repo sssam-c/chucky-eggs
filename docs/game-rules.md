@@ -19,7 +19,7 @@ Choose which eggs deserve the spoon while every thwack carries the conveyor clos
 
 Inspect the five-slot conveyor, the next three eggs in the pipe, the hopper and bin counts, the score, and the visible thwack countdown. Click the hopper to inspect every egg it contains without revealing their queue positions, or click the bin to inspect every stored egg. Choose any spoon control, balancing the eggs it can damage against their current positions and the time required to cycle missed eggs back through the hopper. An empty circuit can be used to advance the belt, but still costs one of the day's thwacks.
 
-After a successful day, bank the unused-thwack payout and enter one unified shop before the next flock loads. The player may recruit or retire birds, merge matching birds, purchase factory upgrades, or leave and save the cash. A failed day awards no cash or shop visit and is retried with the same flock and deterministic shuffle sequence.
+After a successful day, bank the unused-thwack payout and choose one of three free bird offers. The offered birds may be any quality. Then review the complete flock and optionally remove birds for £3 each before the next flock loads. A failed day awards no cash, bird offer, or shop visit and is retried with the same flock and deterministic shuffle sequence.
 
 ## Setup and state
 
@@ -34,18 +34,17 @@ After a successful day, bank the unused-thwack payout and enter one unified shop
 - A Sparrow egg has 1 toughness, is worth 1 point when hatched, and has no additional egg effect.
 - A Plover egg has 6 toughness and is worth 4 points when hatched.
 - A Spoonbill egg has 5 toughness, is worth 4 points when hatched, and takes 2 damage from a direct Pink strike instead of 1.
-- Every bird begins at Standard quality. Two birds of the same species and quality can be merged into one bird of the next quality tier. Queueing the merge costs £1 for a Prize output, £2 for Champion, and thereafter an amount equal to the numbered output tier.
+- Every starting bird is Standard quality. A bird received from a day-end offer may be Standard, Prize, Champion, or a numbered higher tier.
 - Each quality tier multiplies that bird's exact egg score, exact maximum toughness, and exact Double Yolker chance by 1.5. Displayed and awarded scores and percentages round down; maximum toughness rounds up to the whole amount of damage required to hatch. Exact values are retained between tiers.
 - Standard Chicken eggs have a 2% Double Yolker chance and Standard Sparrow eggs have a 5% chance. Standard Cuckoo, Plover, and Spoonbill eggs currently have no Double Yolker chance, so quality multiplication alone does not create one.
 - The pipe shows up to the next three hopper eggs in queue order. Clicking the hopper shows every remaining hopper egg as a non-positional collection; it does not reveal the order beyond the pipe preview. After each non-final thwack, slot 1 receives the next existing hopper egg when one is available. The bin only becomes a new hopper after the existing hopper and conveyor have both cleared.
 - Clicking the bin shows every stored egg and its retained toughness. The bin's future return order remains unknown until its seeded reshuffle occurs.
 - Egg toughness, current score, cash balance, remaining thwacks, hopper count, and bin count are always visible. The hopper count is also displayed on its clickable top.
 - Hovering an egg shows a compact information card aligned beside that egg, with its species and quality, points, and floored Double Yolker chance. The card includes only the effect categories that apply to that egg. Whether the egg's hidden roll actually made it a Double Yolker is not revealed before hatching.
-- All optional between-day progression lives in the same shop. Recruitment, retirement, merging, and factory upgrades cost cash; merging also consumes two matching birds.
-- The merge picker lists every owned species-and-quality group. Groups without an eligible partner remain visible but unavailable. Choosing a group reveals its eligible partners; currently, only another bird of the same species and quality is eligible.
-- A merge fee is paid and both inputs are reserved when the pair is queued. Insufficient cash leaves the balance and birds unchanged. Queued merges resolve when the player leaves, before the next flock loads, and their outputs cannot become inputs again during the same shop visit.
-- When recruitment is in stock, each producer offer identifies the animal with a portrait, previews the one egg it lays each day, and states that egg's toughness, points, and effect before selection.
-- Recruitment offers show the next day's target before selection.
+- After every successful day, exactly three free bird candidates are generated from the five current species. Each offer identifies the animal and quality with a portrait, previews the one egg it lays each day, and states that egg's toughness, points, and effect.
+- The player must choose exactly one offered bird before starting the next day. Choosing it adds one bird and therefore one egg to each subsequent daily pool without spending cash.
+- The flock overview shows every owned bird individually. Selecting a bird there removes that exact flock entry for £3. Removal is unavailable when cash is insufficient or only one bird remains.
+- The day reward and flock overview show the next day's target before selection.
 - Before each later day begins, the complete flock is shown loading one egg per bird into the new daily hopper.
 
 ## Actions and resolution
@@ -86,8 +85,7 @@ Hatching an egg never prevents the conveyor from advancing. Partially damaged eg
 - **Discarded:** Removed without hatching or awarding points when the day ends.
 - **Producer:** A persistent flock member with a species and quality tier that lays exactly one fresh egg into the daily pool.
 - **Hopper:** The current shuffled sequence of eggs waiting to enter slot 1.
-- **Producer offer:** An optional opportunity to add one Chicken, Cuckoo, Sparrow, Plover, or Spoonbill producer to the flock. Choosing one adds exactly one bird and one egg to each subsequent daily pool.
-- **Quality:** A bird's merge tier. Standard birds can become Prize, then Champion, followed by numbered higher tiers. Each step compounds exact score, maximum toughness, and Double Yolker chance by 1.5.
-- **Merge:** A shop action that consumes two birds of the same species and quality plus a fee equal to the output tier: £1 for Prize, £2 for Champion, then £3 for Tier 3 and so on. The pair is reserved and the fee is paid when queued; the output resolves on leaving and cannot be merged again in the same visit.
-- **Shop:** The single post-success home for optional flock and factory progression. Cash prices and merge inputs are shown before commitment; leaving preserves unspent cash.
-- **Cash:** Persistent whole-pound currency held for the current run, earned from unused thwacks, and spent on optional shop progression.
+- **Bird offer:** A mandatory choice of one free Chicken, Cuckoo, Sparrow, Plover, or Spoonbill after a successful day. The three candidates may have different quality tiers. Choosing one adds exactly one bird and one egg to each subsequent daily pool.
+- **Quality:** A bird tier: Standard, Prize, Champion, then numbered higher tiers. Each step compounds exact score, maximum toughness, and Double Yolker chance by 1.5.
+- **Shop:** The post-success flock overview where the only current paid action is removing a selected bird for £3. Leaving preserves unspent cash.
+- **Cash:** Persistent whole-pound currency held for the current run, earned from unused thwacks, and currently spent only on optional bird removal.

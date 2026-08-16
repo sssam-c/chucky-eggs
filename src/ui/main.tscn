@@ -945,7 +945,8 @@ offset_bottom = 80.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StoreHeader")
 
-[node name="RecruitmentPanel" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+[node name="RewardPanel" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 10.0
 offset_top = 88.0
@@ -954,18 +955,10 @@ offset_bottom = 374.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("StoreSection")
 
-[node name="ManagementPanel" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+[node name="FlockPanel" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 10.0
-offset_top = 382.0
-offset_right = 794.0
-offset_bottom = 574.0
-mouse_filter = 2
-theme_override_styles/panel = SubResource("StoreSection")
-
-[node name="FlockLedger" type="PanelContainer" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 0
-offset_left = 802.0
 offset_top = 382.0
 offset_right = 1218.0
 offset_bottom = 574.0
@@ -990,7 +983,7 @@ offset_bottom = 74.0
 theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
 theme_override_fonts/font = ExtResource("13_display")
 theme_override_font_sizes/font_size = 38
-text = "THE GENERAL STORE"
+text = "FLOCK OVERVIEW"
 vertical_alignment = 1
 
 [node name="WorkshopBalance" type="Label" parent="WorkshopOverlay/Card/Content"]
@@ -1020,7 +1013,8 @@ horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 2
 
-[node name="RecruitTitle" type="Label" parent="WorkshopOverlay/Card/Content"]
+[node name="RewardTitle" type="Label" parent="WorkshopOverlay/Card/Content"]
+unique_name_in_owner = true
 layout_mode = 0
 offset_left = 28.0
 offset_top = 94.0
@@ -1028,7 +1022,7 @@ offset_right = 1200.0
 offset_bottom = 124.0
 theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
 theme_override_font_sizes/font_size = 19
-text = "RECRUITMENT  •  ONE BIRD / ONE DAILY EGG"
+text = "DAY REWARD  •  CHOOSE ONE FREE BIRD"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -1054,164 +1048,36 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="MergeSummary" type="Label" parent="WorkshopOverlay/Card/Content"]
+[node name="FlockOverviewTitle" type="Label" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 28.0
-offset_top = 390.0
-offset_right = 776.0
-offset_bottom = 420.0
-theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
-theme_override_font_sizes/font_size = 15
-text = "PICK OF THE LITTER  •  TWO MATCHING BIRDS BECOME ONE 50% BETTER BIRD"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="MergeActions" type="HBoxContainer" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 0
-offset_left = 28.0
-offset_top = 426.0
-offset_right = 776.0
-offset_bottom = 560.0
-theme_override_constants/separation = 10
-alignment = 1
-
-[node name="PairingSources" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions"]
-custom_minimum_size = Vector2(246, 132)
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="SourceTitle" type="Label" parent="WorkshopOverlay/Card/Content/MergeActions/PairingSources"]
-custom_minimum_size = Vector2(0, 22)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
-theme_override_font_sizes/font_size = 13
-text = "1  •  PICK A BIRD"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="SourceScroll" type="ScrollContainer" parent="WorkshopOverlay/Card/Content/MergeActions/PairingSources"]
-custom_minimum_size = Vector2(246, 106)
-layout_mode = 2
-horizontal_scroll_mode = 0
-
-[node name="PairingSourceButtons" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions/PairingSources/SourceScroll"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="PairingPartners" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions"]
-custom_minimum_size = Vector2(246, 132)
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="PairingPrompt" type="Label" parent="WorkshopOverlay/Card/Content/MergeActions/PairingPartners"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 22)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
-theme_override_font_sizes/font_size = 13
-text = "2  •  PICK A MATCH"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="PartnerScroll" type="ScrollContainer" parent="WorkshopOverlay/Card/Content/MergeActions/PairingPartners"]
-custom_minimum_size = Vector2(246, 106)
-layout_mode = 2
-horizontal_scroll_mode = 0
-
-[node name="PairingPartnerButtons" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions/PairingPartners/PartnerScroll"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 4
-
-[node name="FactoryColumn" type="VBoxContainer" parent="WorkshopOverlay/Card/Content/MergeActions"]
-custom_minimum_size = Vector2(236, 132)
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="FactoryTitle" type="Label" parent="WorkshopOverlay/Card/Content/MergeActions/FactoryColumn"]
-custom_minimum_size = Vector2(0, 22)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
-theme_override_font_sizes/font_size = 13
-text = "FACTORY"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ExtraThwack" type="Button" parent="WorkshopOverlay/Card/Content/MergeActions/FactoryColumn"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(236, 76)
-layout_mode = 2
-mouse_default_cursor_shape = 2
-theme_override_colors/font_color = Color(0.48, 0.91, 0.88, 1)
-theme_override_font_sizes/font_size = 13
-text = "STARTING THWACKS 10 → 11  •  £5"
-
-[node name="RetireTitle" type="Label" parent="WorkshopOverlay/Card/Content"]
-layout_mode = 0
-offset_left = 820.0
 offset_top = 390.0
 offset_right = 1200.0
 offset_bottom = 420.0
 theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
 theme_override_font_sizes/font_size = 16
-text = "FLOCK LEDGER  •  RETIRE ONE FOR £2"
+text = "YOUR WHOLE FLOCK  •  SELECT A BIRD TO REMOVE FOR £3"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RetirementActions" type="GridContainer" parent="WorkshopOverlay/Card/Content"]
+[node name="FlockScroll" type="ScrollContainer" parent="WorkshopOverlay/Card/Content"]
+unique_name_in_owner = true
 layout_mode = 0
-offset_left = 820.0
-offset_top = 428.0
+offset_left = 28.0
+offset_top = 424.0
 offset_right = 1200.0
-offset_bottom = 550.0
-theme_override_constants/h_separation = 10
+offset_bottom = 560.0
+horizontal_scroll_mode = 0
+
+[node name="FlockGrid" type="GridContainer" parent="WorkshopOverlay/Card/Content/FlockScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 12
 theme_override_constants/v_separation = 10
-columns = 3
+columns = 6
 alignment = 1
-
-[node name="RetireChicken" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 51)
-layout_mode = 2
-clip_text = true
-theme_override_font_sizes/font_size = 10
-text = "CHICKEN (10)"
-
-[node name="RetireCuckoo" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 51)
-layout_mode = 2
-clip_text = true
-theme_override_font_sizes/font_size = 10
-text = "CUCKOO (3)"
-
-[node name="RetireSparrow" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 51)
-layout_mode = 2
-clip_text = true
-theme_override_font_sizes/font_size = 10
-text = "SPARROW (3)"
-
-[node name="RetirePlover" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 51)
-layout_mode = 2
-clip_text = true
-theme_override_font_sizes/font_size = 10
-text = "PLOVER (2)"
-
-[node name="RetireSpoonbill" type="Button" parent="WorkshopOverlay/Card/Content/RetirementActions"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 51)
-layout_mode = 2
-clip_text = true
-theme_override_font_sizes/font_size = 10
-text = "SPOONBILL (0)"
 
 [node name="WorkshopStatus" type="Label" parent="WorkshopOverlay/Card/Content"]
 unique_name_in_owner = true
@@ -1222,7 +1088,7 @@ offset_right = 1202.0
 offset_bottom = 620.0
 theme_override_colors/font_color = Color(0.57, 1, 0.94, 1)
 theme_override_font_sizes/font_size = 15
-text = "BUY ANY NUMBER OF AFFORDABLE ITEMS  •  OR SAVE YOUR CASH"
+text = "CHOOSE ONE FREE BIRD TO CONTINUE  •  REMOVING A BIRD COSTS £3"
 horizontal_alignment = 1
 vertical_alignment = 1
 

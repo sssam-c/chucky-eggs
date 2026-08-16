@@ -2,15 +2,15 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active validation slice — Quick-payoff Sparrows and dense quality
+## Active validation slice — Free bird rewards and visible flock thinning
 
 ### Question
 
-Do three one-hit Sparrow eggs make an eight-egg opening teach hatching, scoring, and Double Yolkers quickly while preserving a tense positional puzzle at a 10-point target, and does 1.5× score-plus-toughness make merging a situational density choice rather than an automatic upgrade?
+Does choosing one of three free, potentially high-quality birds after each successful day create an interesting build direction, and does removing an exact bird from the whole-flock overview for £3 provide enough control over compulsory flock growth?
 
 ### Status
 
-The complete deterministic and player-visible path now includes three Standard Sparrow producers, their one-hit one-point eggs, 5% Double Yolker chance, colour-matched egg and bird placeholders, and a 10-point Day 1 target. The starting economy uses eight eggs and ten thwacks; later days retain a 9-point target. Bin recycling still waits for the conveyor to clear, and every lever remains active during unlocked play. The earlier automated strategy probe remains useful evidence about the former five-egg control, empty pulls, and toughness sensitivity, but it does not establish the solvability or feel of the new Sparrow opening. The next worthwhile work is an automated target sweep followed by human play of the eight-egg opening.
+The deterministic and player-visible path now generates three free bird candidates after a successful day, preserves their seeded species and quality facts, requires exactly one selection, and then exposes every owned bird as its own £3 removal control in a scrollable flock overview. Recruitment purchases, pairing, merge queues, and factory upgrades are removed. Failed attempts still retry without between-day progression. The next worthwhile work is a human run through several rewards to observe whether flock growth, quality variance, and removal pricing create meaningful tension.
 
 ### Settled rules preserved
 
@@ -18,8 +18,8 @@ The complete deterministic and player-visible path now includes three Standard S
 - Days last at most 10 thwacks, end after the target-reaching thwack, and pay £1 for each unused thwack only on success.
 - Day 1 requires 10 points and each later day requires 9.
 - Red strikes slots 1+3, Blue strikes 2+4, and Pink strikes slot 5. All three remain available during an unlocked day, including when their complete circuit is empty. Pink still deals 2 direct damage to Spoonbills.
-- Cuckoo echoes, Plover retreat, simultaneous damage, hatch order, cash, retries, shop access, and one request-to-resolver pathway remain unchanged.
-- Recruitment, retirement, merging, and factory upgrades share one post-success shop. A merge consumes two matching birds and cash equal to its output tier.
+- Cuckoo echoes, Plover retreat, simultaneous damage, hatch order, cash, retries, success-only shop access, and one request-to-resolver pathway remain unchanged.
+- Every successful day offers three free birds, exactly one must be chosen, and the only current shop action is removing a selected bird for £3.
 - Daily randomness remains seeded and equal retries reproduce initial and recycled shuffles and hidden outcomes.
 
 ### Hypothesis
@@ -32,7 +32,7 @@ Three one-hit Sparrows should make the complete hatch-and-score payoff legible d
 
 At a 10-point target, candidate routes include all three Chickens plus one Sparrow; two Chickens, both Cuckoos, and two Sparrows; or two Chickens, one Cuckoo, and all three Sparrows. These arithmetic routes are hypotheses rather than evidence that each route is equally achievable across shuffled positions.
 
-Quality should make one egg denser rather than simply better. Two same-tier eggs become one next-tier egg with 1.5 times each input's exact score, maximum toughness, and Double Yolker chance. The output loses 25% of the pair's aggregate score, shell, and effect frequency, but its smaller flock cycles more quickly through the recycler.
+Offered quality should create occasional excitement without making high tiers routine. The current prototype independently gives each candidate a 25% chance to advance one tier, repeated until a roll fails. This geometric distribution has no fixed maximum, so every quality is possible while Standard remains common. The 25% continuation rate is an implementation hypothesis, not a settled rule; observe its results before tuning it into rule truth.
 
 ### Implemented prototype scope
 
@@ -45,9 +45,10 @@ Quality should make one egg denser rather than simply better. Two same-tier eggs
 - Existing hopper eggs feed normally, but the bin cannot reshuffle until the conveyor is empty; a recycled wave never joins eggs still travelling from the previous wave.
 - Quality uses exact `1.5^tier` multiplication for score, maximum toughness, and Double Yolker chance.
 - Gameplay score and displayed percentages floor to whole numbers. Maximum toughness rounds up to the whole amount of damage actually required. Later tiers retain exact values.
-- Merge source and partner views show the output's points, shell toughness, Double Yolker percentage, fee, and projected flock size.
+- Three reward cards show species, quality, shell toughness, score, effect, and one daily egg before selection.
+- The flock overview shows every bird as an individual card with its species, quality, egg facts, and £3 removal action. The last bird and unaffordable removals are unavailable.
 - Existing production loading shows the scaled toughness of the egg each quality tier lays.
-- Every species uses one flat temporary colour across a generic egg and a simple bird silhouette throughout the belt, pipe, loading, recruitment, and shop views. Species names sit outside the art. Occupied eggs use a magnifying-glass cursor to advertise inspection. A wrapped hover card top-aligns beside its egg, flips sides at the viewport edge, and presents the egg's name, prominent points and Double Yolker facts, and only its applicable effect sections. Generated raster experiments are excluded from the running game and exports; final production assets are deferred to an artist.
+- Every species uses one flat temporary colour across a generic egg and a simple bird silhouette throughout the belt, pipe, loading, reward, and flock-overview views. Species names sit outside the art. Occupied eggs use a magnifying-glass cursor to advertise inspection. A wrapped hover card top-aligns beside its egg, flips sides at the viewport edge, and presents the egg's name, prominent points and Double Yolker facts, and only its applicable effect sections. Generated raster experiments are excluded from the running game and exports; final production assets are deferred to an artist.
 - The default flock contains three Chickens, two Cuckoos, and three Sparrows, with ten starting thwacks, a 10-point Day 1 target, and a 9-point later target.
 
 ### Balancing constraints
@@ -55,32 +56,30 @@ Quality should make one egg denser rather than simply better. Two same-tier eggs
 - Recycling removes permanent belt loss but not the 10-thwack limit.
 - Empty strikes create a positioning option, but each consumes 10% of the complete day budget and can accelerate eggs toward the bin without scoring.
 - Five eggs remain the machine's natural capacity breakpoint. The eight-egg opening carries more total score and keeps the hopper active longer, but delays any recycled wave.
-- The unmerged starting flock contains 14 total base points and 20 total base toughness. Day 1's 10-point target leaves four points of composition slack.
+- The starting flock contains 14 total base points and 20 total base toughness. Day 1's 10-point target leaves four points of composition slack.
 - Sparrows provide one point per direct damage before positional waste, and a directly struck Sparrow can also cause adjacent Cuckoo echoes. Guard against their combination making the quickest route obvious across most seeds.
-- Merging two starting Chickens produces a 4-point Prize Chicken and reduces the flock's total displayed value to 9, exactly the later-day target before recruitment or retirement.
 - A small flock cycles more often, but can still fail by hatching every available egg below the target.
-- A merge converts pair totals of `2V` and `2T` into one egg at `1.5V` and `1.5T`, before visible rounding.
 - Rounding makes some first-tier ratios uneven. A Prize Chicken requires 5 damage and awards 4 points from exact values of 4.5 and 4.5.
-- A Prize Cuckoo currently requires 6 damage but remains worth 1 displayed point and has no Double Yolker chance. This may be an obvious trap unless faster cycling or later content supplies a strategic payoff; do not add a species exception without playtest evidence.
-- A Prize Sparrow currently requires 2 damage, remains worth 1 displayed point, and shows a 7% Double Yolker chance from an exact 7.5%. Because two Standard Sparrows provide two quick points and two independent 5% rolls, this merge may also be an obvious trap; keep its complete preview visible and do not add a species exception without evidence.
+- A Prize Cuckoo currently requires 6 damage but remains worth 1 displayed point and has no Double Yolker chance. A free high-quality offer can therefore still be strategically unattractive; keep complete candidate facts visible.
+- A Prize Sparrow currently requires 2 damage, remains worth 1 displayed point, and shows a 7% Double Yolker chance from an exact 7.5%. The offer must make that shell-for-odds trade legible rather than presenting quality as universally better.
 - Positive feedback from efficient play into greater purchasing power remains intentional. Guard against a deterministic retry that cannot reach the shop.
 
 ### Explicitly deferred
 
-- Further target, thwack, toughness, score, Sparrow merge, merge-fee, recruitment-price, and retirement-price tuning after playtest evidence.
+- Further target, thwack, toughness, score, reward-quality distribution, and £3 removal-price tuning after playtest evidence.
 - Bin capacity, player-controlled rerolls, selective retrieval, damage healing, or bin upgrades.
-- Hybrid and cross-species recipes, inherited effects, authored hybrid art, and merging unlike tiers.
-- Random shop stock, a campaign map, shop rerolls, discounts, selling, elite conditions, and production art.
+- Pairing, merging, hybrid recipes, inherited effects, and authored hybrid art.
+- Paid recruitment, factory upgrades, a campaign map, reward rerolls, discounts, selling, elite conditions, and production art.
 - A replacement for the removed Day 3 factory milestone or any positional spoon-upgrade ladder.
 
 ### Exit evidence
 
 - Domain tests prove damage-preserving bin transfer, clear-conveyor recycle gating, empty-circuit advancement and thwack spending, resolver event order, deterministic reshuffle, slot-1 refill, quality toughness scaling, and whole required-damage rounding.
-- Session tests prove the default eight-egg flock, ten-thwack budget, 10/9 targets, Sparrow probability, five slots and three circuits, saved-cash shop progression, scaled merge offers, and deterministic failure/retry behavior.
-- UI tests prove all five bird species use distinct placeholder colours and shapes, each egg exactly matches its bird colour, Sparrow odds are legible, the starting pool and day budget are visible, all three levers remain available during unlocked day play, a one-hit hatch plays in resolver order, the bin is visible, merged shells show their required damage, and cancellation/input-lock contracts still hold.
+- Session tests prove the default eight-egg flock, ten-thwack budget, 10/9 targets, Sparrow probability, five slots and three circuits, deterministic three-bird offers, exact free selection, £3 targeted removal, and deterministic failure/retry behavior.
+- UI tests prove the reward cards expose free species-and-quality facts, the whole flock appears as individual removal controls, unaffordable actions disable, a selected bird disappears for £3, dynamic controls do not accumulate stale registrations, and cancellation/input-lock contracts still hold.
 - The 2026-08-16 automated strategy probe supplies an exact-search and heuristic baseline for the superseded five-egg opening. Run the same exact and heuristic sweep against the eight-egg Sparrow opening at targets 9, 10, and 11 before using it as balance evidence.
 - A running-game check at 1280×720 and 1024×576 must verify the bin reads as the conveyor destination, the bin and hopper counts remain legible and clickable, both content inspectors fit and scroll, recycled eggs visibly return through the pipe, and no removed hairpin controls leave empty or overlapping space.
-- Play one seeded run through at least two shop decisions and Day 3. Record whether the first Sparrow makes hatching and scoring immediately clear, whether the player notices a Sparrow Double Yolker, which scoring route they pursue, whether recycling appears at all, which legal merges they accept or refuse, and whether a Sparrow merge reads as an opportunity or a trap.
+- Play one seeded run through at least three bird offers. Record whether candidate quality is understood, whether a clearly stronger quality dominates species choice, when the player first considers paying £3 to thin the flock, and whether removing from the full overview feels precise and trustworthy.
 
 ## Candidate next validation slice — Feed a character, not a score
 
@@ -112,14 +111,14 @@ Begin one controlled ten-thwack day with the normal conveyor and a visible hungr
 ### Implementation conveniences, not rules
 
 - The recipient may use placeholder identity, art, reactions, and sound during the test.
-- The Appetiser egg may be injected by a fixed test-day setup rather than added to recruitment, flock persistence, or the permanent species catalogue.
+- The Appetiser egg may be injected by a fixed test-day setup rather than added to day-end offers, flock persistence, or the permanent species catalogue.
 - “Food” may reuse the exact current score value and target storage while the player-facing experiment uses feeding language.
 
 ### Explicitly deferred
 
 - Multiple recipients, rotating appetites, dislikes, allergies, personalities, dialogue, and relationship progression.
 - Slow feeding over several thwacks, Feeding Frenzy, effect stacking, effect inheritance through quality, and interactions between several new egg effects.
-- A permanent new bird species, recruitment offer, merge path, bespoke production art, or rebalance of the starting flock and targets.
+- A permanent new bird species, day-end reward offer, bespoke production art, or rebalance of the starting flock and targets.
 - Deciding whether eggs are narratively hatched, cracked, cooked, or otherwise prepared for the recipient.
 
 ### Exit evidence

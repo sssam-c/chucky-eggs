@@ -9,7 +9,7 @@ The current build intentionally does not use these mockups or any generated rast
 ## Targets
 
 - `day-1-gameplay-ui.png`: the five-bay Day 1 machine, redesigned as one integrated brass, enamel, cast-iron, and dark-timber cabinet.
-- `general-store-ui.png`: the current recruitment, merging, retirement, factory-upgrade, and leave-shop choices reorganized as an in-world store counter.
+- `general-store-ui.png`: a superseded multi-action shop composition retained only as visual-history reference. Its recruitment, pairing, and factory controls no longer describe the current rules; only its workshop material language remains relevant to the bird-reward and flock-overview screen.
 
 ## Direction being tested
 

@@ -494,7 +494,7 @@ func test_plover_shell_information_shows_the_four_point_payoff() -> void:
 	assert_eq(slot.effect_emblem(), "screen_left")
 
 
-func test_merged_egg_shows_its_quality_tier_and_floored_gameplay_score() -> void:
+func test_quality_egg_shows_its_tier_and_floored_gameplay_score() -> void:
 	var flock = ProducerFlock.new([{"kind": "chicken", "tier": 1}])
 	var session = ChickenDaySession.new(42, flock, IdentityShuffler.new())
 	var main := _add_main()
@@ -1043,7 +1043,7 @@ func test_ui_feedback_uses_shared_motion_tokens_and_cancellable_control_motion()
 	assert_true(feedback.is_control_registered(
 		main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1")
 	))
-	assert_gte(feedback.registered_control_count(), 12)
+	assert_gte(feedback.registered_control_count(), 9)
 
 	main.set_reduced_motion(false)
 	action.button_down.emit()
@@ -1146,7 +1146,7 @@ func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void
 			main.get_node("ResultOverlay/Card/Content/%s" % panel_path).get_global_rect()
 		))
 	var action: Button = main.get_node("ResultOverlay/Card/Content/Restart")
-	assert_eq(action.text, "ENTER THE GENERAL STORE")
+	assert_eq(action.text, "VIEW BIRD OFFER")
 	assert_true(action.has_focus())
 	assert_false(main.is_result_transition_active())
 
@@ -1155,9 +1155,7 @@ func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void
 
 	assert_false(result_overlay.visible)
 	assert_true(main.get_node("WorkshopOverlay").visible)
-	assert_true(main.get_node(
-		"WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop"
-	).has_focus())
+	assert_true(main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1").has_focus())
 
 
 func test_result_reveal_is_cancelled_when_the_session_is_replaced() -> void:
@@ -1173,7 +1171,7 @@ func test_result_reveal_is_cancelled_when_the_session_is_replaced() -> void:
 	assert_false(main.get_node("ResultOverlay").visible)
 
 
-func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void:
+func test_success_opens_three_free_quality_offers_above_the_whole_flock_overview() -> void:
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 
@@ -1189,7 +1187,7 @@ func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void
 		assert_string_contains(choice.card_text(), "EGG")
 		assert_string_contains(choice.card_text(), "TOUGHNESS")
 		assert_string_contains(choice.card_text(), "POINT")
-		assert_string_contains(choice.card_text(), "£3")
+		assert_string_contains(choice.card_text(), "FREE")
 		assert_eq(choice.tooltip_text, "")
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_true(main.get_node("WorkshopOverlay").visible)
@@ -1211,22 +1209,27 @@ func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text,
 		"BALANCE £1"
 	)
-	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "0 MERGES QUEUED")
-	var chicken_source := _pairing_source_button(main, "chicken:0")
-	assert_not_null(chicken_source)
-	assert_string_contains(chicken_source.text, "STANDARD CHICKEN")
-	assert_string_contains(chicken_source.text, "PERFECT PAIRS")
+	var flock_grid: GridContainer = main.get_node(
+		"WorkshopOverlay/Card/Content/FlockScroll/FlockGrid"
+	)
+	assert_eq(flock_grid.get_child_count(), 24)
+	for bird_button: Button in flock_grid.get_children():
+		assert_string_contains(bird_button.card_text(), "REMOVE  £3")
+		assert_eq(bird_button.portrait_kind(), String(
+			bird_button.accessibility_name.split(" ")[-2]
+		).to_lower())
+		assert_true(bird_button.disabled, "the £1 balance cannot fund a £3 removal")
 	assert_eq(main.get_node("Content/Header/Thwacks").text, "THWACKS 1")
 	await get_tree().process_frame
+	assert_true(main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1").has_focus())
 	assert_true(main.get_node(
 		"WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop"
-	).has_focus())
+	).disabled)
 	var shop_card: Control = main.get_node("WorkshopOverlay/Card")
 	assert_true(main.get_global_rect().encloses(shop_card.get_global_rect()))
 	for shop_section_path in [
 		"WorkshopOverlay/Card/Content/RewardChoices",
-		"WorkshopOverlay/Card/Content/MergeActions",
-		"WorkshopOverlay/Card/Content/RetirementActions",
+		"WorkshopOverlay/Card/Content/FlockScroll",
 		"WorkshopOverlay/Card/Content/WorkshopActions",
 	]:
 		assert_true(shop_card.get_global_rect().encloses(
@@ -1237,44 +1240,37 @@ func test_success_opens_one_shop_with_three_legible_recruitment_offers() -> void
 		assert_true(header_rack.get_global_rect().encloses(
 			(main.get_node("WorkshopOverlay/Card/Content/%s" % header_path) as Control).get_global_rect()
 		), "%s stays inside the store header" % header_path)
-	var recruitment_panel: Control = main.get_node(
-		"WorkshopOverlay/Card/Content/RecruitmentPanel"
+	var reward_panel: Control = main.get_node(
+		"WorkshopOverlay/Card/Content/RewardPanel"
 	)
-	assert_true(recruitment_panel.get_global_rect().encloses(choices.get_global_rect()))
+	assert_true(reward_panel.get_global_rect().encloses(choices.get_global_rect()))
 	for choice: Button in choices.get_children():
 		assert_gte(choice.custom_minimum_size.x, 320.0)
 		assert_gte(choice.custom_minimum_size.y, 200.0)
 	assert_true(main.get_node(
-		"WorkshopOverlay/Card/Content/ManagementPanel"
+		"WorkshopOverlay/Card/Content/FlockPanel"
 	).get_global_rect().encloses(
-		main.get_node("WorkshopOverlay/Card/Content/MergeActions").get_global_rect()
+		main.get_node("WorkshopOverlay/Card/Content/FlockScroll").get_global_rect()
 	))
-	assert_true(main.get_node(
-		"WorkshopOverlay/Card/Content/FlockLedger"
-	).get_global_rect().encloses(
-		main.get_node("WorkshopOverlay/Card/Content/RetirementActions").get_global_rect()
-	))
-	for retirement_button: Button in main.get_node(
-		"WorkshopOverlay/Card/Content/RetirementActions"
-	).get_children():
-		assert_false(retirement_button.text.contains("STANDARD"))
-		assert_true(retirement_button.clip_text)
 
 
-func test_pairing_picker_greys_unmatched_sources_then_queues_the_chosen_match() -> void:
+func test_flock_overview_removes_the_selected_bird_for_three_pounds() -> void:
 	var producers: Array[Dictionary] = []
 	for egg_index in range(7):
 		producers.append({"kind": "chicken"})
-	producers.append({"kind": "cuckoo"})
 	var session = ChickenDaySession.new(
 		42, ProducerFlock.new(producers), IdentityShuffler.new()
 	)
-	for circuit_id in [
-		"red", "red", "red", "red", "blue", "red", "blue", "red",
-	]:
-		session.submit_circuit(circuit_id)
-		if session.state().phase != "day":
-			break
+	while int(session.state().cash) < 3:
+		for circuit_id in [
+			"red", "red", "red", "red", "blue", "red", "blue", "red",
+		]:
+			session.submit_circuit(circuit_id)
+			if session.state().phase != "day":
+				break
+		if int(session.state().cash) < 3:
+			session.claim_bird_offer(0)
+			session.leave_shop()
 	assert_eq(session.state().phase, "shop")
 
 	var main := _add_main()
@@ -1282,51 +1278,35 @@ func test_pairing_picker_greys_unmatched_sources_then_queues_the_chosen_match() 
 	main.replace_session(session)
 	await get_tree().process_frame
 
-	var source_buttons: VBoxContainer = main.get_node(
-		"WorkshopOverlay/Card/Content/MergeActions/PairingSources/SourceScroll/PairingSourceButtons"
-	)
-	var partner_buttons: VBoxContainer = main.get_node(
-		"WorkshopOverlay/Card/Content/MergeActions/PairingPartners/PartnerScroll/PairingPartnerButtons"
-	)
-	assert_eq(source_buttons.get_child_count(), 2)
-	assert_eq(partner_buttons.get_child_count(), 0)
-
-	var chicken_source: Button
-	var cuckoo_source: Button
-	for button: Button in source_buttons.get_children():
-		if String(button.get_meta("pairing_source_id")) == "chicken:0":
-			chicken_source = button
-		if String(button.get_meta("pairing_source_id")) == "cuckoo:0":
-			cuckoo_source = button
-	assert_not_null(chicken_source)
-	assert_not_null(cuckoo_source)
-	assert_false(chicken_source.disabled)
-	assert_true(cuckoo_source.disabled)
-	assert_string_contains(cuckoo_source.text, "NO PERFECT MATCH")
-	assert_true(main.get_node("Presentation/UIFeedback").is_control_registered(chicken_source))
-
-	chicken_source.pressed.emit()
+	var choice: Button = main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1")
+	choice.pressed.emit()
 	await get_tree().process_frame
-
-	assert_eq(partner_buttons.get_child_count(), 1)
-	var partner: Button = partner_buttons.get_child(0)
-	assert_false(partner.disabled)
-	assert_string_contains(partner.text, "PERFECT MATCH")
-	assert_string_contains(partner.text, "£1")
-	assert_string_contains(partner.accessibility_description, "one pound")
-
 	var cash_before := int(
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text.trim_prefix("BALANCE £")
 	)
-	partner.pressed.emit()
+	var flock_grid: GridContainer = main.get_node(
+		"WorkshopOverlay/Card/Content/FlockScroll/FlockGrid"
+	)
+	var flock_size_before := flock_grid.get_child_count()
+	var selected: Button = flock_grid.get_child(2)
+	var selected_kind: String = selected.portrait_kind()
+	assert_false(selected.disabled)
+	assert_true(main.get_node("Presentation/UIFeedback").is_control_registered(selected))
+
+	selected.pressed.emit()
 	await get_tree().process_frame
 
 	assert_eq(
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text,
-		"BALANCE £%d" % (cash_before - 1)
+		"BALANCE £%d" % (cash_before - 3)
 	)
-	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "1 MERGE QUEUED")
-	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "£1 PAID")
+	assert_eq(flock_grid.get_child_count(), flock_size_before - 1)
+	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "REMOVED")
+	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, selected_kind.to_upper())
+	assert_eq(
+		main.get_node("Presentation/UIFeedback").registered_control_count(),
+		9 + flock_grid.get_child_count()
+	)
 
 
 func test_store_motion_is_cancellable_and_reduced_motion_opens_immediately() -> void:
@@ -1375,12 +1355,12 @@ func test_early_success_shows_unused_thwack_payout_and_persistent_balance() -> v
 	assert_true(main.get_node("WorkshopOverlay").visible)
 
 
-func test_shop_allows_an_affordable_merge_then_leave_starts_day_two() -> void:
+func test_claiming_a_free_bird_then_leaving_starts_day_two_with_the_larger_flock() -> void:
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _complete_successful_day(main)
 	var first_choice = main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1")
-	var expected_hopper_count := 23
+	var expected_flock_size := 25
 	var loading_facts: Array[Vector2i] = []
 	main.production_loading_started.connect(
 		func(producer_count: int, egg_count: int) -> void:
@@ -1389,43 +1369,42 @@ func test_shop_allows_an_affordable_merge_then_leave_starts_day_two() -> void:
 
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_true(main.get_node("WorkshopOverlay").visible)
-	assert_true(first_choice.disabled)
+	assert_false(first_choice.disabled)
 	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £1")
-	_pairing_source_button(main, "chicken:0").pressed.emit()
+	assert_true(main.get_node(
+		"WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop"
+	).disabled)
+	first_choice.pressed.emit()
 	await get_tree().process_frame
-	main.get_node(
-		"WorkshopOverlay/Card/Content/MergeActions/PairingPartners/PartnerScroll/PairingPartnerButtons"
-	).get_child(0).pressed.emit()
-	await get_tree().process_frame
-	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £0")
-	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/MergeSummary").text, "1 MERGE QUEUED")
-	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "PAIR QUEUED")
+	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £1")
+	assert_false(main.get_node("WorkshopOverlay/Card/Content/RewardPanel").visible)
+	assert_false(main.get_node("WorkshopOverlay/Card/Content/RewardChoices").visible)
+	assert_true(main.get_node("WorkshopOverlay/Card/Content/FlockPanel").get_global_rect().encloses(
+		main.get_node("WorkshopOverlay/Card/Content/FlockScroll").get_global_rect()
+	))
+	assert_eq(main.get_node(
+		"WorkshopOverlay/Card/Content/FlockScroll/FlockGrid"
+	).get_child_count(), expected_flock_size)
+	assert_string_contains(main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text, "NO CHARGE")
 	var ui_feedback = main.get_node("Presentation/UIFeedback")
 	assert_eq(ui_feedback.last_feedback_kind(), "confirm")
-	var extra_thwack: Button = main.get_node(
-		"WorkshopOverlay/Card/Content/MergeActions/FactoryColumn/ExtraThwack"
-	)
-	extra_thwack.pressed.emit()
-	await get_tree().process_frame
-	assert_eq(ui_feedback.last_feedback_kind(), "reject")
-	assert_string_contains(
-		main.get_node("WorkshopOverlay/Card/Content/WorkshopStatus").text,
-		"PURCHASE DECLINED"
-	)
 	assert_eq(
 		main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").text,
 		"LEAVE SHOP & START DAY 2"
 	)
+	assert_false(main.get_node(
+		"WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop"
+	).disabled)
 
 	main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").pressed.emit()
 	await main.production_loading_completed
 	await get_tree().process_frame
 
-	assert_eq(loading_facts, [Vector2i(23, 23)])
+	assert_eq(loading_facts, [Vector2i(expected_flock_size, expected_flock_size)])
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_false(main.get_node("ProductionLoader").visible)
-	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER %d" % (expected_hopper_count - 1))
+	assert_eq(main.get_node("Content/Header/HopperCount").text, "HOPPER %d" % (expected_flock_size - 1))
 	assert_eq(main.get_node("Content/Header/Score").text, "SCORE 0 / 9")
 	assert_string_contains(main.get_node("Content/Feedback").text, "DAY 2")
 	assert_false(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().is_empty())
@@ -1441,6 +1420,8 @@ func test_day_three_keeps_the_same_single_track_and_three_levers() -> void:
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _complete_successful_day(main)
+	main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1").pressed.emit()
+	await get_tree().process_frame
 	main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").pressed.emit()
 	await main.production_loading_completed
 
@@ -1454,6 +1435,8 @@ func test_day_three_keeps_the_same_single_track_and_three_levers() -> void:
 		"LEAVE SHOP & START DAY 3"
 	)
 
+	main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1").pressed.emit()
+	await get_tree().process_frame
 	main.get_node("WorkshopOverlay/Card/Content/WorkshopActions/ContinueWorkshop").pressed.emit()
 	await main.production_loading_completed
 	await get_tree().process_frame
@@ -1480,6 +1463,8 @@ func test_replacing_the_session_cancels_an_active_production_loading_sequence() 
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 	await _complete_successful_day(main)
+	main.get_node("WorkshopOverlay/Card/Content/RewardChoices/Choice1").pressed.emit()
+	await get_tree().process_frame
 	main.set_reduced_motion(false)
 	var completion_count := [0]
 	var started_count := [0]
@@ -1528,16 +1513,6 @@ func _complete_successful_day(main: Control, acknowledge_result := true) -> void
 	):
 		main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 		await get_tree().process_frame
-
-
-func _pairing_source_button(main: Control, source_id: String) -> Button:
-	var container: VBoxContainer = main.get_node(
-		"WorkshopOverlay/Card/Content/MergeActions/PairingSources/SourceScroll/PairingSourceButtons"
-	)
-	for button: Button in container.get_children():
-		if button.visible and String(button.get_meta("pairing_source_id", "")) == source_id:
-			return button
-	return null
 
 
 func _add_main() -> Control:

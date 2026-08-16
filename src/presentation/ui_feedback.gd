@@ -40,6 +40,16 @@ func configure(controls: Array) -> void:
 		control.mouse_exited.connect(_on_pointer_exited.bind(control))
 
 
+func unconfigure(controls: Array) -> void:
+	for candidate in controls:
+		var control := candidate as BaseButton
+		if control == null:
+			continue
+		_kill_control_tween(control)
+		_animated_controls.erase(control.get_instance_id())
+		_registered_controls.erase(control)
+
+
 func set_muted(muted: bool) -> void:
 	_muted = muted
 	if not muted:
