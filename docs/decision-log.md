@@ -624,6 +624,16 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D060's additive 5% next-thwack Disgusting Smell/Sulphurous stacks, rounding rule, and expiry timing, plus D062's characterization of Maleo as only a late-day threshold effect. D060's resource separation and resolver ownership and D062's species assignment, name, egg values, reward availability, and quality constraints remain accepted.
 
+## D064 — Prototype spoons as Fortitude
+
+**Status:** proposed
+
+**Decision:** On the dedicated prototype branch, suspend Patience as an action limit and give each of the five spoon heads 4 Integrity. After a selected circuit's strike, conveyor movement, and refill, Grandma tantrums for 1 damage against each intact spoon that actually fired. A broken spoon no longer fires, a circuit with no intact spoon is unavailable, and all five broken spoons fail the day unless the completed action has already met Appetite. Add a debug-only Shock Absorber descriptor: an egg under a tantrum target takes that damage instead, and popping from that damage makes Grandma skip exactly her next tantrum. Use a temporary fixed £3 success payout. Do not add the absorber to the permanent reward pool or settle Thin-Shelled, armour, thorns, repairs, or progression yet.
+
+**Reason:** Five separately damageable tools turn the day timer into spatial state the player can route, protect, and eventually improve. Resolving movement before retaliation makes egg order and position matter defensively, while the first absorber-to-stun chain tests whether taking damage can create tempo rather than only loss. Keeping the egg debug-only and the payout fixed isolates that question from content, economy, and long-term balance commitments.
+
+**Supersedes:** Nothing while proposed. If accepted, it would supersede D059's Patience action limit and remaining-Patience payout while preserving its complete-action and success-precedence principles.
+
 <!--
 Copy for the next entry:
 

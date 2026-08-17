@@ -5,11 +5,13 @@ const APPETISER := "appetiser"
 const SULPHUROUS := "sulphurous"
 const SHOCKWAVE := "shockwave"
 const DECEPTIVELY_FILLING := "deceptively_filling"
+const SHOCK_ABSORBER := "shock_absorber"
 const SUPPORTED_TYPES: Array[String] = [
 	APPETISER,
 	SULPHUROUS,
 	SHOCKWAVE,
 	DECEPTIVELY_FILLING,
+	SHOCK_ABSORBER,
 ]
 
 
@@ -51,7 +53,7 @@ static func break_actions(
 				"slot_indices": adjacent_slots,
 				"circuit_id": circuit_id,
 			})
-		else:
+		elif effect.type != SHOCK_ABSORBER:
 			actions.append({"type": "grandma_effect", "effect": effect.duplicate(true)})
 	return actions
 
@@ -71,4 +73,6 @@ static func descriptions(effects: Array[Dictionary]) -> Array[String]:
 					"Deceptively Filling (%d): banks slow-release Yolk, releasing 1 each future thwack"
 					% int(effect.duration)
 				)
+			SHOCK_ABSORBER:
+				result.append("Shock Absorber: takes Grandma's hit for the spoon beneath it")
 	return result

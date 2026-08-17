@@ -1,19 +1,19 @@
 class_name DevEggPicker
 extends Control
 
-signal selection_submitted(egg_kinds: Array[String], starting_patience: int)
+signal selection_submitted(egg_kinds: Array[String], starting_spoon_integrity: int)
 signal dismissed
 
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
 const ProducerFlock = preload("res://src/domain/producer_flock.gd")
-const MAX_STARTING_PATIENCE := 99
+const MAX_STARTING_SPOON_INTEGRITY := 99
 
 @onready var _species_buttons: VBoxContainer = %SpeciesButtons
 @onready var _egg_order_list: ItemList = %EggOrder
 @onready var _move_up: Button = %MoveUp
 @onready var _move_down: Button = %MoveDown
 @onready var _remove: Button = %Remove
-@onready var _patience: SpinBox = %Patience
+@onready var _integrity: SpinBox = %Patience
 @onready var _total: Label = %Total
 @onready var _cancel: Button = %Cancel
 @onready var _start: Button = %Start
@@ -22,7 +22,7 @@ var _egg_order: Array[String] = []
 
 
 func _ready() -> void:
-	for kind: String in ProducerFlock.PRODUCER_KINDS:
+	for kind: String in ProducerFlock.KNOWN_KINDS:
 		var add_button := Button.new()
 		add_button.name = "Add%s" % kind.capitalize()
 		add_button.text = "+  %s" % kind.to_upper()
@@ -38,18 +38,18 @@ func _ready() -> void:
 	_egg_order_list.item_selected.connect(_on_order_selection_changed)
 	_cancel.pressed.connect(dismiss)
 	_start.pressed.connect(submit_selection)
-	_patience.min_value = 1.0
-	_patience.max_value = float(MAX_STARTING_PATIENCE)
-	_patience.value = float(ChickenDay.STARTING_PATIENCE)
+	_integrity.min_value = 1.0
+	_integrity.max_value = float(MAX_STARTING_SPOON_INTEGRITY)
+	_integrity.value = float(ChickenDay.STARTING_SPOON_INTEGRITY)
 	_refresh_order()
 
 
 func open_with(
 	egg_kinds: Array[String],
-	starting_patience_value := ChickenDay.STARTING_PATIENCE
+	starting_integrity_value := ChickenDay.STARTING_SPOON_INTEGRITY
 ) -> void:
 	set_egg_order(egg_kinds)
-	set_starting_patience(int(starting_patience_value))
+	set_starting_spoon_integrity(int(starting_integrity_value))
 	show()
 	if _egg_order.is_empty():
 		_start.grab_focus()
@@ -61,7 +61,7 @@ func set_egg_order(egg_kinds: Array) -> void:
 	_egg_order.clear()
 	for kind_value in egg_kinds:
 		var kind := String(kind_value)
-		if kind in ProducerFlock.PRODUCER_KINDS:
+		if kind in ProducerFlock.KNOWN_KINDS:
 			_egg_order.append(kind)
 	_refresh_order(0)
 
@@ -71,7 +71,7 @@ func egg_order() -> Array[String]:
 
 
 func add_egg(kind: String) -> void:
-	if kind not in ProducerFlock.PRODUCER_KINDS:
+	if kind not in ProducerFlock.KNOWN_KINDS:
 		return
 	_egg_order.append(kind)
 	_refresh_order(_egg_order.size() - 1)
@@ -94,12 +94,21 @@ func remove_egg(index: int) -> void:
 	_refresh_order(mini(index, _egg_order.size() - 1))
 
 
+func set_starting_spoon_integrity(value: int) -> void:
+	_integrity.value = clampi(value, 1, MAX_STARTING_SPOON_INTEGRITY)
+
+
+func starting_spoon_integrity() -> int:
+	return int(_integrity.value)
+
+
+# Temporary aliases keep old debug tooling usable while the prototype is tentative.
 func set_starting_patience(value: int) -> void:
-	_patience.value = clampi(value, 1, MAX_STARTING_PATIENCE)
+	set_starting_spoon_integrity(value)
 
 
 func starting_patience() -> int:
-	return int(_patience.value)
+	return starting_spoon_integrity()
 
 
 func total_egg_count() -> int:
@@ -114,7 +123,7 @@ func submit_selection() -> void:
 	if _egg_order.is_empty():
 		return
 	hide()
-	selection_submitted.emit(egg_order(), starting_patience())
+	selection_submitted.emit(egg_order(), starting_spoon_integrity())
 
 
 func dismiss() -> void:

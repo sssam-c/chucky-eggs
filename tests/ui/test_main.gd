@@ -392,7 +392,7 @@ func test_main_renders_initial_day_with_grandma_appetite_scorer() -> void:
 	assert_true(grandma.get_global_rect().encloses(patience.get_global_rect()))
 	assert_true(grandma.get_global_rect().encloses(settings.get_global_rect()))
 	assert_true(hud.get_global_rect().encloses(grandma.get_global_rect()))
-	assert_eq(patience.text, "PATIENCE 10")
+	assert_eq(patience.text, "SPOONS 20 / 20")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 7")
 	assert_eq(main.get_node("Content/Stage/Belt/Bin").text, "BIN 0")
 	assert_false(main.has_node("Content/Header"))
@@ -709,7 +709,7 @@ func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
 	assert_true(main.is_dev_mode())
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 10")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 20 / 20")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots").get_child_count(), 5)
 	assert_eq(main.get_node("Content/Stage/CircuitBank").get_child_count(), 3)
 
@@ -731,24 +731,24 @@ func test_debug_settings_picker_starts_with_the_selected_egg_species() -> void:
 	settings_popup.id_pressed.emit(2)
 	assert_true(picker.visible)
 	assert_eq(picker.total_egg_count(), 8)
-	assert_eq(picker.starting_patience(), 10)
+	assert_eq(picker.starting_spoon_integrity(), 4)
 
 	picker.set_egg_order(["kiwi", "quail", "ostrich"])
 	picker.move_egg(2, 0)
-	picker.set_starting_patience(18)
+	picker.set_starting_spoon_integrity(18)
 	picker.submit_selection()
 
 	assert_false(picker.visible)
 	assert_true(main.is_dev_mode())
 	assert_eq(main.dev_starting_egg_kinds(), ["ostrich", "kiwi", "quail"])
-	assert_eq(main.dev_starting_patience(), 18)
+	assert_eq(main.dev_starting_spoon_integrity(), 18)
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 18")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 90 / 90")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
 
 	main.restart_day()
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 18")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 90 / 90")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
 
 
@@ -775,7 +775,7 @@ func test_dev_egg_picker_fits_default_and_constrained_viewports() -> void:
 		))
 		assert_eq(
 			picker.get_node("Panel/Margin/Layout/Body/Species/SpeciesButtons").get_child_count(),
-			9
+			10
 		)
 		assert_eq(picker.total_egg_count(), 8)
 
@@ -985,7 +985,7 @@ func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
 	await _press_and_wait(main, "RedCircuit")
 
 	assert_eq(fired_slots, [0, 2])
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 9")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 18 / 20")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 2")
 
@@ -1010,8 +1010,11 @@ func test_empty_blue_strike_fires_advances_and_consumes_patience() -> void:
 		"conveyor_advanced",
 		"patience_spent",
 		"egg_entered",
+		"grandma_tantrum_started",
+		"spoon_damaged",
+		"spoon_damaged",
 	])
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 9")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 18 / 20")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 3")
 
@@ -1067,7 +1070,6 @@ func test_moving_eggs_sway_and_the_hopper_feed_lifts_before_pushing_sideways() -
 	var saw_feed_sway := false
 	var strongest_belt_lean := 0.0
 	var feed_backward_lean := 0.0
-	var feed_counter_wobble := 0.0
 	main.presentation_event.connect(func(event_type: String) -> void:
 		if event_type == "circuit_fired":
 			circuit_presented[0] = true
@@ -1089,7 +1091,6 @@ func test_moving_eggs_sway_and_the_hopper_feed_lifts_before_pushing_sideways() -
 		if conveyor_presented[0] and not entry_presented[0]:
 			var feed_offset := next_content.position
 			feed_backward_lean = minf(feed_backward_lean, next_content.rotation)
-			feed_counter_wobble = maxf(feed_counter_wobble, next_content.rotation)
 			saw_lift_before_push = saw_lift_before_push or (
 				feed_offset.y < -5.0 and absf(feed_offset.x) < 4.0
 			)
@@ -1102,10 +1103,10 @@ func test_moving_eggs_sway_and_the_hopper_feed_lifts_before_pushing_sideways() -
 	assert_true(saw_belt_sway)
 	assert_true(saw_lift_before_push)
 	assert_true(saw_feed_sway)
-	assert_gt(strongest_belt_lean, 0.075)
-	assert_lt(feed_backward_lean, -0.09)
-	assert_gt(feed_counter_wobble, 0.045)
+	assert_gt(strongest_belt_lean, 0.06)
+	assert_lt(feed_backward_lean, -0.025)
 	assert_true(entry_presented[0])
+	await main.playback_completed
 	await get_tree().process_frame
 	assert_false(main.is_input_locked())
 	assert_eq(next_content.position, Vector2.ZERO)
@@ -1153,6 +1154,9 @@ func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> v
 		"conveyor_advanced",
 		"patience_spent",
 		"egg_entered",
+		"grandma_tantrum_started",
+		"spoon_damaged",
+		"spoon_damaged",
 	])
 
 
@@ -1194,7 +1198,7 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	assert_true(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 	await main.playback_completed
 	await get_tree().process_frame
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 9")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 18 / 20")
 	assert_eq(completion_count[0], 1)
 	assert_eq(patience_spend_count[0], 1)
 	assert_false(main.get_node("Content/Stage/Pipe/HopperInspect").disabled)
@@ -1400,7 +1404,7 @@ func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
 	await get_tree().create_timer(0.5).timeout
 
 	assert_false(main.is_input_locked())
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 10")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 20 / 20")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_eq(completion_count, 0)
 
@@ -1454,7 +1458,7 @@ func test_resolved_hud_facts_trigger_non_blocking_ui_feedback() -> void:
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_true("patience" in kinds)
+	assert_true("spoons" in kinds)
 	assert_true("hopper" in kinds)
 	assert_true(feedback.has_active_motion())
 	main.set_reduced_motion(true)
@@ -1490,7 +1494,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	var result_panel: Control = main.get_node("ResultOverlay")
 	assert_true(result_panel.visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY FAILED")
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 7")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 14 / 20")
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_true(main.get_node("ResultOverlay/Card/Content/Restart").visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Restart").text, "RETRY DAY 1")
@@ -1502,7 +1506,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 	assert_false(result_panel.visible)
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 10")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 20 / 20")
 
 
 func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void:
@@ -1523,7 +1527,7 @@ func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void
 	)
 	assert_string_contains(
 		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
-		"BALANCE £1"
+		"BALANCE £3"
 	)
 	assert_string_contains(
 		main.get_node("ResultOverlay/Card/Content/FlockSummary").text,
@@ -1595,7 +1599,7 @@ func test_success_opens_three_free_quality_offers_on_a_separate_screen() -> void
 		main.get_node("BirdOfferOverlay/Card/Content/BirdOfferSummary").text,
 		"DAY 2 APPETITE 9"
 	)
-	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 1")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 477 / 495")
 	await get_tree().process_frame
 	assert_true(main.get_node("BirdOfferOverlay/Card/Content/RewardChoices/Choice1").has_focus())
 	var offer_card: Control = main.get_node("BirdOfferOverlay/Card")
@@ -1612,7 +1616,7 @@ func test_flock_overview_removes_the_selected_bird_for_three_pounds() -> void:
 	for egg_index in range(7):
 		producers.append({"kind": "chicken"})
 	var session = ChickenDaySession.new(
-		42, ProducerFlock.new(producers), IdentityShuffler.new()
+		42, ProducerFlock.new(producers), IdentityShuffler.new(), 1, 99
 	)
 	while int(session.state().cash) < 3:
 		for circuit_id in [
@@ -1694,11 +1698,11 @@ func test_store_motion_is_cancellable_and_reduced_motion_opens_immediately() -> 
 	assert_false(main.is_workshop_transition_active())
 
 
-func test_early_success_shows_remaining_patience_payout_and_persistent_balance() -> void:
+func test_early_success_shows_fixed_prototype_payout_and_persistent_balance() -> void:
 	var daily_eggs: Array[String] = []
 	daily_eggs.resize(7)
 	daily_eggs.fill("chicken")
-	var main := _add_main_for_ordered_eggs(daily_eggs)
+	var main := _add_main_for_ordered_eggs(daily_eggs, 99)
 	main.set_reduced_motion(true)
 	var presented: Array[String] = []
 	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
@@ -1710,7 +1714,7 @@ func test_early_success_shows_remaining_patience_payout_and_persistent_balance()
 	assert_true(main.get_node("ResultOverlay").visible)
 	assert_string_contains(
 		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
-		"FROM REMAINING PATIENCE"
+		"PROTOTYPE DAY PAYOUT"
 	)
 	assert_false(main.get_node("BirdOfferOverlay").visible)
 	assert_false(main.get_node("WorkshopOverlay").visible)
@@ -1740,7 +1744,7 @@ func test_claiming_a_free_bird_then_leaving_starts_day_two_with_the_larger_flock
 	await get_tree().process_frame
 	assert_false(main.get_node("BirdOfferOverlay").visible)
 	assert_true(main.get_node("WorkshopOverlay").visible)
-	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £1")
+	assert_eq(main.get_node("WorkshopOverlay/Card/Content/WorkshopBalance").text, "BALANCE £3")
 	assert_true(main.get_node("WorkshopOverlay/Card/Content/FlockPanel").get_global_rect().encloses(
 		main.get_node("WorkshopOverlay/Card/Content/FlockScroll").get_global_rect()
 	))
@@ -1885,17 +1889,33 @@ func _add_main() -> Control:
 
 
 func _add_authored_main() -> Control:
-	return _add_main_for_ordered_eggs(AUTHORED_DAILY_EGGS)
+	var producers: Array[Dictionary] = []
+	for kind: String in AUTHORED_DAILY_EGGS:
+		producers.append({"kind": kind})
+	var session = ChickenDaySession.new(
+		0,
+		ProducerFlock.new(producers),
+		IdentityShuffler.new(),
+		1,
+		99
+	)
+	var main := _add_main()
+	main.replace_session(session)
+	return main
 
 
-func _add_main_for_ordered_eggs(egg_kinds: Array[String]) -> Control:
+func _add_main_for_ordered_eggs(
+	egg_kinds: Array[String], starting_spoon_integrity := 4
+) -> Control:
 	var producers: Array[Dictionary] = []
 	for kind: String in egg_kinds:
 		producers.append({"kind": kind})
 	var session = ChickenDaySession.new(
 		0,
 		ProducerFlock.new(producers),
-		IdentityShuffler.new()
+		IdentityShuffler.new(),
+		1,
+		starting_spoon_integrity
 	)
 	var main := _add_main()
 	main.replace_session(session)

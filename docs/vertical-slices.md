@@ -150,3 +150,34 @@ Accepted and implemented. Quail, Maleo, Ostrich, and Kiwi are immediately availa
 - Domain tests cover all four definitions, their built-in descriptors, permanent producer validation, Double Yolker odds, quality composition, and deterministic effect behavior.
 - Session tests cover deterministic three-choice rewards drawn from the expanded permanent species list.
 - UI tests cover distinct placeholder identities and complete reward-card explanations for every signature egg.
+
+## Tentative prototype slice — Spoon Fortitude and Grandma's tantrum
+
+### Question
+
+Does replacing the ten-action Patience limit with damageable individual spoons create a more legible progression surface and more interesting positional egg interactions?
+
+### Status
+
+Prototype implemented only on `codex/spoon-fortitude-prototype`. The accepted Patience rules remain the baseline until playtesting supports accepting or rejecting this replacement.
+
+### Prototype behavior
+
+- Each of the five spoons begins with 4 Integrity. Only intact spoons in the selected circuit fire; a circuit with no intact spoon is unavailable.
+- After the selected strike resolves, the conveyor advances and refills, then Grandma tantrums against exactly the intact spoons that fired. Shockwave spoons are not extra tantrum targets.
+- A tantrum normally removes 1 Integrity from each targeted spoon. The day fails when all five spoons are broken and Appetite remains unmet; success still takes precedence after the complete action.
+- A debug-only Shock Absorber egg has 1 Toughness and 1 Yolk. If it occupies a targeted spoon's slot after movement, it takes that tantrum damage instead. If Grandma's damage pops it, Grandma skips her next tantrum; this stun does not stack.
+- Debug setup can choose ordered eggs, include the prototype absorber, and set starting Integrity per spoon. Normal opening and reward pools do not include the absorber.
+- Successful prototype days award a temporary fixed £3, isolating the combat-loop question from a replacement for the old remaining-Patience payout.
+
+### Explicitly deferred
+
+- Thin-Shelled follow-up strikes, spoon armour, egg force/damage upgrades, thorns, multi-hit absorbers, repairs, and permanent Fortitude progression.
+- A permanent bird species, final name, tuning, art, or reward path for Shock Absorber.
+- Removing the inert Patience compatibility fields and tests before the prototype is accepted.
+
+### Exit evidence
+
+- Domain coverage must prove post-refill target selection, per-spoon damage, broken-circuit rejection, interception, stun creation, and exactly-one skipped tantrum.
+- Presentation coverage must prove spoon condition remains visible, tantrum/interception/stun events remain inside the existing input barrier, reduced motion resolves immediately, and cancellation restores stable transforms.
+- Playtest at least one ordered absorber setup and one ordinary opening. Record whether players anticipate the post-move interception, distribute circuit wear, understand broken circuits, and experience more meaningful runway than the old ten-action clock.

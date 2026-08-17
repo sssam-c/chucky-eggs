@@ -162,7 +162,7 @@ theme_override_colors/font_color = Color(0.22, 0.87, 0.89, 1)
 theme_override_colors/font_shadow_color = Color(0.01, 0.11, 0.12, 1)
 theme_override_constants/shadow_outline_size = 3
 theme_override_font_sizes/font_size = 18
-text = "PATIENCE 10"
+text = "SPOONS 20 / 20"
 horizontal_alignment = 1
 vertical_alignment = 1
 

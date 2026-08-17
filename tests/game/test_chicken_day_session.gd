@@ -161,12 +161,12 @@ func test_dev_session_uses_exactly_the_selected_starting_egg_species() -> void:
 	), ["quail", "quail", "ostrich"])
 	assert_eq(state.day_number, 3)
 	assert_eq(state.target_score, 9)
-	assert_eq(state.starting_patience, 18)
-	assert_eq(state.current_patience, 18)
+	assert_eq(state.starting_spoon_integrity, 18)
+	assert_eq(state.spoon_integrity, [18, 18, 18, 18, 18])
 
 	session.submit_circuit("red")
 	session.restart()
-	assert_eq(session.state().current_patience, 18)
+	assert_eq(session.state().spoon_integrity, [18, 18, 18, 18, 18])
 	assert_eq(session.state().slots[0].kind, "kiwi")
 
 
@@ -308,7 +308,7 @@ func test_only_one_bird_can_be_removed_during_each_shop_visit() -> void:
 	assert_false(session.state().removal_used_tonight)
 
 
-func test_success_banks_one_pound_per_remaining_patience_exactly_once() -> void:
+func test_success_banks_the_fixed_prototype_payout_exactly_once() -> void:
 	var session = _early_success_session()
 
 	var final_events: Array[Dictionary] = _complete_early_successful_day(session)
@@ -319,18 +319,18 @@ func test_success_banks_one_pound_per_remaining_patience_exactly_once() -> void:
 	assert_eq(final_events[-2].current_patience, 2)
 	assert_eq(final_events[-1], {
 		"type": "cash_awarded",
-		"amount": 2,
-		"cash_total": 2,
-		"remaining_patience": 2,
+		"amount": 3,
+		"cash_total": 3,
+		"payout_rule": "prototype_fixed",
 	})
-	assert_eq(session.state().cash, 2)
-	assert_eq(session.state().last_cash_awarded, 2)
+	assert_eq(session.state().cash, 3)
+	assert_eq(session.state().last_cash_awarded, 3)
 
 	assert_eq(session.submit_circuit("red"), [{"type": "thwack_rejected", "reason": "wrong_phase"}])
-	assert_eq(session.state().cash, 2)
+	assert_eq(session.state().cash, 3)
 
 
-func test_success_with_zero_remaining_patience_awards_zero_pounds() -> void:
+func test_fixed_payout_does_not_depend_on_legacy_patience_telemetry() -> void:
 	var session = _early_success_session()
 	var final_events: Array[Dictionary] = []
 
@@ -340,13 +340,13 @@ func test_success_with_zero_remaining_patience_awards_zero_pounds() -> void:
 	assert_eq(session.state().phase, "bird_offer")
 	assert_true(session.state().succeeded)
 	assert_eq(session.state().current_patience, 0)
-	assert_eq(session.state().cash, 0)
-	assert_eq(session.state().last_cash_awarded, 0)
+	assert_eq(session.state().cash, 3)
+	assert_eq(session.state().last_cash_awarded, 3)
 	assert_eq(final_events[-1], {
 		"type": "cash_awarded",
-		"amount": 0,
-		"cash_total": 0,
-		"remaining_patience": 0,
+		"amount": 3,
+		"cash_total": 3,
+		"payout_rule": "prototype_fixed",
 	})
 
 
@@ -382,11 +382,11 @@ func test_banked_cash_persists_into_day_two() -> void:
 	session.leave_shop()
 
 	assert_eq(session.state().day_number, 2)
-	assert_eq(session.state().cash, 2)
+	assert_eq(session.state().cash, 3)
 	assert_eq(session.state().last_cash_awarded, 0)
 
 
-func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> void:
+func test_second_success_adds_one_more_fixed_prototype_payout() -> void:
 	var session = _early_success_session()
 	_complete_early_successful_day(session)
 	var banked_cash := int(session.state().cash)
@@ -397,18 +397,13 @@ func test_failed_day_two_awards_nothing_and_retry_preserves_banked_cash() -> voi
 	while session.state().phase == "day":
 		final_events = session.submit_circuit("pink")
 
-	assert_eq(session.state().phase, "failed")
-	assert_eq(session.state().cash, banked_cash)
-	assert_eq(session.state().last_cash_awarded, 0)
-	assert_false(final_events.any(func(event: Dictionary) -> bool:
+	assert_eq(session.state().phase, "bird_offer")
+	assert_eq(session.state().cash, banked_cash + ChickenDaySession.SUCCESS_CASH)
+	assert_eq(session.state().last_cash_awarded, ChickenDaySession.SUCCESS_CASH)
+	assert_true(final_events.any(func(event: Dictionary) -> bool:
 		return event.type == "cash_awarded"
 	))
-
-	session.restart()
-
-	assert_eq(session.state().phase, "day")
 	assert_eq(session.state().day_number, 2)
-	assert_eq(session.state().cash, banked_cash)
 
 
 func test_restarting_day_two_preserves_its_nine_point_target() -> void:
@@ -467,14 +462,14 @@ func _successful_day_session():
 	var producers: Array[Dictionary] = []
 	for kind: String in SUCCESSFUL_DAY_EGGS:
 		producers.append({"kind": kind})
-	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new())
+	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new(), 1, 99)
 
 
 func _early_success_session(tier := 0):
 	var producers: Array[Dictionary] = []
 	for egg_index in range(7):
 		producers.append({"kind": "chicken", "tier": tier})
-	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new())
+	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new(), 1, 99)
 
 
 func _funded_early_shop_session(minimum_cash: int):

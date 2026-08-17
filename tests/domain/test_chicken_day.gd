@@ -136,8 +136,8 @@ func test_day_ends_when_every_egg_has_hatched() -> void:
 	assert_eq(state.current_patience, 7)
 	assert_true(state.pipe.is_empty())
 	assert_true(state.slots.all(func(egg: Dictionary) -> bool: return egg.is_empty()))
-	assert_eq(_event_types(final_events).slice(-3), [
-		"patience_spent", "day_remainder_discarded", "day_ended",
+	assert_eq(_event_types(final_events).slice(-2), [
+		"day_remainder_discarded", "day_ended",
 	])
 	assert_eq(final_events[-1].current_patience, 7)
 
@@ -179,6 +179,8 @@ func test_fallen_egg_keeps_damage_and_recycles_when_the_hopper_is_empty() -> voi
 		"patience_spent",
 		"bin_reshuffled",
 		"egg_entered",
+		"grandma_tantrum_started",
+		"spoon_damaged",
 	])
 	assert_eq(shuffler.shuffled_bins.size(), 1)
 	assert_eq(shuffler.shuffled_bins[0][0].kind, "spoonbill")
@@ -210,8 +212,9 @@ func test_bin_waits_for_the_conveyor_to_clear_before_reshuffling() -> void:
 
 	var clear_events: Array[Dictionary] = day.resolve_circuit("pink")
 
-	assert_eq(_event_types(clear_events).slice(-4), [
+	assert_eq(_event_types(clear_events).slice(-6), [
 		"egg_binned", "patience_spent", "bin_reshuffled", "egg_entered",
+		"grandma_tantrum_started", "spoon_damaged",
 	])
 	assert_eq(shuffler.shuffled_bins.size(), 1)
 	assert_eq(shuffler.shuffled_bins[0].size(), 2)
@@ -232,6 +235,9 @@ func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
 		"conveyor_advanced",
 		"patience_spent",
 		"egg_entered",
+		"grandma_tantrum_started",
+		"spoon_damaged",
+		"spoon_damaged",
 	])
 	assert_eq(events[0].circuit_id, "red")
 	assert_eq(events[0].slot_indices, [0, 2])
@@ -254,6 +260,9 @@ func test_empty_circuit_consumes_patience_and_advances_without_damage() -> void:
 		"conveyor_advanced",
 		"patience_spent",
 		"egg_entered",
+		"grandma_tantrum_started",
+		"spoon_damaged",
+		"spoon_damaged",
 	])
 	assert_eq(events[0].circuit_id, "blue")
 	assert_eq(events[0].slot_indices, [1, 3])
@@ -477,23 +486,26 @@ func test_unhatched_egg_is_binned_after_slot_five() -> void:
 	assert_eq(state.bin[0].toughness, 1)
 
 
-func test_tenth_valid_circuit_ends_day_and_rejects_further_requests() -> void:
-	var day = _new_authored_day()
+func test_breaking_all_five_spoons_ends_day_and_rejects_further_requests() -> void:
+	var eggs: Array[String] = []
+	eggs.resize(12)
+	eggs.fill("chicken")
+	var day = ChickenDay.new(eggs, 99, 1)
 
-	for turn in range(10):
-		var events: Array[Dictionary] = day.resolve_circuit("red")
+	for circuit_id in ["red", "blue", "pink"]:
+		var events: Array[Dictionary] = day.resolve_circuit(circuit_id)
 		assert_ne(events[0].type, "thwack_rejected")
 
 	var state: Dictionary = day.snapshot()
 	assert_true(state.ended)
-	assert_eq(state.current_patience, 0)
+	assert_eq(state.spoon_integrity, [0, 0, 0, 0, 0])
 	assert_true(state.slots.all(func(egg: Dictionary) -> bool: return egg.is_empty()))
 	assert_true(state.pipe.is_empty())
 	var rejected: Array[Dictionary] = day.resolve_circuit("red")
 	assert_eq(rejected[0].reason, "day_ended")
 
 
-func test_satisfying_grandma_on_the_final_patience_point_succeeds_after_full_resolution() -> void:
+func test_satisfying_grandma_when_spoons_break_succeeds_after_full_resolution() -> void:
 	var day = ChickenDay.new(["sparrow"], 1, 1)
 
 	var final_events: Array[Dictionary] = day.resolve_circuit("red")
@@ -505,29 +517,28 @@ func test_satisfying_grandma_on_the_final_patience_point_succeeds_after_full_res
 		"egg_hatched",
 		"conveyor_advanced",
 		"patience_spent",
+		"grandma_tantrum_started",
+		"spoon_damaged",
+		"spoon_damaged",
 		"day_remainder_discarded",
 		"day_ended",
 	])
-	assert_eq(state.current_patience, 0)
+	assert_eq(state.spoon_integrity[0], 0)
 	assert_true(state.succeeded)
 	assert_true(final_events[-1].succeeded)
 
 
-func test_reaching_zero_patience_without_satisfying_grandma_fails() -> void:
-	var day = ChickenDay.new(["chicken"], 99, 1)
-
-	var final_events: Array[Dictionary] = day.resolve_circuit("red")
+func test_breaking_all_spoons_without_satisfying_grandma_fails() -> void:
+	var eggs: Array[String] = []
+	eggs.resize(12)
+	eggs.fill("chicken")
+	var day = ChickenDay.new(eggs, 99, 1)
+	var final_events: Array[Dictionary] = []
+	for circuit_id in ["red", "blue", "pink"]:
+		final_events = day.resolve_circuit(circuit_id)
 	var state: Dictionary = day.snapshot()
 
-	assert_eq(_event_types(final_events), [
-		"circuit_fired",
-		"egg_damaged",
-		"conveyor_advanced",
-		"patience_spent",
-		"day_remainder_discarded",
-		"day_ended",
-	])
-	assert_eq(state.current_patience, 0)
+	assert_eq(state.spoon_integrity, [0, 0, 0, 0, 0])
 	assert_false(state.succeeded)
 	assert_false(final_events[-1].succeeded)
 
@@ -536,7 +547,7 @@ func test_day_succeeds_at_ten_or_more_points() -> void:
 	var chicken_pool: Array[String] = []
 	chicken_pool.resize(24)
 	chicken_pool.fill("chicken")
-	var day = ChickenDay.new(chicken_pool)
+	var day = ChickenDay.new(chicken_pool, ChickenDay.DEFAULT_TARGET_SCORE, 99)
 	var circuit_plan := [
 		"red", "red", "red", "blue", "red", "red", "red", "blue", "blue", "pink", "pink",
 	]
@@ -552,10 +563,10 @@ func test_day_succeeds_at_ten_or_more_points() -> void:
 	assert_true(day.snapshot().succeeded)
 	assert_eq(day.snapshot().target_score, 10)
 	assert_gte(day.snapshot().score, 10)
-	assert_eq(_event_types(final_events).slice(-3), [
-		"patience_spent", "day_remainder_discarded", "day_ended",
+	assert_eq(_event_types(final_events).slice(-2), [
+		"day_remainder_discarded", "day_ended",
 	])
-	assert_false(_event_types(final_events).has("egg_entered"))
+	assert_true(_event_types(final_events).has("egg_entered"))
 	assert_gt(final_events[-2].discarded_count, 0)
 
 
@@ -563,11 +574,11 @@ func test_day_fails_below_its_target() -> void:
 	var spoonbill_pool: Array[String] = []
 	spoonbill_pool.resize(24)
 	spoonbill_pool.fill("spoonbill")
-	var day = ChickenDay.new(spoonbill_pool, 20)
+	var day = ChickenDay.new(spoonbill_pool, 20, 1)
 	var final_events: Array[Dictionary] = []
 
-	for turn in range(10):
-		final_events = day.resolve_circuit("red")
+	for circuit_id in ["red", "blue", "pink"]:
+		final_events = day.resolve_circuit(circuit_id)
 
 	assert_true(day.snapshot().ended)
 	assert_false(day.snapshot().succeeded)
@@ -577,7 +588,7 @@ func test_day_fails_below_its_target() -> void:
 		func(event: Dictionary) -> bool: return event.type == "day_ended"
 	)[0]
 	assert_eq(day_ended.target_score, 20)
-	assert_eq(day_ended.current_patience, 0)
+	assert_eq(day_ended.spoon_integrity, [0, 0, 0, 0, 0])
 
 
 func _event_types(events: Array[Dictionary]) -> Array[String]:
@@ -591,4 +602,4 @@ func _new_authored_day():
 	var daily_eggs: Array[String] = []
 	for egg_index in range(24):
 		daily_eggs.append(AUTHORED_PATTERN[egg_index % AUTHORED_PATTERN.size()])
-	return ChickenDay.new(daily_eggs)
+	return ChickenDay.new(daily_eggs, ChickenDay.DEFAULT_TARGET_SCORE, 99)
