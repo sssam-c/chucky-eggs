@@ -16,7 +16,7 @@ const SETTINGS_MUTE_AUDIO := 0
 const SETTINGS_REDUCED_MOTION := 1
 
 @onready var _grandma_scorer: Control = %GrandmaScorer
-@onready var _thwacks_label: Label = %Thwacks
+@onready var _patience_label: Label = %Patience
 @onready var _result_overlay: Control = %ResultOverlay
 @onready var _result_card: PanelContainer = $ResultOverlay/Card
 @onready var _result_label: Label = %Result
@@ -105,7 +105,7 @@ func _ready() -> void:
 		_echo_trace,
 		_hatch_payoff,
 		_grandma_scorer,
-		_thwacks_label,
+		_patience_label,
 		_bin_label
 	)
 	var requested_dev_day := _requested_dev_day()
@@ -342,7 +342,7 @@ func _render(events: Array[Dictionary], _fresh_day := false) -> void:
 	var state: Dictionary = _session.state()
 	_configure_machine(state.machine_slot_count, state.machine_circuits)
 	_grandma_scorer.render_appetite(state.score, state.target_score)
-	_thwacks_label.text = "THWACKS %d" % state.remaining_thwacks
+	_patience_label.text = "PATIENCE %d" % state.current_patience
 	_bin_label.text = "BIN %d" % state.bin_egg_count
 	_hopper_inspect_button.text = "HOPPER %d" % state.hopper_egg_count
 	_hopper_inspect_button.accessibility_name = "Inspect hopper: %d %s remaining" % [
@@ -425,7 +425,7 @@ func _render_result(state: Dictionary, successful: bool) -> void:
 			state.score, state.target_score,
 		]
 		_result_score_label.add_theme_color_override("font_color", Color("8dfff0"))
-		_cash_payout_label.text = "+£%d FROM UNUSED THWACKS  •  BALANCE £%d" % [
+		_cash_payout_label.text = "+£%d FROM REMAINING PATIENCE  •  BALANCE £%d" % [
 			state.last_cash_awarded, state.cash,
 		]
 		_result_summary_label.text = "CHOOSE ONE FREE BIRD  •  THEN REVIEW YOUR FLOCK"
@@ -674,15 +674,15 @@ func _reset_workshop_transform() -> void:
 
 
 func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
-	var thwacks_presented := false
+	var patience_presented := false
 	var hopper_presented := false
 	var cash_presented := false
 	for event: Dictionary in events:
 		match String(event.type):
-			"thwack_spent":
-				if not thwacks_presented:
-					_ui_feedback.present_value(_thwacks_label, "thwacks", Color("66f5ed"))
-					thwacks_presented = true
+			"patience_spent":
+				if not patience_presented:
+					_ui_feedback.present_value(_patience_label, "patience", Color("66f5ed"))
+					patience_presented = true
 			"conveyor_advanced", "bin_reshuffled", "egg_entered":
 				if not hopper_presented:
 					_ui_feedback.present_value(_hopper_inspect_button, "hopper", Color("66f5ed"))

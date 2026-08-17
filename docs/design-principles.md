@@ -22,7 +22,7 @@ Show whole-number consequences wherever the player makes or resolves a choice. F
 
 Show the next day's appetite with the bird reward and flock overview. Use the transition between days to demonstrate where the next hopper comes from: each owned bird contributes exactly one egg.
 
-Give the abstract daily target a visible recipient. Present awarded egg points as proportional progress toward Grandma's appetite, while retaining the exact numeric value for overflow and non-colour readability. Group Grandma, appetite progress, thwacks, and settings in one right-hand machine rail so persistent character and operational information occupy a single place without taking a band from the playfield. The rail owns only presentation: the session remains the canonical owner of score, target, and day-end resolution. Reserve her portrait area for replaceable animation, status, and dialogue without letting those timings decide gameplay.
+Give the abstract daily target a visible recipient. Present awarded egg points as proportional progress toward Grandma's appetite, while retaining the exact numeric value for overflow and non-colour readability. Group Grandma, appetite progress, Patience, and settings in one right-hand machine rail so persistent character and operational information occupy a single place without taking a band from the playfield. The rail owns only presentation: the session remains the canonical owner of score, target, Patience, and day-end resolution. Reserve her portrait area for replaceable animation, status, and dialogue without letting those timings decide gameplay.
 
 Spend the workshop's permanent screen area on existing play objects rather than decorative machinery or invented readouts. Give the three-egg hopper preview, five spoon lanes, and inspectable bin enough physical presence to explain the machine at a glance. Treat the hopper as a bottom-anchored lift on the same deck line as the bin: put its inspection control on the bottom loading deck, raise previews toward the upper exit, then push the top egg sideways onto the conveyor. Give moving eggs a clearly readable backward lean followed by a damped counter-wobble before they settle upright. The track curves only after slot five into the bin. This routing and motion visualize existing facts without suggesting another slot or score-delivery system.
 
@@ -44,7 +44,7 @@ Circuit-specific weaknesses should create a positional objective, not a universa
 
 ## Falling spends time rather than deleting strategy
 
-An egg that leaves slot 5 enters a visible bin with its damage intact. Existing hopper eggs continue feeding slot 1 normally, but the bin waits until both hopper and conveyor are empty before becoming a new shuffled hopper. Falling therefore changes future order and spends limited thwacks without erasing prior damage.
+An egg that leaves slot 5 enters a visible bin with its damage intact. Existing hopper eggs continue feeding slot 1 normally, but the bin waits until both hopper and conveyor are empty before becoming a new shuffled hopper. Falling therefore changes future order and consumes finite Patience without erasing prior damage.
 
 Treat five eggs as the machine's natural capacity rather than a mandatory deck size. A larger flock adds scoring capacity but postpones the next recycled wave; a smaller flock clears sooner but sacrifices score slack, paired-strike coverage, and Cuckoo adjacency. Preserve that tension instead of imposing an arbitrary minimum flock size.
 
@@ -56,7 +56,7 @@ Seed randomness, inject time, and make state transitions replayable. A surprisin
 
 ## Efficiency becomes future agency
 
-End the day automatically once a fully resolved thwack meets the target, then convert every unused thwack into cash. The ten-thwack budget keeps the eight-egg opening tense and prevents the compact starting flock from generating the oversized payouts of the former twenty-thwack day. This makes speed-to-target valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
+End the day automatically once a fully resolved thwack meets the target, then convert every remaining point of Patience into cash. Ten starting Patience preserves the established opening tension and payout balance while making Grandma's capacity an explicit resource that can later change independently of the thwack count. Patience is not capped at its starting value by default. This makes efficiency valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
 
 Keep the current shop deliberately narrow: removing one selected bird costs £3, is limited to once per successful night, and can never remove the last bird. Saving remains a valid choice. This makes cash a measured correction to compulsory daily growth without allowing one rich visit to rebuild the whole flock, and avoids a second list that obscures which quality is being removed.
 

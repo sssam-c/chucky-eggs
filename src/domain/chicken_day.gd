@@ -1,9 +1,10 @@
 class_name ChickenDay
 extends RefCounted
 
+const GrandmaPatience = preload("res://src/domain/grandma_patience.gd")
 const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
-const STARTING_THWACKS := 10
+const STARTING_PATIENCE := 10
 const DEFAULT_TARGET_SCORE := 10
 const CHICKEN_TOUGHNESS := 3
 const CHICKEN_POINTS := 3
@@ -19,7 +20,7 @@ var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
 var _bin: Array[Dictionary] = []
 var _recycle_shuffler
-var _remaining_thwacks := STARTING_THWACKS
+var _patience
 var _score := 0
 var _ended := false
 var _succeeded := false
@@ -31,13 +32,12 @@ var _circuits: Array[Dictionary] = []
 func _init(
 	daily_eggs: Array,
 	target_score := DEFAULT_TARGET_SCORE,
-	starting_thwacks := STARTING_THWACKS,
+	starting_patience := STARTING_PATIENCE,
 	recycle_shuffler = null
 ) -> void:
 	assert(not daily_eggs.is_empty(), "A day needs at least one laid egg.")
 	assert(target_score > 0, "A day needs a positive target score.")
-	assert(starting_thwacks > 0, "A day needs at least one thwack.")
-	_remaining_thwacks = starting_thwacks
+	_patience = GrandmaPatience.new(starting_patience)
 	_target_score = target_score
 	_recycle_shuffler = recycle_shuffler
 	_circuits = circuits_for_slot_count(SLOT_COUNT)
@@ -60,7 +60,8 @@ func snapshot() -> Dictionary:
 		"daily_egg_count": _daily_egg_count,
 		"circuits": _circuits.duplicate(true),
 		"slot_count": _slots.size(),
-		"remaining_thwacks": _remaining_thwacks,
+		"current_patience": _patience.current(),
+		"starting_patience": _patience.starting(),
 		"score": _score,
 		"target_score": _target_score,
 		"ended": _ended,
@@ -90,6 +91,8 @@ func _egg_content_precedes(first: Dictionary, second: Dictionary) -> bool:
 func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 	if _ended:
 		return [{"type": "thwack_rejected", "reason": "day_ended"}]
+	if not _patience.can_afford(1):
+		return [{"type": "thwack_rejected", "reason": "no_patience"}]
 	var circuit := _circuit(circuit_id)
 	if circuit.is_empty():
 		return [{"type": "thwack_rejected", "reason": "invalid_circuit"}]
@@ -110,9 +113,13 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 	_damage_eggs(occupied_slot_indices, circuit_id, events)
 	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 	_advance_conveyor(events)
-	_spend_thwack(events)
+	_spend_patience(events)
 
-	if _remaining_thwacks == 0 or _score >= _target_score:
+	# Success takes precedence after the complete thwack, including when its
+	# Patience cost reduced Grandma to zero.
+	if _score >= _target_score:
+		_end_day(events)
+	elif _patience.current() == 0:
 		_end_day(events)
 	else:
 		_refill_belt(events)
@@ -256,11 +263,12 @@ func _advance_conveyor(events: Array[Dictionary]) -> void:
 		})
 
 
-func _spend_thwack(events: Array[Dictionary]) -> void:
-	_remaining_thwacks -= 1
+func _spend_patience(events: Array[Dictionary]) -> void:
+	var amount_spent: int = _patience.lose(1)
 	events.append({
-		"type": "thwack_spent",
-		"remaining_thwacks": _remaining_thwacks,
+		"type": "patience_spent",
+		"amount": amount_spent,
+		"current_patience": _patience.current(),
 	})
 
 
@@ -322,7 +330,7 @@ func _end_day(events: Array[Dictionary]) -> void:
 		"type": "day_ended",
 		"score": _score,
 		"target_score": _target_score,
-		"remaining_thwacks": _remaining_thwacks,
+		"current_patience": _patience.current(),
 		"succeeded": _succeeded,
 	})
 

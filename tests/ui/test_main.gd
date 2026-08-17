@@ -344,17 +344,17 @@ func test_main_renders_initial_day_with_grandma_appetite_scorer() -> void:
 	assert_true(grandma.is_idle_motion_active())
 	var hud: Control = main.get_node("Content/HUD")
 	var stage: Control = main.get_node("Content/Stage")
-	var thwacks: Label = main.get_node("Content/HUD/Thwacks")
+	var patience: Label = main.get_node("Content/HUD/Patience")
 	var settings: MenuButton = main.get_node("Content/HUD/Settings")
 	assert_lte(stage.position.y, 16.0)
 	assert_gte(grandma.size.x, 260.0)
 	assert_lte(grandma.size.x, 320.0)
 	assert_gte(grandma.size.y, 650.0)
 	assert_gt(grandma.get_global_rect().get_center().x, stage.get_global_rect().get_center().x)
-	assert_true(grandma.get_global_rect().encloses(thwacks.get_global_rect()))
+	assert_true(grandma.get_global_rect().encloses(patience.get_global_rect()))
 	assert_true(grandma.get_global_rect().encloses(settings.get_global_rect()))
 	assert_true(hud.get_global_rect().encloses(grandma.get_global_rect()))
-	assert_eq(thwacks.text, "THWACKS 10")
+	assert_eq(patience.text, "PATIENCE 10")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 7")
 	assert_eq(main.get_node("Content/Stage/Belt/Bin").text, "BIN 0")
 	assert_false(main.has_node("Content/Header"))
@@ -572,7 +572,7 @@ func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
 	assert_true(main.is_dev_mode())
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 10")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 10")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots").get_child_count(), 5)
 	assert_eq(main.get_node("Content/Stage/CircuitBank").get_child_count(), 3)
 
@@ -787,12 +787,12 @@ func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
 	await _press_and_wait(main, "RedCircuit")
 
 	assert_eq(fired_slots, [0, 2])
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 9")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 9")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 2")
 
 
-func test_empty_blue_strike_fires_advances_and_spends_a_thwack() -> void:
+func test_empty_blue_strike_fires_advances_and_consumes_patience() -> void:
 	var main := _add_main_for_ordered_eggs([
 		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
 	])
@@ -810,10 +810,10 @@ func test_empty_blue_strike_fires_advances_and_spends_a_thwack() -> void:
 	assert_eq(presented, [
 		"circuit_fired",
 		"conveyor_advanced",
-		"thwack_spent",
+		"patience_spent",
 		"egg_entered",
 	])
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 9")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 9")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 3")
 
@@ -953,7 +953,7 @@ func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> v
 		"circuit_fired",
 		"egg_damaged",
 		"conveyor_advanced",
-		"thwack_spent",
+		"patience_spent",
 		"egg_entered",
 	])
 
@@ -981,7 +981,12 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	])
 	var red: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
 	var completion_count := [0]
+	var patience_spend_count := [0]
 	main.playback_completed.connect(func() -> void: completion_count[0] += 1)
+	main.presentation_event.connect(func(event_type: String) -> void:
+		if event_type == "patience_spent":
+			patience_spend_count[0] += 1
+	)
 
 	red.pressed.emit()
 	red.pressed.emit()
@@ -991,8 +996,9 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	assert_true(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 	await main.playback_completed
 	await get_tree().process_frame
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 9")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 9")
 	assert_eq(completion_count[0], 1)
+	assert_eq(patience_spend_count[0], 1)
 	assert_false(main.get_node("Content/Stage/Pipe/HopperInspect").disabled)
 	assert_false(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 
@@ -1196,7 +1202,7 @@ func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
 	await get_tree().create_timer(0.5).timeout
 
 	assert_false(main.is_input_locked())
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 10")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 10")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_eq(completion_count, 0)
 
@@ -1250,14 +1256,14 @@ func test_resolved_hud_facts_trigger_non_blocking_ui_feedback() -> void:
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_true("thwacks" in kinds)
+	assert_true("patience" in kinds)
 	assert_true("hopper" in kinds)
 	assert_true(feedback.has_active_motion())
 	main.set_reduced_motion(true)
 	assert_false(feedback.has_active_motion())
-	assert_eq(main.get_node("Content/HUD/Thwacks").scale, Vector2.ONE)
+	assert_eq(main.get_node("Content/HUD/Patience").scale, Vector2.ONE)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").scale, Vector2.ONE)
-	assert_eq(main.get_node("Content/HUD/Thwacks").modulate, Color.WHITE)
+	assert_eq(main.get_node("Content/HUD/Patience").modulate, Color.WHITE)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").modulate, Color.WHITE)
 
 
@@ -1286,7 +1292,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	var result_panel: Control = main.get_node("ResultOverlay")
 	assert_true(result_panel.visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY FAILED")
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 7")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 7")
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_true(main.get_node("ResultOverlay/Card/Content/Restart").visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Restart").text, "RETRY DAY 1")
@@ -1298,7 +1304,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 	assert_false(result_panel.visible)
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 10")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 10")
 
 
 func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void:
@@ -1391,7 +1397,7 @@ func test_success_opens_three_free_quality_offers_on_a_separate_screen() -> void
 		main.get_node("BirdOfferOverlay/Card/Content/BirdOfferSummary").text,
 		"DAY 2 APPETITE 9"
 	)
-	assert_eq(main.get_node("Content/HUD/Thwacks").text, "THWACKS 1")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 1")
 	await get_tree().process_frame
 	assert_true(main.get_node("BirdOfferOverlay/Card/Content/RewardChoices/Choice1").has_focus())
 	var offer_card: Control = main.get_node("BirdOfferOverlay/Card")
@@ -1490,7 +1496,7 @@ func test_store_motion_is_cancellable_and_reduced_motion_opens_immediately() -> 
 	assert_false(main.is_workshop_transition_active())
 
 
-func test_early_success_shows_unused_thwack_payout_and_persistent_balance() -> void:
+func test_early_success_shows_remaining_patience_payout_and_persistent_balance() -> void:
 	var daily_eggs: Array[String] = []
 	daily_eggs.resize(7)
 	daily_eggs.fill("chicken")
@@ -1504,6 +1510,10 @@ func test_early_success_shows_unused_thwack_payout_and_persistent_balance() -> v
 
 	assert_eq(presented.slice(-3), ["day_remainder_discarded", "day_ended", "cash_awarded"])
 	assert_true(main.get_node("ResultOverlay").visible)
+	assert_string_contains(
+		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
+		"FROM REMAINING PATIENCE"
+	)
 	assert_false(main.get_node("BirdOfferOverlay").visible)
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()

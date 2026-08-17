@@ -25,7 +25,7 @@ var _bird_offer_claimed := true
 var _removal_used_tonight := false
 var _cash := 0
 var _last_cash_awarded := 0
-var _starting_thwacks := ChickenDay.STARTING_THWACKS
+var _starting_patience := ChickenDay.STARTING_PATIENCE
 
 
 func _init(
@@ -57,7 +57,7 @@ func state() -> Dictionary:
 	current_state["cash"] = _cash
 	current_state["last_cash_awarded"] = _last_cash_awarded
 	current_state["machine_slot_count"] = ChickenDay.SLOT_COUNT
-	current_state["starting_thwacks"] = _starting_thwacks
+	current_state["starting_patience"] = _starting_patience
 	current_state["machine_circuits"] = ChickenDay.circuits_for_slot_count(ChickenDay.SLOT_COUNT)
 	return current_state
 
@@ -78,13 +78,13 @@ func submit_circuit(circuit_id: String) -> Array[Dictionary]:
 		else:
 			_phase = "failed"
 	if not ended_event.is_empty() and ended_event.succeeded:
-		_last_cash_awarded = int(ended_event.remaining_thwacks)
+		_last_cash_awarded = int(ended_event.current_patience)
 		_cash += _last_cash_awarded
 		events.append({
 			"type": "cash_awarded",
 			"amount": _last_cash_awarded,
 			"cash_total": _cash,
-			"remaining_thwacks": int(ended_event.remaining_thwacks),
+			"remaining_patience": int(ended_event.current_patience),
 		})
 	return events
 
@@ -179,7 +179,7 @@ func _start_day() -> void:
 	_day = ChickenDay.new(
 		shuffled_eggs,
 		_target_for_day(_day_number),
-		_starting_thwacks,
+		_starting_patience,
 		day_shuffler
 	)
 

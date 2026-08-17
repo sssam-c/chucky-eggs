@@ -15,7 +15,7 @@ The deterministic and player-visible path now opens a dedicated bird-offer scree
 ### Settled rules preserved
 
 - Every bird lays exactly one egg per day; the starting pool is three Chicken, two Cuckoo, and three Sparrow eggs.
-- Days last at most 10 thwacks, end after the target-reaching thwack, and pay £1 for each unused thwack only on success.
+- Grandma starts each day with 10 Patience. Every resolved thwack costs 1 Patience; success takes precedence on the final point, and each remaining point pays £1 only on success.
 - Day 1 requires 10 points and each later day requires 9.
 - Red strikes slots 1+3, Blue strikes 2+4, and Pink strikes slot 5. All three remain available during an unlocked day, including when their complete circuit is empty. Pink still deals 2 direct damage to Spoonbills.
 - Cuckoo echoes, Plover retreat, simultaneous damage, hatch order, cash, retries, success-only shop access, and one request-to-resolver pathway remain unchanged.
@@ -26,9 +26,9 @@ The deterministic and player-visible path now opens a dedicated bird-offer scree
 
 One stable track should let the player read circuits and egg movement immediately. Moving an unhatched egg into a visible bin converts permanent loss into a tempo cost: the egg retains damage, but the player must clear both the hopper and conveyor and accept a new seeded order before seeing it again.
 
-Keeping all three levers active should make conveyor position an intentional resource instead of letting occupancy silently choose the legal actions. An empty pull may improve the next alignment, but its full one-thwack cost must keep it from becoming free cycling.
+Keeping all three levers active should make conveyor position an intentional resource instead of letting occupancy silently choose the legal actions. An empty pull may improve the next alignment, but its full one-Patience cost must keep it from becoming free cycling.
 
-Three one-hit Sparrows should make the complete hatch-and-score payoff legible during the opening pulls. Their 5% Double Yolker chance should introduce jackpots through the simplest possible shell, while their positions beside Cuckoos can teach that damaging one egg may also create an echo elsewhere. An eight-egg pool keeps the pipe active beyond one track capacity and delays recycling, so its increased scoring supply must compete with congestion and the ten-thwack limit.
+Three one-hit Sparrows should make the complete hatch-and-score payoff legible during the opening pulls. Their 5% Double Yolker chance should introduce jackpots through the simplest possible shell, while their positions beside Cuckoos can teach that damaging one egg may also create an echo elsewhere. An eight-egg pool keeps the pipe active beyond one track capacity and delays recycling, so its increased scoring supply must compete with congestion and ten starting Patience.
 
 At a 10-point target, candidate routes include all three Chickens plus one Sparrow; two Chickens, both Cuckoos, and two Sparrows; or two Chickens, one Cuckoo, and all three Sparrows. These arithmetic routes are hypotheses rather than evidence that each route is equally achievable across shuffled positions.
 
@@ -37,7 +37,7 @@ Offered quality should create occasional excitement without making high tiers ro
 ### Implemented prototype scope
 
 - One five-slot conveyor and the same three circuits on every day; the Day 3 hairpin and refit are removed.
-- Every visible lever is usable throughout an unlocked day. A completely empty circuit fires its linked spoons, advances the conveyor, and spends one thwack without damage.
+- Every visible lever is usable throughout an unlocked day. A completely empty circuit fires its linked spoons, advances the conveyor, and costs 1 Patience without dealing damage.
 - Visible hopper and bin counts at their physical containers. Clicking the hopper opens a non-positional egg collection without revealing queue order beyond the three pipe previews; clicking the bin opens every stored egg with retained toughness and states that return order will shuffle.
 - Resolver events for an egg entering the bin, the complete bin reshuffling into an empty hopper, and the next egg entering slot 1.
 - Binned eggs retain remaining toughness, tier, score, Double Yolker result, and every other egg fact.
@@ -49,13 +49,14 @@ Offered quality should create occasional excitement without making high tiers ro
 - After selection, a separate shop screen shows the complete flock as individual cards with species, quality, egg facts, and £3 removal actions. After one removal, all remaining cards visibly report that the nightly removal was used. The last bird and unaffordable removals are also unavailable.
 - Existing production loading shows the scaled toughness of the egg each quality tier lays.
 - Every species uses one flat temporary colour across a generic egg and a simple bird silhouette throughout the belt, pipe, loading, reward, and flock-overview views. Species names sit outside the art. Occupied eggs use a magnifying-glass cursor to advertise inspection. A wrapped hover card top-aligns beside its egg, flips sides at the viewport edge, and presents the egg's name, prominent points and Double Yolker facts, and only its applicable effect sections. Generated raster experiments are excluded from the running game and exports; final production assets are deferred to an artist.
-- The default flock contains three Chickens, two Cuckoos, and three Sparrows, with ten starting thwacks, a 10-point Day 1 target, and a 9-point later target.
-- A full-height information rail to the right of the belt presents the unchanged score and target as Grandma's appetite, alongside remaining thwacks and settings. Awarded points fill a yolk meter proportionally, overflow remains numeric, reduced motion stops her placeholder idle animation, and the reusable scene reserves status and left-expanding dialogue regions without yet authoring dialogue behavior.
+- The default flock contains three Chickens, two Cuckoos, and three Sparrows, with ten starting Patience, a 10-point Day 1 target, and a 9-point later target.
+- Grandma owns an explicit Patience resource with independently inspectable starting and current values, uncapped gains, and loss clamped at zero. No eggs interact with it yet. A resolved thwack consumes exactly 1 after damage, effects, hatches, and conveyor movement; success is checked before zero-Patience failure.
+- A full-height information rail to the right of the belt presents the unchanged score and target as Grandma's appetite, alongside current Patience and settings. Awarded points fill a yolk meter proportionally, overflow remains numeric, reduced motion stops her placeholder idle animation, and the reusable scene reserves status and left-expanding dialogue regions without yet authoring dialogue behavior.
 - The workshop spends its remaining area on the existing machine: a bottom-anchored hopper lift shares a deck line with the larger clickable bin, carries its clickable count on that loading deck, raises three preview eggs toward a short conveyor-height exit, and then pushes the top egg sideways into a lowered five-lane playfield with slightly larger eggs and taller stored spoons. Moving eggs show a readable backward lean followed by a damped counter-wobble and always settle upright. The conveyor curves once after slot five into the bin, the same three circuit controls occupy a compact bottom fascia, and no decorative yolk pipe or additional readout implies new functionality.
 
 ### Balancing constraints
 
-- Recycling removes permanent belt loss but not the 10-thwack limit.
+- Recycling removes permanent belt loss but not the 10-point starting Patience constraint.
 - Empty strikes create a positioning option, but each consumes 10% of the complete day budget and can accelerate eggs toward the bin without scoring.
 - Five eggs remain the machine's natural capacity breakpoint. The eight-egg opening carries more total score and keeps the hopper active longer, but delays any recycled wave.
 - The starting flock contains 14 total base points and 20 total base toughness. Day 1's 10-point target leaves four points of composition slack.
@@ -76,8 +77,8 @@ Offered quality should create occasional excitement without making high tiers ro
 
 ### Exit evidence
 
-- Domain tests prove damage-preserving bin transfer, clear-conveyor recycle gating, empty-circuit advancement and thwack spending, resolver event order, deterministic reshuffle, slot-1 refill, quality toughness scaling, and whole required-damage rounding.
-- Session tests prove the default eight-egg flock, ten-thwack budget, 10/9 targets, Sparrow probability, five slots and three circuits, deterministic three-bird offers, exact free selection, one £3 targeted removal per shop visit, and deterministic failure/retry behavior.
+- Domain tests prove damage-preserving bin transfer, clear-conveyor recycle gating, empty-circuit advancement and Patience spending, resolver event order, deterministic reshuffle, slot-1 refill, quality toughness scaling, and whole required-damage rounding.
+- Session tests prove the default eight-egg flock, ten starting Patience, remaining-Patience payouts including £0, 10/9 targets, Sparrow probability, five slots and three circuits, deterministic three-bird offers, exact free selection, one £3 targeted removal per shop visit, and deterministic failure/retry behavior.
 - UI tests prove the dedicated reward screen exposes free species-and-quality facts without flock controls, Standard/Prize/Champion cards carry neutral/green/blue rarity treatment, selecting a reward opens the separate shop, the whole flock appears there as individual removal controls, all removals disable after one selected bird disappears for £3, dynamic controls do not accumulate stale registrations, and cancellation/input-lock contracts still hold.
 - The 2026-08-16 automated strategy probe supplies an exact-search and heuristic baseline for the superseded five-egg opening. Run the same exact and heuristic sweep against the eight-egg Sparrow opening at targets 9, 10, and 11 before using it as balance evidence.
 - A running-game check at 1280×720 and 1024×576 must verify the bin reads as the conveyor destination, the bin and hopper counts remain legible and clickable, both content inspectors fit and scroll, recycled eggs visibly return through the pipe, and no removed hairpin controls leave empty or overlapping space.
@@ -95,7 +96,7 @@ The Grandma appetite presentation subset is accepted and implemented without cha
 
 ### Settled rules to preserve
 
-- A day still has ten thwacks and ends immediately after a fully resolved thwack meets or exceeds its target.
+- Grandma still begins a day with 10 Patience, each fully resolved thwack costs 1 Patience, and the day ends immediately when that thwack meets or exceeds its target.
 - The five-slot conveyor, three fixed circuits, seeded egg order, recycling rule, visible information, and one-bird/one-egg relationship remain unchanged.
 - Existing printed egg values remain the initial balance baseline. For the first test, food and score are numerically identical.
 - Conveyor order remains the canonical order for resolving several eggs that open during the same damage batch.
@@ -108,7 +109,7 @@ Candidate Appetiser wording: “Feeds 1. The next egg fed provides twice its pri
 
 ### One playable path
 
-Begin one controlled ten-thwack day with the normal conveyor and a visible hungry character beside a 10-food meter. Use a seeded pool containing ordinary known eggs and exactly one clearly marked Appetiser test egg. The player can inspect toughness, food, and the Appetiser effect before choosing a circuit. When it opens, the character visibly gains 1 food and displays a persistent “Next egg ×2” state. The next egg to resolve consumes that state, its immediate food animates into the character at double value, and the day otherwise succeeds, fails, pays out, and retries under the established rules.
+Begin one controlled day with 10 starting Patience, the normal conveyor, and a visible hungry character beside a 10-food meter. Use a seeded pool containing ordinary known eggs and exactly one clearly marked Appetiser test egg. The player can inspect toughness, food, and the Appetiser effect before choosing a circuit. When it opens, the character visibly gains 1 food and displays a persistent “Next egg ×2” state. The next egg to resolve consumes that state, its immediate food animates into the character at double value, and the day otherwise succeeds, fails, pays out, and retries under the established rules.
 
 ### Implementation conveniences, not rules
 
@@ -126,6 +127,6 @@ Begin one controlled ten-thwack day with the normal conveyor and a visible hungr
 ### Exit evidence
 
 - Deterministic tests prove Appetiser activation, same-thwack conveyor-order consumption, 2× immediate food, non-stacking behavior, day-end expiry, and unchanged end-of-day timing.
-- UI checks prove the character, current food, target, pending 2× state, source egg, and doubled result remain legible without obscuring the conveyor, pipe, bin, or thwack countdown.
+- UI checks prove the character, current food, target, Patience, pending 2× state, source egg, and doubled result remain legible without obscuring the conveyor, pipe, or bin.
 - In a short comparison playtest, play the same seed once with abstract score presentation and once with the feeding-character presentation. Ask what the objective is, what Appetiser will do, which egg should follow it, and whether watching the character adds payoff or merely delays the machine.
 - Advance this direction only if players understand the objective and predict Appetiser resolution at least as reliably as the current score model while reporting a stronger sense of consequence or attachment.

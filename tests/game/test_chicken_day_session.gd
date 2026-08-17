@@ -11,6 +11,9 @@ const SUCCESSFUL_DAY_EGGS: Array[String] = [
 const EARLY_SUCCESS_PLAN: Array[String] = [
 	"red", "red", "red", "red", "blue", "red", "blue", "red",
 ]
+const FINAL_PATIENCE_SUCCESS_PLAN: Array[String] = [
+	"red", "blue", "red", "red", "red", "blue", "red", "red", "red", "blue",
+]
 
 
 class IdentityShuffler:
@@ -23,7 +26,7 @@ class IdentityShuffler:
 		return values.duplicate(true)
 
 
-func test_session_builds_an_eight_egg_ten_thwack_day_from_the_starting_flock() -> void:
+func test_session_builds_an_eight_egg_day_with_ten_patience_from_the_starting_flock() -> void:
 	var state: Dictionary = ChickenDaySession.new(42).state()
 
 	assert_eq(state.day_number, 1)
@@ -35,8 +38,10 @@ func test_session_builds_an_eight_egg_ten_thwack_day_from_the_starting_flock() -
 	assert_eq(state.daily_egg_count, 8)
 	assert_eq(state.hopper_egg_count, 7)
 	assert_eq(state.pipe.size(), 3)
-	assert_eq(state.starting_thwacks, 10)
-	assert_eq(state.remaining_thwacks, 10)
+	assert_eq(state.starting_patience, 10)
+	assert_eq(state.current_patience, 10)
+	assert_false("starting_thwacks" in state)
+	assert_false("remaining_thwacks" in state)
 	assert_false(state.slots[0].is_empty())
 
 
@@ -103,14 +108,14 @@ func test_session_can_initialize_day_three_on_the_single_track_for_dev_tools() -
 		{"id": "blue", "slot_indices": [1, 3]},
 		{"id": "pink", "slot_indices": [4]},
 	])
-	assert_eq(state.remaining_thwacks, 10)
+	assert_eq(state.current_patience, 10)
 
 	session.submit_circuit("red")
 	session.restart()
 
 	assert_eq(session.state().day_number, 3)
 	assert_eq(session.state().machine_slot_count, 5)
-	assert_eq(session.state().remaining_thwacks, 10)
+	assert_eq(session.state().current_patience, 10)
 
 
 func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
@@ -118,7 +123,7 @@ func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 		42, ProducerFlock.new([{"kind": "chicken"}, {"kind": "cuckoo"}]), IdentityShuffler.new()
 	)
 	var exposed_state: Dictionary = session.state()
-	exposed_state.remaining_thwacks = 2
+	exposed_state.current_patience = 2
 	exposed_state.slots[0].toughness = 1
 	exposed_state.hopper_contents[0].toughness = 1
 
@@ -126,7 +131,7 @@ func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 	var actual_state: Dictionary = session.state()
 
 	assert_eq(events[0].type, "circuit_fired")
-	assert_eq(actual_state.remaining_thwacks, 9)
+	assert_eq(actual_state.current_patience, 9)
 	assert_eq(actual_state.slots[1].toughness, 2)
 	assert_eq(actual_state.slots[0].kind, "cuckoo")
 	assert_eq(actual_state.slots[0].toughness, 4)
@@ -140,7 +145,7 @@ func test_restart_replaces_the_day_with_initial_state() -> void:
 
 	session.restart()
 
-	assert_eq(session.state().remaining_thwacks, 10)
+	assert_eq(session.state().current_patience, 10)
 	assert_eq(session.state().slots[0].toughness, 3)
 
 
@@ -232,7 +237,7 @@ func test_only_one_bird_can_be_removed_during_each_shop_visit() -> void:
 	assert_false(session.state().removal_used_tonight)
 
 
-func test_success_banks_one_pound_per_remaining_thwack_exactly_once() -> void:
+func test_success_banks_one_pound_per_remaining_patience_exactly_once() -> void:
 	var session = _early_success_session()
 
 	var final_events: Array[Dictionary] = _complete_early_successful_day(session)
@@ -240,18 +245,38 @@ func test_success_banks_one_pound_per_remaining_thwack_exactly_once() -> void:
 	assert_eq(final_events.map(func(event: Dictionary) -> String: return event.type).slice(-3), [
 		"day_remainder_discarded", "day_ended", "cash_awarded",
 	])
-	assert_eq(final_events[-2].remaining_thwacks, 2)
+	assert_eq(final_events[-2].current_patience, 2)
 	assert_eq(final_events[-1], {
 		"type": "cash_awarded",
 		"amount": 2,
 		"cash_total": 2,
-		"remaining_thwacks": 2,
+		"remaining_patience": 2,
 	})
 	assert_eq(session.state().cash, 2)
 	assert_eq(session.state().last_cash_awarded, 2)
 
 	assert_eq(session.submit_circuit("red"), [{"type": "thwack_rejected", "reason": "wrong_phase"}])
 	assert_eq(session.state().cash, 2)
+
+
+func test_success_with_zero_remaining_patience_awards_zero_pounds() -> void:
+	var session = _early_success_session()
+	var final_events: Array[Dictionary] = []
+
+	for circuit_id in FINAL_PATIENCE_SUCCESS_PLAN:
+		final_events = session.submit_circuit(circuit_id)
+
+	assert_eq(session.state().phase, "bird_offer")
+	assert_true(session.state().succeeded)
+	assert_eq(session.state().current_patience, 0)
+	assert_eq(session.state().cash, 0)
+	assert_eq(session.state().last_cash_awarded, 0)
+	assert_eq(final_events[-1], {
+		"type": "cash_awarded",
+		"amount": 0,
+		"cash_total": 0,
+		"remaining_patience": 0,
+	})
 
 
 func test_every_day_keeps_the_single_five_slot_track() -> void:
@@ -327,7 +352,7 @@ func test_restarting_day_two_preserves_its_nine_point_target() -> void:
 	assert_eq(session.state().day_number, 2)
 	assert_eq(session.state().target_score, 9)
 	assert_eq(session.state().score, 0)
-	assert_eq(session.state().remaining_thwacks, 10)
+	assert_eq(session.state().current_patience, 10)
 
 
 func test_restart_cannot_bypass_the_success_shop() -> void:
@@ -363,6 +388,7 @@ func test_failure_offers_no_shop_and_retry_replays_the_same_day() -> void:
 	assert_eq(session.state().producers, opening.producers)
 	assert_eq(session.state().slots, opening.slots)
 	assert_eq(session.state().pipe, opening.pipe)
+	assert_eq(session.state().current_patience, 10)
 	assert_eq(session.state().cash, 0)
 
 

@@ -2,7 +2,7 @@
 
 A tactical conveyor game about choosing which eggs deserve the spoon. Every thwack fires a fixed coloured spoon circuit, Cuckoos copy damage dealt to neighboring eggs, Plovers retreat to the left after surviving a direct hit, and every survivor moves closer to the recycling bin.
 
-The current playable slice is a multi-day, 10-thwack producer-flock run on one five-slot track. The starting flock has three Chickens and two Cuckoos. Three-hit Chickens award 3 points; four-hit Cuckoos award 1 while copying damage from neighboring eggs. Four-point Plovers take six damage and swap one bay to screen-left when directly struck and left alive. Five-hit Spoonbills award 4 points and take double direct damage from Pink. Unhatched eggs that leave slot 5 enter a visible bin with their cracks intact; once both the hopper and conveyor are empty, the bin is shuffled back into the hopper. Day 1 requires 8 points; Day 2 and later days require 9. A day ends as soon as a resolved thwack reaches its target, then banks £1 for each unused thwack. Merging multiplies an egg's exact points, toughness, and Double Yolker chance by 1.5.
+The current playable slice is a multi-day producer-flock run on one five-slot track. Grandma starts each day with 10 Patience and every resolved thwack costs 1 Patience. The starting flock has three Chickens, two Cuckoos, and three Sparrows. Three-hit Chickens award 3 points; four-hit Cuckoos award 1 while copying damage from neighbouring eggs; one-hit Sparrows award 1 and have a 5% Double Yolker chance. Four-point Plovers take six damage and swap one bay to screen-left when directly struck and left alive. Five-hit Spoonbills award 4 points and take double direct damage from Pink. Unhatched eggs that leave slot 5 enter a visible bin with their cracks intact; once both the hopper and conveyor are empty, the bin is shuffled back into the hopper. Day 1 requires 10 points; Day 2 and later days require 9. A day ends as soon as a resolved thwack meets Grandma's appetite, then banks £1 for each remaining point of Patience.
 
 ## What is included
 
@@ -21,7 +21,7 @@ Open `project.godot` in Godot 4.7 or run:
 godot --path .
 ```
 
-Foreground levers fire three fixed spoon controls on every day: Red 1+3, Blue 2+4, and Pink 5. Every lever remains active during an unlocked day and every connected position fires; pulling a completely empty circuit still advances the belt and spends a thwack. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; hopper and bin counts, score, cash, remaining thwacks, mute, and reduced-motion controls stay visible.
+Foreground levers fire three fixed spoon controls on every day: Red 1+3, Blue 2+4, and Pink 5. Every lever remains active during an unlocked day and every connected position fires; pulling a completely empty circuit still advances the belt and costs 1 Patience. Keyboard players can move focus with Tab and Shift+Tab, then press Enter. Every shell shows its remaining toughness, hatch score seal, and any effect emblem, including the next three eggs in the left pipe; hopper and bin counts, Grandma's appetite and Patience, cash, mute, and reduced-motion controls stay visible.
 
 ### Development start
 

@@ -574,10 +574,20 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D057's instruction that the inertial sway remain slight. Its two-stage lift-and-push transfer, bottom hopper control, upright completion, reduced-motion behavior, and unchanged gameplay ownership remain accepted.
 
+## D059 — Establish Grandma's Patience as the daily resource
+
+**Status:** accepted
+
+**Decision:** Grandma begins every day with 10 Patience. A thwack is legal while she has at least 1 Patience, and its complete damage, effect, hatch, scoring, retreat, and conveyor sequence resolves before she loses exactly 1. Patience cannot become negative and is modelled independently from the number of thwacks made; its starting and current values are inspectable, and later gains are not inherently capped at the starting value. After a resolved thwack, meeting Grandma's appetite succeeds before zero Patience can fail the day. A successful day awards £1 for each remaining Patience, including £0 at zero; a failed day awards nothing and retry restores 10 Patience without changing its deterministic flock, shuffle, hidden outcomes, or offers. Present current Patience in Grandma's information rail. Add no Patience-changing eggs or other balance changes in this slice.
+
+**Reason:** The fixed ten-thwack counter already behaves like a spendable capacity, but encoding that capacity as Patience gives future egg rules one explicit resource to gain, lose, inspect, and react to without deriving it from action history. Keeping the initial value and one-point cost preserves the current ten-action balance, while consuming it after the complete resolver sequence preserves final-thwack hatches and makes success-at-zero precedence unambiguous.
+
+**Supersedes:** D016 and D017's unused-thwack cash source, D041 and D044's fixed ten-thwack budget framing, and D054's remaining-thwacks presentation. Their £1 rate, success-only payout, automatic success timing, current balance, action resolution, and unrelated progression rules remain.
+
 <!--
 Copy for the next entry:
 
-## D059 — Short decision title
+## D060 — Short decision title
 
 **Status:** proposed | accepted | superseded
 
