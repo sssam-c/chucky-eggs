@@ -43,6 +43,8 @@ func render_choice(choice: Dictionary) -> void:
 		"max_toughness": toughness,
 		"points": points,
 		"double_yolk_chance": float(choice.get("double_yolk_chance", 0.0)),
+		"effects": choice.get("effects", []).duplicate(true),
+		"all_other_effects": choice.get("all_other_effects", []).duplicate(true),
 	}
 	_egg_preview.set_egg(egg, true)
 	accessibility_name = "%s %s bird, free day reward" % [
@@ -102,6 +104,14 @@ func _effect_description(effect: String) -> String:
 			return "A surviving direct hit makes it retreat left."
 		"pink_weakness":
 			return "Pink deals 2 direct damage."
+		"appetiser":
+			return "Appetiser — doubles the next egg's immediate Yolk."
+		"sulphurous":
+			return "Sulphurous — suppresses 2 Appetite for the rest of the day."
+		"shockwave":
+			return "Shockwave — strikes both adjacent slots on hatching."
+		"deceptively_filling":
+			return "Deceptively Filling — banks 8 slow-release Yolk."
 	return "Reliable and plentiful."
 
 

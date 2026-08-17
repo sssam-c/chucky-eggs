@@ -66,6 +66,51 @@ func _draw_placeholder_bird(center: Vector2, scale_value: float, color: Color) -
 			draw_circle(head, scale_value * 0.18, color)
 			draw_line(head, head + Vector2(0.52, 0.02) * scale_value, color, maxf(4.0, scale_value * 0.15), true)
 			draw_circle(head + Vector2(0.54, 0.02) * scale_value, scale_value * 0.11, color)
+		"topknot":
+			_draw_ellipse(body_center, Vector2(0.48, 0.39) * scale_value, color)
+			var head := center + Vector2(0.28, -0.24) * scale_value
+			_draw_head_and_beak(head, scale_value, color, 0.19)
+			draw_line(
+				head + Vector2(-0.04, -0.15) * scale_value,
+				head + Vector2(-0.18, -0.48) * scale_value,
+				color, maxf(2.0, scale_value * 0.07), true
+			)
+		"casque":
+			_draw_ellipse(body_center, Vector2(0.54, 0.38) * scale_value, color)
+			var head := center + Vector2(0.31, -0.28) * scale_value
+			_draw_head_and_beak(head, scale_value, color, 0.20)
+			_draw_shape(PackedVector2Array([
+				head + Vector2(-0.17, -0.12) * scale_value,
+				head + Vector2(-0.03, -0.40) * scale_value,
+				head + Vector2(0.12, -0.13) * scale_value,
+			]), color)
+		"tall_neck":
+			_draw_ellipse(
+				body_center + Vector2(-0.12, 0.10) * scale_value,
+				Vector2(0.48, 0.34) * scale_value,
+				color
+			)
+			var head := center + Vector2(0.23, -0.54) * scale_value
+			draw_line(
+				center + Vector2(0.12, -0.12) * scale_value,
+				head, color, maxf(4.0, scale_value * 0.14), true
+			)
+			_draw_head_and_beak(head, scale_value, color, 0.14)
+			for leg_x in [-0.24, 0.02]:
+				draw_line(
+					center + Vector2(leg_x, 0.28) * scale_value,
+					center + Vector2(leg_x - 0.03, 0.67) * scale_value,
+					color, maxf(2.0, scale_value * 0.07), true
+				)
+		"long_beak":
+			_draw_ellipse(body_center, Vector2(0.56, 0.45) * scale_value, color)
+			var head := center + Vector2(0.27, -0.25) * scale_value
+			draw_circle(head, scale_value * 0.18, color)
+			_draw_shape(PackedVector2Array([
+				head + Vector2(0.12, -0.03) * scale_value,
+				head + Vector2(0.80, 0.10) * scale_value,
+				head + Vector2(0.13, 0.10) * scale_value,
+			]), color)
 		_:
 			_draw_ellipse(body_center, Vector2(0.55, 0.42) * scale_value, color)
 			_draw_head_and_beak(center + Vector2(0.32, -0.28) * scale_value, scale_value, color, 0.22)

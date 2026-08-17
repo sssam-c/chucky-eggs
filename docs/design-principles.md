@@ -24,6 +24,10 @@ Show the next day's appetite with the bird reward and flock overview. Use the tr
 
 Give the abstract daily target a visible recipient. Present awarded egg points as proportional progress toward Grandma's appetite, while retaining the exact numeric value for overflow and non-colour readability. Group Grandma, appetite progress, Patience, and settings in one right-hand machine rail so persistent character and operational information occupy a single place without taking a band from the playfield. The rail owns only presentation: the session remains the canonical owner of score, target, Patience, and day-end resolution. Reserve her portrait area for replaceable animation, status, and dialogue without letting those timings decide gameplay.
 
+Keep Yolk, Satisfaction, Appetite, and Patience separate in the domain even where the interface can stay compact. Immediate-Yolk modifiers act only when an egg hatches; slow-release Yolk can instead enter one duration reserve which pays a fixed amount on later thwacks. Sulphurous suppression permanently lowers effective Appetite for the current day without becoming Satisfaction, while thwack costs act on Patience. Show that distinction spatially: Yolk fills the appetite meter from the left and green suppression fills it from the right, with the reduced numeric denominator and written status carrying the same fact without relying on colour. This vocabulary lets effects compose without using an unrelated number as an implementation shortcut.
+
+Give each reusable egg effect one signature permanent species so a reward communicates both a bird identity and a tactical promise. Keep the original eight-bird starting flock unchanged while all nine species remain possible rewards; this exposes the new decisions without silently rewriting the opening puzzle. Quality continues to scale toughness, immediate Yolk, and Double Yolker chance, not a species' effect magnitude or duration.
+
 Spend the workshop's permanent screen area on existing play objects rather than decorative machinery or invented readouts. Give the three-egg hopper preview, five spoon lanes, and inspectable bin enough physical presence to explain the machine at a glance. Treat the hopper as a bottom-anchored lift on the same deck line as the bin: put its inspection control on the bottom loading deck, raise previews toward the upper exit, then push the top egg sideways onto the conveyor. Give moving eggs a clearly readable backward lean followed by a damped counter-wobble before they settle upright. The track curves only after slot five into the bin. This routing and motion visualize existing facts without suggesting another slot or score-delivery system.
 
 ## Rules resolve once
@@ -33,6 +37,8 @@ A game rule has one canonical owner. The domain resolves it and records ordered 
 ## Damage batches stay legible
 
 When one physical strike damages several eggs, apply and show its complete direct-and-echo batch before resolving any hatch. Preserve conveyor order for simultaneous hatch effects.
+
+Treat secondary strikes as resolver-authored damage batches. Carry their originating circuit identity, finish every resulting hatch and chain before belt movement, and guard every egg's on-hatch resolution exactly once.
 
 ## One track makes position readable
 

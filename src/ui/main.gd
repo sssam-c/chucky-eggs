@@ -14,6 +14,7 @@ const FlockBirdButtonScene = preload("res://src/ui/flock_bird_button.tscn")
 
 const SETTINGS_MUTE_AUDIO := 0
 const SETTINGS_REDUCED_MOTION := 1
+const SETTINGS_DEV_EGGS := 2
 
 @onready var _grandma_scorer: Control = %GrandmaScorer
 @onready var _patience_label: Label = %Patience
@@ -39,6 +40,7 @@ const SETTINGS_REDUCED_MOTION := 1
 @onready var _flock_grid: GridContainer = %FlockGrid
 @onready var _continue_workshop_button: Button = %ContinueWorkshop
 @onready var _settings_menu: MenuButton = %Settings
+@onready var _dev_egg_picker: Control = %DevEggPicker
 @onready var _belt: Control = %Belt
 @onready var _machine_stage: Control = $Content/Stage/Workshop
 @onready var _workshop_ambience: Control = %Ambience
@@ -65,6 +67,8 @@ var _session = ChickenDaySession.new()
 var _input_locked := false
 var _request_generation := 0
 var _dev_day_number := 0
+var _dev_starting_eggs: Array[String] = []
+var _dev_starting_patience := 0
 var _workshop_transition: Tween
 var _workshop_transition_serial := 0
 var _active_workshop_transition_token := 0
@@ -73,6 +77,8 @@ var _result_transition: Tween
 
 func _ready() -> void:
 	_configure_settings_menu()
+	_dev_egg_picker.selection_submitted.connect(_on_dev_eggs_selected)
+	_dev_egg_picker.dismissed.connect(_on_dev_egg_picker_dismissed)
 	for circuit_button: Button in _circuit_buttons:
 		circuit_button.connect("circuit_requested", _on_circuit_requested)
 		circuit_button.connect("preview_changed", _on_circuit_preview_changed)
@@ -121,6 +127,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("dev_start_day_3", false):
 		start_dev_day(3)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("dev_choose_eggs", false):
+		open_dev_egg_picker()
 		get_viewport().set_input_as_handled()
 
 
@@ -232,6 +241,7 @@ func restart_day() -> void:
 	_cancel_result_motion()
 	_ui_feedback.cancel_all()
 	_container_inspector.dismiss()
+	_dev_egg_picker.hide()
 	_input_locked = false
 	_session.restart()
 	_render([], true)
@@ -249,12 +259,63 @@ func start_dev_day(day_number := 3) -> bool:
 	return true
 
 
+func start_dev_day_with_eggs(
+	egg_kinds: Array[String],
+	starting_patience: int = ChickenDay.STARTING_PATIENCE,
+	day_number: int = 3
+) -> bool:
+	if (
+		not OS.is_debug_build()
+		or day_number < 1
+		or egg_kinds.is_empty()
+		or starting_patience < 1
+	):
+		return false
+	var known_kinds: Array[String] = []
+	for kind: String in egg_kinds:
+		if ChickenDay.egg_definition(kind).is_empty():
+			return false
+		known_kinds.append(kind)
+	var session = ChickenDaySession.create_dev_session(
+		day_number,
+		known_kinds,
+		starting_patience
+	)
+	_replace_session(session, day_number, known_kinds, starting_patience)
+	return true
+
+
+func open_dev_egg_picker() -> bool:
+	if not OS.is_debug_build() or _input_locked:
+		return false
+	_container_inspector.dismiss()
+	_set_circuit_interaction(false)
+	_set_container_inspection_enabled(false)
+	var egg_kinds := dev_starting_egg_kinds()
+	if egg_kinds.is_empty():
+		for producer: Dictionary in _session.state().producers:
+			egg_kinds.append(String(producer.kind))
+	var patience := dev_starting_patience()
+	if patience < 1:
+		patience = int(_session.state().starting_patience)
+	_dev_egg_picker.open_with(egg_kinds, patience)
+	return true
+
+
 func is_dev_mode() -> bool:
 	return _dev_day_number > 0
 
 
 func dev_day_number() -> int:
 	return _dev_day_number
+
+
+func dev_starting_egg_kinds() -> Array[String]:
+	return _dev_starting_eggs.duplicate()
+
+
+func dev_starting_patience() -> int:
+	return _dev_starting_patience
 
 
 func _start_dev_day(day_number: int) -> void:
@@ -264,10 +325,19 @@ func _start_dev_day(day_number: int) -> void:
 		null,
 		day_number
 	)
-	_replace_session(session, day_number)
+	var egg_kinds: Array[String] = []
+	var state: Dictionary = session.state()
+	for producer: Dictionary in state.producers:
+		egg_kinds.append(String(producer.kind))
+	_replace_session(session, day_number, egg_kinds, int(state.starting_patience))
 
 
-func _replace_session(session, dev_day_number: int) -> void:
+func _replace_session(
+	session,
+	dev_day_number: int,
+	dev_starting_eggs: Array[String] = [],
+	dev_starting_patience: int = 0
+) -> void:
 	_request_generation += 1
 	_presenter.cancel_playback()
 	_production_loader.cancel()
@@ -275,9 +345,12 @@ func _replace_session(session, dev_day_number: int) -> void:
 	_cancel_result_motion()
 	_ui_feedback.cancel_all()
 	_container_inspector.dismiss()
+	_dev_egg_picker.hide()
 	_input_locked = false
 	_session = session
 	_dev_day_number = dev_day_number
+	_dev_starting_eggs = dev_starting_eggs.duplicate()
+	_dev_starting_patience = dev_starting_patience
 	_render([], true)
 	_focus_first_available_lever()
 
@@ -320,6 +393,9 @@ func _configure_settings_menu() -> void:
 	var popup := _settings_menu.get_popup()
 	popup.add_check_item("MUTE AUDIO", SETTINGS_MUTE_AUDIO)
 	popup.add_check_item("REDUCE MOTION", SETTINGS_REDUCED_MOTION)
+	if OS.is_debug_build():
+		popup.add_separator()
+		popup.add_item("CHOOSE STARTING EGGS…   F4", SETTINGS_DEV_EGGS)
 	popup.id_pressed.connect(_on_settings_item_pressed)
 
 
@@ -329,6 +405,22 @@ func _on_settings_item_pressed(item_id: int) -> void:
 			set_muted(not is_muted())
 		SETTINGS_REDUCED_MOTION:
 			set_reduced_motion(not is_reduced_motion())
+		SETTINGS_DEV_EGGS:
+			open_dev_egg_picker()
+
+
+func _on_dev_eggs_selected(egg_kinds: Array[String], starting_patience: int) -> void:
+	start_dev_day_with_eggs(egg_kinds, starting_patience, 3)
+
+
+func _on_dev_egg_picker_dismissed() -> void:
+	var day_active := String(_session.state().phase) == "day"
+	_set_circuit_interaction(day_active)
+	_set_container_inspection_enabled(day_active)
+	if day_active:
+		_focus_first_available_lever()
+	else:
+		_render([])
 
 
 func _set_settings_item_checked(item_id: int, checked: bool) -> void:
@@ -341,7 +433,12 @@ func _set_settings_item_checked(item_id: int, checked: bool) -> void:
 func _render(events: Array[Dictionary], _fresh_day := false) -> void:
 	var state: Dictionary = _session.state()
 	_configure_machine(state.machine_slot_count, state.machine_circuits)
-	_grandma_scorer.render_appetite(state.score, state.target_score)
+	_grandma_scorer.render_appetite(
+		state.score,
+		state.target_score,
+		maxi(0, int(state.target_score) - int(state.effective_target_score))
+	)
+	_grandma_scorer.render_effects(state.grandma_effects)
 	_patience_label.text = "PATIENCE %d" % state.current_patience
 	_bin_label.text = "BIN %d" % state.bin_egg_count
 	_hopper_inspect_button.text = "HOPPER %d" % state.hopper_egg_count
@@ -422,7 +519,7 @@ func _render_result(state: Dictionary, successful: bool) -> void:
 		_result_label.text = "DAY %d COMPLETE" % state.day_number
 		_result_label.add_theme_color_override("font_color", Color("ffb934"))
 		_result_score_label.text = "APPETITE MET  •  %d / %d POINTS" % [
-			state.score, state.target_score,
+			state.score, state.effective_target_score,
 		]
 		_result_score_label.add_theme_color_override("font_color", Color("8dfff0"))
 		_cash_payout_label.text = "+£%d FROM REMAINING PATIENCE  •  BALANCE £%d" % [
@@ -434,7 +531,7 @@ func _render_result(state: Dictionary, successful: bool) -> void:
 	_result_label.text = "DAY FAILED"
 	_result_label.add_theme_color_override("font_color", Color("ff8a3d"))
 	_result_score_label.text = "APPETITE UNMET  •  %d / %d POINTS" % [
-		state.score, state.target_score,
+		state.score, state.effective_target_score,
 	]
 	_result_score_label.add_theme_color_override("font_color", Color("ffb76b"))
 	_cash_payout_label.text = "NO CASH EARNED  •  BALANCE £%d" % state.cash

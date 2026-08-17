@@ -1,0 +1,197 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/ui/dev_egg_picker.gd" id="1_picker"]
+
+[sub_resource type="StyleBoxFlat" id="PickerPanel"]
+bg_color = Color(0.075, 0.058, 0.052, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 6
+border_color = Color(0.55, 0.39, 0.20, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+shadow_color = Color(0, 0, 0, 0.78)
+shadow_size = 18
+shadow_offset = Vector2(0, 8)
+
+[node name="DevEggPicker" type="Control"]
+visible = false
+z_index = 200
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_picker")
+
+[node name="Shade" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.009, 0.008, 0.9)
+mouse_filter = 0
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -380.0
+offset_top = -266.0
+offset_right = 380.0
+offset_bottom = 266.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("PickerPanel")
+
+[node name="Margin" type="MarginContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 16
+
+[node name="Layout" type="VBoxContainer" parent="Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+theme_override_font_sizes/font_size = 27
+text = "DEV DAY SETUP"
+horizontal_alignment = 1
+
+[node name="Instructions" type="Label" parent="Panel/Margin/Layout"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Add eggs, then arrange their exact entry order. Egg 01 starts in Slot 1."
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Body" type="HBoxContainer" parent="Panel/Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 18
+
+[node name="Species" type="VBoxContainer" parent="Panel/Margin/Layout/Body"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Heading" type="Label" parent="Panel/Margin/Layout/Body/Species"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+text = "ADD EGG"
+horizontal_alignment = 1
+
+[node name="SpeciesButtons" type="VBoxContainer" parent="Panel/Margin/Layout/Body/Species"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 1
+
+[node name="Order" type="VBoxContainer" parent="Panel/Margin/Layout/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="Heading" type="Label" parent="Panel/Margin/Layout/Body/Order"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
+text = "EGG ORDER · FIRST TO LAST"
+horizontal_alignment = 1
+
+[node name="EggOrder" type="ItemList" parent="Panel/Margin/Layout/Body/Order"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+size_flags_vertical = 3
+allow_reselect = true
+accessibility_name = "Starting egg order"
+
+[node name="OrderActions" type="HBoxContainer" parent="Panel/Margin/Layout/Body/Order"]
+layout_mode = 2
+theme_override_constants/separation = 7
+alignment = 1
+
+[node name="MoveUp" type="Button" parent="Panel/Margin/Layout/Body/Order/OrderActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 34)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "MOVE UP"
+
+[node name="MoveDown" type="Button" parent="Panel/Margin/Layout/Body/Order/OrderActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 34)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "MOVE DOWN"
+
+[node name="Remove" type="Button" parent="Panel/Margin/Layout/Body/Order/OrderActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(92, 34)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "REMOVE"
+
+[node name="Setup" type="HBoxContainer" parent="Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="PatienceLabel" type="Label" parent="Panel/Margin/Layout/Setup"]
+layout_mode = 2
+text = "STARTING PATIENCE"
+vertical_alignment = 1
+
+[node name="Patience" type="SpinBox" parent="Panel/Margin/Layout/Setup"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(110, 36)
+layout_mode = 2
+min_value = 1.0
+max_value = 99.0
+value = 10.0
+accessibility_name = "Starting Patience"
+
+[node name="Spacer" type="Control" parent="Panel/Margin/Layout/Setup"]
+custom_minimum_size = Vector2(34, 0)
+layout_mode = 2
+
+[node name="Total" type="Label" parent="Panel/Margin/Layout/Setup"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.87, 0.89, 1)
+theme_override_font_sizes/font_size = 18
+text = "TOTAL EGGS  8"
+vertical_alignment = 1
+
+[node name="Actions" type="HBoxContainer" parent="Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 14
+alignment = 1
+
+[node name="Cancel" type="Button" parent="Panel/Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 42)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "CANCEL"
+
+[node name="Start" type="Button" parent="Panel/Margin/Layout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(210, 42)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "START DEV DAY"

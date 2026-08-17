@@ -9,6 +9,10 @@ const COLOURS := {
 	"sparrow": Color("b86f43"),
 	"plover": Color("7f9d45"),
 	"spoonbill": Color("c8649d"),
+	"quail": Color("9b72b8"),
+	"maleo": Color("df765e"),
+	"ostrich": Color("b69a62"),
+	"kiwi": Color("806044"),
 }
 
 const SHAPES := {
@@ -17,6 +21,10 @@ const SHAPES := {
 	"sparrow": "compact",
 	"plover": "long_legged",
 	"spoonbill": "spoon_bill",
+	"quail": "topknot",
+	"maleo": "casque",
+	"ostrich": "tall_neck",
+	"kiwi": "long_beak",
 }
 
 static func colour(kind: String) -> Color:

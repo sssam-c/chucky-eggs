@@ -132,7 +132,7 @@ func egg_description() -> String:
 		_egg.toughness,
 		_egg.points,
 		"point" if _egg.points == 1 else "points",
-		_effect_description(String(_egg.kind)),
+		_effect_description(_egg),
 	]
 
 
@@ -183,15 +183,19 @@ func reset_motion() -> void:
 	_content.z_index = 0
 
 
-func _effect_description(kind: String) -> String:
+func _effect_description(egg: Dictionary) -> String:
+	var descriptions: Array[String] = []
+	var kind := String(egg.kind)
 	match kind:
 		"cuckoo":
-			return "copies damage from an adjacent egg"
+			descriptions.append("copies damage from an adjacent egg")
 		"plover":
-			return "a surviving direct hit retreats it one bay to the left"
+			descriptions.append("a surviving direct hit retreats it one bay to the left")
 		"spoonbill":
-			return "its spark weakness takes 2 damage from Pink's direct strike"
-	return "no extra effect"
+			descriptions.append("its spark weakness takes 2 damage from Pink's direct strike")
+	for description: Variant in egg.get("all_other_effects", []):
+		descriptions.append(String(description))
+	return "; ".join(descriptions) if not descriptions.is_empty() else "no extra effect"
 
 
 func _quality_name(tier: int) -> String:

@@ -61,6 +61,24 @@ func test_standard_sparrows_have_five_percent_double_yolker_chance() -> void:
 	assert_true(laid_eggs[0].is_double_yolker)
 
 
+func test_new_effect_species_are_permanent_producers_with_settled_double_yolk_odds() -> void:
+	assert_eq(ProducerFlock.PRODUCER_KINDS, [
+		"chicken", "cuckoo", "sparrow", "plover", "spoonbill",
+		"quail", "maleo", "ostrich", "kiwi",
+	])
+	var laid_eggs: Array[Dictionary] = ProducerFlock.new([
+		{"kind": "quail"}, {"kind": "maleo"},
+		{"kind": "ostrich"}, {"kind": "kiwi"},
+	]).lay_daily_eggs(EligibleEggsDoubleRoller.new())
+
+	assert_eq(laid_eggs.map(func(egg: Dictionary) -> float:
+		return float(egg.double_yolk_chance)
+	), [0.0, 0.01, 0.01, 0.0])
+	assert_eq(laid_eggs.map(func(egg: Dictionary) -> bool:
+		return bool(egg.is_double_yolker)
+	), [false, true, true, false])
+
+
 func test_every_producer_lays_exactly_one_egg() -> void:
 	var producers: Array[Dictionary] = []
 	for kind: String in ProducerFlock.PRODUCER_KINDS:

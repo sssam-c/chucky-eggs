@@ -136,10 +136,20 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 	match event.type:
 		"circuit_fired":
 			return await _present_circuit(event, playback_generation)
+		"shockwave_fired":
+			return await _present_shockwave(event, playback_generation)
 		"egg_damaged":
 			return await _present_damage(event, playback_generation)
 		"egg_hatched":
 			return await _present_hatch(event, playback_generation)
+		"satisfaction_added":
+			return await _present_satisfaction(event, playback_generation)
+		"grandma_effect_activated":
+			if event.effect_type == "sulphurous":
+				return await _present_sulphurous(event, playback_generation)
+			_appetite_display.render_effects(event.grandma_effects)
+		"appetiser_consumed":
+			_appetite_display.render_effects(event.grandma_effects)
 		"eggs_swapped":
 			return await _present_swap(event, playback_generation)
 		"conveyor_advanced":
@@ -157,6 +167,83 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 		"day_ended":
 			pass
 	return true
+
+
+func _present_shockwave(event: Dictionary, playback_generation: int) -> bool:
+	var fired_hammers: Array[Control] = []
+	var fired_hammer_indices: Array[int] = []
+	for slot_index: int in event.slot_indices:
+		var hammer_index := _slot_hammer_indices[slot_index]
+		if hammer_index in fired_hammer_indices:
+			continue
+		fired_hammer_indices.append(hammer_index)
+		fired_hammers.append(_hammers[hammer_index])
+		hammer_fired.emit(hammer_index)
+	if _reduced_motion:
+		for hammer: Control in fired_hammers:
+			hammer.set_strike_amount(1.0)
+			hammer.reset_pose()
+		return true
+	var strike := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	for hammer_index in range(fired_hammers.size()):
+		if hammer_index == 0:
+			strike.tween_property(fired_hammers[hammer_index], "strike_amount", 1.0, 0.11)
+		else:
+			strike.parallel().tween_property(
+				fired_hammers[hammer_index], "strike_amount", 1.0, 0.11
+			)
+	if not await _run_tween(strike, playback_generation):
+		return false
+	var recovery := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	for hammer_index in range(fired_hammers.size()):
+		if hammer_index == 0:
+			recovery.tween_property(fired_hammers[hammer_index], "strike_amount", 0.0, 0.12)
+		else:
+			recovery.parallel().tween_property(
+				fired_hammers[hammer_index], "strike_amount", 0.0, 0.12
+			)
+	return await _run_tween(recovery, playback_generation)
+
+
+func _present_satisfaction(event: Dictionary, playback_generation: int) -> bool:
+	_appetite_display.render_appetite(
+		event.score,
+		event.target_score,
+		int(event.get("sulphurous_suppression", 0))
+	)
+	_play(_score_player)
+	score_committed.emit(event.amount, event.score)
+	if _reduced_motion:
+		return true
+	var feedback: Control = _appetite_display.feedback_control()
+	feedback.pivot_offset = feedback.size * 0.5
+	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pulse.tween_property(feedback, "scale", Vector2(1.09, 1.09), 0.07)
+	pulse.parallel().tween_property(feedback, "modulate", Color(0.75, 1.0, 0.72, 1.0), 0.07)
+	pulse.tween_property(feedback, "scale", Vector2.ONE, 0.10)
+	pulse.parallel().tween_property(feedback, "modulate", Color.WHITE, 0.10)
+	return await _run_tween(pulse, playback_generation)
+
+
+func _present_sulphurous(event: Dictionary, playback_generation: int) -> bool:
+	_appetite_display.render_effects(event.grandma_effects)
+	_appetite_display.render_appetite(
+		event.score,
+		event.base_appetite,
+		int(event.grandma_effects.sulphurous_suppression)
+	)
+	if _reduced_motion:
+		return true
+	var feedback: Control = _appetite_display.feedback_control()
+	feedback.pivot_offset = feedback.size * 0.5
+	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pulse.tween_property(feedback, "scale", Vector2(1.04, 1.18), 0.09)
+	pulse.parallel().tween_property(
+		feedback, "modulate", Color(0.66, 0.88, 0.30, 1.0), 0.09
+	)
+	pulse.tween_property(feedback, "scale", Vector2.ONE, 0.14)
+	pulse.parallel().tween_property(feedback, "modulate", Color.WHITE, 0.14)
+	return await _run_tween(pulse, playback_generation)
 
 
 func _present_damage(event: Dictionary, playback_generation: int) -> bool:
@@ -322,7 +409,11 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 
 
 func _commit_score(event: Dictionary) -> void:
-	_appetite_display.render_appetite(event.score, event.get("target_score", 15))
+	_appetite_display.render_appetite(
+		event.score,
+		event.get("target_score", 15),
+		int(event.get("sulphurous_suppression", 0))
+	)
 	_play(_score_player)
 	score_committed.emit(event.points_awarded, event.score)
 
@@ -534,9 +625,15 @@ func _apply_momentum_motion(
 	var rotation_offset := 0.0
 	if progress < lean_end:
 		var lean_progress := progress / lean_end
-		rotation_offset = (
-			-sway_direction * sway_amount * sin(lean_progress * PI)
-		)
+		# Hold the readable backward lean across the middle of travel so the pose
+		# remains visible at constrained frame rates instead of existing for one
+		# narrowly sampled instant.
+		var lean_strength := 1.0
+		if lean_progress < 0.22:
+			lean_strength = sin((lean_progress / 0.22) * PI * 0.5)
+		elif lean_progress > 0.78:
+			lean_strength = sin(((1.0 - lean_progress) / 0.22) * PI * 0.5)
+		rotation_offset = -sway_direction * sway_amount * lean_strength
 	else:
 		var wobble_progress := (progress - lean_end) / (1.0 - lean_end)
 		var damping := 1.0 - wobble_progress

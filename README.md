@@ -25,7 +25,9 @@ Foreground levers fire three fixed spoon controls on every day: Red 1+3, Blue 2+
 
 ### Development start
 
-In a debug run, press `F3` at any time to replace the current run with a fresh Day 3 session. Restart then remains on Day 3. To launch there directly from the command line, pass the user argument after `--`:
+In a debug run, press `F3` at any time to replace the current run with a fresh Day 3 session. Restart then remains on Day 3. Open **Settings → Choose Starting Eggs** (or press `F4`) to add eggs, arrange their exact entry order, and increase starting Patience before launching a fresh Day 3 session. Restart preserves that setup. This developer action and menu entry are unavailable in release builds.
+
+To launch Day 3 directly from the command line, pass the user argument after `--`:
 
 ```sh
 godot --path . -- --dev-day=3

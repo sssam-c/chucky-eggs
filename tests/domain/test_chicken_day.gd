@@ -33,6 +33,39 @@ func test_sparrow_is_a_single_hit_single_point_egg() -> void:
 	})
 
 
+func test_new_effect_species_have_the_settled_base_egg_definitions() -> void:
+	assert_eq(ChickenDay.egg_definition("quail"), {
+		"kind": "quail", "toughness": 2, "points": 1, "effect": "appetiser",
+		"effects": [{"type": "appetiser"}],
+	})
+	assert_eq(ChickenDay.egg_definition("maleo"), {
+		"kind": "maleo", "toughness": 6, "points": 3, "effect": "sulphurous",
+		"effects": [{"type": "sulphurous"}],
+	})
+	assert_eq(ChickenDay.egg_definition("ostrich"), {
+		"kind": "ostrich", "toughness": 7, "points": 3, "effect": "shockwave",
+		"effects": [{"type": "shockwave"}],
+	})
+	assert_eq(ChickenDay.egg_definition("kiwi"), {
+		"kind": "kiwi", "toughness": 3, "points": 0,
+		"effect": "deceptively_filling",
+		"effects": [{"type": "deceptively_filling", "duration": 8}],
+	})
+
+
+func test_new_species_eggs_receive_their_effects_without_test_injection() -> void:
+	var state: Dictionary = ChickenDay.new([
+		"quail", "maleo", "ostrich", "kiwi",
+	], 99).snapshot()
+	var eggs: Array[Dictionary] = [state.slots[0]]
+	for egg: Dictionary in state.pipe:
+		eggs.append(egg)
+
+	for egg: Dictionary in eggs:
+		assert_eq(egg.effects, ChickenDay.egg_definition(String(egg.kind)).effects)
+		assert_eq(egg.all_other_effects.size(), 1)
+
+
 func test_grandma_starts_with_ten_patience() -> void:
 	var state: Dictionary = ChickenDay.new(["chicken"]).snapshot()
 

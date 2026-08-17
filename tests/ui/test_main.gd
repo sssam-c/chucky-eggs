@@ -33,6 +33,24 @@ class IdentityShuffler:
 		return values.duplicate(true)
 
 
+class EffectInjectingShuffler:
+	extends RefCounted
+
+	var effect_type: String
+
+	func _init(injected_effect_type: String) -> void:
+		effect_type = injected_effect_type
+
+	func shuffle_strings(values: Array[String]) -> Array[String]:
+		return values.duplicate()
+
+	func shuffle_dictionaries(values: Array[Dictionary]) -> Array[Dictionary]:
+		var eggs := values.duplicate(true)
+		if not eggs.is_empty():
+			eggs[0]["effects"] = [{"type": effect_type}]
+		return eggs
+
+
 func test_each_species_uses_matching_placeholder_colour_and_distinct_bird_shape() -> void:
 	var portrait := BirdPortrait.new()
 	var egg_visual := EggVisual.new()
@@ -45,7 +63,7 @@ func test_each_species_uses_matching_placeholder_colour_and_distinct_bird_shape(
 
 	var species_colours: Array[Color] = []
 	var bird_shapes: Array[String] = []
-	for kind in ["chicken", "cuckoo", "sparrow", "plover", "spoonbill"]:
+	for kind in ProducerFlock.PRODUCER_KINDS:
 		portrait.set_bird_kind(kind)
 		egg_visual.set_egg({"kind": kind, "toughness": 3, "max_toughness": 3, "points": 1})
 		assert_eq(portrait.placeholder_color(), egg_visual.placeholder_color())
@@ -86,6 +104,26 @@ func test_bird_cards_use_no_standard_accent_green_prize_and_blue_champion() -> v
 			assert_eq(choice.rarity_color(), Color("55b86a"))
 		else:
 			assert_eq(choice.rarity_color(), Color("4d89e8"))
+
+
+func test_new_species_reward_cards_explain_their_signature_eggs() -> void:
+	var choice = load("res://src/ui/producer_choice_button.tscn").instantiate()
+	add_child_autofree(choice)
+	await get_tree().process_frame
+	var expected_effect_text := {
+		"quail": "Appetiser",
+		"maleo": "2 Appetite",
+		"ostrich": "Shockwave",
+		"kiwi": "8 slow-release Yolk",
+	}
+	for kind: String in expected_effect_text:
+		var fact: Dictionary = ChickenDaySession.new(42, ProducerFlock.new([
+			{"kind": kind},
+		])).state().flock_overview[0]
+		choice.render_choice(fact)
+		assert_eq(choice.portrait_kind(), kind)
+		assert_eq(choice.preview_egg_kind(), kind)
+		assert_string_contains(choice.card_text(), expected_effect_text[kind])
 
 
 func test_occupied_egg_hover_uses_a_custom_magnifying_glass_cursor() -> void:
@@ -376,17 +414,116 @@ func test_grandma_appetite_fill_is_proportional_and_caps_at_full() -> void:
 	add_child_autofree(grandma)
 	await get_tree().process_frame
 
-	grandma.render_appetite(3, 10)
-	assert_eq(grandma.get_node("Layout/Appetite/Score").text, "APPETITE 3 / 10")
+	grandma.render_appetite(3, 10, 2)
+	assert_eq(grandma.get_node("Layout/Appetite/Score").text, "APPETITE 3 / 8")
 	assert_almost_eq(grandma.appetite_ratio(), 0.3, 0.00001)
+	assert_almost_eq(grandma.sulphurous_suppression_ratio(), 0.2, 0.00001)
 	assert_almost_eq(
 		grandma.get_node("Layout/GrandmaPortrait").hunger_ratio(),
-		0.3,
+		0.5,
 		0.00001
 	)
+	var appetite_bar: Control = grandma.get_node("Layout/Appetite/YolkBar")
+	var suppression_clip: Control = appetite_bar.get_node("SuppressionClip")
+	assert_almost_eq(
+		suppression_clip.position.x + suppression_clip.size.x,
+		appetite_bar.size.x - 4.0,
+		0.001
+	)
+	assert_gt(suppression_clip.size.x, 0.0)
 	grandma.render_appetite(12, 10)
 	assert_eq(grandma.get_node("Layout/Appetite/Score").text, "APPETITE 12 / 10")
 	assert_eq(grandma.appetite_ratio(), 1.0)
+	assert_eq(grandma.sulphurous_suppression_ratio(), 0.0)
+
+
+func test_grandma_compactly_lists_each_active_egg_effect() -> void:
+	var grandma = load("res://src/ui/grandma_scorer.tscn").instantiate()
+	add_child_autofree(grandma)
+	await get_tree().process_frame
+
+	grandma.render_effects({
+		"appetiser_charges": 2,
+		"sulphurous_suppression": 4,
+		"deceptively_filling_reserve": 8,
+	})
+	var effects: Label = grandma.get_node("Layout/Effects")
+	assert_string_contains(effects.text, "APPETISER ×2 · 2 EGGS")
+	assert_string_contains(effects.text, "SULPHUROUS · −4 APPETITE THIS DAY")
+	assert_string_contains(effects.text, "FILLING · 8 YOLK LEFT")
+	assert_string_contains(effects.accessibility_name, "two Appetiser charges")
+
+	grandma.render_effects({
+		"appetiser_charges": 0,
+		"sulphurous_suppression": 0,
+		"deceptively_filling_reserve": 0,
+	})
+	assert_eq(effects.text, "NO ACTIVE EGG EFFECTS")
+
+
+func test_resolved_appetiser_updates_grandmas_persistent_status() -> void:
+	var session = ChickenDaySession.new(
+		0,
+		ProducerFlock.new([{"kind": "sparrow"}, {"kind": "chicken"}]),
+		EffectInjectingShuffler.new("appetiser")
+	)
+	var main := _add_main()
+	main.replace_session(session)
+	main.set_reduced_motion(true)
+
+	await _press_and_wait(main, "RedCircuit")
+
+	var effects: Label = main.get_node("Content/HUD/GrandmaScorer/Layout/Effects")
+	assert_eq(effects.text, "APPETISER ×2 · NEXT EGG")
+	assert_false(main.is_input_locked())
+
+
+func test_resolved_sulphurous_permanently_suppresses_the_visible_appetite() -> void:
+	var session = ChickenDaySession.new(
+		0,
+		ProducerFlock.new([{"kind": "sparrow"}, {"kind": "chicken"}]),
+		EffectInjectingShuffler.new("sulphurous")
+	)
+	var main := _add_main()
+	main.replace_session(session)
+	main.set_reduced_motion(true)
+	var presented: Array[String] = []
+	main.presentation_event.connect(
+		func(event_type: String) -> void: presented.append(event_type)
+	)
+
+	await _press_and_wait(main, "RedCircuit")
+
+	var grandma: Control = main.get_node("Content/HUD/GrandmaScorer")
+	assert_eq(grandma.get_node("Layout/Appetite/Score").text, "APPETITE 1 / 8")
+	assert_almost_eq(grandma.sulphurous_suppression_ratio(), 0.2, 0.00001)
+	assert_eq(
+		grandma.get_node("Layout/Effects").text,
+		"SULPHUROUS · −2 APPETITE THIS DAY"
+	)
+	assert_lt(presented.find("grandma_effect_activated"), presented.find("conveyor_advanced"))
+	assert_false(main.is_input_locked())
+
+
+func test_shockwave_event_plays_before_the_single_conveyor_advance() -> void:
+	var session = ChickenDaySession.new(
+		0,
+		ProducerFlock.new([{"kind": "sparrow"}, {"kind": "chicken"}]),
+		EffectInjectingShuffler.new("shockwave")
+	)
+	var main := _add_main()
+	main.replace_session(session)
+	main.set_reduced_motion(true)
+	var presented: Array[String] = []
+	main.presentation_event.connect(
+		func(event_type: String) -> void: presented.append(event_type)
+	)
+
+	await _press_and_wait(main, "RedCircuit")
+
+	assert_lt(presented.find("shockwave_fired"), presented.find("conveyor_advanced"))
+	assert_eq(presented.count("conveyor_advanced"), 1)
+	assert_false(main.is_input_locked())
 
 
 func test_reduced_motion_stops_grandma_idle_animation() -> void:
@@ -580,6 +717,67 @@ func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
 
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
+
+
+func test_debug_settings_picker_starts_with_the_selected_egg_species() -> void:
+	var main := _add_main()
+	var settings_popup: PopupMenu = main.get_node("Content/HUD/Settings").get_popup()
+	var picker: Control = main.get_node("DevEggPicker")
+	var dev_item_index := settings_popup.get_item_index(2)
+
+	assert_true(InputMap.has_action("dev_choose_eggs"))
+	assert_gte(dev_item_index, 0)
+	assert_eq(settings_popup.get_item_text(dev_item_index), "CHOOSE STARTING EGGS…   F4")
+	settings_popup.id_pressed.emit(2)
+	assert_true(picker.visible)
+	assert_eq(picker.total_egg_count(), 8)
+	assert_eq(picker.starting_patience(), 10)
+
+	picker.set_egg_order(["kiwi", "quail", "ostrich"])
+	picker.move_egg(2, 0)
+	picker.set_starting_patience(18)
+	picker.submit_selection()
+
+	assert_false(picker.visible)
+	assert_true(main.is_dev_mode())
+	assert_eq(main.dev_starting_egg_kinds(), ["ostrich", "kiwi", "quail"])
+	assert_eq(main.dev_starting_patience(), 18)
+	assert_eq(main.dev_day_number(), 3)
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 18")
+	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
+
+	main.restart_day()
+	assert_eq(main.get_node("Content/HUD/Patience").text, "PATIENCE 18")
+	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
+
+
+func test_dev_egg_picker_fits_default_and_constrained_viewports() -> void:
+	var default_eggs: Array[String] = [
+		"chicken", "chicken", "chicken", "cuckoo",
+		"cuckoo", "sparrow", "sparrow", "sparrow",
+	]
+	for viewport_size: Vector2i in [Vector2i(1280, 720), Vector2i(1024, 576)]:
+		var viewport := SubViewport.new()
+		viewport.size = viewport_size
+		add_child_autofree(viewport)
+		var picker = load("res://src/ui/dev_egg_picker.tscn").instantiate()
+		viewport.add_child(picker)
+		await get_tree().process_frame
+		picker.open_with(default_eggs)
+		await get_tree().process_frame
+
+		var viewport_rect := Rect2(Vector2.ZERO, Vector2(viewport_size))
+		var panel: PanelContainer = picker.get_node("Panel")
+		assert_true(viewport_rect.encloses(panel.get_rect()))
+		assert_true(panel.get_global_rect().encloses(
+			picker.get_node("Panel/Margin/Layout/Actions/Start").get_global_rect()
+		))
+		assert_eq(
+			picker.get_node("Panel/Margin/Layout/Body/Species/SpeciesButtons").get_child_count(),
+			9
+		)
+		assert_eq(picker.total_egg_count(), 8)
 
 
 func test_plover_shell_information_shows_the_four_point_payoff() -> void:

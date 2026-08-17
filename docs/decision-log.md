@@ -584,10 +584,50 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D016 and D017's unused-thwack cash source, D041 and D044's fixed ten-thwack budget framing, and D054's remaining-thwacks presentation. Their £1 rate, success-only payout, automatic success timing, current balance, action resolution, and unrelated progression rules remain.
 
+## D060 — Establish the first Grandma-facing egg-effect vocabulary
+
+**Status:** accepted
+
+**Decision:** Distinguish Yolk produced by eggs, Satisfaction applied to Grandma, her base Appetite, and her Patience. Support Appetiser as queued ×2 charges consumed one per later positive-Yolk egg; stacking increases the number of doubled eggs, not the multiplier. Support additive 5% Disgusting Smell stacks for one future thwack, calculated from base Appetite with nearest-whole and minimum-one reduction. Support circuit-inheriting, chainable left/right Shockwave spoon strikes within the current thwack. Support independent Deceptively Filling counters that add 1 non-Yolk Satisfaction at the beginning of future thwacks. Clear every active effect at the day boundary and expose persistent effects compactly in Grandma's rail. Do not assign the effects to new permanent birds or tune a ten-day Appetite curve in this slice.
+
+**Reason:** Explicit resources and resolver-owned timing let the effects compose without multiplying delayed Satisfaction, permanently mutating Appetite, spending extra Patience, advancing the belt twice, or delegating chain order to animation. Charge-based Appetiser stacking preserves a legible ×2 promise while making repeated activations last longer rather than creating explosive powers of two.
+
+**Supersedes:** The earlier candidate slice's proposed non-stacking Appetiser wording and its deferral of slow feeding, stacking, and multi-effect composition. D053's deferral of new egg effects applied only to its presentation-only change and is now fulfilled without changing its appetite-meter ownership.
+
+## D061 — Make Deceptively Filling one slow-release Yolk reserve
+
+**Status:** accepted
+
+**Decision:** When Deceptively Filling (`n`) activates, add `n` to one shared slow-release Yolk reserve. Beginning on the next thwack, release exactly 1 Yolk from that reserve as Satisfaction and decrease it by 1. Further activations extend the duration of the reserve rather than increasing its release rate. Appetiser responds only to immediate Yolk awarded when an egg hatches, so it neither consumes a charge nor doubles Deceptively Filling's delayed releases. Clear the reserve at every day boundary and on retry.
+
+**Reason:** A fixed one-Yolk release rate makes the egg's printed value a delayed payload rather than a multiplier created by owning several copies. One visible reserve communicates the remaining value directly, preserves the committed-thwack sequence, and keeps Appetiser's immediate-egg timing unambiguous.
+
+**Supersedes:** D060's independent Deceptively Filling counters and its classification of their output as non-Yolk Satisfaction. D060's other egg effects, resolver ownership, clearing rules, and presentation constraints remain accepted.
+
+## D062 — Assign each Grandma-facing effect a permanent species
+
+**Status:** accepted
+
+**Decision:** Add four permanent reward species without changing the starting flock. Quail lays a 2-toughness, 1-immediate-Yolk Appetiser egg with 0% Double Yolker chance. Maleo lays a 6-toughness, 3-immediate-Yolk Sulphurous egg with a 1% Standard chance. Ostrich lays a 7-toughness, 3-immediate-Yolk Shockwave egg with a 1% Standard chance. Kiwi lays a 3-toughness egg with 0 immediate Yolk, 0% chance, and Deceptively Filling (8). Rename the player-facing Disgusting Smell effect to Sulphurous. Make all four species immediately eligible in the same unweighted reward pool as the existing five; keep the original eight-bird starting flock. Apply normal quality scaling only to toughness, immediate Yolk, and non-zero Double Yolker chance, leaving signature effect values unchanged.
+
+**Reason:** One signature species per effect makes reward cards and flock composition readable without creating rare egg variants or another inheritance rule. Quail is an accessible setup egg, Maleo gains late-day threshold value, Ostrich turns high toughness into a positional collateral puzzle, and Kiwi trades all immediate Yolk for a long fixed-rate reserve. Keeping the opening flock stable isolates the learning and balance impact to post-success growth.
+
+**Supersedes:** D060's deferral of permanent effect-bearing birds and its player-facing Disgusting Smell name. It does not change D060's resolver rules or D061's shared slow-release reserve.
+
+## D063 — Make Sulphurous permanent visible Appetite suppression
+
+**Status:** accepted
+
+**Decision:** When a Sulphurous egg hatches, suppress 2 of Grandma's Appetite for the rest of the current day. Each egg applies this effect exactly once; further Sulphurous eggs stack another 2 suppression, effective Appetite cannot fall below 1, and all suppression clears at the day boundary. Apply suppression immediately during that egg's resolver-owned hatch action, so it can satisfy Grandma on the same completed thwack. Keep base Appetite and accumulated Satisfaction unchanged. Present Yolk filling the appetite meter from the left and green, vomit-like suppression filling it from the right; also lower the numeric denominator and retain a written day-long status so colour is not the only cue. Keep the effect magnitude fixed across quality tiers.
+
+**Reason:** Percentage reduction against nine- and ten-point targets produced opaque rounding, often made several stacks no stronger than one, mattered for only a narrow next-thwack threshold, and never visibly changed the displayed target. A fixed permanent reduction gives every Maleo a whole-number promise, makes repeated birds stack predictably, and lets the two sides of the existing bar directly show how Satisfaction and suppression combine without conflating them in the domain.
+
+**Supersedes:** D060's additive 5% next-thwack Disgusting Smell/Sulphurous stacks, rounding rule, and expiry timing, plus D062's characterization of Maleo as only a late-day threshold effect. D060's resource separation and resolver ownership and D062's species assignment, name, egg values, reward availability, and quality constraints remain accepted.
+
 <!--
 Copy for the next entry:
 
-## D060 — Short decision title
+## D063 — Short decision title
 
 **Status:** proposed | accepted | superseded
 

@@ -19,21 +19,44 @@ func render_bird(fact: Dictionary, price: int, can_remove: bool, removal_used :=
 	_apply_rarity(tier)
 	_portrait.set_bird_kind(kind)
 	_name_label.text = "%s %s" % [_quality_name(tier), kind.to_upper()]
-	_stats_label.text = "%d SHELL  •  %d PTS" % [int(fact.toughness), int(fact.points)]
+	var effect_description := _effect_description(String(fact.get("effect", "none")))
+	_stats_label.text = "%d SHELL  •  %d PTS  •  %s" % [
+		int(fact.toughness), int(fact.points), effect_description,
+	]
 	_remove_label.text = "REMOVAL USED" if removal_used else "REMOVE  £%d" % price
 	disabled = not can_remove
 	accessibility_name = "%s %s bird" % [_quality_name(tier).to_lower(), kind.capitalize()]
 	accessibility_description = (
-		"Lays one egg per day with %d toughness worth %d points. Remove for %d pounds.%s"
+		"Lays one egg per day with %d toughness worth %d points. %s Remove for %d pounds.%s"
 		% [
 			int(fact.toughness),
 			int(fact.points),
+			effect_description,
 			price,
 			" The nightly removal has already been used." if removal_used else (
 				" Unavailable." if disabled else ""
 			),
 		]
 	)
+
+
+func _effect_description(effect: String) -> String:
+	match effect:
+		"adjacent_echo":
+			return "Echo"
+		"screen_left":
+			return "Retreat"
+		"pink_weakness":
+			return "Pink weakness"
+		"appetiser":
+			return "Appetiser"
+		"sulphurous":
+			return "Sulphurous"
+		"shockwave":
+			return "Shockwave"
+		"deceptively_filling":
+			return "Filling 8"
+	return "No effect"
 
 
 func portrait_kind() -> String:

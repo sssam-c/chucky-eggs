@@ -1,10 +1,11 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://src/ui/grandma_scorer.gd" id="1_scorer"]
 [ext_resource type="Script" path="res://src/ui/grandma_portrait.gd" id="2_portrait"]
 [ext_resource type="Script" path="res://src/ui/yolk_appetite_bar.gd" id="3_bar"]
 [ext_resource type="Script" path="res://src/ui/yolk_fill.gd" id="4_fill"]
 [ext_resource type="Script" path="res://src/ui/grandma_station_hardware.gd" id="5_hardware"]
+[ext_resource type="Script" path="res://src/ui/sulphurous_fill.gd" id="6_sulphurous"]
 
 [sub_resource type="StyleBoxFlat" id="ScorerPanel"]
 bg_color = Color(0.065, 0.043, 0.031, 0.998)
@@ -156,6 +157,21 @@ offset_bottom = 27.0
 mouse_filter = 2
 script = ExtResource("4_fill")
 
+[node name="SuppressionClip" type="Control" parent="Layout/Appetite/YolkBar"]
+clip_contents = true
+layout_mode = 0
+offset_left = 254.0
+offset_top = 4.0
+offset_right = 254.0
+offset_bottom = 31.0
+mouse_filter = 2
+
+[node name="SulphurousFill" type="Control" parent="Layout/Appetite/YolkBar/SuppressionClip"]
+layout_mode = 0
+offset_bottom = 27.0
+mouse_filter = 2
+script = ExtResource("6_sulphurous")
+
 [node name="Status" type="Label" parent="Layout/Appetite"]
 unique_name_in_owner = true
 layout_mode = 0
@@ -167,6 +183,21 @@ theme_override_colors/font_color = Color(0.55, 1, 0.92, 1)
 theme_override_font_sizes/font_size = 13
 text = "RAVENOUS"
 horizontal_alignment = 1
+
+[node name="Effects" type="Label" parent="Layout"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 14.0
+offset_top = 430.0
+offset_right = 272.0
+offset_bottom = 480.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.94, 0.8, 0.42, 1)
+theme_override_font_sizes/font_size = 11
+text = "NO ACTIVE EGG EFFECTS"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
 
 [node name="Dialogue" type="PanelContainer" parent="."]
 unique_name_in_owner = true

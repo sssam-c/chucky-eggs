@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://src/ui/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
@@ -16,6 +16,7 @@
 [ext_resource type="Script" path="res://src/presentation/workshop_ambience.gd" id="15_ambience"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_container_popup.tscn" id="16_container"]
 [ext_resource type="PackedScene" path="res://src/ui/grandma_scorer.tscn" id="17_grandma"]
+[ext_resource type="PackedScene" path="res://src/ui/dev_egg_picker.tscn" id="18_dev_picker"]
 
 [sub_resource type="StyleBoxFlat" id="RestartNormal"]
 bg_color = Color(0.58, 0.19, 0.09, 1)
@@ -536,6 +537,9 @@ volume_db = -7.0
 [node name="Pipe" type="AudioStreamPlayer" parent="Presentation/Audio"]
 
 [node name="ContainerInspector" parent="." instance=ExtResource("16_container")]
+unique_name_in_owner = true
+
+[node name="DevEggPicker" parent="." instance=ExtResource("18_dev_picker")]
 unique_name_in_owner = true
 
 [node name="ResultOverlay" type="Control" parent="."]

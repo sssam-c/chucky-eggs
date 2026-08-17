@@ -26,6 +26,19 @@ class IdentityShuffler:
 		return values.duplicate(true)
 
 
+class AppetiserInjectingShuffler:
+	extends RefCounted
+
+	func shuffle_strings(values: Array[String]) -> Array[String]:
+		return values.duplicate()
+
+	func shuffle_dictionaries(values: Array[Dictionary]) -> Array[Dictionary]:
+		var eggs := values.duplicate(true)
+		if not eggs.is_empty():
+			eggs[0]["effects"] = [{"type": "appetiser"}]
+		return eggs
+
+
 func test_session_builds_an_eight_egg_day_with_ten_patience_from_the_starting_flock() -> void:
 	var state: Dictionary = ChickenDaySession.new(42).state()
 
@@ -118,6 +131,45 @@ func test_session_can_initialize_day_three_on_the_single_track_for_dev_tools() -
 	assert_eq(session.state().current_patience, 10)
 
 
+func test_dev_session_uses_exactly_the_selected_starting_egg_species() -> void:
+	var session = ChickenDaySession.create_dev_session(
+		3,
+		["kiwi", "quail", "quail", "ostrich"],
+		18,
+		IdentityShuffler.new()
+	)
+	var state: Dictionary = session.state()
+	var starting_kinds: Array[String] = []
+	for egg: Dictionary in state.slots:
+		if not egg.is_empty():
+			starting_kinds.append(String(egg.kind))
+	for egg: Dictionary in state.hopper_contents:
+		starting_kinds.append(String(egg.kind))
+	var expected_kinds: Array[String] = ["kiwi", "quail", "quail", "ostrich"]
+	starting_kinds.sort()
+	var sorted_expected := expected_kinds.duplicate()
+	sorted_expected.sort()
+
+	assert_eq(starting_kinds, sorted_expected)
+	assert_eq(state.daily_egg_count, 4)
+	assert_eq(state.producers.map(func(producer: Dictionary) -> String:
+		return String(producer.kind)
+	), expected_kinds)
+	assert_eq(state.slots[0].kind, "kiwi")
+	assert_eq(state.pipe.map(func(egg: Dictionary) -> String:
+		return String(egg.kind)
+	), ["quail", "quail", "ostrich"])
+	assert_eq(state.day_number, 3)
+	assert_eq(state.target_score, 9)
+	assert_eq(state.starting_patience, 18)
+	assert_eq(state.current_patience, 18)
+
+	session.submit_circuit("red")
+	session.restart()
+	assert_eq(session.state().current_patience, 18)
+	assert_eq(session.state().slots[0].kind, "kiwi")
+
+
 func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 	var session = ChickenDaySession.new(
 		42, ProducerFlock.new([{"kind": "chicken"}, {"kind": "cuckoo"}]), IdentityShuffler.new()
@@ -147,6 +199,25 @@ func test_restart_replaces_the_day_with_initial_state() -> void:
 
 	assert_eq(session.state().current_patience, 10)
 	assert_eq(session.state().slots[0].toughness, 3)
+
+
+func test_restart_clears_active_grandma_effects() -> void:
+	var session = ChickenDaySession.new(
+		42,
+		ProducerFlock.new([{"kind": "sparrow"}, {"kind": "chicken"}]),
+		AppetiserInjectingShuffler.new()
+	)
+	session.submit_circuit("red")
+	assert_eq(session.state().grandma_effects.appetiser_charges, 1)
+
+	session.restart()
+
+	assert_eq(session.state().score, 0)
+	assert_eq(session.state().grandma_effects, {
+		"appetiser_charges": 0,
+		"sulphurous_suppression": 0,
+		"deceptively_filling_reserve": 0,
+	})
 
 
 func test_success_opens_a_deterministic_bird_offer_before_the_shop() -> void:

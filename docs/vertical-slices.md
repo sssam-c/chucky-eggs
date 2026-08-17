@@ -84,15 +84,15 @@ Offered quality should create occasional excitement without making high tiers ro
 - A running-game check at 1280×720 and 1024×576 must verify the bin reads as the conveyor destination, the bin and hopper counts remain legible and clickable, both content inspectors fit and scroll, recycled eggs visibly return through the pipe, and no removed hairpin controls leave empty or overlapping space.
 - Play one seeded run through at least three bird offers. Record whether candidate quality is understood, whether a clearly stronger quality dominates species choice, when the player first considers paying £3 to thin the flock, and whether removing from the full overview feels precise and trustworthy.
 
-## Candidate next validation slice — Feed a character, not a score
+## Implemented supporting slice — First Grandma-facing egg effects
 
 ### Question
 
-Does directing hatched eggs into one visible hungry character make the daily objective and egg effects more immediate, memorable, and readable without distracting from the conveyor-position puzzle?
+Can four reusable egg effects establish a coherent, deterministic vocabulary for Yolk, Satisfaction, Appetite, and future-thwack timing before the ten-day curve is balanced?
 
 ### Status
 
-The Grandma appetite presentation subset is accepted and implemented without changing score storage, egg values, or day-end rules. The Appetiser effect, feeding-language changes beyond the objective HUD, and this candidate's controlled comparison playtest remain proposed. The active Sparrow-and-quality balance probe is still the current gameplay validation slice.
+Accepted and implemented. Appetiser, Sulphurous, Shockwave, and Deceptively Filling are reusable egg descriptors resolved by the canonical day resolver. A subsequent supporting slice assigned them to permanent reward species; ten-day balance remains deferred.
 
 ### Settled rules to preserve
 
@@ -101,32 +101,52 @@ The Grandma appetite presentation subset is accepted and implemented without cha
 - Existing printed egg values remain the initial balance baseline. For the first test, food and score are numerically identical.
 - Conveyor order remains the canonical order for resolving several eggs that open during the same damage batch.
 
-### Hypothesis
+### Implemented behavior
 
-A visible recipient gives the abstract score target a physical cause: opened eggs feed someone. The same character can visibly carry temporary states, allowing egg effects to read as reactions rather than unrelated arithmetic. An Appetiser is the smallest useful effect test because it asks the player to engineer hatch order using information and controls they already understand.
-
-Candidate Appetiser wording: “Feeds 1. The next egg fed provides twice its printed food.” The bonus becomes active immediately, can be consumed by a later egg in the same thwack, doubles immediate printed food only, does not stack beyond 2×, and expires at day end.
-
-### One playable path
-
-Begin one controlled day with 10 starting Patience, the normal conveyor, and a visible hungry character beside a 10-food meter. Use a seeded pool containing ordinary known eggs and exactly one clearly marked Appetiser test egg. The player can inspect toughness, food, and the Appetiser effect before choosing a circuit. When it opens, the character visibly gains 1 food and displays a persistent “Next egg ×2” state. The next egg to resolve consumes that state, its immediate food animates into the character at double value, and the day otherwise succeeds, fails, pays out, and retries under the established rules.
-
-### Implementation conveniences, not rules
-
-- The recipient may use placeholder identity, art, reactions, and sound during the test.
-- The Appetiser egg may be injected by a fixed test-day setup rather than added to day-end offers, flock persistence, or the permanent species catalogue.
-- “Food” may reuse the exact current score value and target storage while the player-facing experiment uses feeding language.
+- Appetiser queues ×2 charges for future positive-Yolk eggs. Stacking adds eligible eggs of duration rather than increasing the multiplier; one charge is consumed per eligible egg.
+- Each Sulphurous egg suppresses 2 Appetite exactly once when it hatches. Suppression stacks, persists for the rest of the day, cannot lower effective Appetite below 1, and clears at the day boundary.
+- Shockwave emits resolver-owned left/right strike batches with inherited circuit identity, Cuckoo/Plover/Spoonbill composition, deterministic chains, and exactly-once hatch guards.
+- Deceptively Filling adds slow-release Yolk to one shared reserve. The reserve releases exactly 1 Yolk at the start of each later thwack, so additional activations extend duration rather than increasing the release rate; a release cannot cancel a committed action.
+- All Grandma effects clear at day end and on retry. Compact statuses show Appetiser charges, total day-long Sulphurous suppression, and the remaining Filling reserve. The appetite bar fills Yolk from the left and green suppression from the right while its numeric denominator shows effective Appetite.
 
 ### Explicitly deferred
 
 - Multiple recipients, rotating appetites, dislikes, allergies, personalities, authored dialogue triggers, and relationship progression. The Grandma scene reserves presentation space for later statuses and dialogue only.
-- Slow feeding over several thwacks, Feeding Frenzy, effect stacking, effect inheritance through quality, and interactions between several new egg effects.
-- A permanent new bird species, day-end reward offer, bespoke production art, or rebalance of the starting flock and targets.
+- Bespoke production art, staged reward unlocks, a rebalance of the starting flock and targets, and ten-day effect tuning.
 - Deciding whether eggs are narratively hatched, cracked, cooked, or otherwise prepared for the recipient.
 
 ### Exit evidence
 
-- Deterministic tests prove Appetiser activation, same-thwack conveyor-order consumption, 2× immediate food, non-stacking behavior, day-end expiry, and unchanged end-of-day timing.
-- UI checks prove the character, current food, target, Patience, pending 2× state, source egg, and doubled result remain legible without obscuring the conveyor, pipe, or bin.
-- In a short comparison playtest, play the same seed once with abstract score presentation and once with the feeding-character presentation. Ask what the objective is, what Appetiser will do, which egg should follow it, and whether watching the character adds payoff or merely delays the machine.
-- Advance this direction only if players understand the objective and predict Appetiser resolution at least as reliably as the current score model while reporting a stronger sense of consequence or attachment.
+- Domain coverage proves charge-based Appetiser duration, same-batch ordering, immediate-Yolk-only eligibility, permanent fixed Sulphurous stacking and exactly-once activation, one-per-thwack Filling release from an additive reserve, complete committed thwacks, Shockwave boundaries/chains/circuit inheritance, and exactly-once resolution.
+- Session coverage proves retry clears active Grandma effects.
+- UI coverage proves the compact status area exposes Appetiser charges, total Sulphurous Appetite suppression, and the remaining Filling reserve without adding another major panel; the appetite meter exposes suppression from the opposite direction with a numeric alternative to colour.
+
+## Implemented supporting slice — Signature effect species
+
+### Question
+
+Can one permanent bird per effect make the Grandma-facing vocabulary legible as flock-building choices without changing the opening flock?
+
+### Status
+
+Accepted and implemented. Quail, Maleo, Ostrich, and Kiwi are immediately available in the post-success reward pool alongside the five existing species. The starting flock remains three Chickens, two Cuckoos, and three Sparrows.
+
+### Implemented behavior
+
+- Quail lays a 2-toughness, 1-Yolk Appetiser egg with no Double Yolker chance.
+- Maleo lays a 6-toughness, 3-Yolk Sulphurous egg with a 1% Standard Double Yolker chance.
+- Ostrich lays a 7-toughness, 3-Yolk Shockwave egg with a 1% Standard Double Yolker chance.
+- Kiwi lays a 3-toughness, 0-immediate-Yolk Deceptively Filling (8) egg with no Double Yolker chance.
+- Quality scales toughness, immediate Yolk, and non-zero Double Yolker chance by the existing exact ×1.5 rule. Signature effects do not scale with quality.
+- Reward, flock-overview, loading, conveyor, hopper, bin, and hover-card views reuse the existing species paths with distinct temporary colours, silhouettes, effect marks, and written effect descriptions.
+
+### Explicitly deferred
+
+- Ten-day Appetite tuning, reward weighting or staged unlocks, starting-flock changes, and bespoke final art.
+- Playtest evidence about whether the expanded nine-species reward pool is too dilute or whether any signature egg dominates its nearest existing alternative.
+
+### Exit evidence
+
+- Domain tests cover all four definitions, their built-in descriptors, permanent producer validation, Double Yolker odds, quality composition, and deterministic effect behavior.
+- Session tests cover deterministic three-choice rewards drawn from the expanded permanent species list.
+- UI tests cover distinct placeholder identities and complete reward-card explanations for every signature egg.

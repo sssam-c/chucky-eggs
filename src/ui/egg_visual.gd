@@ -214,6 +214,14 @@ func effect_emblem() -> String:
 			return "screen_left"
 		"spoonbill":
 			return "spark"
+		"quail":
+			return "appetiser"
+		"maleo":
+			return "sulphurous"
+		"ostrich":
+			return "shockwave"
+		"kiwi":
+			return "filling"
 	return ""
 
 
@@ -256,6 +264,16 @@ func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 			_draw_left_emblem(emblem_center, mark_scale)
 		"spark":
 			_draw_spark_emblem(emblem_center, mark_scale)
+		"appetiser":
+			_draw_appetiser_emblem(emblem_center, mark_scale)
+		"sulphurous":
+			_draw_sulphurous_emblem(emblem_center, mark_scale)
+		"shockwave":
+			_draw_shockwave_emblem(emblem_center, mark_scale)
+		"filling":
+			_draw_filling_emblem(emblem_center, mark_scale)
+
+
 func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 	var outer_radius := 15.0 * mark_scale
 	var seal_points := PackedVector2Array()
@@ -336,6 +354,54 @@ func _draw_spark_emblem(center: Vector2, mark_scale: float) -> void:
 	draw_colored_polygon(points, glow)
 	draw_polyline(points, ink, 2.5 * mark_scale, true)
 	draw_circle(center, 2.5 * mark_scale, Color("fff0cf"))
+
+
+func _draw_appetiser_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := Color("402451")
+	var width := 3.0 * mark_scale
+	draw_circle(center, 11.0 * mark_scale, Color(0.83, 0.68, 0.91, 0.72))
+	draw_line(
+		center + Vector2(-6, 0) * mark_scale,
+		center + Vector2(6, 0) * mark_scale,
+		ink, width, true
+	)
+	draw_line(
+		center + Vector2(0, -6) * mark_scale,
+		center + Vector2(0, 6) * mark_scale,
+		ink, width, true
+	)
+
+
+func _draw_sulphurous_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := Color("58251b")
+	for offset_x in [-7.0, 0.0, 7.0]:
+		draw_arc(
+			center + Vector2(offset_x, 2) * mark_scale,
+			6.0 * mark_scale,
+			-2.2,
+			0.9,
+			10,
+			ink,
+			2.4 * mark_scale,
+			true
+		)
+
+
+func _draw_shockwave_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := Color("4b3a18")
+	draw_circle(center, 3.0 * mark_scale, ink)
+	for radius in [7.0, 12.0]:
+		draw_arc(
+			center, radius * mark_scale, 0.0, TAU, 24,
+			ink, 2.1 * mark_scale, true
+		)
+
+
+func _draw_filling_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := Color("352316")
+	draw_arc(center, 11.0 * mark_scale, 0.0, TAU, 24, ink, 2.4 * mark_scale, true)
+	for point in [Vector2(-4, -3), Vector2(3, -3), Vector2(0, 4)]:
+		draw_circle(center + point * mark_scale, 2.3 * mark_scale, ink)
 
 
 func _draw_crack(origin: Vector2, offsets: Array[Vector2]) -> void:

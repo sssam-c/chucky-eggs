@@ -2,6 +2,7 @@ class_name ChickenDaySession
 extends RefCounted
 
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
+const EggEffects = preload("res://src/domain/egg_effects.gd")
 const ProducerFlock = preload("res://src/domain/producer_flock.gd")
 const SeededChanceRoller = preload("res://src/core/seeded_chance_roller.gd")
 const SeededShuffler = preload("res://src/core/seeded_shuffler.gd")
@@ -13,6 +14,17 @@ const DAY_ONE_TARGET := 10
 const LATER_DAY_TARGET := 9
 const REMOVE_BIRD_PRICE := 3
 const QUALITY_ADVANCE_CHANCE := 0.25
+
+
+class DevOrderShuffler:
+	extends RefCounted
+
+	func shuffle_strings(values: Array[String]) -> Array[String]:
+		return values.duplicate()
+
+	func shuffle_dictionaries(values: Array[Dictionary]) -> Array[Dictionary]:
+		return values.duplicate(true)
+
 
 var _day
 var _flock
@@ -32,13 +44,37 @@ func _init(
 	day_seed := DEFAULT_DAY_SEED,
 	flock = null,
 	shuffler = null,
-	initial_day_number := 1
+	initial_day_number := 1,
+	initial_patience := ChickenDay.STARTING_PATIENCE
 ) -> void:
 	_day_seed = day_seed
 	_flock = flock if flock != null else ProducerFlock.new()
 	_shuffler = shuffler
 	_day_number = maxi(int(initial_day_number), 1)
+	_starting_patience = maxi(int(initial_patience), 1)
 	_start_day()
+
+
+static func create_dev_session(
+	day_number: int,
+	egg_kinds: Array[String],
+	starting_patience: int = ChickenDay.STARTING_PATIENCE,
+	shuffler = null
+):
+	assert(day_number >= 1, "A dev day number must be positive.")
+	assert(not egg_kinds.is_empty(), "A dev day needs at least one egg.")
+	assert(starting_patience >= 1, "A dev day needs positive starting Patience.")
+	var producers: Array[Dictionary] = []
+	for kind: String in egg_kinds:
+		assert(kind in ProducerFlock.PRODUCER_KINDS, "A dev egg needs a known species.")
+		producers.append({"kind": kind})
+	return ChickenDaySession.new(
+		DEFAULT_DAY_SEED,
+		ProducerFlock.new(producers),
+		shuffler if shuffler != null else DevOrderShuffler.new(),
+		day_number,
+		starting_patience
+	)
 
 
 func state() -> Dictionary:
@@ -214,6 +250,9 @@ func _producer_offer(kind: String, tier: int) -> Dictionary:
 	choice["exact_points"] = float(definition.points) * multiplier
 	choice["points"] = floori(float(choice.exact_points))
 	choice["double_yolk_chance"] = ProducerFlock.double_yolk_chance(kind, tier)
+	choice["all_other_effects"] = EggEffects.descriptions(
+		EggEffects.normalize(choice.get("effects", []))
+	)
 	return choice
 
 
@@ -258,6 +297,9 @@ func _production_snapshot() -> Array[Dictionary]:
 		produced_egg["points"] = floori(float(produced_egg.points) * multiplier)
 		produced_egg["double_yolk_chance"] = ProducerFlock.double_yolk_chance(
 			String(producer.kind), tier
+		)
+		produced_egg["all_other_effects"] = EggEffects.descriptions(
+			EggEffects.normalize(produced_egg.get("effects", []))
 		)
 		var fact: Dictionary = producer.duplicate(true)
 		fact.merge(produced_egg)

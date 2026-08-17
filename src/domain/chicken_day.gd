@@ -2,6 +2,8 @@ class_name ChickenDay
 extends RefCounted
 
 const GrandmaPatience = preload("res://src/domain/grandma_patience.gd")
+const GrandmaEffects = preload("res://src/domain/grandma_effects.gd")
+const EggEffects = preload("res://src/domain/egg_effects.gd")
 const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
 const STARTING_PATIENCE := 10
@@ -16,6 +18,14 @@ const PLOVER_TOUGHNESS := 6
 const PLOVER_POINTS := 4
 const SPOONBILL_TOUGHNESS := 5
 const SPOONBILL_POINTS := 4
+const QUAIL_TOUGHNESS := 2
+const QUAIL_POINTS := 1
+const MALEO_TOUGHNESS := 6
+const MALEO_POINTS := 3
+const OSTRICH_TOUGHNESS := 7
+const OSTRICH_POINTS := 3
+const KIWI_TOUGHNESS := 3
+const KIWI_POINTS := 0
 var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
 var _bin: Array[Dictionary] = []
@@ -27,6 +37,10 @@ var _succeeded := false
 var _daily_egg_count := 0
 var _target_score: int
 var _circuits: Array[Dictionary] = []
+var _grandma_effects = GrandmaEffects.new()
+var _effective_target_score: int
+var _next_egg_instance_id := 1
+var _resolved_egg_ids_this_thwack := {}
 
 
 func _init(
@@ -39,6 +53,7 @@ func _init(
 	assert(target_score > 0, "A day needs a positive target score.")
 	_patience = GrandmaPatience.new(starting_patience)
 	_target_score = target_score
+	_effective_target_score = target_score
 	_recycle_shuffler = recycle_shuffler
 	_circuits = circuits_for_slot_count(SLOT_COUNT)
 	for slot_index in range(SLOT_COUNT):
@@ -63,7 +78,10 @@ func snapshot() -> Dictionary:
 		"current_patience": _patience.current(),
 		"starting_patience": _patience.starting(),
 		"score": _score,
+		"satisfaction": _score,
 		"target_score": _target_score,
+		"effective_target_score": _effective_target_score,
+		"grandma_effects": _grandma_effects.snapshot(),
 		"ended": _ended,
 		"succeeded": _succeeded,
 	}
@@ -104,12 +122,16 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		if not _slots[slot_index].is_empty():
 			occupied_slot_indices.append(slot_index)
 
-	var events: Array[Dictionary] = [{
+	var events: Array[Dictionary] = []
+	_resolved_egg_ids_this_thwack.clear()
+	_score = _grandma_effects.begin_thwack(_target_score, _score, events)
+	_effective_target_score = _grandma_effects.effective_appetite(_target_score)
+	events.append({
 		"type": "circuit_fired",
 		"circuit_id": circuit_id,
 		"slot_indices": circuit_slot_indices,
 		"occupied_slot_indices": occupied_slot_indices,
-	}]
+	})
 	_damage_eggs(occupied_slot_indices, circuit_id, events)
 	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 	_advance_conveyor(events)
@@ -117,14 +139,17 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 
 	# Success takes precedence after the complete thwack, including when its
 	# Patience cost reduced Grandma to zero.
-	if _score >= _target_score:
-		_end_day(events)
-	elif _patience.current() == 0:
-		_end_day(events)
+	var succeeded_this_thwack: bool = _score >= _effective_target_score
+	var patience_failed: bool = int(_patience.current()) == 0
+	var completed_effective_target := _effective_target_score
+	if succeeded_this_thwack:
+		_end_day(events, true, completed_effective_target)
+	elif patience_failed:
+		_end_day(events, false, completed_effective_target)
 	else:
 		_refill_belt(events)
 		if _hopper.is_empty() and _bin.is_empty() and _conveyor_is_empty():
-			_end_day(events)
+			_end_day(events, false, completed_effective_target)
 
 	return events
 
@@ -139,7 +164,9 @@ func _circuit(circuit_id: String) -> Dictionary:
 func _damage_eggs(
 	primary_slot_indices: Array[int],
 	circuit_id: String,
-	events: Array[Dictionary]
+	events: Array[Dictionary],
+	direct_cause := "spoon",
+	source_slot_override := -1
 ) -> void:
 	# Apply the whole direct-and-echo batch before resolving any hatch. Empty
 	# linked slots have already been omitted while their spoons still visibly fire.
@@ -147,7 +174,14 @@ func _damage_eggs(
 	for primary_slot_index: int in primary_slot_indices:
 		var damage_amount := _direct_damage_amount(circuit_id, primary_slot_index)
 		direct_damage_by_slot[primary_slot_index] = damage_amount
-		_apply_damage(primary_slot_index, damage_amount, "spoon", primary_slot_index, events)
+		_apply_damage(
+			primary_slot_index,
+			damage_amount,
+			direct_cause,
+			source_slot_override if source_slot_override >= 0 else primary_slot_index,
+			circuit_id,
+			events
+		)
 
 	for primary_slot_index: int in primary_slot_indices:
 		for slot_index in range(_slots.size()):
@@ -159,10 +193,11 @@ func _damage_eggs(
 					direct_damage_by_slot[primary_slot_index],
 					"cuckoo_echo",
 					primary_slot_index,
+					circuit_id,
 					events
 				)
 
-	_resolve_hatches(events)
+	_resolve_hatches(events, circuit_id)
 
 
 func _apply_damage(
@@ -170,8 +205,11 @@ func _apply_damage(
 	damage_amount: int,
 	cause: String,
 	source_slot_index: int,
+	circuit_id: String,
 	events: Array[Dictionary]
 ) -> void:
+	if slot_index < 0 or slot_index >= _slots.size() or _slots[slot_index].is_empty():
+		return
 	_slots[slot_index].toughness = maxi(_slots[slot_index].toughness - damage_amount, 0)
 	events.append({
 		"type": "egg_damaged",
@@ -181,6 +219,7 @@ func _apply_damage(
 		"source_slot_index": source_slot_index,
 		"damage_amount": damage_amount,
 		"remaining_toughness": _slots[slot_index].toughness,
+		"circuit_id": circuit_id,
 	})
 
 
@@ -190,29 +229,88 @@ func _direct_damage_amount(circuit_id: String, slot_index: int) -> int:
 	return 1
 
 
-func _resolve_hatches(events: Array[Dictionary]) -> void:
+func _resolve_hatches(events: Array[Dictionary], circuit_id: String) -> void:
 	for slot_index in range(_slots.size()):
 		if _slots[slot_index].is_empty() or _slots[slot_index].toughness > 0:
 			continue
 		var egg: Dictionary = _slots[slot_index]
+		var egg_instance_id := int(egg.egg_instance_id)
+		if _resolved_egg_ids_this_thwack.has(egg_instance_id):
+			continue
+		_resolved_egg_ids_this_thwack[egg_instance_id] = true
 		_slots[slot_index] = {}
 		var base_points := int(egg.points)
 		var exact_base_points := float(egg.get("exact_base_points", base_points))
 		var is_double_yolker := bool(egg.get("is_double_yolker", false))
-		var points_awarded := base_points * 2 if is_double_yolker else base_points
+		var yolk_produced := base_points * 2 if is_double_yolker else base_points
+		var appetiser_multiplier := _grandma_effects.appetiser_multiplier_for_yolk(
+			yolk_produced, events
+		)
+		var points_awarded := yolk_produced * appetiser_multiplier
 		_score += points_awarded
 		events.append({
 			"type": "egg_hatched",
+			"egg_instance_id": egg_instance_id,
 			"slot_index": slot_index,
 			"kind": egg.kind,
 			"tier": int(egg.get("tier", 0)),
 			"base_points": base_points,
 			"exact_base_points": exact_base_points,
 			"double_yolker": is_double_yolker,
+			"yolk_produced": yolk_produced,
+			"appetiser_multiplier": appetiser_multiplier,
 			"points_awarded": points_awarded,
 			"score": _score,
+			"satisfaction": _score,
 			"target_score": _target_score,
+			"effective_target_score": _effective_target_score,
+			"sulphurous_suppression": int(
+				_grandma_effects.snapshot().sulphurous_suppression
+			),
 		})
+		_resolve_break_actions(egg, slot_index, circuit_id, events)
+
+
+func _resolve_break_actions(
+	egg: Dictionary,
+	slot_index: int,
+	circuit_id: String,
+	events: Array[Dictionary]
+) -> void:
+	var effects: Array[Dictionary] = []
+	effects.assign(egg.get("effects", []))
+	for action: Dictionary in EggEffects.break_actions(
+		effects, slot_index, circuit_id, _slots.size()
+	):
+		if action.type == "grandma_effect":
+			_grandma_effects.activate(action.effect, events, _target_score, _score)
+			_effective_target_score = _grandma_effects.effective_appetite(_target_score)
+		else:
+			_resolve_shockwave(action, events)
+
+
+func _resolve_shockwave(action: Dictionary, events: Array[Dictionary]) -> void:
+	var slot_indices: Array[int] = []
+	slot_indices.assign(action.slot_indices)
+	var occupied_slot_indices: Array[int] = []
+	for slot_index: int in slot_indices:
+		if not _slots[slot_index].is_empty():
+			occupied_slot_indices.append(slot_index)
+	events.append({
+		"type": "shockwave_fired",
+		"source_slot_index": int(action.source_slot_index),
+		"slot_indices": slot_indices,
+		"occupied_slot_indices": occupied_slot_indices,
+		"circuit_id": String(action.circuit_id),
+	})
+	_damage_eggs(
+		occupied_slot_indices,
+		String(action.circuit_id),
+		events,
+		"shockwave",
+		int(action.source_slot_index)
+	)
+	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 
 
 func _retreat_surviving_plovers_left(slot_indices: Array[int], events: Array[Dictionary]) -> void:
@@ -308,7 +406,11 @@ func _conveyor_is_empty() -> bool:
 	return _slots.all(func(egg: Dictionary) -> bool: return egg.is_empty())
 
 
-func _end_day(events: Array[Dictionary]) -> void:
+func _end_day(
+	events: Array[Dictionary],
+	succeeded: bool,
+	completed_effective_target: int
+) -> void:
 	var discarded_count := 0
 	for egg: Dictionary in _slots:
 		if not egg.is_empty():
@@ -320,8 +422,10 @@ func _end_day(events: Array[Dictionary]) -> void:
 		_slots[slot_index] = {}
 	_hopper.clear()
 	_bin.clear()
+	_grandma_effects.clear()
+	_effective_target_score = completed_effective_target
 	_ended = true
-	_succeeded = _score >= _target_score
+	_succeeded = succeeded
 	events.append({
 		"type": "day_remainder_discarded",
 		"discarded_count": discarded_count,
@@ -330,6 +434,7 @@ func _end_day(events: Array[Dictionary]) -> void:
 		"type": "day_ended",
 		"score": _score,
 		"target_score": _target_score,
+		"effective_target_score": completed_effective_target,
 		"current_patience": _patience.current(),
 		"succeeded": _succeeded,
 	})
@@ -374,7 +479,15 @@ func _new_egg(laid_egg: Variant) -> Dictionary:
 	var exact_base_points := float(definition.points) * quality_multiplier
 	var exact_max_toughness := float(definition.toughness) * quality_multiplier
 	var max_toughness := ceili(exact_max_toughness)
+	var raw_effects: Array = definition.get("effects", []).duplicate(true)
+	if laid_egg is Dictionary:
+		for supplied_effect: Variant in laid_egg.get("effects", []):
+			raw_effects.append(supplied_effect)
+	var effects := EggEffects.normalize(raw_effects)
+	var egg_instance_id := _next_egg_instance_id
+	_next_egg_instance_id += 1
 	return {
+		"egg_instance_id": egg_instance_id,
 		"kind": definition.kind,
 		"tier": tier,
 		"toughness": max_toughness,
@@ -384,6 +497,8 @@ func _new_egg(laid_egg: Variant) -> Dictionary:
 		"exact_base_points": exact_base_points,
 		"double_yolk_chance": double_yolk_chance,
 		"is_double_yolker": is_double_yolker,
+		"effects": effects,
+		"all_other_effects": EggEffects.descriptions(effects),
 	}
 
 
@@ -399,4 +514,25 @@ static func egg_definition(kind: String) -> Dictionary:
 			return {"kind": kind, "toughness": PLOVER_TOUGHNESS, "points": PLOVER_POINTS, "effect": "screen_left"}
 		"spoonbill":
 			return {"kind": kind, "toughness": SPOONBILL_TOUGHNESS, "points": SPOONBILL_POINTS, "effect": "pink_weakness"}
+		"quail":
+			return {
+				"kind": kind, "toughness": QUAIL_TOUGHNESS, "points": QUAIL_POINTS,
+				"effect": "appetiser", "effects": [{"type": EggEffects.APPETISER}],
+			}
+		"maleo":
+			return {
+				"kind": kind, "toughness": MALEO_TOUGHNESS, "points": MALEO_POINTS,
+				"effect": "sulphurous", "effects": [{"type": EggEffects.SULPHUROUS}],
+			}
+		"ostrich":
+			return {
+				"kind": kind, "toughness": OSTRICH_TOUGHNESS, "points": OSTRICH_POINTS,
+				"effect": "shockwave", "effects": [{"type": EggEffects.SHOCKWAVE}],
+			}
+		"kiwi":
+			return {
+				"kind": kind, "toughness": KIWI_TOUGHNESS, "points": KIWI_POINTS,
+				"effect": "deceptively_filling",
+				"effects": [{"type": EggEffects.DECEPTIVELY_FILLING, "duration": 8}],
+			}
 	return {}
