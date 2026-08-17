@@ -1007,16 +1007,40 @@ func test_empty_blue_strike_fires_advances_and_consumes_patience() -> void:
 	assert_eq(fired_slots, [1, 3])
 	assert_eq(presented, [
 		"circuit_fired",
+		"spoon_worn",
+		"spoon_worn",
 		"conveyor_advanced",
 		"patience_spent",
 		"egg_entered",
-		"grandma_tantrum_started",
-		"spoon_damaged",
-		"spoon_damaged",
 	])
 	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 18 / 20")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 3")
+
+
+func test_soft_shelled_impact_prevention_is_presented_before_the_belt_advances() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"soft_shelled", "chicken", "chicken", "chicken", "chicken",
+	])
+	main.set_reduced_motion(true)
+	var presented: Array[String] = []
+	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
+
+	await _press_and_wait(main, "RedCircuit")
+
+	assert_eq(presented, [
+		"circuit_fired",
+		"egg_damaged",
+		"spoon_wear_prevented",
+		"spoon_worn",
+		"conveyor_advanced",
+		"patience_spent",
+		"egg_entered",
+	])
+	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 19 / 20")
+	assert_string_contains(
+		main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "SOFT-SHELLED"
+	)
 
 
 func test_hopper_lift_rises_while_the_next_egg_feeds_the_belt() -> void:
@@ -1106,7 +1130,10 @@ func test_moving_eggs_sway_and_the_hopper_feed_lifts_before_pushing_sideways() -
 	assert_gt(strongest_belt_lean, 0.06)
 	assert_lt(feed_backward_lean, -0.025)
 	assert_true(entry_presented[0])
-	await main.playback_completed
+	for _frame_index in range(30):
+		if not main.is_input_locked():
+			break
+		await get_tree().process_frame
 	await get_tree().process_frame
 	assert_false(main.is_input_locked())
 	assert_eq(next_content.position, Vector2.ZERO)
@@ -1151,12 +1178,11 @@ func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> v
 	assert_eq(presented, [
 		"circuit_fired",
 		"egg_damaged",
+		"spoon_worn",
+		"spoon_worn",
 		"conveyor_advanced",
 		"patience_spent",
 		"egg_entered",
-		"grandma_tantrum_started",
-		"spoon_damaged",
-		"spoon_damaged",
 	])
 
 
@@ -1215,12 +1241,14 @@ func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() ->
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_eq(presented.slice(0, 7), [
+	assert_eq(presented.slice(0, 9), [
 		"circuit_fired",
 		"egg_damaged",
 		"egg_damaged",
 		"egg_damaged",
 		"egg_damaged",
+		"spoon_worn",
+		"spoon_worn",
 		"egg_hatched",
 		"conveyor_advanced",
 	])
@@ -1384,9 +1412,9 @@ func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_payoff() ->
 
 	await _press_and_wait(main, "PinkCircuit")
 
-	assert_eq(presented.slice(0, 5), [
+	assert_eq(presented.slice(0, 6), [
 		"circuit_fired", "egg_damaged", "egg_damaged",
-		"egg_hatched", "conveyor_advanced",
+		"spoon_worn", "egg_hatched", "conveyor_advanced",
 	])
 	assert_eq(points_landed, [1])
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 1 / 10")

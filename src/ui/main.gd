@@ -447,11 +447,7 @@ func _render(events: Array[Dictionary], _fresh_day := false) -> void:
 	for value: int in state.spoon_integrity:
 		total_integrity += value
 	var maximum_integrity: int = int(state.starting_spoon_integrity) * state.spoon_integrity.size()
-	_fortitude_label.text = "SPOONS %d / %d%s" % [
-		total_integrity,
-		maximum_integrity,
-		"  •  GRANDMA STUNNED" if bool(state.grandma_stunned) else "",
-	]
+	_fortitude_label.text = "SPOONS %d / %d" % [total_integrity, maximum_integrity]
 	for hammer_index in range(_hammers.size()):
 		_hammers[hammer_index].render_integrity(
 			int(state.spoon_integrity[hammer_index]), int(state.starting_spoon_integrity)
@@ -797,7 +793,7 @@ func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
 	var cash_presented := false
 	for event: Dictionary in events:
 		match String(event.type):
-			"spoon_damaged", "grandma_stunned":
+			"spoon_worn":
 				if not fortitude_presented:
 					_ui_feedback.present_value(_fortitude_label, "spoons", Color("66f5ed"))
 					fortitude_presented = true

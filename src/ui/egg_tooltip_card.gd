@@ -133,7 +133,7 @@ func _double_yolker_chance_text() -> String:
 
 
 func _display_name() -> String:
-	var animal_name := _kind().capitalize()
+	var animal_name := "Soft-Shelled" if _kind() == "soft_shelled" else _kind().capitalize()
 	match int(_egg.get("tier", 0)):
 		1:
 			return "Prize %s" % animal_name

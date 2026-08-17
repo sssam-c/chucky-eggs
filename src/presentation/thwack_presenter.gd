@@ -154,16 +154,10 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_swap(event, playback_generation)
 		"conveyor_advanced":
 			return await _present_conveyor(event, playback_generation)
-		"grandma_tantrum_started":
-			return await _present_grandma_tantrum(playback_generation)
-		"shock_absorbed":
-			return await _present_shock_absorbed(event, playback_generation)
-		"spoon_damaged":
-			return await _present_spoon_damage(event, playback_generation)
-		"grandma_stunned":
-			return await _present_grandma_stunned(playback_generation)
-		"grandma_tantrum_skipped":
-			return await _present_grandma_stunned(playback_generation)
+		"spoon_wear_prevented":
+			return await _present_spoon_wear_prevented(event, playback_generation)
+		"spoon_worn":
+			return await _present_spoon_wear(event, playback_generation)
 		"egg_binned":
 			return await _present_bin(event, playback_generation)
 		"patience_spent":
@@ -179,65 +173,30 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 	return true
 
 
-func _present_grandma_tantrum(playback_generation: int) -> bool:
-	_play(_loss_player)
-	if _reduced_motion:
-		return true
-	var feedback: Control = _appetite_display.feedback_control()
-	feedback.pivot_offset = feedback.size * 0.5
-	var tantrum := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tantrum.tween_property(feedback, "scale", Vector2(1.10, 0.92), 0.09)
-	tantrum.parallel().tween_property(feedback, "modulate", Color(1.0, 0.38, 0.26, 1.0), 0.09)
-	tantrum.tween_property(feedback, "scale", Vector2.ONE, 0.13)
-	tantrum.parallel().tween_property(feedback, "modulate", Color.WHITE, 0.13)
-	return await _run_tween(tantrum, playback_generation)
-
-
-func _present_shock_absorbed(event: Dictionary, playback_generation: int) -> bool:
+func _present_spoon_wear_prevented(event: Dictionary, playback_generation: int) -> bool:
 	var slot: Button = _belt_slots[int(event.slot_index)]
 	if _reduced_motion:
 		return true
 	var content: Control = slot.motion_content()
+	var hammer: Control = _hammers[int(event.slot_index)]
 	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	pulse.tween_property(content, "modulate", Color(0.42, 1.0, 0.67, 1.0), 0.08)
 	pulse.parallel().tween_property(content, "scale", Vector2(1.18, 0.82), 0.08)
+	pulse.parallel().tween_property(hammer, "modulate", Color(0.42, 1.0, 0.67, 1.0), 0.08)
 	pulse.tween_property(content, "modulate", Color.WHITE, 0.12)
 	pulse.parallel().tween_property(content, "scale", Vector2.ONE, 0.12)
+	pulse.parallel().tween_property(hammer, "modulate", Color.WHITE, 0.12)
 	return await _run_tween(pulse, playback_generation)
 
 
-func _present_spoon_damage(event: Dictionary, playback_generation: int) -> bool:
+func _present_spoon_wear(event: Dictionary, _playback_generation: int) -> bool:
 	var hammer: Control = _hammers[int(event.slot_index)]
 	hammer.render_integrity(int(event.remaining_integrity), int(event.starting_integrity))
 	_play(_impact_player)
-	if _reduced_motion:
-		return true
-	hammer.pivot_offset = hammer.size * 0.5
-	var hit := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	hit.tween_property(hammer, "scale", Vector2(1.08, 0.94), 0.07)
-	hit.parallel().tween_property(hammer, "modulate", Color(1.0, 0.36, 0.25, 1.0), 0.07)
-	hit.tween_property(hammer, "scale", Vector2.ONE, 0.12)
-	hit.parallel().tween_property(
-		hammer,
-		"modulate",
-		Color(0.48, 0.43, 0.40, 1.0) if bool(event.broken) else Color.WHITE,
-		0.12
-	)
-	return await _run_tween(hit, playback_generation)
-
-
-func _present_grandma_stunned(playback_generation: int) -> bool:
-	if _reduced_motion:
-		return true
-	var feedback: Control = _appetite_display.feedback_control()
-	feedback.pivot_offset = feedback.size * 0.5
-	var stun := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	stun.tween_property(feedback, "rotation", -0.045, 0.07)
-	stun.parallel().tween_property(feedback, "modulate", Color(0.48, 0.96, 0.84, 1.0), 0.07)
-	stun.tween_property(feedback, "rotation", 0.045, 0.07)
-	stun.tween_property(feedback, "rotation", 0.0, 0.09)
-	stun.parallel().tween_property(feedback, "modulate", Color.WHITE, 0.09)
-	return await _run_tween(stun, playback_generation)
+	# The circuit animation already shows the simultaneous physical impacts.
+	# Updating the pips here keeps paired wear simultaneous rather than adding a
+	# second, serial hit animation for each resolver fact.
+	return true
 
 
 func _present_shockwave(event: Dictionary, playback_generation: int) -> bool:

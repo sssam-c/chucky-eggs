@@ -186,10 +186,12 @@ func test_opening_filling_success_still_resolves_damage_movement_and_patience() 
 	assert_eq(day.snapshot().score, 1)
 
 	var completing: Array[Dictionary] = day.resolve_circuit("blue")
-	assert_eq(_event_types(completing).slice(0, 5), [
+	assert_eq(_event_types(completing).slice(0, 7), [
 		"grandma_effects_started",
 		"satisfaction_added",
 		"circuit_fired",
+		"spoon_worn",
+		"spoon_worn",
 		"conveyor_advanced",
 		"patience_spent",
 	])

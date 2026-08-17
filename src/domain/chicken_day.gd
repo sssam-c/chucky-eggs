@@ -27,8 +27,8 @@ const OSTRICH_TOUGHNESS := 7
 const OSTRICH_POINTS := 3
 const KIWI_TOUGHNESS := 3
 const KIWI_POINTS := 0
-const SHOCK_ABSORBER_TOUGHNESS := 1
-const SHOCK_ABSORBER_POINTS := 1
+const SOFT_SHELLED_TOUGHNESS := 3
+const SOFT_SHELLED_POINTS := 3
 var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
 var _bin: Array[Dictionary] = []
@@ -44,10 +44,8 @@ var _grandma_effects = GrandmaEffects.new()
 var _effective_target_score: int
 var _next_egg_instance_id := 1
 var _resolved_egg_ids_this_thwack := {}
-var _tantrum_damaged_egg_ids := {}
 var _spoon_integrity: Array[int] = []
 var _starting_spoon_integrity := STARTING_SPOON_INTEGRITY
-var _grandma_stunned := false
 
 
 func _init(
@@ -91,7 +89,6 @@ func snapshot() -> Dictionary:
 		"starting_patience": _patience.starting(),
 		"spoon_integrity": _spoon_integrity.duplicate(),
 		"starting_spoon_integrity": _starting_spoon_integrity,
-		"grandma_stunned": _grandma_stunned,
 		"score": _score,
 		"satisfaction": _score,
 		"target_score": _target_score,
@@ -153,14 +150,20 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		"slot_indices": circuit_slot_indices,
 		"occupied_slot_indices": occupied_slot_indices,
 	})
-	_damage_eggs(occupied_slot_indices, circuit_id, events)
+	_damage_eggs(
+		occupied_slot_indices,
+		circuit_id,
+		events,
+		"spoon",
+		-1,
+		circuit_slot_indices
+	)
 	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 	_advance_conveyor(events)
 	_spend_patience(events)
 	_refill_belt(events)
-	_resolve_grandma_tantrum(circuit_slot_indices, circuit_id, events)
 
-	# Success takes precedence after the complete thwack, including Grandma's reply.
+	# Success takes precedence after the complete thwack, including impact wear.
 	var succeeded_this_thwack: bool = _score >= _effective_target_score
 	var spoons_failed: bool = _spoon_integrity.all(func(value: int) -> bool: return value <= 0)
 	var completed_effective_target := _effective_target_score
@@ -173,50 +176,6 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 			_end_day(events, false, completed_effective_target)
 
 	return events
-
-
-func _resolve_grandma_tantrum(
-	fired_slot_indices: Array[int], circuit_id: String, events: Array[Dictionary]
-) -> void:
-	if _grandma_stunned:
-		_grandma_stunned = false
-		events.append({
-			"type": "grandma_tantrum_skipped",
-			"reason": "stunned",
-			"slot_indices": fired_slot_indices.duplicate(),
-		})
-		return
-	events.append({
-		"type": "grandma_tantrum_started",
-		"circuit_id": circuit_id,
-		"slot_indices": fired_slot_indices.duplicate(),
-	})
-	_tantrum_damaged_egg_ids.clear()
-	for slot_index: int in fired_slot_indices:
-		if _spoon_integrity[slot_index] <= 0:
-			continue
-		if _egg_has_effect(_slots[slot_index], EggEffects.SHOCK_ABSORBER):
-			var egg_instance_id := int(_slots[slot_index].egg_instance_id)
-			_tantrum_damaged_egg_ids[egg_instance_id] = true
-			events.append({
-				"type": "shock_absorbed",
-				"slot_index": slot_index,
-				"egg_instance_id": egg_instance_id,
-				"spoon_integrity": _spoon_integrity[slot_index],
-			})
-			_apply_damage(slot_index, 1, "grandma_tantrum", slot_index, circuit_id, events)
-		else:
-			_spoon_integrity[slot_index] = maxi(_spoon_integrity[slot_index] - 1, 0)
-			events.append({
-				"type": "spoon_damaged",
-				"slot_index": slot_index,
-				"damage_amount": 1,
-				"remaining_integrity": _spoon_integrity[slot_index],
-				"starting_integrity": _starting_spoon_integrity,
-				"broken": _spoon_integrity[slot_index] == 0,
-			})
-	_resolve_hatches(events, circuit_id)
-	_tantrum_damaged_egg_ids.clear()
 
 
 func _egg_has_effect(egg: Dictionary, effect_type: String) -> bool:
@@ -240,10 +199,20 @@ func _damage_eggs(
 	circuit_id: String,
 	events: Array[Dictionary],
 	direct_cause := "spoon",
-	source_slot_override := -1
+	source_slot_override := -1,
+	physical_spoon_slot_indices: Array[int] = []
 ) -> void:
 	# Apply the whole direct-and-echo batch before resolving any hatch. Empty
 	# linked slots have already been omitted while their spoons still visibly fire.
+	var impact_facts_by_slot := {}
+	for slot_index: int in physical_spoon_slot_indices:
+		var egg: Dictionary = _slots[slot_index]
+		impact_facts_by_slot[slot_index] = {
+			"struck_egg": not egg.is_empty(),
+			"soft_shelled": _egg_has_effect(egg, EggEffects.SOFT_SHELLED),
+			"egg_instance_id": int(egg.get("egg_instance_id", -1)),
+			"kind": String(egg.get("kind", "")),
+		}
 	var direct_damage_by_slot := {}
 	for primary_slot_index: int in primary_slot_indices:
 		var damage_amount := _direct_damage_amount(circuit_id, primary_slot_index)
@@ -271,7 +240,41 @@ func _damage_eggs(
 					events
 				)
 
+	_apply_spoon_wear(physical_spoon_slot_indices, impact_facts_by_slot, direct_cause, events)
 	_resolve_hatches(events, circuit_id)
+
+
+func _apply_spoon_wear(
+	spoon_slot_indices: Array[int],
+	impact_facts_by_slot: Dictionary,
+	cause: String,
+	events: Array[Dictionary]
+) -> void:
+	for slot_index: int in spoon_slot_indices:
+		var impact_facts: Dictionary = impact_facts_by_slot[slot_index]
+		if bool(impact_facts.soft_shelled):
+			events.append({
+				"type": "spoon_wear_prevented",
+				"slot_index": slot_index,
+				"reason": "soft_shelled",
+				"cause": cause,
+				"egg_instance_id": int(impact_facts.egg_instance_id),
+				"kind": String(impact_facts.kind),
+				"remaining_integrity": _spoon_integrity[slot_index],
+				"starting_integrity": _starting_spoon_integrity,
+			})
+			continue
+		_spoon_integrity[slot_index] = maxi(_spoon_integrity[slot_index] - 1, 0)
+		events.append({
+			"type": "spoon_worn",
+			"slot_index": slot_index,
+			"wear_amount": 1,
+			"cause": cause,
+			"struck_egg": bool(impact_facts.struck_egg),
+			"remaining_integrity": _spoon_integrity[slot_index],
+			"starting_integrity": _starting_spoon_integrity,
+			"broken": _spoon_integrity[slot_index] == 0,
+		})
 
 
 func _apply_damage(
@@ -342,13 +345,6 @@ func _resolve_hatches(events: Array[Dictionary], circuit_id: String) -> void:
 				_grandma_effects.snapshot().sulphurous_suppression
 			),
 		})
-		if _tantrum_damaged_egg_ids.has(egg_instance_id) and not _grandma_stunned:
-			_grandma_stunned = true
-			events.append({
-				"type": "grandma_stunned",
-				"source_egg_instance_id": egg_instance_id,
-				"duration_tantrums": 1,
-			})
 		_resolve_break_actions(egg, slot_index, circuit_id, events)
 
 
@@ -372,7 +368,9 @@ func _resolve_break_actions(
 
 func _resolve_shockwave(action: Dictionary, events: Array[Dictionary]) -> void:
 	var slot_indices: Array[int] = []
-	slot_indices.assign(action.slot_indices)
+	for slot_index: int in action.slot_indices:
+		if _spoon_integrity[slot_index] > 0:
+			slot_indices.append(slot_index)
 	var occupied_slot_indices: Array[int] = []
 	for slot_index: int in slot_indices:
 		if not _slots[slot_index].is_empty():
@@ -389,7 +387,8 @@ func _resolve_shockwave(action: Dictionary, events: Array[Dictionary]) -> void:
 		String(action.circuit_id),
 		events,
 		"shockwave",
-		int(action.source_slot_index)
+		int(action.source_slot_index),
+		slot_indices
 	)
 	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 
@@ -504,7 +503,6 @@ func _end_day(
 	_hopper.clear()
 	_bin.clear()
 	_grandma_effects.clear()
-	_grandma_stunned = false
 	_effective_target_score = completed_effective_target
 	_ended = true
 	_succeeded = succeeded
@@ -618,12 +616,12 @@ static func egg_definition(kind: String) -> Dictionary:
 				"effect": "deceptively_filling",
 				"effects": [{"type": EggEffects.DECEPTIVELY_FILLING, "duration": 8}],
 			}
-		"shock_absorber":
+		"soft_shelled":
 			return {
 				"kind": kind,
-				"toughness": SHOCK_ABSORBER_TOUGHNESS,
-				"points": SHOCK_ABSORBER_POINTS,
-				"effect": "shock_absorber",
-				"effects": [{"type": EggEffects.SHOCK_ABSORBER}],
+				"toughness": SOFT_SHELLED_TOUGHNESS,
+				"points": SOFT_SHELLED_POINTS,
+				"effect": "soft_shelled",
+				"effects": [{"type": EggEffects.SOFT_SHELLED}],
 			}
 	return {}

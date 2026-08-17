@@ -174,13 +174,12 @@ func test_fallen_egg_keeps_damage_and_recycles_when_the_hopper_is_empty() -> voi
 	assert_eq(_event_types(final_events), [
 		"circuit_fired",
 		"egg_damaged",
+		"spoon_worn",
 		"conveyor_advanced",
 		"egg_binned",
 		"patience_spent",
 		"bin_reshuffled",
 		"egg_entered",
-		"grandma_tantrum_started",
-		"spoon_damaged",
 	])
 	assert_eq(shuffler.shuffled_bins.size(), 1)
 	assert_eq(shuffler.shuffled_bins[0][0].kind, "spoonbill")
@@ -213,8 +212,8 @@ func test_bin_waits_for_the_conveyor_to_clear_before_reshuffling() -> void:
 	var clear_events: Array[Dictionary] = day.resolve_circuit("pink")
 
 	assert_eq(_event_types(clear_events).slice(-6), [
-		"egg_binned", "patience_spent", "bin_reshuffled", "egg_entered",
-		"grandma_tantrum_started", "spoon_damaged",
+		"spoon_worn", "conveyor_advanced", "egg_binned", "patience_spent",
+		"bin_reshuffled", "egg_entered",
 	])
 	assert_eq(shuffler.shuffled_bins.size(), 1)
 	assert_eq(shuffler.shuffled_bins[0].size(), 2)
@@ -232,12 +231,11 @@ func test_red_fires_slots_one_and_three_and_wastes_the_empty_strike() -> void:
 	assert_eq(_event_types(events), [
 		"circuit_fired",
 		"egg_damaged",
+		"spoon_worn",
+		"spoon_worn",
 		"conveyor_advanced",
 		"patience_spent",
 		"egg_entered",
-		"grandma_tantrum_started",
-		"spoon_damaged",
-		"spoon_damaged",
 	])
 	assert_eq(events[0].circuit_id, "red")
 	assert_eq(events[0].slot_indices, [0, 2])
@@ -257,12 +255,11 @@ func test_empty_circuit_consumes_patience_and_advances_without_damage() -> void:
 
 	assert_eq(_event_types(events), [
 		"circuit_fired",
+		"spoon_worn",
+		"spoon_worn",
 		"conveyor_advanced",
 		"patience_spent",
 		"egg_entered",
-		"grandma_tantrum_started",
-		"spoon_damaged",
-		"spoon_damaged",
 	])
 	assert_eq(events[0].circuit_id, "blue")
 	assert_eq(events[0].slot_indices, [1, 3])
@@ -299,8 +296,8 @@ func test_red_damages_both_occupied_slots_before_a_cuckoo_between_them_echoes_tw
 		"egg_damaged",
 		"egg_damaged",
 		"egg_damaged",
-		"egg_hatched",
-		"conveyor_advanced",
+		"spoon_worn",
+		"spoon_worn",
 	])
 	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.slot_index), [0, 2, 1, 1])
 	assert_eq(damage_events.map(func(event: Dictionary) -> String: return event.cause), [
@@ -514,12 +511,11 @@ func test_satisfying_grandma_when_spoons_break_succeeds_after_full_resolution() 
 	assert_eq(_event_types(final_events), [
 		"circuit_fired",
 		"egg_damaged",
+		"spoon_worn",
+		"spoon_worn",
 		"egg_hatched",
 		"conveyor_advanced",
 		"patience_spent",
-		"grandma_tantrum_started",
-		"spoon_damaged",
-		"spoon_damaged",
 		"day_remainder_discarded",
 		"day_ended",
 	])

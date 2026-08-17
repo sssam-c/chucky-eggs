@@ -23,12 +23,13 @@ var _egg_order: Array[String] = []
 
 func _ready() -> void:
 	for kind: String in ProducerFlock.KNOWN_KINDS:
+		var display_name := "Soft-Shelled" if kind == "soft_shelled" else kind.capitalize()
 		var add_button := Button.new()
 		add_button.name = "Add%s" % kind.capitalize()
-		add_button.text = "+  %s" % kind.to_upper()
+		add_button.text = "+  %s" % display_name.to_upper()
 		add_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		add_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		add_button.accessibility_name = "Add %s egg" % kind.capitalize()
+		add_button.accessibility_name = "Add %s egg" % display_name
 		add_button.pressed.connect(add_egg.bind(kind))
 		_species_buttons.add_child(add_button)
 

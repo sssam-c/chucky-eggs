@@ -634,6 +634,16 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** Nothing while proposed. If accepted, it would supersede D059's Patience action limit and remaining-Patience payout while preserving its complete-action and success-precedence principles.
 
+## D065 — Reframe Fortitude loss as spoon impact wear
+
+**Status:** proposed
+
+**Decision:** On the dedicated prototype branch, replace Grandma's post-movement tantrum with wear caused by the spoon impact itself. Every intact spoon that physically strikes loses 1 Integrity before conveyor movement, including a spoon striking an empty bay. A Soft-Shelled egg takes ordinary strike damage but prevents wear to the spoon directly striking it; it does not intercept a later attack, take extra damage, or stun Grandma. Shockwave uses only intact adjacent spoons, and each actual Shockwave impact follows the same wear and Soft-Shelled rule. Keep individual Integrity, broken-spoon disabling, all-spoons-broken failure with success precedence, debug starting Integrity, and the temporary fixed £3 success payout. Keep the Soft-Shelled egg debug-only with Chicken-equivalent values until its permanent species and tuning are deliberately chosen.
+
+**Reason:** Wear and tear makes tool loss a direct consequence of the player's own machine use, so misses and empty strikes become strategic costs without inventing hostile behavior for Grandma. Soft-Shelled then provides one compact positional exception—protect this spoon on this hit—without the target-selection ambiguity, extra damage rule, and stun state introduced by Shock Absorber. Applying the same physical rule to Shockwave keeps every visible spoon impact causal and prevents the effect from creating free tool use.
+
+**Supersedes:** D064's Grandma tantrum timing, Shock Absorber interception, absorber damage, and Grandma stun. D064's branch-only status, individual spoon Integrity, broken-spoon behavior, success precedence, debug controls, and fixed prototype payout remain proposed.
+
 <!--
 Copy for the next entry:
 

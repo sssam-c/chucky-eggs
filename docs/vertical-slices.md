@@ -151,11 +151,11 @@ Accepted and implemented. Quail, Maleo, Ostrich, and Kiwi are immediately availa
 - Session tests cover deterministic three-choice rewards drawn from the expanded permanent species list.
 - UI tests cover distinct placeholder identities and complete reward-card explanations for every signature egg.
 
-## Tentative prototype slice — Spoon Fortitude and Grandma's tantrum
+## Tentative prototype slice — Spoon wear and Soft-Shelled impacts
 
 ### Question
 
-Does replacing the ten-action Patience limit with damageable individual spoons create a more legible progression surface and more interesting positional egg interactions?
+Does replacing the ten-action Patience limit with impact wear on individual spoons create a more legible progression surface and more interesting positional egg interactions?
 
 ### Status
 
@@ -164,20 +164,21 @@ Prototype implemented only on `codex/spoon-fortitude-prototype`. The accepted Pa
 ### Prototype behavior
 
 - Each of the five spoons begins with 4 Integrity. Only intact spoons in the selected circuit fire; a circuit with no intact spoon is unavailable.
-- After the selected strike resolves, the conveyor advances and refills, then Grandma tantrums against exactly the intact spoons that fired. Shockwave spoons are not extra tantrum targets.
-- A tantrum normally removes 1 Integrity from each targeted spoon. The day fails when all five spoons are broken and Appetite remains unmet; success still takes precedence after the complete action.
-- A debug-only Shock Absorber egg has 1 Toughness and 1 Yolk. If it occupies a targeted spoon's slot after movement, it takes that tantrum damage instead. If Grandma's damage pops it, Grandma skips her next tantrum; this stun does not stack.
-- Debug setup can choose ordered eggs, include the prototype absorber, and set starting Integrity per spoon. Normal opening and reward pools do not include the absorber.
+- Every physical spoon impact removes 1 Integrity from that spoon before conveyor movement. A spoon still suffers wear when it strikes an empty belt bay.
+- A Soft-Shelled egg takes the strike's ordinary egg damage but prevents wear to the spoon striking it. The protection is determined from the egg under that spoon at impact; it does not move under a later target, absorb damage, take extra damage, or stun Grandma.
+- Shockwave calls only adjacent intact spoons to strike. Each such impact follows the same wear and Soft-Shelled rules, including wear over an empty adjacent bay.
+- The day fails when all five spoons are broken and Appetite remains unmet; success still takes precedence after the complete action.
+- Debug setup can choose ordered eggs, include a Chicken-stat Soft-Shelled test egg, and set starting Integrity per spoon. Normal opening and reward pools do not include that egg.
 - Successful prototype days award a temporary fixed £3, isolating the combat-loop question from a replacement for the old remaining-Patience payout.
 
 ### Explicitly deferred
 
-- Thin-Shelled follow-up strikes, spoon armour, egg force/damage upgrades, thorns, multi-hit absorbers, repairs, and permanent Fortitude progression.
-- A permanent bird species, final name, tuning, art, or reward path for Shock Absorber.
+- Thin-Shelled follow-up strikes, spoon armour, egg force/damage upgrades, thorns, repairs, and permanent Fortitude progression.
+- A permanent bird species, final tuning, art, or reward path for Soft-Shelled.
 - Removing the inert Patience compatibility fields and tests before the prototype is accepted.
 
 ### Exit evidence
 
-- Domain coverage must prove post-refill target selection, per-spoon damage, broken-circuit rejection, interception, stun creation, and exactly-one skipped tantrum.
-- Presentation coverage must prove spoon condition remains visible, tantrum/interception/stun events remain inside the existing input barrier, reduced motion resolves immediately, and cancellation restores stable transforms.
-- Playtest at least one ordered absorber setup and one ordinary opening. Record whether players anticipate the post-move interception, distribute circuit wear, understand broken circuits, and experience more meaningful runway than the old ten-action clock.
+- Domain coverage must prove impact-before-movement wear, empty-bay wear, broken-circuit rejection, Soft-Shelled prevention without altered egg damage, and Shockwave use of intact spoons.
+- Presentation coverage must prove spoon condition and Soft-Shelled prevention remain visible inside the existing input barrier, reduced motion resolves immediately, and cancellation restores stable transforms.
+- Playtest at least one ordered Soft-Shelled setup and one ordinary opening. Record whether players intentionally spend empty-bay wear, preserve particular spoons, understand Shockwave's tool cost, and experience more meaningful runway than the old ten-action clock.
