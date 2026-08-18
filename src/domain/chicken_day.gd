@@ -1,12 +1,11 @@
 class_name ChickenDay
 extends RefCounted
 
-const GrandmaPatience = preload("res://src/domain/grandma_patience.gd")
 const GrandmaEffects = preload("res://src/domain/grandma_effects.gd")
 const EggEffects = preload("res://src/domain/egg_effects.gd")
 const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
-const STARTING_PATIENCE := 10
+const STARTING_SPOON_INTEGRITY := 4
 const DEFAULT_TARGET_SCORE := 10
 const CHICKEN_TOUGHNESS := 3
 const CHICKEN_POINTS := 3
@@ -26,11 +25,12 @@ const OSTRICH_TOUGHNESS := 7
 const OSTRICH_POINTS := 3
 const KIWI_TOUGHNESS := 3
 const KIWI_POINTS := 0
+const SOFT_SHELLED_TOUGHNESS := 3
+const SOFT_SHELLED_POINTS := 3
 var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
 var _bin: Array[Dictionary] = []
 var _recycle_shuffler
-var _patience
 var _score := 0
 var _ended := false
 var _succeeded := false
@@ -41,17 +41,22 @@ var _grandma_effects = GrandmaEffects.new()
 var _effective_target_score: int
 var _next_egg_instance_id := 1
 var _resolved_egg_ids_this_thwack := {}
+var _spoon_integrity: Array[int] = []
+var _starting_spoon_integrity := STARTING_SPOON_INTEGRITY
 
 
 func _init(
 	daily_eggs: Array,
 	target_score := DEFAULT_TARGET_SCORE,
-	starting_patience := STARTING_PATIENCE,
+	starting_spoon_integrity := STARTING_SPOON_INTEGRITY,
 	recycle_shuffler = null
 ) -> void:
 	assert(not daily_eggs.is_empty(), "A day needs at least one laid egg.")
 	assert(target_score > 0, "A day needs a positive target score.")
-	_patience = GrandmaPatience.new(starting_patience)
+	assert(starting_spoon_integrity > 0, "Spoons need positive starting Integrity.")
+	_starting_spoon_integrity = starting_spoon_integrity
+	_spoon_integrity.resize(SLOT_COUNT)
+	_spoon_integrity.fill(starting_spoon_integrity)
 	_target_score = target_score
 	_effective_target_score = target_score
 	_recycle_shuffler = recycle_shuffler
@@ -61,7 +66,8 @@ func _init(
 	for laid_egg: Variant in daily_eggs:
 		_hopper.append(_new_egg(laid_egg))
 	_daily_egg_count = _hopper.size()
-	_slots[0] = _hopper.pop_front()
+	for slot_index in range(mini(SLOT_COUNT, _hopper.size())):
+		_slots[slot_index] = _hopper.pop_front()
 
 
 func snapshot() -> Dictionary:
@@ -75,8 +81,8 @@ func snapshot() -> Dictionary:
 		"daily_egg_count": _daily_egg_count,
 		"circuits": _circuits.duplicate(true),
 		"slot_count": _slots.size(),
-		"current_patience": _patience.current(),
-		"starting_patience": _patience.starting(),
+		"spoon_integrity": _spoon_integrity.duplicate(),
+		"starting_spoon_integrity": _starting_spoon_integrity,
 		"score": _score,
 		"satisfaction": _score,
 		"target_score": _target_score,
@@ -109,8 +115,6 @@ func _egg_content_precedes(first: Dictionary, second: Dictionary) -> bool:
 func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 	if _ended:
 		return [{"type": "thwack_rejected", "reason": "day_ended"}]
-	if not _patience.can_afford(1):
-		return [{"type": "thwack_rejected", "reason": "no_patience"}]
 	var circuit := _circuit(circuit_id)
 	if circuit.is_empty():
 		return [{"type": "thwack_rejected", "reason": "invalid_circuit"}]
@@ -118,9 +122,17 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 	var circuit_slot_indices: Array[int] = []
 	var occupied_slot_indices: Array[int] = []
 	for slot_index: int in circuit.slot_indices:
+		if _spoon_integrity[slot_index] <= 0:
+			continue
 		circuit_slot_indices.append(slot_index)
 		if not _slots[slot_index].is_empty():
 			occupied_slot_indices.append(slot_index)
+	if circuit_slot_indices.is_empty():
+		return [{
+			"type": "thwack_rejected",
+			"reason": "broken_circuit",
+			"circuit_id": circuit_id,
+		}]
 
 	var events: Array[Dictionary] = []
 	_resolved_egg_ids_this_thwack.clear()
@@ -132,26 +144,40 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		"slot_indices": circuit_slot_indices,
 		"occupied_slot_indices": occupied_slot_indices,
 	})
-	_damage_eggs(occupied_slot_indices, circuit_id, events)
+	_damage_eggs(
+		occupied_slot_indices,
+		circuit_id,
+		events,
+		"spoon",
+		-1,
+		circuit_slot_indices
+	)
 	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 	_advance_conveyor(events)
-	_spend_patience(events)
+	_refill_belt(events)
 
-	# Success takes precedence after the complete thwack, including when its
-	# Patience cost reduced Grandma to zero.
+	# Success takes precedence after the complete thwack, including impact wear.
 	var succeeded_this_thwack: bool = _score >= _effective_target_score
-	var patience_failed: bool = int(_patience.current()) == 0
+	var spoons_failed: bool = _spoon_integrity.all(func(value: int) -> bool: return value <= 0)
 	var completed_effective_target := _effective_target_score
 	if succeeded_this_thwack:
 		_end_day(events, true, completed_effective_target)
-	elif patience_failed:
+	elif spoons_failed:
 		_end_day(events, false, completed_effective_target)
 	else:
-		_refill_belt(events)
 		if _hopper.is_empty() and _bin.is_empty() and _conveyor_is_empty():
 			_end_day(events, false, completed_effective_target)
 
 	return events
+
+
+func _egg_has_effect(egg: Dictionary, effect_type: String) -> bool:
+	if egg.is_empty():
+		return false
+	for effect: Dictionary in egg.get("effects", []):
+		if String(effect.get("type", "")) == effect_type:
+			return true
+	return false
 
 
 func _circuit(circuit_id: String) -> Dictionary:
@@ -166,10 +192,20 @@ func _damage_eggs(
 	circuit_id: String,
 	events: Array[Dictionary],
 	direct_cause := "spoon",
-	source_slot_override := -1
+	source_slot_override := -1,
+	physical_spoon_slot_indices: Array[int] = []
 ) -> void:
 	# Apply the whole direct-and-echo batch before resolving any hatch. Empty
 	# linked slots have already been omitted while their spoons still visibly fire.
+	var impact_facts_by_slot := {}
+	for slot_index: int in physical_spoon_slot_indices:
+		var egg: Dictionary = _slots[slot_index]
+		impact_facts_by_slot[slot_index] = {
+			"struck_egg": not egg.is_empty(),
+			"soft_shelled": _egg_has_effect(egg, EggEffects.SOFT_SHELLED),
+			"egg_instance_id": int(egg.get("egg_instance_id", -1)),
+			"kind": String(egg.get("kind", "")),
+		}
 	var direct_damage_by_slot := {}
 	for primary_slot_index: int in primary_slot_indices:
 		var damage_amount := _direct_damage_amount(circuit_id, primary_slot_index)
@@ -197,7 +233,41 @@ func _damage_eggs(
 					events
 				)
 
+	_apply_spoon_wear(physical_spoon_slot_indices, impact_facts_by_slot, direct_cause, events)
 	_resolve_hatches(events, circuit_id)
+
+
+func _apply_spoon_wear(
+	spoon_slot_indices: Array[int],
+	impact_facts_by_slot: Dictionary,
+	cause: String,
+	events: Array[Dictionary]
+) -> void:
+	for slot_index: int in spoon_slot_indices:
+		var impact_facts: Dictionary = impact_facts_by_slot[slot_index]
+		if bool(impact_facts.soft_shelled):
+			events.append({
+				"type": "spoon_wear_prevented",
+				"slot_index": slot_index,
+				"reason": "soft_shelled",
+				"cause": cause,
+				"egg_instance_id": int(impact_facts.egg_instance_id),
+				"kind": String(impact_facts.kind),
+				"remaining_integrity": _spoon_integrity[slot_index],
+				"starting_integrity": _starting_spoon_integrity,
+			})
+			continue
+		_spoon_integrity[slot_index] = maxi(_spoon_integrity[slot_index] - 1, 0)
+		events.append({
+			"type": "spoon_worn",
+			"slot_index": slot_index,
+			"wear_amount": 1,
+			"cause": cause,
+			"struck_egg": bool(impact_facts.struck_egg),
+			"remaining_integrity": _spoon_integrity[slot_index],
+			"starting_integrity": _starting_spoon_integrity,
+			"broken": _spoon_integrity[slot_index] == 0,
+		})
 
 
 func _apply_damage(
@@ -291,7 +361,9 @@ func _resolve_break_actions(
 
 func _resolve_shockwave(action: Dictionary, events: Array[Dictionary]) -> void:
 	var slot_indices: Array[int] = []
-	slot_indices.assign(action.slot_indices)
+	for slot_index: int in action.slot_indices:
+		if _spoon_integrity[slot_index] > 0:
+			slot_indices.append(slot_index)
 	var occupied_slot_indices: Array[int] = []
 	for slot_index: int in slot_indices:
 		if not _slots[slot_index].is_empty():
@@ -308,7 +380,8 @@ func _resolve_shockwave(action: Dictionary, events: Array[Dictionary]) -> void:
 		String(action.circuit_id),
 		events,
 		"shockwave",
-		int(action.source_slot_index)
+		int(action.source_slot_index),
+		slot_indices
 	)
 	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 
@@ -361,17 +434,8 @@ func _advance_conveyor(events: Array[Dictionary]) -> void:
 		})
 
 
-func _spend_patience(events: Array[Dictionary]) -> void:
-	var amount_spent: int = _patience.lose(1)
-	events.append({
-		"type": "patience_spent",
-		"amount": amount_spent,
-		"current_patience": _patience.current(),
-	})
-
-
 func _refill_belt(events: Array[Dictionary]) -> void:
-	if _hopper.is_empty() and _conveyor_is_empty():
+	if _hopper.is_empty():
 		_recycle_bin(events)
 	if _hopper.is_empty():
 		return
@@ -435,7 +499,7 @@ func _end_day(
 		"score": _score,
 		"target_score": _target_score,
 		"effective_target_score": completed_effective_target,
-		"current_patience": _patience.current(),
+		"spoon_integrity": _spoon_integrity.duplicate(),
 		"succeeded": _succeeded,
 	})
 
@@ -534,5 +598,13 @@ static func egg_definition(kind: String) -> Dictionary:
 				"kind": kind, "toughness": KIWI_TOUGHNESS, "points": KIWI_POINTS,
 				"effect": "deceptively_filling",
 				"effects": [{"type": EggEffects.DECEPTIVELY_FILLING, "duration": 8}],
+			}
+		"soft_shelled":
+			return {
+				"kind": kind,
+				"toughness": SOFT_SHELLED_TOUGHNESS,
+				"points": SOFT_SHELLED_POINTS,
+				"effect": "soft_shelled",
+				"effects": [{"type": EggEffects.SOFT_SHELLED}],
 			}
 	return {}

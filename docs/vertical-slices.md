@@ -15,7 +15,7 @@ The deterministic and player-visible path now opens a dedicated bird-offer scree
 ### Settled rules preserved
 
 - Every bird lays exactly one egg per day; the starting pool is three Chicken, two Cuckoo, and three Sparrow eggs.
-- Grandma starts each day with 10 Patience. Every resolved thwack costs 1 Patience; success takes precedence on the final point, and each remaining point pays £1 only on success.
+- Each spoon starts with 4 Integrity. Every physical impact normally costs that spoon 1 Integrity; success takes precedence if the last intact spoons break during the target-reaching thwack. A successful day pays a fixed £3.
 - Day 1 requires 10 points and each later day requires 9.
 - Red strikes slots 1+3, Blue strikes 2+4, and Pink strikes slot 5. All three remain available during an unlocked day, including when their complete circuit is empty. Pink still deals 2 direct damage to Spoonbills.
 - Cuckoo echoes, Plover retreat, simultaneous damage, hatch order, cash, retries, success-only shop access, and one request-to-resolver pathway remain unchanged.
@@ -24,11 +24,11 @@ The deterministic and player-visible path now opens a dedicated bird-offer scree
 
 ### Hypothesis
 
-One stable track should let the player read circuits and egg movement immediately. Moving an unhatched egg into a visible bin converts permanent loss into a tempo cost: the egg retains damage, but the player must clear both the hopper and conveyor and accept a new seeded order before seeing it again.
+One stable track should let the player read circuits and egg movement immediately. Opening with up to five eggs makes the first paired-circuit choice meaningful. Moving an unhatched egg into a visible bin changes its future order without deleting its damage; immediate circulation when the hopper empties keeps that consequence relevant without requiring several low-agency clearing actions.
 
-Keeping all three levers active should make conveyor position an intentional resource instead of letting occupancy silently choose the legal actions. An empty pull may improve the next alignment, but its full one-Patience cost must keep it from becoming free cycling.
+Keeping any circuit with an intact spoon active should make conveyor position an intentional resource instead of letting occupancy silently choose the legal actions. An empty impact may improve the next alignment, but wear to the firing spoon keeps it from becoming free cycling.
 
-Three one-hit Sparrows should make the complete hatch-and-score payoff legible during the opening pulls. Their 5% Double Yolker chance should introduce jackpots through the simplest possible shell, while their positions beside Cuckoos can teach that damaging one egg may also create an echo elsewhere. An eight-egg pool keeps the pipe active beyond one track capacity and delays recycling, so its increased scoring supply must compete with congestion and ten starting Patience.
+Three one-hit Sparrows should make the complete hatch-and-score payoff legible during the opening pulls. Their 5% Double Yolker chance should introduce jackpots through the simplest possible shell, while their positions beside Cuckoos can teach that damaging one egg may also create an echo elsewhere. An eight-egg pool fills the five-slot opening and keeps three eggs in the pipe, so its increased scoring supply must compete with spoon wear and positional congestion.
 
 At a 10-point target, candidate routes include all three Chickens plus one Sparrow; two Chickens, both Cuckoos, and two Sparrows; or two Chickens, one Cuckoo, and all three Sparrows. These arithmetic routes are hypotheses rather than evidence that each route is equally achievable across shuffled positions.
 
@@ -37,39 +37,39 @@ Offered quality should create occasional excitement without making high tiers ro
 ### Implemented prototype scope
 
 - One five-slot conveyor and the same three circuits on every day; the Day 3 hairpin and refit are removed.
-- Every visible lever is usable throughout an unlocked day. A completely empty circuit fires its linked spoons, advances the conveyor, and costs 1 Patience without dealing damage.
+- Every lever with at least one intact linked spoon is usable throughout an unlocked day. An intact spoon over an empty bay still fires, advances the conveyor, and loses 1 Integrity without dealing damage.
 - Visible hopper and bin counts at their physical containers. Clicking the hopper opens a non-positional egg collection without revealing queue order beyond the three pipe previews; clicking the bin opens every stored egg with retained toughness and states that return order will shuffle.
 - Resolver events for an egg entering the bin, the complete bin reshuffling into an empty hopper, and the next egg entering slot 1.
 - Binned eggs retain remaining toughness, tier, score, Double Yolker result, and every other egg fact.
 - The injected shuffler owns every recycle order, preserving deterministic retries.
-- Existing hopper eggs feed normally, but the bin cannot reshuffle until the conveyor is empty; a recycled wave never joins eggs still travelling from the previous wave.
+- Existing hopper eggs feed normally. Whenever the hopper is empty, the bin reshuffles immediately and may rejoin eggs still travelling on the conveyor; at most one egg enters slot 1 per thwack.
 - Quality uses exact `1.5^tier` multiplication for score, maximum toughness, and Double Yolker chance.
 - Gameplay score and displayed percentages floor to whole numbers. Maximum toughness rounds up to the whole amount of damage actually required. Later tiers retain exact values.
 - A dedicated reward screen shows three cards with species, quality, shell toughness, score, effect, and one daily egg before selection. It contains no shop or removal controls. Standard cards have no rarity tint, Prize cards use green, and Champion-or-higher cards use blue without replacing their text labels.
 - After selection, a separate shop screen shows the complete flock as individual cards with species, quality, egg facts, and £3 removal actions. After one removal, all remaining cards visibly report that the nightly removal was used. The last bird and unaffordable removals are also unavailable.
 - Existing production loading shows the scaled toughness of the egg each quality tier lays.
 - Every species uses one flat temporary colour across a generic egg and a simple bird silhouette throughout the belt, pipe, loading, reward, and flock-overview views. Species names sit outside the art. Occupied eggs use a magnifying-glass cursor to advertise inspection. A wrapped hover card top-aligns beside its egg, flips sides at the viewport edge, and presents the egg's name, prominent points and Double Yolker facts, and only its applicable effect sections. Generated raster experiments are excluded from the running game and exports; final production assets are deferred to an artist.
-- The default flock contains three Chickens, two Cuckoos, and three Sparrows, with ten starting Patience, a 10-point Day 1 target, and a 9-point later target.
-- Grandma owns an explicit Patience resource with independently inspectable starting and current values, uncapped gains, and loss clamped at zero. No eggs interact with it yet. A resolved thwack consumes exactly 1 after damage, effects, hatches, and conveyor movement; success is checked before zero-Patience failure.
-- A full-height information rail to the right of the belt presents the unchanged score and target as Grandma's appetite, alongside current Patience and settings. Awarded points fill a yolk meter proportionally, overflow remains numeric, reduced motion stops her placeholder idle animation, and the reusable scene reserves status and left-expanding dialogue regions without yet authoring dialogue behavior.
+- The default flock contains three Chickens, two Cuckoos, and three Sparrows, with 4 starting Integrity on each spoon, a 10-point Day 1 target, and a 9-point later target.
+- Each spoon owns independently inspectable Integrity. Direct and Shockwave impacts wear the actual firing spoon before conveyor movement, including empty-bay impacts; broken spoons do not fire, and all five broken spoons fail unless the completed thwack already succeeded.
+- A full-height information rail to the right of the belt presents the unchanged score and target as Grandma's appetite, alongside total spoon Integrity and settings. Each spoon also presents its individual condition. Awarded points fill a yolk meter proportionally, overflow remains numeric, reduced motion stops her placeholder idle animation, and the reusable scene reserves status and left-expanding dialogue regions without yet authoring dialogue behavior.
 - The workshop spends its remaining area on the existing machine: a bottom-anchored hopper lift shares a deck line with the larger clickable bin, carries its clickable count on that loading deck, raises three preview eggs toward a short conveyor-height exit, and then pushes the top egg sideways into a lowered five-lane playfield with slightly larger eggs and taller stored spoons. Moving eggs show a readable backward lean followed by a damped counter-wobble and always settle upright. The conveyor curves once after slot five into the bin, the same three circuit controls occupy a compact bottom fascia, and no decorative yolk pipe or additional readout implies new functionality.
 
 ### Balancing constraints
 
-- Recycling removes permanent belt loss but not the 10-point starting Patience constraint.
-- Empty strikes create a positioning option, but each consumes 10% of the complete day budget and can accelerate eggs toward the bin without scoring.
-- Five eggs remain the machine's natural capacity breakpoint. The eight-egg opening carries more total score and keeps the hopper active longer, but delays any recycled wave.
+- Recycling removes permanent belt loss without adding dead conveyor-clearing turns.
+- Empty strikes create a positioning option, but each wears the firing spoon and can accelerate eggs toward the bin without scoring.
+- Five eggs fill the machine's natural opening capacity. The eight-egg daily pool carries more total score and keeps three eggs in the initial hopper.
 - The starting flock contains 14 total base points and 20 total base toughness. Day 1's 10-point target leaves four points of composition slack.
 - Sparrows provide one point per direct damage before positional waste, and a directly struck Sparrow can also cause adjacent Cuckoo echoes. Guard against their combination making the quickest route obvious across most seeds.
 - A small flock cycles more often, but can still fail by hatching every available egg below the target.
 - Rounding makes some first-tier ratios uneven. A Prize Chicken requires 5 damage and awards 4 points from exact values of 4.5 and 4.5.
 - A Prize Cuckoo currently requires 6 damage but remains worth 1 displayed point and has no Double Yolker chance. A free high-quality offer can therefore still be strategically unattractive; keep complete candidate facts visible.
 - A Prize Sparrow currently requires 2 damage, remains worth 1 displayed point, and shows a 7% Double Yolker chance from an exact 7.5%. The offer must make that shell-for-odds trade legible rather than presenting quality as universally better.
-- Positive feedback from efficient play into greater purchasing power remains intentional. Guard against a deterministic retry that cannot reach the shop.
+- The fixed £3 success payout keeps the economy independent from current Fortitude tuning. Guard against a deterministic retry that cannot reach the shop.
 
 ### Explicitly deferred
 
-- Further target, thwack, toughness, score, reward-quality distribution, and £3 removal-price tuning after playtest evidence.
+- Further target, Integrity, toughness, score, reward-quality distribution, and £3 removal-price tuning after playtest evidence.
 - Bin capacity, player-controlled rerolls, selective retrieval, damage healing, or bin upgrades.
 - Pairing, merging, hybrid recipes, inherited effects, and authored hybrid art.
 - Paid recruitment, factory upgrades, a campaign map, reward rerolls, discounts, selling, elite conditions, and production art.
@@ -77,10 +77,10 @@ Offered quality should create occasional excitement without making high tiers ro
 
 ### Exit evidence
 
-- Domain tests prove damage-preserving bin transfer, clear-conveyor recycle gating, empty-circuit advancement and Patience spending, resolver event order, deterministic reshuffle, slot-1 refill, quality toughness scaling, and whole required-damage rounding.
-- Session tests prove the default eight-egg flock, ten starting Patience, remaining-Patience payouts including £0, 10/9 targets, Sparrow probability, five slots and three circuits, deterministic three-bird offers, exact free selection, one £3 targeted removal per shop visit, and deterministic failure/retry behavior.
+- Domain tests prove damage-preserving bin transfer, immediate occupied-conveyor recycling, empty-impact advancement and spoon wear, Soft-Shelled prevention, resolver event order, deterministic reshuffle, slot-1 refill, quality toughness scaling, and whole required-damage rounding.
+- Session tests prove the default eight-egg flock, five 4-Integrity spoons, fixed £3 payout, 10/9 targets, Sparrow probability, five slots and three circuits, deterministic three-bird offers, exact free selection, one £3 targeted removal per shop visit, and deterministic failure/retry behavior.
 - UI tests prove the dedicated reward screen exposes free species-and-quality facts without flock controls, Standard/Prize/Champion cards carry neutral/green/blue rarity treatment, selecting a reward opens the separate shop, the whole flock appears there as individual removal controls, all removals disable after one selected bird disappears for £3, dynamic controls do not accumulate stale registrations, and cancellation/input-lock contracts still hold.
-- The 2026-08-16 automated strategy probe supplies an exact-search and heuristic baseline for the superseded five-egg opening. Run the same exact and heuristic sweep against the eight-egg Sparrow opening at targets 9, 10, and 11 before using it as balance evidence.
+- The 2026-08-16 automated strategy probe predates spoon Integrity and immediate bin circulation. Rerun exact and heuristic sweeps against the accepted eight-egg daily pool before using it as current balance evidence.
 - A running-game check at 1280×720 and 1024×576 must verify the bin reads as the conveyor destination, the bin and hopper counts remain legible and clickable, both content inspectors fit and scroll, recycled eggs visibly return through the pipe, and no removed hairpin controls leave empty or overlapping space.
 - Play one seeded run through at least three bird offers. Record whether candidate quality is understood, whether a clearly stronger quality dominates species choice, when the player first considers paying £3 to thin the flock, and whether removing from the full overview feels precise and trustworthy.
 
@@ -96,7 +96,7 @@ Accepted and implemented. Appetiser, Sulphurous, Shockwave, and Deceptively Fill
 
 ### Settled rules to preserve
 
-- Grandma still begins a day with 10 Patience, each fully resolved thwack costs 1 Patience, and the day ends immediately when that thwack meets or exceeds its target.
+- Each spoon begins a day with 4 Integrity, physical impacts wear the firing spoon, and the day ends immediately when a fully resolved thwack meets or exceeds its target.
 - The five-slot conveyor, three fixed circuits, seeded egg order, recycling rule, visible information, and one-bird/one-egg relationship remain unchanged.
 - Existing printed egg values remain the initial balance baseline. For the first test, food and score are numerically identical.
 - Conveyor order remains the canonical order for resolving several eggs that open during the same damage batch.
@@ -150,3 +150,36 @@ Accepted and implemented. Quail, Maleo, Ostrich, and Kiwi are immediately availa
 - Domain tests cover all four definitions, their built-in descriptors, permanent producer validation, Double Yolker odds, quality composition, and deterministic effect behavior.
 - Session tests cover deterministic three-choice rewards drawn from the expanded permanent species list.
 - UI tests cover distinct placeholder identities and complete reward-card explanations for every signature egg.
+
+## Accepted foundational slice — Spoon wear and Soft-Shelled impacts
+
+### Question
+
+Does replacing the ten-action Patience limit with impact wear on individual spoons create a more legible progression surface and more interesting positional egg interactions?
+
+### Status
+
+Accepted and implemented as the authoritative daily-pressure system. The player found the positional choices substantially more meaningful than the arbitrary action timer, especially with a full opening conveyor and immediate bin circulation. Long-term Fortitude progression and a permanent Soft-Shelled species remain separate design questions.
+
+### Settled behavior
+
+- At day start, load the first five shuffled eggs across slots 1–5, or every available egg when the daily pool contains fewer than five. Only eggs beyond those opening five remain in the hopper and pipe preview.
+- Each of the five spoons begins with 4 Integrity. Only intact spoons in the selected circuit fire; a circuit with no intact spoon is unavailable.
+- Every physical spoon impact removes 1 Integrity from that spoon before conveyor movement. A spoon still suffers wear when it strikes an empty belt bay.
+- A Soft-Shelled egg takes the strike's ordinary egg damage but prevents wear to the spoon striking it. The protection is determined from the egg under that spoon at impact; it does not move under a later target, absorb damage, take extra damage, or stun Grandma.
+- Shockwave calls only adjacent intact spoons to strike. Each such impact follows the same wear and Soft-Shelled rules, including wear over an empty adjacent bay.
+- The day fails when all five spoons are broken and Appetite remains unmet; success still takes precedence after the complete action.
+- Debug setup can choose ordered eggs, include a Chicken-stat Soft-Shelled test egg, and set starting Integrity per spoon. Normal opening and reward pools do not include that egg.
+- Whenever the hopper is empty, immediately reshuffle the current bin into a new hopper even while other eggs remain on the conveyor. If an egg falls into the bin on that thwack, it is eligible for that same reshuffle and the next shuffled egg enters slot 1 before the thwack completes.
+- Successful days award a fixed £3, keeping the economy independent from current Fortitude tuning.
+
+### Explicitly deferred
+
+- Thin-Shelled follow-up strikes, spoon armour, egg force/damage upgrades, thorns, repairs, and permanent Fortitude progression.
+- A permanent bird species, final tuning, art, or reward path for Soft-Shelled.
+
+### Exit evidence
+
+- Domain coverage must prove five-egg opening order, same-thwack bin circulation with an occupied conveyor, impact-before-movement wear, empty-bay wear, broken-circuit rejection, Soft-Shelled prevention without altered egg damage, and Shockwave use of intact spoons.
+- Presentation coverage must prove spoon condition and Soft-Shelled prevention remain visible inside the existing input barrier, reduced motion resolves immediately, and cancellation restores stable transforms.
+- Continue playtesting ordered Soft-Shelled setups and ordinary five-egg openings. Record whether players intentionally spend empty-bay wear, preserve particular spoons, understand Shockwave's tool cost, and experience recycled eggs as available without feeling trapped in dead conveyor time.

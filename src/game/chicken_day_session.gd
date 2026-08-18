@@ -14,6 +14,7 @@ const DAY_ONE_TARGET := 10
 const LATER_DAY_TARGET := 9
 const REMOVE_BIRD_PRICE := 3
 const QUALITY_ADVANCE_CHANCE := 0.25
+const SUCCESS_CASH := 3
 
 
 class DevOrderShuffler:
@@ -37,7 +38,7 @@ var _bird_offer_claimed := true
 var _removal_used_tonight := false
 var _cash := 0
 var _last_cash_awarded := 0
-var _starting_patience := ChickenDay.STARTING_PATIENCE
+var _starting_spoon_integrity := ChickenDay.STARTING_SPOON_INTEGRITY
 
 
 func _init(
@@ -45,35 +46,35 @@ func _init(
 	flock = null,
 	shuffler = null,
 	initial_day_number := 1,
-	initial_patience := ChickenDay.STARTING_PATIENCE
+	initial_spoon_integrity := ChickenDay.STARTING_SPOON_INTEGRITY
 ) -> void:
 	_day_seed = day_seed
 	_flock = flock if flock != null else ProducerFlock.new()
 	_shuffler = shuffler
 	_day_number = maxi(int(initial_day_number), 1)
-	_starting_patience = maxi(int(initial_patience), 1)
+	_starting_spoon_integrity = maxi(int(initial_spoon_integrity), 1)
 	_start_day()
 
 
 static func create_dev_session(
 	day_number: int,
 	egg_kinds: Array[String],
-	starting_patience: int = ChickenDay.STARTING_PATIENCE,
+	starting_spoon_integrity: int = ChickenDay.STARTING_SPOON_INTEGRITY,
 	shuffler = null
 ):
 	assert(day_number >= 1, "A dev day number must be positive.")
 	assert(not egg_kinds.is_empty(), "A dev day needs at least one egg.")
-	assert(starting_patience >= 1, "A dev day needs positive starting Patience.")
+	assert(starting_spoon_integrity >= 1, "A dev day needs positive spoon Integrity.")
 	var producers: Array[Dictionary] = []
 	for kind: String in egg_kinds:
-		assert(kind in ProducerFlock.PRODUCER_KINDS, "A dev egg needs a known species.")
+		assert(kind in ProducerFlock.KNOWN_KINDS, "A dev egg needs a known kind.")
 		producers.append({"kind": kind})
 	return ChickenDaySession.new(
 		DEFAULT_DAY_SEED,
 		ProducerFlock.new(producers),
 		shuffler if shuffler != null else DevOrderShuffler.new(),
 		day_number,
-		starting_patience
+		starting_spoon_integrity
 	)
 
 
@@ -93,7 +94,7 @@ func state() -> Dictionary:
 	current_state["cash"] = _cash
 	current_state["last_cash_awarded"] = _last_cash_awarded
 	current_state["machine_slot_count"] = ChickenDay.SLOT_COUNT
-	current_state["starting_patience"] = _starting_patience
+	current_state["starting_spoon_integrity"] = _starting_spoon_integrity
 	current_state["machine_circuits"] = ChickenDay.circuits_for_slot_count(ChickenDay.SLOT_COUNT)
 	return current_state
 
@@ -114,13 +115,13 @@ func submit_circuit(circuit_id: String) -> Array[Dictionary]:
 		else:
 			_phase = "failed"
 	if not ended_event.is_empty() and ended_event.succeeded:
-		_last_cash_awarded = int(ended_event.current_patience)
+		_last_cash_awarded = SUCCESS_CASH
 		_cash += _last_cash_awarded
 		events.append({
 			"type": "cash_awarded",
 			"amount": _last_cash_awarded,
 			"cash_total": _cash,
-			"remaining_patience": int(ended_event.current_patience),
+			"payout_rule": "fixed",
 		})
 	return events
 
@@ -215,7 +216,7 @@ func _start_day() -> void:
 	_day = ChickenDay.new(
 		shuffled_eggs,
 		_target_for_day(_day_number),
-		_starting_patience,
+		_starting_spoon_integrity,
 		day_shuffler
 	)
 

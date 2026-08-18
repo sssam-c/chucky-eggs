@@ -22,51 +22,47 @@ func test_appetiser_charge_doubles_one_future_positive_yolk_and_is_consumed() ->
 
 func test_appetiser_stacks_as_duration_across_two_eligible_eggs() -> void:
 	var day = ChickenDay.new([
+		"sparrow", "chicken", "sparrow", "chicken",
 		{
 			"kind": "sparrow",
 			"effects": [{"type": "appetiser"}, {"type": "appetiser"}],
 		},
-		"sparrow",
-		"sparrow",
 	], 99)
-	day.resolve_circuit("red")
+	day.resolve_circuit("pink")
 	assert_eq(day.snapshot().grandma_effects.appetiser_charges, 2)
 
-	var first_hatch: Dictionary = _resolve_until_hatch(day)
-	assert_eq(first_hatch.points_awarded, 2)
-	assert_eq(first_hatch.appetiser_multiplier, 2)
-	assert_eq(day.snapshot().grandma_effects.appetiser_charges, 1)
-	var second_hatch: Dictionary = _resolve_until_hatch(day)
-	assert_eq(second_hatch.points_awarded, 2)
-	assert_eq(second_hatch.appetiser_multiplier, 2)
+	var later_hatches := _hatches(day.resolve_circuit("blue"))
+	assert_eq(later_hatches.map(
+		func(event: Dictionary) -> int: return event.points_awarded
+	), [2, 2])
+	assert_true(later_hatches.all(func(event: Dictionary) -> bool:
+		return event.appetiser_multiplier == 2
+	))
 	assert_eq(day.snapshot().grandma_effects.appetiser_charges, 0)
 
 
 func test_appetiser_can_affect_later_but_not_earlier_egg_in_same_batch() -> void:
-	var later_day = ChickenDay.new([
-		"sparrow",
-		"chicken",
-		_effect_egg("appetiser"),
-	], 99)
-	later_day.resolve_circuit("blue")
-	later_day.resolve_circuit("pink")
-	var later_hatches := _hatches(later_day.resolve_circuit("red"))
-	assert_eq(later_hatches.map(
-		func(event: Dictionary) -> int: return event.points_awarded
-	), [1, 2])
-
 	var earlier_day = ChickenDay.new([
 		_effect_egg("appetiser"),
 		"chicken",
 		"sparrow",
 	], 99)
-	earlier_day.resolve_circuit("blue")
-	earlier_day.resolve_circuit("pink")
 	var earlier_hatches := _hatches(earlier_day.resolve_circuit("red"))
 	assert_eq(earlier_hatches.map(
 		func(event: Dictionary) -> int: return event.points_awarded
+	), [1, 2])
+	assert_eq(earlier_day.snapshot().grandma_effects.appetiser_charges, 0)
+
+	var later_day = ChickenDay.new([
+		"sparrow",
+		"chicken",
+		_effect_egg("appetiser"),
+	], 99)
+	var later_hatches := _hatches(later_day.resolve_circuit("red"))
+	assert_eq(later_hatches.map(
+		func(event: Dictionary) -> int: return event.points_awarded
 	), [1, 1])
-	assert_eq(earlier_day.snapshot().grandma_effects.appetiser_charges, 1)
+	assert_eq(later_day.snapshot().grandma_effects.appetiser_charges, 1)
 
 
 func test_appetiser_ignores_deceptively_filling_slow_release_yolk() -> void:
@@ -176,7 +172,7 @@ func test_deceptively_filling_adds_to_one_reserve_released_once_per_thwack() -> 
 	assert_eq(day.snapshot().grandma_effects.deceptively_filling_reserve, 0)
 
 
-func test_opening_filling_success_still_resolves_damage_movement_and_patience() -> void:
+func test_opening_filling_success_still_resolves_damage_wear_and_movement() -> void:
 	var day = ChickenDay.new([
 		_effect_egg("deceptively_filling", 1),
 		"chicken",
@@ -186,24 +182,24 @@ func test_opening_filling_success_still_resolves_damage_movement_and_patience() 
 	assert_eq(day.snapshot().score, 1)
 
 	var completing: Array[Dictionary] = day.resolve_circuit("blue")
-	assert_eq(_event_types(completing).slice(0, 5), [
+	assert_eq(_event_types(completing).slice(0, 7), [
 		"grandma_effects_started",
 		"satisfaction_added",
 		"circuit_fired",
+		"egg_damaged",
+		"spoon_worn",
+		"spoon_worn",
 		"conveyor_advanced",
-		"patience_spent",
 	])
 	assert_true(completing[-1].type == "day_ended" and completing[-1].succeeded)
 
 
-func test_shockwave_strikes_both_neighbours_without_extra_patience_or_movement() -> void:
+func test_shockwave_strikes_both_neighbours_without_extra_movement() -> void:
 	var day = ChickenDay.new([
 		"sparrow",
 		_effect_egg("shockwave"),
 		"sparrow",
 	], 99)
-	day.resolve_circuit("blue")
-	day.resolve_circuit("pink")
 	var events: Array[Dictionary] = day.resolve_circuit("blue")
 	var shockwave: Dictionary = events.filter(
 		func(event: Dictionary) -> bool: return event.type == "shockwave_fired"
@@ -211,9 +207,6 @@ func test_shockwave_strikes_both_neighbours_without_extra_patience_or_movement()
 	assert_eq(shockwave.source_slot_index, 1)
 	assert_eq(shockwave.slot_indices, [0, 2])
 	assert_eq(_hatches(events).size(), 3)
-	assert_eq(events.filter(func(event: Dictionary) -> bool:
-		return event.type == "patience_spent"
-	).size(), 1)
 	assert_eq(events.filter(func(event: Dictionary) -> bool:
 		return event.type == "conveyor_advanced"
 	).size(), 1)
@@ -225,11 +218,11 @@ func test_shockwave_handles_boundaries_and_empty_neighbours() -> void:
 	assert_eq(left_events.filter(func(event: Dictionary) -> bool:
 		return event.type == "shockwave_fired"
 	)[0].slot_indices, [1])
-	assert_eq(_hatches(left_events).size(), 1)
+	assert_eq(_hatches(left_events).size(), 2)
 
-	var right_day = ChickenDay.new([_effect_egg("shockwave")], 99)
-	for circuit_id in ["blue", "red", "blue", "red"]:
-		right_day.resolve_circuit(circuit_id)
+	var right_day = ChickenDay.new([
+		"chicken", "chicken", "chicken", "chicken", _effect_egg("shockwave"),
+	], 99)
 	var right_events: Array[Dictionary] = right_day.resolve_circuit("pink")
 	assert_eq(right_events.filter(func(event: Dictionary) -> bool:
 		return event.type == "shockwave_fired"
@@ -242,8 +235,6 @@ func test_shockwave_chains_and_each_broken_egg_resolves_once() -> void:
 		_effect_egg("shockwave"),
 		_effect_egg("shockwave"),
 	], 99)
-	day.resolve_circuit("blue")
-	day.resolve_circuit("pink")
 	var events: Array[Dictionary] = day.resolve_circuit("blue")
 	assert_eq(events.filter(func(event: Dictionary) -> bool:
 		return event.type == "shockwave_fired"
@@ -263,12 +254,10 @@ func test_shockwave_chains_and_each_broken_egg_resolves_once() -> void:
 
 func test_shockwave_can_trigger_another_on_break_effect_in_conveyor_order() -> void:
 	var day = ChickenDay.new([
-		"sparrow",
-		_effect_egg("shockwave"),
 		_effect_egg("appetiser"),
+		_effect_egg("shockwave"),
+		"sparrow",
 	], 99)
-	day.resolve_circuit("blue")
-	day.resolve_circuit("pink")
 	var events: Array[Dictionary] = day.resolve_circuit("blue")
 	var shock_hatches := _hatches(events)
 
@@ -283,13 +272,10 @@ func test_shockwave_can_trigger_another_on_break_effect_in_conveyor_order() -> v
 
 func test_shockwave_inherits_pink_and_uses_spoonbill_direct_vulnerability() -> void:
 	var day = ChickenDay.new([
-		_effect_egg("shockwave"),
-		"spoonbill",
+		"chicken", "chicken", "chicken", "spoonbill", _effect_egg("shockwave"),
 	], 99)
-	for circuit_id in ["blue", "red", "blue", "red"]:
-		day.resolve_circuit(circuit_id)
 	assert_eq(day.snapshot().slots[3].kind, "spoonbill")
-	assert_eq(day.snapshot().slots[3].toughness, 2)
+	assert_eq(day.snapshot().slots[3].toughness, 5)
 
 	var events: Array[Dictionary] = day.resolve_circuit("pink")
 	var shock_damage: Dictionary = events.filter(func(event: Dictionary) -> bool:
@@ -298,9 +284,7 @@ func test_shockwave_inherits_pink_and_uses_spoonbill_direct_vulnerability() -> v
 	assert_eq(shock_damage.kind, "spoonbill")
 	assert_eq(shock_damage.circuit_id, "pink")
 	assert_eq(shock_damage.damage_amount, 2)
-	assert_true(_hatches(events).any(func(event: Dictionary) -> bool:
-		return event.kind == "spoonbill"
-	))
+	assert_eq(shock_damage.remaining_toughness, 3)
 
 
 func test_ending_a_day_clears_all_grandma_effects() -> void:

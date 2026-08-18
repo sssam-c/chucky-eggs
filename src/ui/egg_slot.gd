@@ -50,7 +50,7 @@ func render_egg(egg: Dictionary, interaction_enabled: bool, preview := false) ->
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
 	tooltip_text = ""
-	accessibility_name = "%s egg" % String(_egg.kind).capitalize()
+	accessibility_name = "%s egg" % _kind_display_name(String(_egg.kind))
 	accessibility_description = egg_description()
 	queue_redraw()
 
@@ -116,7 +116,7 @@ func egg_summary() -> String:
 		return "EMPTY"
 	return "%s%s EGG TOUGHNESS %d %d %s" % [
 		"%s " % _quality_name(int(_egg.get("tier", 0))) if int(_egg.get("tier", 0)) > 0 else "",
-		String(_egg.kind).to_upper(),
+		_kind_display_name(String(_egg.kind)).to_upper(),
 		_egg.toughness,
 		_egg.points,
 		"POINT" if _egg.points == 1 else "POINTS",
@@ -128,7 +128,7 @@ func egg_description() -> String:
 		return "No egg in this slot."
 	return "%s%s egg: %d toughness remaining, worth %d %s; %s." % [
 		"%s " % _quality_name(int(_egg.get("tier", 0))) if int(_egg.get("tier", 0)) > 0 else "",
-		String(_egg.kind).capitalize(),
+		_kind_display_name(String(_egg.kind)),
 		_egg.toughness,
 		_egg.points,
 		"point" if _egg.points == 1 else "points",
@@ -205,6 +205,10 @@ func _quality_name(tier: int) -> String:
 		2:
 			return "Champion"
 	return "Tier %d" % tier
+
+
+func _kind_display_name(kind: String) -> String:
+	return "Soft-Shelled" if kind == "soft_shelled" else kind.capitalize()
 
 
 func _draw() -> void:

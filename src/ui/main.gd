@@ -17,7 +17,7 @@ const SETTINGS_REDUCED_MOTION := 1
 const SETTINGS_DEV_EGGS := 2
 
 @onready var _grandma_scorer: Control = %GrandmaScorer
-@onready var _patience_label: Label = %Patience
+@onready var _fortitude_label: Label = %Fortitude
 @onready var _result_overlay: Control = %ResultOverlay
 @onready var _result_card: PanelContainer = $ResultOverlay/Card
 @onready var _result_label: Label = %Result
@@ -68,7 +68,7 @@ var _input_locked := false
 var _request_generation := 0
 var _dev_day_number := 0
 var _dev_starting_eggs: Array[String] = []
-var _dev_starting_patience := 0
+var _dev_starting_spoon_integrity := 0
 var _workshop_transition: Tween
 var _workshop_transition_serial := 0
 var _active_workshop_transition_token := 0
@@ -111,7 +111,6 @@ func _ready() -> void:
 		_echo_trace,
 		_hatch_payoff,
 		_grandma_scorer,
-		_patience_label,
 		_bin_label
 	)
 	var requested_dev_day := _requested_dev_day()
@@ -261,14 +260,14 @@ func start_dev_day(day_number := 3) -> bool:
 
 func start_dev_day_with_eggs(
 	egg_kinds: Array[String],
-	starting_patience: int = ChickenDay.STARTING_PATIENCE,
+	starting_spoon_integrity: int = ChickenDay.STARTING_SPOON_INTEGRITY,
 	day_number: int = 3
 ) -> bool:
 	if (
 		not OS.is_debug_build()
 		or day_number < 1
 		or egg_kinds.is_empty()
-		or starting_patience < 1
+		or starting_spoon_integrity < 1
 	):
 		return false
 	var known_kinds: Array[String] = []
@@ -279,9 +278,9 @@ func start_dev_day_with_eggs(
 	var session = ChickenDaySession.create_dev_session(
 		day_number,
 		known_kinds,
-		starting_patience
+		starting_spoon_integrity
 	)
-	_replace_session(session, day_number, known_kinds, starting_patience)
+	_replace_session(session, day_number, known_kinds, starting_spoon_integrity)
 	return true
 
 
@@ -295,10 +294,10 @@ func open_dev_egg_picker() -> bool:
 	if egg_kinds.is_empty():
 		for producer: Dictionary in _session.state().producers:
 			egg_kinds.append(String(producer.kind))
-	var patience := dev_starting_patience()
-	if patience < 1:
-		patience = int(_session.state().starting_patience)
-	_dev_egg_picker.open_with(egg_kinds, patience)
+	var integrity := dev_starting_spoon_integrity()
+	if integrity < 1:
+		integrity = int(_session.state().starting_spoon_integrity)
+	_dev_egg_picker.open_with(egg_kinds, integrity)
 	return true
 
 
@@ -314,8 +313,8 @@ func dev_starting_egg_kinds() -> Array[String]:
 	return _dev_starting_eggs.duplicate()
 
 
-func dev_starting_patience() -> int:
-	return _dev_starting_patience
+func dev_starting_spoon_integrity() -> int:
+	return _dev_starting_spoon_integrity
 
 
 func _start_dev_day(day_number: int) -> void:
@@ -329,14 +328,14 @@ func _start_dev_day(day_number: int) -> void:
 	var state: Dictionary = session.state()
 	for producer: Dictionary in state.producers:
 		egg_kinds.append(String(producer.kind))
-	_replace_session(session, day_number, egg_kinds, int(state.starting_patience))
+	_replace_session(session, day_number, egg_kinds, int(state.starting_spoon_integrity))
 
 
 func _replace_session(
 	session,
 	dev_day_number: int,
 	dev_starting_eggs: Array[String] = [],
-	dev_starting_patience: int = 0
+	dev_starting_spoon_integrity: int = 0
 ) -> void:
 	_request_generation += 1
 	_presenter.cancel_playback()
@@ -350,7 +349,7 @@ func _replace_session(
 	_session = session
 	_dev_day_number = dev_day_number
 	_dev_starting_eggs = dev_starting_eggs.duplicate()
-	_dev_starting_patience = dev_starting_patience
+	_dev_starting_spoon_integrity = dev_starting_spoon_integrity
 	_render([], true)
 	_focus_first_available_lever()
 
@@ -409,8 +408,8 @@ func _on_settings_item_pressed(item_id: int) -> void:
 			open_dev_egg_picker()
 
 
-func _on_dev_eggs_selected(egg_kinds: Array[String], starting_patience: int) -> void:
-	start_dev_day_with_eggs(egg_kinds, starting_patience, 3)
+func _on_dev_eggs_selected(egg_kinds: Array[String], starting_spoon_integrity: int) -> void:
+	start_dev_day_with_eggs(egg_kinds, starting_spoon_integrity, 3)
 
 
 func _on_dev_egg_picker_dismissed() -> void:
@@ -439,7 +438,15 @@ func _render(events: Array[Dictionary], _fresh_day := false) -> void:
 		maxi(0, int(state.target_score) - int(state.effective_target_score))
 	)
 	_grandma_scorer.render_effects(state.grandma_effects)
-	_patience_label.text = "PATIENCE %d" % state.current_patience
+	var total_integrity := 0
+	for value: int in state.spoon_integrity:
+		total_integrity += value
+	var maximum_integrity: int = int(state.starting_spoon_integrity) * state.spoon_integrity.size()
+	_fortitude_label.text = "SPOONS %d / %d" % [total_integrity, maximum_integrity]
+	for hammer_index in range(_hammers.size()):
+		_hammers[hammer_index].render_integrity(
+			int(state.spoon_integrity[hammer_index]), int(state.starting_spoon_integrity)
+		)
 	_bin_label.text = "BIN %d" % state.bin_egg_count
 	_hopper_inspect_button.text = "HOPPER %d" % state.hopper_egg_count
 	_hopper_inspect_button.accessibility_name = "Inspect hopper: %d %s remaining" % [
@@ -472,7 +479,12 @@ func _render(events: Array[Dictionary], _fresh_day := false) -> void:
 			var egg: Dictionary = state.slots[slot_index] if slot_index < state.slots.size() else {}
 			descriptions.append("empty" if egg.is_empty() else _belt_slots[slot_index].egg_description())
 		circuit_button.set_target_descriptions(descriptions)
-		circuit_button.set_available(state.phase == "day" and not _input_locked)
+		var has_intact_spoon: bool = circuit_button.slot_indices.any(
+			func(slot_index: int) -> bool: return int(state.spoon_integrity[slot_index]) > 0
+		)
+		circuit_button.set_available(
+			state.phase == "day" and not _input_locked and has_intact_spoon
+		)
 
 	var bird_offer_visible: bool = String(state.phase) == "bird_offer"
 	var shop_visible: bool = String(state.phase) == "shop"
@@ -522,7 +534,7 @@ func _render_result(state: Dictionary, successful: bool) -> void:
 			state.score, state.effective_target_score,
 		]
 		_result_score_label.add_theme_color_override("font_color", Color("8dfff0"))
-		_cash_payout_label.text = "+£%d FROM REMAINING PATIENCE  •  BALANCE £%d" % [
+		_cash_payout_label.text = "+£%d DAY PAYOUT  •  BALANCE £%d" % [
 			state.last_cash_awarded, state.cash,
 		]
 		_result_summary_label.text = "CHOOSE ONE FREE BIRD  •  THEN REVIEW YOUR FLOCK"
@@ -771,15 +783,15 @@ func _reset_workshop_transform() -> void:
 
 
 func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
-	var patience_presented := false
+	var fortitude_presented := false
 	var hopper_presented := false
 	var cash_presented := false
 	for event: Dictionary in events:
 		match String(event.type):
-			"patience_spent":
-				if not patience_presented:
-					_ui_feedback.present_value(_patience_label, "patience", Color("66f5ed"))
-					patience_presented = true
+			"spoon_worn":
+				if not fortitude_presented:
+					_ui_feedback.present_value(_fortitude_label, "spoons", Color("66f5ed"))
+					fortitude_presented = true
 			"conveyor_advanced", "bin_reshuffled", "egg_entered":
 				if not hopper_presented:
 					_ui_feedback.present_value(_hopper_inspect_button, "hopper", Color("66f5ed"))
@@ -852,11 +864,18 @@ func _focus_first_shop_action() -> void:
 
 
 func _set_circuit_interaction(enabled: bool) -> void:
+	var state: Dictionary = _session.state() if enabled else {}
 	for circuit_button: Button in _circuit_buttons:
 		if not circuit_button.visible:
 			circuit_button.set_available(false)
 			continue
-		circuit_button.set_available(enabled)
+		var has_intact_spoon := true
+		if enabled and state.has("spoon_integrity"):
+			has_intact_spoon = circuit_button.slot_indices.any(
+				func(slot_index: int) -> bool:
+					return int(state.spoon_integrity[slot_index]) > 0
+			)
+		circuit_button.set_available(enabled and has_intact_spoon)
 
 
 func _set_container_inspection_enabled(enabled: bool) -> void:

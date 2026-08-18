@@ -5,6 +5,8 @@ const PRODUCER_KINDS: Array[String] = [
 	"chicken", "cuckoo", "sparrow", "plover", "spoonbill",
 	"quail", "maleo", "ostrich", "kiwi",
 ]
+const DEV_ONLY_EGG_KINDS: Array[String] = ["soft_shelled"]
+const KNOWN_KINDS: Array[String] = PRODUCER_KINDS + DEV_ONLY_EGG_KINDS
 const STARTING_DOUBLE_YOLK_CHANCE := 0.02
 const SPARROW_DOUBLE_YOLK_CHANCE := 0.05
 const QUALITY_STEP := 1.5
@@ -37,7 +39,7 @@ func _init(producers: Array[Dictionary] = STARTING_PRODUCERS) -> void:
 	for supplied: Dictionary in producers:
 		var kind := String(supplied.get("kind", ""))
 		var tier := int(supplied.get("tier", 0))
-		assert(kind in PRODUCER_KINDS, "A producer needs a known egg kind.")
+		assert(kind in KNOWN_KINDS, "A producer needs a known egg kind.")
 		assert(tier >= 0, "A producer quality tier cannot be negative.")
 		_producers.append({"kind": kind, "tier": tier})
 
@@ -121,7 +123,7 @@ static func double_yolk_chance(kind: String, tier: int) -> float:
 
 
 static func producer_for_kind(kind: String, tier := 0) -> Dictionary:
-	if kind not in PRODUCER_KINDS or tier < 0:
+	if kind not in KNOWN_KINDS or tier < 0:
 		return {}
 	return {
 		"kind": kind,
