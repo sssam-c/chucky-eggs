@@ -382,15 +382,24 @@ func test_main_renders_initial_day_with_grandma_appetite_scorer() -> void:
 	assert_true(grandma.is_idle_motion_active())
 	var hud: Control = main.get_node("Content/HUD")
 	var stage: Control = main.get_node("Content/Stage")
-	var belt_condition: Control = main.get_node("Content/HUD/BeltCondition")
+	var belt_condition: Control = main.get_node("Content/Stage/Belt/BeltCondition")
 	var belt_condition_label: Label = belt_condition.get_node("BeltConditionLabel")
+	var belt: Control = main.get_node("Content/Stage/Belt")
 	var settings: MenuButton = main.get_node("Content/HUD/Settings")
 	assert_lte(stage.position.y, 16.0)
 	assert_gte(grandma.size.x, 260.0)
 	assert_lte(grandma.size.x, 320.0)
 	assert_gte(grandma.size.y, 650.0)
 	assert_gt(grandma.get_global_rect().get_center().x, stage.get_global_rect().get_center().x)
-	assert_true(grandma.get_global_rect().encloses(belt_condition.get_global_rect()))
+	assert_true(belt.get_global_rect().encloses(belt_condition.get_global_rect()))
+	assert_false(grandma.get_global_rect().intersects(belt_condition.get_global_rect()))
+	for slot: Control in main.get_node("Content/Stage/Belt/Slots").get_children():
+		assert_false(slot.get_global_rect().intersects(belt_condition.get_global_rect()))
+	for circuit_button: Control in main.get_node("Content/Stage/CircuitBank").get_children():
+		if circuit_button.visible:
+			assert_false(circuit_button.get_global_rect().intersects(
+				belt_condition.get_global_rect()
+			))
 	assert_true(grandma.get_global_rect().encloses(settings.get_global_rect()))
 	assert_true(hud.get_global_rect().encloses(grandma.get_global_rect()))
 	assert_eq(belt_condition_label.text, "BELT CONDITION  12 / 12")
@@ -713,7 +722,7 @@ func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
 	assert_true(main.is_dev_mode())
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots").get_child_count(), 5)
 	assert_eq(main.get_node("Content/Stage/CircuitBank").get_child_count(), 3)
 
@@ -748,11 +757,11 @@ func test_debug_settings_picker_starts_with_the_selected_egg_species() -> void:
 	assert_eq(main.dev_starting_belt_condition(), 18)
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  18 / 18")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  18 / 18")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
 
 	main.restart_day()
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  18 / 18")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  18 / 18")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
 
 
@@ -989,7 +998,7 @@ func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
 	await _press_and_wait(main, "RedCircuit")
 
 	assert_eq(fired_slots, [0, 2])
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 0")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 2")
 
@@ -1014,7 +1023,7 @@ func test_empty_blue_strike_fires_advances_and_spends_one_belt_condition() -> vo
 		"conveyor_advanced",
 		"belt_condition_spent",
 	])
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 0")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 3")
 
@@ -1208,7 +1217,7 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	assert_true(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 	await main.playback_completed
 	await get_tree().process_frame
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
 	assert_eq(completion_count[0], 1)
 	assert_eq(condition_spend_count[0], 1)
 	assert_false(main.get_node("Content/Stage/Pipe/HopperInspect").disabled)
@@ -1408,7 +1417,7 @@ func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
 	await get_tree().create_timer(0.5).timeout
 
 	assert_false(main.is_input_locked())
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_eq(completion_count, 0)
 
@@ -1467,9 +1476,9 @@ func test_resolved_hud_facts_trigger_non_blocking_ui_feedback() -> void:
 	assert_true(feedback.has_active_motion())
 	main.set_reduced_motion(true)
 	assert_false(feedback.has_active_motion())
-	assert_eq(main.get_node("Content/HUD/BeltCondition").scale, Vector2.ONE)
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition").scale, Vector2.ONE)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").scale, Vector2.ONE)
-	assert_eq(main.get_node("Content/HUD/BeltCondition").modulate, Color.WHITE)
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition").modulate, Color.WHITE)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").modulate, Color.WHITE)
 
 
@@ -1498,7 +1507,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	var result_panel: Control = main.get_node("ResultOverlay")
 	assert_true(result_panel.visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY FAILED")
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  9 / 12")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  9 / 12")
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_true(main.get_node("ResultOverlay/Card/Content/Restart").visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Restart").text, "RETRY DAY 1")
@@ -1510,7 +1519,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 	assert_false(result_panel.visible)
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
 
 
 func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void:
@@ -1603,7 +1612,7 @@ func test_success_opens_three_free_quality_offers_on_a_separate_screen() -> void
 		main.get_node("BirdOfferOverlay/Card/Content/BirdOfferSummary").text,
 		"DAY 2 APPETITE 9"
 	)
-	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  91 / 99")
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  91 / 99")
 	await get_tree().process_frame
 	assert_true(main.get_node("BirdOfferOverlay/Card/Content/RewardChoices/Choice1").has_focus())
 	var offer_card: Control = main.get_node("BirdOfferOverlay/Card")

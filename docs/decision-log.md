@@ -684,6 +684,16 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D067's individual spoon Integrity, impact wear, broken-spoon availability and failure, Soft-Shelled rule and development egg, and starting-Integrity control. It also supersedes D065's proposed wear framing and remaining Soft-Shelled design. D067's five-egg opening, immediate bin circulation, success precedence, and fixed £3 payout remain accepted; D068's exact hopper-empty reload timing remains accepted. D059 remains superseded: Belt Condition is not Patience, because its cost belongs to a resolver-authored movement operation rather than automatically to every committed thwack.
 
+## D070 — Mount Belt Condition on the conveyor
+
+**Status:** accepted
+
+**Decision:** Place the single labelled Belt Condition bar directly on the conveyor's front housing rather than inside Grandma's information rail. Preserve its exact numeric value, progress fill, accessibility text, resolver-authored updates, and existing playback barrier.
+
+**Reason:** Belt Condition describes wear to the conveyor, so spatially attaching the clock to that machine makes its cause and consequence legible without explanation. It also leaves Grandma's rail focused on Appetite, Satisfaction, active egg effects, and settings.
+
+**Supersedes:** D069 only where the initial implementation placed the new bar in Grandma's rail. D069's resource rules, visibility requirement, and all gameplay behavior remain accepted.
+
 <!--
 Copy for the next entry:
 

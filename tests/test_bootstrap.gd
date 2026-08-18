@@ -13,8 +13,11 @@ func test_main_scene_can_be_instantiated() -> void:
 	assert_not_null(main.get_node_or_null(
 		"Content/HUD/GrandmaScorer/Layout/Appetite/Score"
 	))
-	assert_not_null(main.get_node_or_null("Content/HUD/BeltCondition"))
-	assert_not_null(main.get_node_or_null("Content/HUD/BeltCondition/BeltConditionBar"))
+	assert_not_null(main.get_node_or_null("Content/Stage/Belt/BeltCondition"))
+	assert_not_null(main.get_node_or_null("Content/Stage/Belt/BeltCondition/BeltConditionBar"))
+	var belt_condition = main.get_node("Content/Stage/Belt/BeltCondition")
+	assert_eq(belt_condition.get_parent(), main.get_node("Content/Stage/Belt"))
+	assert_eq(belt_condition.mount_bolt_count(), 4)
 	assert_not_null(main.get_node_or_null("Content/HUD/Settings"))
 	assert_not_null(main.get_node_or_null("Content/Stage/Belt/Slots/Slot1"))
 	assert_not_null(main.get_node_or_null("Content/Stage/Pipe/Preview/Next1"))

@@ -20,28 +20,28 @@
 [ext_resource type="Script" path="res://src/ui/belt_condition_display.gd" id="19_belt_condition"]
 
 [sub_resource type="StyleBoxFlat" id="BeltConditionBackground"]
-bg_color = Color(0.055, 0.07, 0.075, 1)
+bg_color = Color(0.035, 0.039, 0.043, 1)
 border_width_left = 3
 border_width_top = 3
 border_width_right = 3
-border_width_bottom = 4
-border_color = Color(0.13, 0.32, 0.33, 1)
-corner_radius_top_left = 5
-corner_radius_top_right = 5
-corner_radius_bottom_right = 5
-corner_radius_bottom_left = 5
+border_width_bottom = 3
+border_color = Color(0.23, 0.14, 0.09, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
 
 [sub_resource type="StyleBoxFlat" id="BeltConditionFill"]
-bg_color = Color(0.16, 0.78, 0.74, 1)
+bg_color = Color(0.67, 0.34, 0.13, 1)
 border_width_left = 2
 border_width_top = 2
 border_width_right = 2
 border_width_bottom = 2
-border_color = Color(0.45, 1, 0.92, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
+border_color = Color(0.93, 0.64, 0.29, 1)
+corner_radius_top_left = 1
+corner_radius_top_right = 1
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 1
 
 [sub_resource type="StyleBoxFlat" id="RestartNormal"]
 bg_color = Color(0.58, 0.19, 0.09, 1)
@@ -174,45 +174,6 @@ offset_left = 950.0
 offset_top = 0.0
 offset_right = 1236.0
 offset_bottom = 696.0
-
-[node name="BeltCondition" type="Control" parent="Content/HUD"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 966.0
-offset_top = 474.0
-offset_right = 1220.0
-offset_bottom = 548.0
-mouse_filter = 2
-script = ExtResource("19_belt_condition")
-
-[node name="BeltConditionLabel" type="Label" parent="Content/HUD/BeltCondition"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_right = 254.0
-offset_bottom = 30.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.22, 0.87, 0.89, 1)
-theme_override_colors/font_shadow_color = Color(0.01, 0.11, 0.12, 1)
-theme_override_constants/shadow_outline_size = 3
-theme_override_font_sizes/font_size = 18
-text = "BELT CONDITION  12 / 12"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="BeltConditionBar" type="ProgressBar" parent="Content/HUD/BeltCondition"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 7.0
-offset_top = 34.0
-offset_right = 247.0
-offset_bottom = 68.0
-mouse_filter = 2
-theme_override_styles/background = SubResource("BeltConditionBackground")
-theme_override_styles/fill = SubResource("BeltConditionFill")
-max_value = 12.0
-value = 12.0
-show_percentage = false
-accessibility_name = "Belt Condition: 12 of 12"
 
 [node name="Settings" type="MenuButton" parent="Content/HUD"]
 unique_name_in_owner = true
@@ -393,6 +354,48 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="BeltCondition" type="Control" parent="Content/Stage/Belt"]
+unique_name_in_owner = true
+z_index = 4
+layout_mode = 0
+offset_left = 208.0
+offset_top = 460.0
+offset_right = 824.0
+offset_bottom = 506.0
+mouse_filter = 2
+script = ExtResource("19_belt_condition")
+
+[node name="BeltConditionLabel" type="Label" parent="Content/Stage/Belt/BeltCondition"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 20.0
+offset_top = 8.0
+offset_right = 220.0
+offset_bottom = 38.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.91, 0.67, 0.34, 1)
+theme_override_colors/font_shadow_color = Color(0.08, 0.045, 0.025, 1)
+theme_override_constants/shadow_outline_size = 2
+theme_override_font_sizes/font_size = 14
+text = "BELT CONDITION  12 / 12"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BeltConditionBar" type="ProgressBar" parent="Content/Stage/Belt/BeltCondition"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 230.0
+offset_top = 10.0
+offset_right = 596.0
+offset_bottom = 36.0
+mouse_filter = 2
+theme_override_styles/background = SubResource("BeltConditionBackground")
+theme_override_styles/fill = SubResource("BeltConditionFill")
+max_value = 12.0
+value = 12.0
+show_percentage = false
+accessibility_name = "Belt Condition: 12 of 12"
 
 [node name="Slots" type="Control" parent="Content/Stage/Belt"]
 layout_mode = 1
