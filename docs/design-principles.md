@@ -22,9 +22,9 @@ Show whole-number consequences wherever the player makes or resolves a choice. F
 
 Show the next day's appetite with the bird reward and flock overview. Use the transition between days to demonstrate where the next hopper comes from: each owned bird contributes exactly one egg.
 
-Give the abstract daily target a visible recipient. Present awarded egg points as proportional progress toward Grandma's appetite, while retaining the exact numeric value for overflow and non-colour readability. Group Grandma, appetite progress, Patience, and settings in one right-hand machine rail so persistent character and operational information occupy a single place without taking a band from the playfield. The rail owns only presentation: the session remains the canonical owner of score, target, Patience, and day-end resolution. Reserve her portrait area for replaceable animation, status, and dialogue without letting those timings decide gameplay.
+Give the abstract daily target a visible recipient. Present awarded egg points as proportional progress toward Grandma's appetite, while retaining the exact numeric value for overflow and non-colour readability. Group Grandma, appetite progress, total spoon Integrity, and settings in one right-hand machine rail so persistent character and operational information occupy a single place without taking a band from the playfield. Keep each spoon's individual condition legible at the machine. The rail owns only presentation: the session remains the canonical owner of score, target, spoon Integrity, and day-end resolution. Reserve her portrait area for replaceable animation, status, and dialogue without letting those timings decide gameplay.
 
-Keep Yolk, Satisfaction, Appetite, and Patience separate in the domain even where the interface can stay compact. Immediate-Yolk modifiers act only when an egg hatches; slow-release Yolk can instead enter one duration reserve which pays a fixed amount on later thwacks. Sulphurous suppression permanently lowers effective Appetite for the current day without becoming Satisfaction, while thwack costs act on Patience. Show that distinction spatially: Yolk fills the appetite meter from the left and green suppression fills it from the right, with the reduced numeric denominator and written status carrying the same fact without relying on colour. This vocabulary lets effects compose without using an unrelated number as an implementation shortcut.
+Keep Yolk, Satisfaction, Appetite, and spoon Integrity separate in the domain even where the interface can stay compact. Immediate-Yolk modifiers act only when an egg hatches; slow-release Yolk can instead enter one duration reserve which pays a fixed amount on later thwacks. Sulphurous suppression permanently lowers effective Appetite for the current day without becoming Satisfaction, while physical impacts wear individual spoons. Show the food distinction spatially: Yolk fills the appetite meter from the left and green suppression fills it from the right, with the reduced numeric denominator and written status carrying the same fact without relying on colour. This vocabulary lets effects compose without using an unrelated number as an implementation shortcut.
 
 Give each reusable egg effect one signature permanent species so a reward communicates both a bird identity and a tactical promise. Keep the original eight-bird starting flock unchanged while all nine species remain possible rewards; this exposes the new decisions without silently rewriting the opening puzzle. Quality continues to scale toughness, immediate Yolk, and Double Yolker chance, not a species' effect magnitude or duration.
 
@@ -48,11 +48,11 @@ All spoons share one authored bowl-first landing sequence. Present input as phys
 
 Circuit-specific weaknesses should create a positional objective, not a universally superior button. Spoonbill rewards planning toward Pink's single final-slot opportunity.
 
-## Falling spends time rather than deleting strategy
+## Falling changes order rather than deleting strategy
 
-An egg that leaves slot 5 enters a visible bin with its damage intact. Existing hopper eggs continue feeding slot 1 normally, but the bin waits until both hopper and conveyor are empty before becoming a new shuffled hopper. Falling therefore changes future order and consumes finite Patience without erasing prior damage.
+An egg that leaves slot 5 enters a visible bin with its damage intact. Existing hopper eggs continue feeding slot 1 normally; as soon as that hopper empties, the bin becomes a new shuffled hopper even while other eggs remain on the conveyor. Falling therefore changes future order without forcing several low-agency clearing actions. It can return an egg immediately, but never creates extra movement or a free strike.
 
-Treat five eggs as the machine's natural capacity rather than a mandatory deck size. A larger flock adds scoring capacity but postpones the next recycled wave; a smaller flock clears sooner but sacrifices score slack, paired-strike coverage, and Cuckoo adjacency. Preserve that tension instead of imposing an arbitrary minimum flock size.
+Treat five eggs as the machine's natural opening capacity rather than a mandatory deck size. Begin with up to five shuffled eggs already on the track so the first lever choice exposes its paired positions. A larger flock adds scoring capacity and a longer initial hopper; a smaller flock sacrifices score slack, paired-strike coverage, and Cuckoo adjacency.
 
 Keep hopper preview and bin count visible. The resolver owns bin transfer, reshuffle, and entry order; their animation explains facts already decided. Seed every shuffle so the same retry reproduces the same sequence.
 
@@ -60,9 +60,9 @@ Keep hopper preview and bin count visible. The resolver owns bin transfer, reshu
 
 Seed randomness, inject time, and make state transitions replayable. A surprising playtest should be reproducible before it is tuned.
 
-## Efficiency becomes future agency
+## Fortitude becomes future agency
 
-End the day automatically once a fully resolved thwack meets the target, then convert every remaining point of Patience into cash. Ten starting Patience preserves the established opening tension and payout balance while making Grandma's capacity an explicit resource that can later change independently of the thwack count. Patience is not capped at its starting value by default. This makes efficiency valuable without adding a separate cash-out decision or allowing failed-day farming. Keep the current balance and each payout visible so later shop choices can be understood as consequences of earlier play.
+End the day automatically once a fully resolved thwack meets the target and pay a fixed £3. Keep economy tuning separate from the combat-loop question until spoon progression has enough content to support a performance-sensitive reward. Five separately damageable spoons turn the old timer into spatial state that eggs can protect, damage, repair, or modify later. Wear must follow the physical impact: misses and empty strikes remain strategic costs, while Soft-Shelled protection is a precise positional exception rather than a second health system.
 
 Keep the current shop deliberately narrow: removing one selected bird costs £3, is limited to once per successful night, and can never remove the last bird. Saving remains a valid choice. This makes cash a measured correction to compulsory daily growth without allowing one rich visit to rebuild the whole flock, and avoids a second list that obscures which quality is being removed.
 

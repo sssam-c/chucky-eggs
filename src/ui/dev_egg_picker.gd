@@ -13,7 +13,7 @@ const MAX_STARTING_SPOON_INTEGRITY := 99
 @onready var _move_up: Button = %MoveUp
 @onready var _move_down: Button = %MoveDown
 @onready var _remove: Button = %Remove
-@onready var _integrity: SpinBox = %Patience
+@onready var _integrity: SpinBox = %Integrity
 @onready var _total: Label = %Total
 @onready var _cancel: Button = %Cancel
 @onready var _start: Button = %Start
@@ -101,15 +101,6 @@ func set_starting_spoon_integrity(value: int) -> void:
 
 func starting_spoon_integrity() -> int:
 	return int(_integrity.value)
-
-
-# Temporary aliases keep old debug tooling usable while the prototype is tentative.
-func set_starting_patience(value: int) -> void:
-	set_starting_spoon_integrity(value)
-
-
-func starting_patience() -> int:
-	return starting_spoon_integrity()
 
 
 func total_egg_count() -> int:

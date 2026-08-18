@@ -1,12 +1,10 @@
 class_name ChickenDay
 extends RefCounted
 
-const GrandmaPatience = preload("res://src/domain/grandma_patience.gd")
 const GrandmaEffects = preload("res://src/domain/grandma_effects.gd")
 const EggEffects = preload("res://src/domain/egg_effects.gd")
 const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
-const STARTING_PATIENCE := 10
 const STARTING_SPOON_INTEGRITY := 4
 const DEFAULT_TARGET_SCORE := 10
 const CHICKEN_TOUGHNESS := 3
@@ -33,7 +31,6 @@ var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
 var _bin: Array[Dictionary] = []
 var _recycle_shuffler
-var _patience
 var _score := 0
 var _ended := false
 var _succeeded := false
@@ -60,8 +57,6 @@ func _init(
 	_starting_spoon_integrity = starting_spoon_integrity
 	_spoon_integrity.resize(SLOT_COUNT)
 	_spoon_integrity.fill(starting_spoon_integrity)
-	# Kept only as inert compatibility state while this tentative branch is evaluated.
-	_patience = GrandmaPatience.new(STARTING_PATIENCE)
 	_target_score = target_score
 	_effective_target_score = target_score
 	_recycle_shuffler = recycle_shuffler
@@ -71,7 +66,8 @@ func _init(
 	for laid_egg: Variant in daily_eggs:
 		_hopper.append(_new_egg(laid_egg))
 	_daily_egg_count = _hopper.size()
-	_slots[0] = _hopper.pop_front()
+	for slot_index in range(mini(SLOT_COUNT, _hopper.size())):
+		_slots[slot_index] = _hopper.pop_front()
 
 
 func snapshot() -> Dictionary:
@@ -85,8 +81,6 @@ func snapshot() -> Dictionary:
 		"daily_egg_count": _daily_egg_count,
 		"circuits": _circuits.duplicate(true),
 		"slot_count": _slots.size(),
-		"current_patience": _patience.current(),
-		"starting_patience": _patience.starting(),
 		"spoon_integrity": _spoon_integrity.duplicate(),
 		"starting_spoon_integrity": _starting_spoon_integrity,
 		"score": _score,
@@ -160,7 +154,6 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 	)
 	_retreat_surviving_plovers_left(occupied_slot_indices, events)
 	_advance_conveyor(events)
-	_spend_patience(events)
 	_refill_belt(events)
 
 	# Success takes precedence after the complete thwack, including impact wear.
@@ -441,17 +434,8 @@ func _advance_conveyor(events: Array[Dictionary]) -> void:
 		})
 
 
-func _spend_patience(events: Array[Dictionary]) -> void:
-	var amount_spent: int = _patience.lose(1)
-	events.append({
-		"type": "patience_spent",
-		"amount": amount_spent,
-		"current_patience": _patience.current(),
-	})
-
-
 func _refill_belt(events: Array[Dictionary]) -> void:
-	if _hopper.is_empty() and _conveyor_is_empty():
+	if _hopper.is_empty():
 		_recycle_bin(events)
 	if _hopper.is_empty():
 		return
@@ -515,7 +499,6 @@ func _end_day(
 		"score": _score,
 		"target_score": _target_score,
 		"effective_target_score": completed_effective_target,
-		"current_patience": _patience.current(),
 		"spoon_integrity": _spoon_integrity.duplicate(),
 		"succeeded": _succeeded,
 	})

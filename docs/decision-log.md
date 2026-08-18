@@ -644,6 +644,26 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D064's Grandma tantrum timing, Shock Absorber interception, absorber damage, and Grandma stun. D064's branch-only status, individual spoon Integrity, broken-spoon behavior, success precedence, debug controls, and fixed prototype payout remain proposed.
 
+## D066 — Open with a full conveyor and circulate the bin immediately
+
+**Status:** proposed
+
+**Decision:** On the dedicated Fortitude prototype branch, load up to five shuffled daily eggs directly across the five conveyor slots at day start, preserving their shuffled order, and leave only later eggs in the hopper. Whenever the hopper is empty, reshuffle every current bin egg into a new hopper without waiting for the conveyor to clear. An egg that falls from slot 5 while the hopper is empty joins that same resolver-owned reshuffle and may re-enter slot 1 during the completed thwack. Continue to load at most one egg into slot 1 per thwack and preserve retained toughness, seeded reshuffling, event order, and every Fortitude rule.
+
+**Reason:** A one-egg opening leaves most circuits without meaningful targets while every empty impact still consumes spoon Integrity. Filling the machine immediately exposes the positional choice that Fortitude is meant to test. Waiting for the whole conveyor to empty before recycling the bin compounds that wear cost with several low-agency clearing actions; allowing the bin to become the next hopper as soon as the current hopper runs out keeps missed eggs in circulation without creating extra movement or free strikes.
+
+**Supersedes:** The opening-load and bin-gating portions of the accepted baseline only while this branch remains a proposed prototype. If accepted, it would supersede the setup and bin-delay rules recorded in `game-rules.md`; all unrelated daily shuffle, conveyor, damage-retention, preview, and event-order rules remain.
+
+## D067 — Adopt spoon Fortitude as the authoritative daily-pressure system
+
+**Status:** accepted
+
+**Decision:** Replace Grandma's Patience action limit with five independently wearing spoons, each starting the day with 4 Integrity. Only intact spoons in a selected circuit fire; a circuit with no intact spoon is unavailable. Every physical direct or Shockwave impact removes 1 Integrity from the spoon before conveyor movement, including an impact on an empty bay. A Soft-Shelled egg takes ordinary damage but prevents wear only to the spoon striking it. If all five spoons break before Appetite is met, the day fails after the complete thwack; success on that thwack takes precedence. Load up to five shuffled eggs across the opening conveyor, leaving only later eggs in the hopper. Whenever the hopper is empty, immediately reshuffle the bin and load at most one egg into slot 1 without waiting for the conveyor to clear; an egg binned on that thwack may join the same reshuffle. Award a fixed £3 for each successful day. Keep ordered-egg and starting-Integrity controls in development mode, but keep Soft-Shelled out of the permanent reward pool until its species and tuning are separately accepted.
+
+**Reason:** In hands-on play the per-spoon wear pattern made each circuit choice feel substantially more meaningful than an arbitrary action timer. Filling the opening conveyor exposes those positional choices immediately, while immediate bin circulation prevents missed eggs from creating a punishing sequence of low-agency clearing actions. Impact wear also gives misses, Soft-Shelled protection, Shockwave costs, future armour, repair, damage, and absorption effects one coherent physical resource. A fixed payout avoids pretending the replacement economy is already balanced.
+
+**Supersedes:** D059's Patience resource, ten-action limit, remaining-Patience payout, and Patience presentation; D060's remaining references to Patience as a separate gameplay resource; D064's proposed Grandma tantrum, Shock Absorber, and stun rules; and the old one-egg opening plus clear-conveyor bin gate recorded in `game-rules.md`. It accepts D065's impact-wear and Soft-Shelled pattern and D066's full opening and immediate circulation as the current baseline. D059's complete-thwack and success-precedence principles, D060's Yolk/Satisfaction/Appetite separation, and all unrelated conveyor, egg-effect, retry, and progression rules remain accepted.
+
 <!--
 Copy for the next entry:
 

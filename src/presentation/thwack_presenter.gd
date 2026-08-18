@@ -26,7 +26,6 @@ var _slot_hammer_indices: Array[int] = []
 var _echo_trace: Control
 var _hatch_payoff: Control
 var _appetite_display: Control
-var _patience_label: Label
 var _bin_label: Label
 var _generation := 0
 var _busy := false
@@ -57,7 +56,6 @@ func configure(
 	echo_trace: Control,
 	hatch_payoff: Control,
 	appetite_display: Control,
-	patience_label: Label,
 	bin_label: Label
 ) -> void:
 	_belt_slots = belt_slots
@@ -67,7 +65,6 @@ func configure(
 	_echo_trace = echo_trace
 	_hatch_payoff = hatch_payoff
 	_appetite_display = appetite_display
-	_patience_label = patience_label
 	_bin_label = bin_label
 
 
@@ -160,8 +157,6 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_spoon_wear(event, playback_generation)
 		"egg_binned":
 			return await _present_bin(event, playback_generation)
-		"patience_spent":
-			pass # Inert compatibility event during the Fortitude prototype.
 		"egg_entered":
 			return await _present_pipe_entry(event, playback_generation)
 		"bin_reshuffled":

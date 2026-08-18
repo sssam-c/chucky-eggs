@@ -382,18 +382,18 @@ func test_main_renders_initial_day_with_grandma_appetite_scorer() -> void:
 	assert_true(grandma.is_idle_motion_active())
 	var hud: Control = main.get_node("Content/HUD")
 	var stage: Control = main.get_node("Content/Stage")
-	var patience: Label = main.get_node("Content/HUD/Patience")
+	var fortitude: Label = main.get_node("Content/HUD/Fortitude")
 	var settings: MenuButton = main.get_node("Content/HUD/Settings")
 	assert_lte(stage.position.y, 16.0)
 	assert_gte(grandma.size.x, 260.0)
 	assert_lte(grandma.size.x, 320.0)
 	assert_gte(grandma.size.y, 650.0)
 	assert_gt(grandma.get_global_rect().get_center().x, stage.get_global_rect().get_center().x)
-	assert_true(grandma.get_global_rect().encloses(patience.get_global_rect()))
+	assert_true(grandma.get_global_rect().encloses(fortitude.get_global_rect()))
 	assert_true(grandma.get_global_rect().encloses(settings.get_global_rect()))
 	assert_true(hud.get_global_rect().encloses(grandma.get_global_rect()))
-	assert_eq(patience.text, "SPOONS 20 / 20")
-	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 7")
+	assert_eq(fortitude.text, "SPOONS 20 / 20")
+	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
 	assert_eq(main.get_node("Content/Stage/Belt/Bin").text, "BIN 0")
 	assert_false(main.has_node("Content/Header"))
 	assert_false(main.has_node("Content/FooterPlate"))
@@ -591,7 +591,8 @@ func test_hopper_preview_eggs_are_compact_and_open_anchored_popovers() -> void:
 
 func test_hopper_deck_displays_count_and_opens_an_unordered_egg_collection() -> void:
 	var main := _add_main_for_ordered_eggs([
-		"chicken", "spoonbill", "plover", "cuckoo", "sparrow",
+		"chicken", "chicken", "chicken", "chicken", "chicken",
+		"spoonbill", "plover", "cuckoo", "sparrow",
 	])
 	var hopper_button: Button = main.get_node("Content/Stage/Pipe/HopperInspect")
 	var inspector = main.get_node("ContainerInspector")
@@ -622,10 +623,11 @@ func test_hopper_deck_displays_count_and_opens_an_unordered_egg_collection() -> 
 
 
 func test_bin_click_opens_every_stored_egg_with_retained_toughness() -> void:
-	var main := _add_main_for_ordered_eggs(["spoonbill", "spoonbill"])
+	var main := _add_main_for_ordered_eggs([
+		"chicken", "chicken", "chicken", "chicken", "spoonbill", "chicken",
+	])
 	main.set_reduced_motion(true)
-	for circuit_name in ["RedCircuit", "RedCircuit", "RedCircuit", "RedCircuit", "PinkCircuit"]:
-		await _press_and_wait(main, circuit_name)
+	await _press_and_wait(main, "PinkCircuit")
 	var bin_button: Button = main.get_node("Content/Stage/Belt/BinInspect")
 	var inspector = main.get_node("ContainerInspector")
 
@@ -638,7 +640,7 @@ func test_bin_click_opens_every_stored_egg_with_retained_toughness() -> void:
 	assert_eq(inspector.container_kind(), "bin")
 	assert_eq(inspector.egg_count(), 1)
 	assert_eq(inspector.egg_kinds(), ["spoonbill"])
-	assert_eq(inspector.egg_at(0).toughness, 1)
+	assert_eq(inspector.egg_at(0).toughness, 3)
 	assert_eq(inspector.position_labels(), ["STORED 1"])
 	assert_string_contains(inspector.guidance_text(), "RETURN ORDER SHUFFLES")
 	assert_false(inspector.all_visible_text().contains("IS DOUBLE YOLKER"))
@@ -709,7 +711,7 @@ func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
 	assert_true(main.is_dev_mode())
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 20 / 20")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 20 / 20")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots").get_child_count(), 5)
 	assert_eq(main.get_node("Content/Stage/CircuitBank").get_child_count(), 3)
 
@@ -744,11 +746,11 @@ func test_debug_settings_picker_starts_with_the_selected_egg_species() -> void:
 	assert_eq(main.dev_starting_spoon_integrity(), 18)
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 90 / 90")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 90 / 90")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
 
 	main.restart_day()
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 90 / 90")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 90 / 90")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
 
 
@@ -968,13 +970,13 @@ func test_circuit_levers_have_no_hover_text_and_describe_connections_accessibly(
 	assert_eq(red.accessibility_name, "Red diamond lever")
 	assert_string_contains(red.accessibility_description, "slots 1 and 3")
 	assert_string_contains(red.accessibility_description, "Slot 1: Sparrow egg")
-	assert_string_contains(red.accessibility_description, "Slot 3: empty")
+	assert_string_contains(red.accessibility_description, "Slot 3: Sparrow egg")
 	assert_eq(pink.accessibility_name, "Pink spark lever")
 
 
 func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
 	var main := _add_main_for_ordered_eggs([
-		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+		"chicken", "cuckoo",
 	])
 	main.set_reduced_motion(true)
 	var fired_slots: Array[int] = []
@@ -985,14 +987,14 @@ func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
 	await _press_and_wait(main, "RedCircuit")
 
 	assert_eq(fired_slots, [0, 2])
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 18 / 20")
-	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 18 / 20")
+	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 0")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 2")
 
 
-func test_empty_blue_strike_fires_advances_and_consumes_patience() -> void:
+func test_empty_blue_strike_fires_advances_and_wears_both_spoons() -> void:
 	var main := _add_main_for_ordered_eggs([
-		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+		"chicken",
 	])
 	main.set_reduced_motion(true)
 	var fired_slots: Array[int] = []
@@ -1010,17 +1012,15 @@ func test_empty_blue_strike_fires_advances_and_consumes_patience() -> void:
 		"spoon_worn",
 		"spoon_worn",
 		"conveyor_advanced",
-		"patience_spent",
-		"egg_entered",
 	])
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 18 / 20")
-	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 18 / 20")
+	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 0")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 3")
 
 
 func test_soft_shelled_impact_prevention_is_presented_before_the_belt_advances() -> void:
 	var main := _add_main_for_ordered_eggs([
-		"soft_shelled", "chicken", "chicken", "chicken", "chicken",
+		"soft_shelled", "chicken",
 	])
 	main.set_reduced_motion(true)
 	var presented: Array[String] = []
@@ -1034,10 +1034,8 @@ func test_soft_shelled_impact_prevention_is_presented_before_the_belt_advances()
 		"spoon_wear_prevented",
 		"spoon_worn",
 		"conveyor_advanced",
-		"patience_spent",
-		"egg_entered",
 	])
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 19 / 20")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 19 / 20")
 	assert_string_contains(
 		main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "SOFT-SHELLED"
 	)
@@ -1046,6 +1044,7 @@ func test_soft_shelled_impact_prevention_is_presented_before_the_belt_advances()
 func test_hopper_lift_rises_while_the_next_egg_feeds_the_belt() -> void:
 	var main := _add_main_for_ordered_eggs([
 		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+		"chicken", "cuckoo", "chicken",
 	])
 	main.set_reduced_motion(false)
 	var previews: Array[Node] = main.get_node("Content/Stage/Pipe/Preview").get_children()
@@ -1065,8 +1064,13 @@ func test_hopper_lift_rises_while_the_next_egg_feeds_the_belt() -> void:
 	assert_true(conveyor_presented[0])
 	if not conveyor_presented[0]:
 		return
-	await get_tree().process_frame
-
+	for _frame_index in range(120):
+		if (
+			previews[1].motion_content().position.y < second_origin_y
+			and previews[2].motion_content().position.y < third_origin_y
+		):
+			break
+		await get_tree().process_frame
 	assert_lt(previews[1].motion_content().position.y, second_origin_y)
 	assert_lt(previews[2].motion_content().position.y, third_origin_y)
 	await main.playback_completed
@@ -1078,6 +1082,7 @@ func test_hopper_lift_rises_while_the_next_egg_feeds_the_belt() -> void:
 func test_moving_eggs_sway_and_the_hopper_feed_lifts_before_pushing_sideways() -> void:
 	var main := _add_main_for_ordered_eggs([
 		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+		"chicken", "cuckoo", "chicken",
 	])
 	main.set_reduced_motion(false)
 	var next_content: Control = main.get_node(
@@ -1143,6 +1148,7 @@ func test_moving_eggs_sway_and_the_hopper_feed_lifts_before_pushing_sideways() -
 func test_replacing_the_session_cancels_hopper_feed_sway_without_a_stale_pose() -> void:
 	var main := _add_main_for_ordered_eggs([
 		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+		"chicken", "cuckoo", "chicken",
 	])
 	main.set_reduced_motion(false)
 	var next_content: Control = main.get_node(
@@ -1167,7 +1173,7 @@ func test_replacing_the_session_cancels_hopper_feed_sway_without_a_stale_pose() 
 
 func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> void:
 	var main := _add_main_for_ordered_eggs([
-		"chicken", "cuckoo", "chicken", "cuckoo", "chicken",
+		"chicken", "chicken",
 	])
 	main.set_reduced_motion(true)
 	var presented: Array[String] = []
@@ -1181,8 +1187,6 @@ func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> v
 		"spoon_worn",
 		"spoon_worn",
 		"conveyor_advanced",
-		"patience_spent",
-		"egg_entered",
 	])
 
 
@@ -1198,7 +1202,10 @@ func test_original_spoon_rebounds_before_the_egg_damage_response() -> void:
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_eq(strike_amounts_during_damage, [0.0])
+	assert_false(strike_amounts_during_damage.is_empty())
+	assert_true(strike_amounts_during_damage.all(func(amount: float) -> bool:
+		return is_zero_approx(amount)
+	))
 	assert_eq(red_spoon.strike_amount, 0.0)
 	assert_false(main.is_input_locked())
 
@@ -1209,11 +1216,11 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	])
 	var red: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
 	var completion_count := [0]
-	var patience_spend_count := [0]
+	var spoon_wear_count := [0]
 	main.playback_completed.connect(func() -> void: completion_count[0] += 1)
 	main.presentation_event.connect(func(event_type: String) -> void:
-		if event_type == "patience_spent":
-			patience_spend_count[0] += 1
+		if event_type == "spoon_worn":
+			spoon_wear_count[0] += 1
 	)
 
 	red.pressed.emit()
@@ -1224,24 +1231,24 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	assert_true(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 	await main.playback_completed
 	await get_tree().process_frame
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 18 / 20")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 18 / 20")
 	assert_eq(completion_count[0], 1)
-	assert_eq(patience_spend_count[0], 1)
+	assert_eq(spoon_wear_count[0], 2)
 	assert_false(main.get_node("Content/Stage/Pipe/HopperInspect").disabled)
 	assert_false(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 
 
 func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() -> void:
-	var main := _add_authored_main()
+	var main := _add_main_for_ordered_eggs([
+		"sparrow", "cuckoo", "sparrow", "chicken", "chicken", "chicken",
+	], 99)
 	main.set_reduced_motion(true)
-	await _press_and_wait(main, "RedCircuit")
-	await _press_and_wait(main, "BlueCircuit")
 	var presented: Array[String] = []
 	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_eq(presented.slice(0, 9), [
+	assert_eq(presented.slice(0, 10), [
 		"circuit_fired",
 		"egg_damaged",
 		"egg_damaged",
@@ -1250,16 +1257,14 @@ func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() ->
 		"spoon_worn",
 		"spoon_worn",
 		"egg_hatched",
+		"egg_hatched",
 		"conveyor_advanced",
 	])
-	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 3 / 10")
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 2 / 10")
 
 
 func test_hatch_burst_carries_resolved_points_into_the_score_before_event_completion() -> void:
-	var main := _add_authored_main()
-	main.set_reduced_motion(true)
-	await _press_and_wait(main, "RedCircuit")
-	await _press_and_wait(main, "BlueCircuit")
+	var main := _add_main_for_ordered_eggs(["sparrow"], 99)
 	main.set_reduced_motion(false)
 	var presenter := main.get_node("Presentation")
 	var payoff := main.get_node("Content/HatchPayoff")
@@ -1285,18 +1290,18 @@ func test_hatch_burst_carries_resolved_points_into_the_score_before_event_comple
 	await _press_and_wait(main, "RedCircuit")
 
 	assert_eq(score_when_burst_started[0], "APPETITE 0 / 10")
-	assert_eq(point_text_when_burst_started[0], "+3")
+	assert_eq(point_text_when_burst_started[0], "+1")
 	assert_gte(payoff.fragment_count(), 12)
-	assert_eq(milestones, ["burst", "score:3:3", "event"])
-	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 3 / 10")
+	assert_eq(milestones, ["burst", "score:1:1", "event"])
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 1 / 10")
 	assert_false(payoff.is_active())
 
 
 func test_double_yolker_outcomes_remain_hidden_while_hover_card_shows_known_chance() -> void:
 	var flock = ProducerFlock.new([
-		{"kind": "chicken"},
-		{"kind": "chicken"},
-		{"kind": "chicken"},
+		{"kind": "chicken"}, {"kind": "chicken"}, {"kind": "chicken"},
+		{"kind": "chicken"}, {"kind": "chicken"}, {"kind": "chicken"},
+		{"kind": "chicken"}, {"kind": "chicken"},
 	])
 	var session = ChickenDaySession.new(42, flock, IdentityShuffler.new())
 	var main := _add_main()
@@ -1394,15 +1399,11 @@ func test_restart_clears_an_interrupted_hatch_payoff_without_committing_score() 
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 10")
 
 
-func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_payoff() -> void:
+func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_echo() -> void:
 	var main := _add_main_for_ordered_eggs([
-		"spoonbill", "cuckoo", "chicken", "chicken", "chicken", "chicken",
+		"chicken", "chicken", "chicken", "cuckoo", "spoonbill", "chicken",
 	])
 	main.set_reduced_motion(true)
-	for circuit_name in [
-		"RedCircuit", "RedCircuit", "BlueCircuit", "RedCircuit",
-	]:
-		await _press_and_wait(main, circuit_name)
 	var presented: Array[String] = []
 	var points_landed: Array[int] = []
 	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
@@ -1412,12 +1413,12 @@ func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_payoff() ->
 
 	await _press_and_wait(main, "PinkCircuit")
 
-	assert_eq(presented.slice(0, 6), [
+	assert_eq(presented.slice(0, 7), [
 		"circuit_fired", "egg_damaged", "egg_damaged",
-		"spoon_worn", "egg_hatched", "conveyor_advanced",
+		"spoon_worn", "conveyor_advanced", "egg_binned", "egg_entered",
 	])
-	assert_eq(points_landed, [1])
-	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 1 / 10")
+	assert_eq(points_landed, [])
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 10")
 
 
 func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
@@ -1432,7 +1433,7 @@ func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
 	await get_tree().create_timer(0.5).timeout
 
 	assert_false(main.is_input_locked())
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 20 / 20")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 20 / 20")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_eq(completion_count, 0)
 
@@ -1491,9 +1492,9 @@ func test_resolved_hud_facts_trigger_non_blocking_ui_feedback() -> void:
 	assert_true(feedback.has_active_motion())
 	main.set_reduced_motion(true)
 	assert_false(feedback.has_active_motion())
-	assert_eq(main.get_node("Content/HUD/Patience").scale, Vector2.ONE)
+	assert_eq(main.get_node("Content/HUD/Fortitude").scale, Vector2.ONE)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").scale, Vector2.ONE)
-	assert_eq(main.get_node("Content/HUD/Patience").modulate, Color.WHITE)
+	assert_eq(main.get_node("Content/HUD/Fortitude").modulate, Color.WHITE)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").modulate, Color.WHITE)
 
 
@@ -1522,7 +1523,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	var result_panel: Control = main.get_node("ResultOverlay")
 	assert_true(result_panel.visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY FAILED")
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 14 / 20")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 14 / 20")
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_true(main.get_node("ResultOverlay/Card/Content/Restart").visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Restart").text, "RETRY DAY 1")
@@ -1534,7 +1535,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 	assert_false(result_panel.visible)
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 20 / 20")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 20 / 20")
 
 
 func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void:
@@ -1627,7 +1628,7 @@ func test_success_opens_three_free_quality_offers_on_a_separate_screen() -> void
 		main.get_node("BirdOfferOverlay/Card/Content/BirdOfferSummary").text,
 		"DAY 2 APPETITE 9"
 	)
-	assert_eq(main.get_node("Content/HUD/Patience").text, "SPOONS 477 / 495")
+	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 479 / 495")
 	await get_tree().process_frame
 	assert_true(main.get_node("BirdOfferOverlay/Card/Content/RewardChoices/Choice1").has_focus())
 	var offer_card: Control = main.get_node("BirdOfferOverlay/Card")
@@ -1726,7 +1727,7 @@ func test_store_motion_is_cancellable_and_reduced_motion_opens_immediately() -> 
 	assert_false(main.is_workshop_transition_active())
 
 
-func test_early_success_shows_fixed_prototype_payout_and_persistent_balance() -> void:
+func test_early_success_shows_fixed_day_payout_and_persistent_balance() -> void:
 	var daily_eggs: Array[String] = []
 	daily_eggs.resize(7)
 	daily_eggs.fill("chicken")
@@ -1742,7 +1743,10 @@ func test_early_success_shows_fixed_prototype_payout_and_persistent_balance() ->
 	assert_true(main.get_node("ResultOverlay").visible)
 	assert_string_contains(
 		main.get_node("ResultOverlay/Card/Content/CashPayout").text,
-		"PROTOTYPE DAY PAYOUT"
+		"DAY PAYOUT"
+	)
+	assert_false(
+		"PROTOTYPE" in main.get_node("ResultOverlay/Card/Content/CashPayout").text
 	)
 	assert_false(main.get_node("BirdOfferOverlay").visible)
 	assert_false(main.get_node("WorkshopOverlay").visible)
@@ -1798,7 +1802,7 @@ func test_claiming_a_free_bird_then_leaving_starts_day_two_with_the_larger_flock
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_false(main.get_node("ProductionLoader").visible)
-	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER %d" % (expected_flock_size - 1))
+	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER %d" % maxi(0, expected_flock_size - 5))
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
 	assert_false(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().is_empty())
 	assert_false(main.has_node("Content/Stage/Belt/Slots/Slot6"))

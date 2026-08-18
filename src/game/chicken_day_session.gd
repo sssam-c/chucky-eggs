@@ -121,7 +121,7 @@ func submit_circuit(circuit_id: String) -> Array[Dictionary]:
 			"type": "cash_awarded",
 			"amount": _last_cash_awarded,
 			"cash_total": _cash,
-			"payout_rule": "prototype_fixed",
+			"payout_rule": "fixed",
 		})
 	return events
 

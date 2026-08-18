@@ -17,7 +17,7 @@ const SETTINGS_REDUCED_MOTION := 1
 const SETTINGS_DEV_EGGS := 2
 
 @onready var _grandma_scorer: Control = %GrandmaScorer
-@onready var _fortitude_label: Label = %Patience
+@onready var _fortitude_label: Label = %Fortitude
 @onready var _result_overlay: Control = %ResultOverlay
 @onready var _result_card: PanelContainer = $ResultOverlay/Card
 @onready var _result_label: Label = %Result
@@ -111,7 +111,6 @@ func _ready() -> void:
 		_echo_trace,
 		_hatch_payoff,
 		_grandma_scorer,
-		_fortitude_label,
 		_bin_label
 	)
 	var requested_dev_day := _requested_dev_day()
@@ -316,10 +315,6 @@ func dev_starting_egg_kinds() -> Array[String]:
 
 func dev_starting_spoon_integrity() -> int:
 	return _dev_starting_spoon_integrity
-
-
-func dev_starting_patience() -> int:
-	return dev_starting_spoon_integrity()
 
 
 func _start_dev_day(day_number: int) -> void:
@@ -539,7 +534,7 @@ func _render_result(state: Dictionary, successful: bool) -> void:
 			state.score, state.effective_target_score,
 		]
 		_result_score_label.add_theme_color_override("font_color", Color("8dfff0"))
-		_cash_payout_label.text = "+£%d PROTOTYPE DAY PAYOUT  •  BALANCE £%d" % [
+		_cash_payout_label.text = "+£%d DAY PAYOUT  •  BALANCE £%d" % [
 			state.last_cash_awarded, state.cash,
 		]
 		_result_summary_label.text = "CHOOSE ONE FREE BIRD  •  THEN REVIEW YOUR FLOCK"

@@ -4,7 +4,7 @@ const ChickenDay = preload("res://src/domain/chicken_day.gd")
 
 
 func test_each_physical_impact_wears_its_spoon_before_the_belt_moves() -> void:
-	var day = ChickenDay.new(["chicken", "chicken", "chicken"], 99, 4)
+	var day = ChickenDay.new(["chicken", "chicken"], 99, 4)
 
 	var events: Array[Dictionary] = day.resolve_circuit("red")
 
@@ -45,7 +45,7 @@ func test_shockwave_uses_adjacent_intact_spoons_and_wears_them_on_empty_bays() -
 		"kind": "sparrow",
 		"effects": [{"type": "shockwave"}],
 	}
-	var day = ChickenDay.new([shockwave_sparrow, "chicken"], 99, 1)
+	var day = ChickenDay.new([shockwave_sparrow], 99, 1)
 
 	var events: Array[Dictionary] = day.resolve_circuit("red")
 
@@ -63,7 +63,9 @@ func test_shockwave_skips_an_adjacent_broken_spoon() -> void:
 		"kind": "sparrow",
 		"effects": [{"type": "shockwave"}],
 	}
-	var day = ChickenDay.new(["chicken", shockwave_sparrow, "chicken"], 99, 1)
+	var day = ChickenDay.new([
+		"chicken", "chicken", "chicken", "chicken", "chicken", shockwave_sparrow,
+	], 99, 1)
 	day.resolve_circuit("blue")
 
 	var events: Array[Dictionary] = day.resolve_circuit("red")
@@ -79,7 +81,9 @@ func test_soft_shelled_also_prevents_wear_from_a_shockwave_spoon() -> void:
 		"kind": "sparrow",
 		"effects": [{"type": "shockwave"}],
 	}
-	var day = ChickenDay.new(["soft_shelled", shockwave_sparrow, "chicken"], 99, 4)
+	var day = ChickenDay.new([
+		"soft_shelled", "chicken", "chicken", "chicken", "chicken", shockwave_sparrow,
+	], 99, 4)
 	day.resolve_circuit("blue")
 
 	var events: Array[Dictionary] = day.resolve_circuit("red")
