@@ -1,19 +1,19 @@
 class_name DevEggPicker
 extends Control
 
-signal selection_submitted(egg_kinds: Array[String], starting_spoon_integrity: int)
+signal selection_submitted(egg_kinds: Array[String], starting_belt_condition: int)
 signal dismissed
 
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
 const ProducerFlock = preload("res://src/domain/producer_flock.gd")
-const MAX_STARTING_SPOON_INTEGRITY := 99
+const MAX_STARTING_BELT_CONDITION := 99
 
 @onready var _species_buttons: VBoxContainer = %SpeciesButtons
 @onready var _egg_order_list: ItemList = %EggOrder
 @onready var _move_up: Button = %MoveUp
 @onready var _move_down: Button = %MoveDown
 @onready var _remove: Button = %Remove
-@onready var _integrity: SpinBox = %Integrity
+@onready var _condition: SpinBox = %Condition
 @onready var _total: Label = %Total
 @onready var _cancel: Button = %Cancel
 @onready var _start: Button = %Start
@@ -23,7 +23,7 @@ var _egg_order: Array[String] = []
 
 func _ready() -> void:
 	for kind: String in ProducerFlock.KNOWN_KINDS:
-		var display_name := "Soft-Shelled" if kind == "soft_shelled" else kind.capitalize()
+		var display_name := kind.capitalize()
 		var add_button := Button.new()
 		add_button.name = "Add%s" % kind.capitalize()
 		add_button.text = "+  %s" % display_name.to_upper()
@@ -39,18 +39,18 @@ func _ready() -> void:
 	_egg_order_list.item_selected.connect(_on_order_selection_changed)
 	_cancel.pressed.connect(dismiss)
 	_start.pressed.connect(submit_selection)
-	_integrity.min_value = 1.0
-	_integrity.max_value = float(MAX_STARTING_SPOON_INTEGRITY)
-	_integrity.value = float(ChickenDay.STARTING_SPOON_INTEGRITY)
+	_condition.min_value = 1.0
+	_condition.max_value = float(MAX_STARTING_BELT_CONDITION)
+	_condition.value = float(ChickenDay.DEFAULT_BELT_CONDITION)
 	_refresh_order()
 
 
 func open_with(
 	egg_kinds: Array[String],
-	starting_integrity_value := ChickenDay.STARTING_SPOON_INTEGRITY
+	starting_condition_value := ChickenDay.DEFAULT_BELT_CONDITION
 ) -> void:
 	set_egg_order(egg_kinds)
-	set_starting_spoon_integrity(int(starting_integrity_value))
+	set_starting_belt_condition(int(starting_condition_value))
 	show()
 	if _egg_order.is_empty():
 		_start.grab_focus()
@@ -95,12 +95,12 @@ func remove_egg(index: int) -> void:
 	_refresh_order(mini(index, _egg_order.size() - 1))
 
 
-func set_starting_spoon_integrity(value: int) -> void:
-	_integrity.value = clampi(value, 1, MAX_STARTING_SPOON_INTEGRITY)
+func set_starting_belt_condition(value: int) -> void:
+	_condition.value = clampi(value, 1, MAX_STARTING_BELT_CONDITION)
 
 
-func starting_spoon_integrity() -> int:
-	return int(_integrity.value)
+func starting_belt_condition() -> int:
+	return int(_condition.value)
 
 
 func total_egg_count() -> int:
@@ -115,7 +115,7 @@ func submit_selection() -> void:
 	if _egg_order.is_empty():
 		return
 	hide()
-	selection_submitted.emit(egg_order(), starting_spoon_integrity())
+	selection_submitted.emit(egg_order(), starting_belt_condition())
 
 
 func dismiss() -> void:

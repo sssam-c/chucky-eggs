@@ -664,6 +664,26 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D059's Patience resource, ten-action limit, remaining-Patience payout, and Patience presentation; D060's remaining references to Patience as a separate gameplay resource; D064's proposed Grandma tantrum, Shock Absorber, and stun rules; and the old one-egg opening plus clear-conveyor bin gate recorded in `game-rules.md`. It accepts D065's impact-wear and Soft-Shelled pattern and D066's full opening and immediate circulation as the current baseline. D059's complete-thwack and success-precedence principles, D060's Yolk/Satisfaction/Appetite separation, and all unrelated conveyor, egg-effect, retry, and progression rules remain accepted.
 
+## D068 — Reload the hopper at the exact moment it empties
+
+**Status:** accepted
+
+**Decision:** Treat the hopper becoming empty as the bin-recycle trigger, including when the last waiting hopper egg has just entered slot 1. After that single egg enters, immediately reshuffle every current bin egg into the hopper and refresh the pipe during the same completed thwack. Do not load a second egg onto the conveyor. Preserve the complementary case where an already-empty hopper reshuffles the bin before selecting the one egg allowed to enter.
+
+**Reason:** Waiting until the following thwack leaves the machine visibly empty for one action even though recyclable eggs are already available. Reloading at the state transition makes “whenever the hopper is empty” literal, keeps upcoming choices visible, and removes an unintended one-thwack circulation delay without granting extra movement or damage.
+
+**Supersedes:** D067 and D066 only where their wording could be read as checking hopper emptiness solely before slot-1 entry. Their immediate occupied-conveyor circulation, seeded reshuffle, retained egg facts, and one-entry-per-thwack rules remain accepted.
+
+## D069 — Replace spoon Integrity with movement-linked Belt Condition
+
+**Status:** accepted
+
+**Decision:** Replace all individual spoon Integrity, wear, broken-spoon restrictions, and Soft-Shelled protection with one Belt Condition resource that starts each day at 12. Every spoon and circuit remains usable until the day ends. A resolver-owned movement operation spends exactly 1 Condition if it advances the belt one or more slots, regardless of the number of slots bundled into that operation, and spends none if it advances zero. The current base thwack advances one slot; Shockwave and other strikes that cause no belt movement spend no additional Condition. Resolve the complete movement and refill before recording its one-point cost. If Condition reaches 0, finish the committed thwack and let success take precedence before failing. Expose one labelled Belt Condition bar, restore it on retry, and let development setup choose its starting maximum. Remove the development-only Soft-Shelled egg. Keep the fixed £3 success payout.
+
+**Reason:** Per-spoon wear made the pressure state granular, distributed across five readouts, and vulnerable to a flock composed entirely of permanent wear-prevention eggs. Charging the machine's natural forward motion creates one highly visible clock while opening coherent egg-effect space: movement can be paused for no cost, several steps can be bundled for one cost, and the belt can later be repaired, armoured, or damaged. Because ordinary play continually tends toward belt advancement, free tempo must come from explicit effects rather than blanket composition immunity. One movement cost also lets additional strikes create efficiency without pretending every trigger is a separate turn.
+
+**Supersedes:** D067's individual spoon Integrity, impact wear, broken-spoon availability and failure, Soft-Shelled rule and development egg, and starting-Integrity control. It also supersedes D065's proposed wear framing and remaining Soft-Shelled design. D067's five-egg opening, immediate bin circulation, success precedence, and fixed £3 payout remain accepted; D068's exact hopper-empty reload timing remains accepted. D059 remains superseded: Belt Condition is not Patience, because its cost belongs to a resolver-authored movement operation rather than automatically to every committed thwack.
+
 <!--
 Copy for the next entry:
 

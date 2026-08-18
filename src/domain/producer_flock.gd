@@ -5,8 +5,7 @@ const PRODUCER_KINDS: Array[String] = [
 	"chicken", "cuckoo", "sparrow", "plover", "spoonbill",
 	"quail", "maleo", "ostrich", "kiwi",
 ]
-const DEV_ONLY_EGG_KINDS: Array[String] = ["soft_shelled"]
-const KNOWN_KINDS: Array[String] = PRODUCER_KINDS + DEV_ONLY_EGG_KINDS
+const KNOWN_KINDS: Array[String] = PRODUCER_KINDS
 const STARTING_DOUBLE_YOLK_CHANCE := 0.02
 const SPARROW_DOUBLE_YOLK_CHANCE := 0.05
 const QUALITY_STEP := 1.5

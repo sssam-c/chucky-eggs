@@ -16,7 +16,7 @@ func render_egg(egg: Dictionary, position_text: String) -> void:
 	_egg_visual.set_egg(_egg, true)
 	var tier := int(_egg.get("tier", 0))
 	var kind := String(_egg.get("kind", "egg"))
-	var display_name := "SOFT-SHELLED" if kind == "soft_shelled" else kind.to_upper()
+	var display_name := kind.to_upper()
 	_name_label.text = "%s %s" % [_quality_name(tier), display_name]
 	var toughness := int(_egg.get("toughness", 0))
 	var max_toughness := int(_egg.get("max_toughness", toughness))
@@ -77,6 +77,4 @@ func _effect_text(kind: String) -> String:
 			return "SHOCKWAVE  •  STRIKES BOTH ADJACENT SLOTS"
 		"kiwi":
 			return "FILLING 8  •  RELEASES 1 YOLK PER FUTURE THWACK"
-		"soft_shelled":
-			return "SOFT-SHELLED  •  THE STRIKING SPOON SUFFERS NO WEAR"
 	return "NO EXTRA EFFECT"

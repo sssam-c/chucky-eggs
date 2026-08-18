@@ -38,7 +38,7 @@ var _bird_offer_claimed := true
 var _removal_used_tonight := false
 var _cash := 0
 var _last_cash_awarded := 0
-var _starting_spoon_integrity := ChickenDay.STARTING_SPOON_INTEGRITY
+var _starting_belt_condition := ChickenDay.DEFAULT_BELT_CONDITION
 
 
 func _init(
@@ -46,25 +46,25 @@ func _init(
 	flock = null,
 	shuffler = null,
 	initial_day_number := 1,
-	initial_spoon_integrity := ChickenDay.STARTING_SPOON_INTEGRITY
+	initial_belt_condition := ChickenDay.DEFAULT_BELT_CONDITION
 ) -> void:
 	_day_seed = day_seed
 	_flock = flock if flock != null else ProducerFlock.new()
 	_shuffler = shuffler
 	_day_number = maxi(int(initial_day_number), 1)
-	_starting_spoon_integrity = maxi(int(initial_spoon_integrity), 1)
+	_starting_belt_condition = maxi(int(initial_belt_condition), 1)
 	_start_day()
 
 
 static func create_dev_session(
 	day_number: int,
 	egg_kinds: Array[String],
-	starting_spoon_integrity: int = ChickenDay.STARTING_SPOON_INTEGRITY,
+	starting_belt_condition: int = ChickenDay.DEFAULT_BELT_CONDITION,
 	shuffler = null
 ):
 	assert(day_number >= 1, "A dev day number must be positive.")
 	assert(not egg_kinds.is_empty(), "A dev day needs at least one egg.")
-	assert(starting_spoon_integrity >= 1, "A dev day needs positive spoon Integrity.")
+	assert(starting_belt_condition >= 1, "A dev day needs positive Belt Condition.")
 	var producers: Array[Dictionary] = []
 	for kind: String in egg_kinds:
 		assert(kind in ProducerFlock.KNOWN_KINDS, "A dev egg needs a known kind.")
@@ -74,7 +74,7 @@ static func create_dev_session(
 		ProducerFlock.new(producers),
 		shuffler if shuffler != null else DevOrderShuffler.new(),
 		day_number,
-		starting_spoon_integrity
+		starting_belt_condition
 	)
 
 
@@ -94,7 +94,6 @@ func state() -> Dictionary:
 	current_state["cash"] = _cash
 	current_state["last_cash_awarded"] = _last_cash_awarded
 	current_state["machine_slot_count"] = ChickenDay.SLOT_COUNT
-	current_state["starting_spoon_integrity"] = _starting_spoon_integrity
 	current_state["machine_circuits"] = ChickenDay.circuits_for_slot_count(ChickenDay.SLOT_COUNT)
 	return current_state
 
@@ -216,7 +215,7 @@ func _start_day() -> void:
 	_day = ChickenDay.new(
 		shuffled_eggs,
 		_target_for_day(_day_number),
-		_starting_spoon_integrity,
+		_starting_belt_condition,
 		day_shuffler
 	)
 

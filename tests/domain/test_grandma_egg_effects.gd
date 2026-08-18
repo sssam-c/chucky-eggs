@@ -172,7 +172,7 @@ func test_deceptively_filling_adds_to_one_reserve_released_once_per_thwack() -> 
 	assert_eq(day.snapshot().grandma_effects.deceptively_filling_reserve, 0)
 
 
-func test_opening_filling_success_still_resolves_damage_wear_and_movement() -> void:
+func test_opening_filling_success_still_resolves_damage_and_paid_movement() -> void:
 	var day = ChickenDay.new([
 		_effect_egg("deceptively_filling", 1),
 		"chicken",
@@ -182,14 +182,13 @@ func test_opening_filling_success_still_resolves_damage_wear_and_movement() -> v
 	assert_eq(day.snapshot().score, 1)
 
 	var completing: Array[Dictionary] = day.resolve_circuit("blue")
-	assert_eq(_event_types(completing).slice(0, 7), [
+	assert_eq(_event_types(completing).slice(0, 6), [
 		"grandma_effects_started",
 		"satisfaction_added",
 		"circuit_fired",
 		"egg_damaged",
-		"spoon_worn",
-		"spoon_worn",
 		"conveyor_advanced",
+		"belt_condition_spent",
 	])
 	assert_true(completing[-1].type == "day_ended" and completing[-1].succeeded)
 

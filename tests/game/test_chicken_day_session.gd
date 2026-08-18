@@ -31,7 +31,7 @@ class AppetiserInjectingShuffler:
 		return eggs
 
 
-func test_session_builds_an_eight_egg_day_with_five_four_integrity_spoons() -> void:
+func test_session_builds_an_eight_egg_day_with_twelve_belt_condition() -> void:
 	var state: Dictionary = ChickenDaySession.new(42).state()
 
 	assert_eq(state.day_number, 1)
@@ -43,8 +43,10 @@ func test_session_builds_an_eight_egg_day_with_five_four_integrity_spoons() -> v
 	assert_eq(state.daily_egg_count, 8)
 	assert_eq(state.hopper_egg_count, 3)
 	assert_eq(state.pipe.size(), 3)
-	assert_eq(state.starting_spoon_integrity, 4)
-	assert_eq(state.spoon_integrity, [4, 4, 4, 4, 4])
+	assert_eq(state.maximum_belt_condition, 12)
+	assert_eq(state.belt_condition, 12)
+	assert_false("starting_spoon_integrity" in state)
+	assert_false("spoon_integrity" in state)
 	assert_false("starting_patience" in state)
 	assert_false("current_patience" in state)
 	assert_false("starting_thwacks" in state)
@@ -115,14 +117,14 @@ func test_session_can_initialize_day_three_on_the_single_track_for_dev_tools() -
 		{"id": "blue", "slot_indices": [1, 3]},
 		{"id": "pink", "slot_indices": [4]},
 	])
-	assert_eq(state.spoon_integrity, [4, 4, 4, 4, 4])
+	assert_eq(state.belt_condition, 12)
 
 	session.submit_circuit("red")
 	session.restart()
 
 	assert_eq(session.state().day_number, 3)
 	assert_eq(session.state().machine_slot_count, 5)
-	assert_eq(session.state().spoon_integrity, [4, 4, 4, 4, 4])
+	assert_eq(session.state().belt_condition, 12)
 
 
 func test_dev_session_uses_exactly_the_selected_starting_egg_species() -> void:
@@ -156,12 +158,12 @@ func test_dev_session_uses_exactly_the_selected_starting_egg_species() -> void:
 	assert_true(state.pipe.is_empty())
 	assert_eq(state.day_number, 3)
 	assert_eq(state.target_score, 9)
-	assert_eq(state.starting_spoon_integrity, 18)
-	assert_eq(state.spoon_integrity, [18, 18, 18, 18, 18])
+	assert_eq(state.maximum_belt_condition, 18)
+	assert_eq(state.belt_condition, 18)
 
 	session.submit_circuit("red")
 	session.restart()
-	assert_eq(session.state().spoon_integrity, [18, 18, 18, 18, 18])
+	assert_eq(session.state().belt_condition, 18)
 	assert_eq(session.state().slots[0].kind, "kiwi")
 
 
@@ -170,14 +172,14 @@ func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
 		42, ProducerFlock.new([{"kind": "chicken"}, {"kind": "cuckoo"}]), IdentityShuffler.new()
 	)
 	var exposed_state: Dictionary = session.state()
-	exposed_state.spoon_integrity[0] = 1
+	exposed_state.belt_condition = 1
 	exposed_state.slots[0].toughness = 1
 
 	var events: Array[Dictionary] = session.submit_circuit("red")
 	var actual_state: Dictionary = session.state()
 
 	assert_eq(events[0].type, "circuit_fired")
-	assert_eq(actual_state.spoon_integrity, [3, 4, 3, 4, 4])
+	assert_eq(actual_state.belt_condition, 11)
 	assert_eq(actual_state.slots[1].toughness, 2)
 	assert_true(actual_state.slots[0].is_empty())
 	assert_eq(actual_state.slots[2].kind, "cuckoo")
@@ -192,7 +194,7 @@ func test_restart_replaces_the_day_with_initial_state() -> void:
 
 	session.restart()
 
-	assert_eq(session.state().spoon_integrity, [4, 4, 4, 4, 4])
+	assert_eq(session.state().belt_condition, 12)
 	assert_eq(session.state().slots[0].toughness, 3)
 
 
@@ -325,19 +327,19 @@ func test_success_banks_the_fixed_day_payout_exactly_once() -> void:
 	assert_eq(session.state().cash, 3)
 
 
-func test_fixed_payout_does_not_depend_on_remaining_spoon_integrity() -> void:
-	var lower_integrity_session = _early_success_session(0, 20)
-	var higher_integrity_session = _early_success_session(0, 99)
+func test_fixed_payout_does_not_depend_on_remaining_belt_condition() -> void:
+	var lower_condition_session = _early_success_session(0, 20)
+	var higher_condition_session = _early_success_session(0, 99)
 
-	var lower_events: Array[Dictionary] = _complete_early_successful_day(lower_integrity_session)
-	var higher_events: Array[Dictionary] = _complete_early_successful_day(higher_integrity_session)
+	var lower_events: Array[Dictionary] = _complete_early_successful_day(lower_condition_session)
+	var higher_events: Array[Dictionary] = _complete_early_successful_day(higher_condition_session)
 
 	assert_ne(
-		lower_integrity_session.state().spoon_integrity,
-		higher_integrity_session.state().spoon_integrity
+		lower_condition_session.state().belt_condition,
+		higher_condition_session.state().belt_condition
 	)
-	assert_eq(lower_integrity_session.state().last_cash_awarded, 3)
-	assert_eq(higher_integrity_session.state().last_cash_awarded, 3)
+	assert_eq(lower_condition_session.state().last_cash_awarded, 3)
+	assert_eq(higher_condition_session.state().last_cash_awarded, 3)
 	assert_eq(lower_events[-1].payout_rule, "fixed")
 	assert_eq(higher_events[-1].payout_rule, "fixed")
 
@@ -410,7 +412,7 @@ func test_restarting_day_two_preserves_its_nine_point_target() -> void:
 	assert_eq(session.state().day_number, 2)
 	assert_eq(session.state().target_score, 9)
 	assert_eq(session.state().score, 0)
-	assert_eq(session.state().spoon_integrity, [99, 99, 99, 99, 99])
+	assert_eq(session.state().belt_condition, 99)
 
 
 func test_restart_cannot_bypass_the_success_shop() -> void:
@@ -446,7 +448,7 @@ func test_failure_offers_no_shop_and_retry_replays_the_same_day() -> void:
 	assert_eq(session.state().producers, opening.producers)
 	assert_eq(session.state().slots, opening.slots)
 	assert_eq(session.state().pipe, opening.pipe)
-	assert_eq(session.state().spoon_integrity, opening.spoon_integrity)
+	assert_eq(session.state().belt_condition, opening.belt_condition)
 	assert_eq(session.state().cash, 0)
 
 
@@ -457,7 +459,7 @@ func _successful_day_session():
 	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new(), 1, 99)
 
 
-func _early_success_session(tier := 0, starting_spoon_integrity := 99):
+func _early_success_session(tier := 0, starting_belt_condition := 99):
 	var producers: Array[Dictionary] = []
 	for egg_index in range(7):
 		producers.append({"kind": "chicken", "tier": tier})
@@ -466,7 +468,7 @@ func _early_success_session(tier := 0, starting_spoon_integrity := 99):
 		ProducerFlock.new(producers),
 		IdentityShuffler.new(),
 		1,
-		starting_spoon_integrity
+		starting_belt_condition
 	)
 
 

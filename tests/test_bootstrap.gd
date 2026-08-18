@@ -13,7 +13,8 @@ func test_main_scene_can_be_instantiated() -> void:
 	assert_not_null(main.get_node_or_null(
 		"Content/HUD/GrandmaScorer/Layout/Appetite/Score"
 	))
-	assert_not_null(main.get_node_or_null("Content/HUD/Fortitude"))
+	assert_not_null(main.get_node_or_null("Content/HUD/BeltCondition"))
+	assert_not_null(main.get_node_or_null("Content/HUD/BeltCondition/BeltConditionBar"))
 	assert_not_null(main.get_node_or_null("Content/HUD/Settings"))
 	assert_not_null(main.get_node_or_null("Content/Stage/Belt/Slots/Slot1"))
 	assert_not_null(main.get_node_or_null("Content/Stage/Pipe/Preview/Next1"))

@@ -40,8 +40,6 @@ var strike_amount := 0.0:
 var _bowl_size_scale := 1.0
 var _circuit_marked := true
 var _single_contact_target := DEFAULT_SINGLE_CONTACT
-var _integrity := 1
-var _max_integrity := 1
 
 
 func _ready() -> void:
@@ -56,21 +54,6 @@ func set_strike_amount(amount: float) -> void:
 
 func reset_pose() -> void:
 	strike_amount = 0.0
-
-
-func render_integrity(current: int, maximum: int) -> void:
-	_integrity = maxi(current, 0)
-	_max_integrity = maxi(maximum, 1)
-	modulate = Color(0.48, 0.43, 0.40, 1.0) if _integrity == 0 else Color.WHITE
-	queue_redraw()
-
-
-func current_integrity() -> int:
-	return _integrity
-
-
-func is_broken() -> bool:
-	return _integrity == 0
 
 
 func pivot_global_position() -> Vector2:
@@ -240,21 +223,6 @@ func _draw_wall_spoon() -> void:
 		_draw_circuit_symbol(hinge, circuit_color.lightened(0.38))
 	else:
 		draw_circle(hinge, 3.0, Color("d09a52"))
-	_draw_integrity_gauge(hinge)
-
-
-func _draw_integrity_gauge(hinge: Vector2) -> void:
-	var visible_pips := mini(_max_integrity, 8)
-	var pip_step := 13.0
-	var first_x := hinge.x - float(visible_pips - 1) * pip_step * 0.5
-	for pip_index in range(visible_pips):
-		var threshold := ceili(float(pip_index + 1) * float(_max_integrity) / float(visible_pips))
-		var filled := _integrity >= threshold
-		var color := Color("73e0b1") if filled else Color("3d2925")
-		draw_circle(Vector2(first_x + pip_index * pip_step, hinge.y - 35.0), 4.5, color)
-	if _integrity == 0:
-		draw_line(hinge + Vector2(-18.0, -18.0), hinge + Vector2(18.0, 18.0), Color("e94d3d"), 6.0, true)
-		draw_line(hinge + Vector2(18.0, -18.0), hinge + Vector2(-18.0, 18.0), Color("e94d3d"), 6.0, true)
 
 
 func _single_hinge() -> Vector2:

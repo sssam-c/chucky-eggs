@@ -382,17 +382,19 @@ func test_main_renders_initial_day_with_grandma_appetite_scorer() -> void:
 	assert_true(grandma.is_idle_motion_active())
 	var hud: Control = main.get_node("Content/HUD")
 	var stage: Control = main.get_node("Content/Stage")
-	var fortitude: Label = main.get_node("Content/HUD/Fortitude")
+	var belt_condition: Control = main.get_node("Content/HUD/BeltCondition")
+	var belt_condition_label: Label = belt_condition.get_node("BeltConditionLabel")
 	var settings: MenuButton = main.get_node("Content/HUD/Settings")
 	assert_lte(stage.position.y, 16.0)
 	assert_gte(grandma.size.x, 260.0)
 	assert_lte(grandma.size.x, 320.0)
 	assert_gte(grandma.size.y, 650.0)
 	assert_gt(grandma.get_global_rect().get_center().x, stage.get_global_rect().get_center().x)
-	assert_true(grandma.get_global_rect().encloses(fortitude.get_global_rect()))
+	assert_true(grandma.get_global_rect().encloses(belt_condition.get_global_rect()))
 	assert_true(grandma.get_global_rect().encloses(settings.get_global_rect()))
 	assert_true(hud.get_global_rect().encloses(grandma.get_global_rect()))
-	assert_eq(fortitude.text, "SPOONS 20 / 20")
+	assert_eq(belt_condition_label.text, "BELT CONDITION  12 / 12")
+	assert_eq(belt_condition.current_condition(), 12)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 3")
 	assert_eq(main.get_node("Content/Stage/Belt/Bin").text, "BIN 0")
 	assert_false(main.has_node("Content/Header"))
@@ -624,7 +626,7 @@ func test_hopper_deck_displays_count_and_opens_an_unordered_egg_collection() -> 
 
 func test_bin_click_opens_every_stored_egg_with_retained_toughness() -> void:
 	var main := _add_main_for_ordered_eggs([
-		"chicken", "chicken", "chicken", "chicken", "spoonbill", "chicken",
+		"chicken", "chicken", "chicken", "chicken", "spoonbill", "chicken", "chicken",
 	])
 	main.set_reduced_motion(true)
 	await _press_and_wait(main, "PinkCircuit")
@@ -711,7 +713,7 @@ func test_debug_mode_can_replace_the_run_with_a_fresh_day_three() -> void:
 	assert_true(main.is_dev_mode())
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 20 / 20")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots").get_child_count(), 5)
 	assert_eq(main.get_node("Content/Stage/CircuitBank").get_child_count(), 3)
 
@@ -733,24 +735,24 @@ func test_debug_settings_picker_starts_with_the_selected_egg_species() -> void:
 	settings_popup.id_pressed.emit(2)
 	assert_true(picker.visible)
 	assert_eq(picker.total_egg_count(), 8)
-	assert_eq(picker.starting_spoon_integrity(), 4)
+	assert_eq(picker.starting_belt_condition(), 12)
 
 	picker.set_egg_order(["kiwi", "quail", "ostrich"])
 	picker.move_egg(2, 0)
-	picker.set_starting_spoon_integrity(18)
+	picker.set_starting_belt_condition(18)
 	picker.submit_selection()
 
 	assert_false(picker.visible)
 	assert_true(main.is_dev_mode())
 	assert_eq(main.dev_starting_egg_kinds(), ["ostrich", "kiwi", "quail"])
-	assert_eq(main.dev_starting_spoon_integrity(), 18)
+	assert_eq(main.dev_starting_belt_condition(), 18)
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 90 / 90")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  18 / 18")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
 
 	main.restart_day()
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 90 / 90")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  18 / 18")
 	assert_eq(main.get_node("Content/Stage/Belt/Slots/Slot1").current_egg().kind, "ostrich")
 
 
@@ -777,7 +779,7 @@ func test_dev_egg_picker_fits_default_and_constrained_viewports() -> void:
 		))
 		assert_eq(
 			picker.get_node("Panel/Margin/Layout/Body/Species/SpeciesButtons").get_child_count(),
-			10
+			9
 		)
 		assert_eq(picker.total_egg_count(), 8)
 
@@ -987,12 +989,12 @@ func test_red_fires_both_connected_spoons_even_when_one_slot_is_empty() -> void:
 	await _press_and_wait(main, "RedCircuit")
 
 	assert_eq(fired_slots, [0, 2])
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 18 / 20")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 0")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 2")
 
 
-func test_empty_blue_strike_fires_advances_and_wears_both_spoons() -> void:
+func test_empty_blue_strike_fires_advances_and_spends_one_belt_condition() -> void:
 	var main := _add_main_for_ordered_eggs([
 		"chicken",
 	])
@@ -1009,36 +1011,12 @@ func test_empty_blue_strike_fires_advances_and_wears_both_spoons() -> void:
 	assert_eq(fired_slots, [1, 3])
 	assert_eq(presented, [
 		"circuit_fired",
-		"spoon_worn",
-		"spoon_worn",
 		"conveyor_advanced",
+		"belt_condition_spent",
 	])
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 18 / 20")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").text, "HOPPER 0")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "TOUGHNESS 3")
-
-
-func test_soft_shelled_impact_prevention_is_presented_before_the_belt_advances() -> void:
-	var main := _add_main_for_ordered_eggs([
-		"soft_shelled", "chicken",
-	])
-	main.set_reduced_motion(true)
-	var presented: Array[String] = []
-	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
-
-	await _press_and_wait(main, "RedCircuit")
-
-	assert_eq(presented, [
-		"circuit_fired",
-		"egg_damaged",
-		"spoon_wear_prevented",
-		"spoon_worn",
-		"conveyor_advanced",
-	])
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 19 / 20")
-	assert_string_contains(
-		main.get_node("Content/Stage/Belt/Slots/Slot2").egg_summary(), "SOFT-SHELLED"
-	)
 
 
 func test_hopper_lift_rises_while_the_next_egg_feeds_the_belt() -> void:
@@ -1184,9 +1162,8 @@ func test_circuit_event_and_damage_are_presented_before_the_belt_advances() -> v
 	assert_eq(presented, [
 		"circuit_fired",
 		"egg_damaged",
-		"spoon_worn",
-		"spoon_worn",
 		"conveyor_advanced",
+		"belt_condition_spent",
 	])
 
 
@@ -1216,11 +1193,11 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	])
 	var red: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
 	var completion_count := [0]
-	var spoon_wear_count := [0]
+	var condition_spend_count := [0]
 	main.playback_completed.connect(func() -> void: completion_count[0] += 1)
 	main.presentation_event.connect(func(event_type: String) -> void:
-		if event_type == "spoon_worn":
-			spoon_wear_count[0] += 1
+		if event_type == "belt_condition_spent":
+			condition_spend_count[0] += 1
 	)
 
 	red.pressed.emit()
@@ -1231,9 +1208,9 @@ func test_second_circuit_press_is_ignored_while_presentation_barrier_is_active()
 	assert_true(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 	await main.playback_completed
 	await get_tree().process_frame
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 18 / 20")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
 	assert_eq(completion_count[0], 1)
-	assert_eq(spoon_wear_count[0], 2)
+	assert_eq(condition_spend_count[0], 1)
 	assert_false(main.get_node("Content/Stage/Pipe/HopperInspect").disabled)
 	assert_false(main.get_node("Content/Stage/Belt/BinInspect").disabled)
 
@@ -1248,14 +1225,12 @@ func test_red_pair_presents_two_cuckoo_echoes_before_hatching_and_advancing() ->
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_eq(presented.slice(0, 10), [
+	assert_eq(presented.slice(0, 8), [
 		"circuit_fired",
 		"egg_damaged",
 		"egg_damaged",
 		"egg_damaged",
 		"egg_damaged",
-		"spoon_worn",
-		"spoon_worn",
 		"egg_hatched",
 		"egg_hatched",
 		"conveyor_advanced",
@@ -1415,7 +1390,7 @@ func test_pink_spoonbill_combo_presents_double_damage_and_the_cuckoo_echo() -> v
 
 	assert_eq(presented.slice(0, 7), [
 		"circuit_fired", "egg_damaged", "egg_damaged",
-		"spoon_worn", "conveyor_advanced", "egg_binned", "egg_entered",
+		"conveyor_advanced", "egg_binned", "egg_entered", "bin_reshuffled",
 	])
 	assert_eq(points_landed, [])
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 10")
@@ -1433,7 +1408,7 @@ func test_restart_cancels_active_circuit_playback_without_stale_state() -> void:
 	await get_tree().create_timer(0.5).timeout
 
 	assert_false(main.is_input_locked())
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 20 / 20")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
 	assert_string_contains(main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "TOUGHNESS 3")
 	assert_eq(completion_count, 0)
 
@@ -1487,14 +1462,14 @@ func test_resolved_hud_facts_trigger_non_blocking_ui_feedback() -> void:
 
 	await _press_and_wait(main, "RedCircuit")
 
-	assert_true("spoons" in kinds)
+	assert_true("belt condition" in kinds)
 	assert_true("hopper" in kinds)
 	assert_true(feedback.has_active_motion())
 	main.set_reduced_motion(true)
 	assert_false(feedback.has_active_motion())
-	assert_eq(main.get_node("Content/HUD/Fortitude").scale, Vector2.ONE)
+	assert_eq(main.get_node("Content/HUD/BeltCondition").scale, Vector2.ONE)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").scale, Vector2.ONE)
-	assert_eq(main.get_node("Content/HUD/Fortitude").modulate, Color.WHITE)
+	assert_eq(main.get_node("Content/HUD/BeltCondition").modulate, Color.WHITE)
 	assert_eq(main.get_node("Content/Stage/Pipe/HopperInspect").modulate, Color.WHITE)
 
 
@@ -1523,7 +1498,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 	var result_panel: Control = main.get_node("ResultOverlay")
 	assert_true(result_panel.visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Result").text, "DAY FAILED")
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 14 / 20")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  9 / 12")
 	assert_false(main.get_node("WorkshopOverlay").visible)
 	assert_true(main.get_node("ResultOverlay/Card/Content/Restart").visible)
 	assert_eq(main.get_node("ResultOverlay/Card/Content/Restart").text, "RETRY DAY 1")
@@ -1535,7 +1510,7 @@ func test_day_result_appears_when_hopper_and_conveyor_are_empty() -> void:
 
 	main.get_node("ResultOverlay/Card/Content/Restart").pressed.emit()
 	assert_false(result_panel.visible)
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 20 / 20")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  12 / 12")
 
 
 func test_success_result_ledger_is_acknowledged_before_the_store_opens() -> void:
@@ -1628,7 +1603,7 @@ func test_success_opens_three_free_quality_offers_on_a_separate_screen() -> void
 		main.get_node("BirdOfferOverlay/Card/Content/BirdOfferSummary").text,
 		"DAY 2 APPETITE 9"
 	)
-	assert_eq(main.get_node("Content/HUD/Fortitude").text, "SPOONS 479 / 495")
+	assert_eq(main.get_node("Content/HUD/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  91 / 99")
 	await get_tree().process_frame
 	assert_true(main.get_node("BirdOfferOverlay/Card/Content/RewardChoices/Choice1").has_focus())
 	var offer_card: Control = main.get_node("BirdOfferOverlay/Card")
@@ -1937,7 +1912,7 @@ func _add_authored_main() -> Control:
 
 
 func _add_main_for_ordered_eggs(
-	egg_kinds: Array[String], starting_spoon_integrity := 4
+	egg_kinds: Array[String], starting_belt_condition := 12
 ) -> Control:
 	var producers: Array[Dictionary] = []
 	for kind: String in egg_kinds:
@@ -1947,7 +1922,7 @@ func _add_main_for_ordered_eggs(
 		ProducerFlock.new(producers),
 		IdentityShuffler.new(),
 		1,
-		starting_spoon_integrity
+		starting_belt_condition
 	)
 	var main := _add_main()
 	main.replace_session(session)

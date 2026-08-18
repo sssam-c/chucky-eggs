@@ -26,6 +26,7 @@ var _slot_hammer_indices: Array[int] = []
 var _echo_trace: Control
 var _hatch_payoff: Control
 var _appetite_display: Control
+var _belt_condition_display: Control
 var _bin_label: Label
 var _generation := 0
 var _busy := false
@@ -56,6 +57,7 @@ func configure(
 	echo_trace: Control,
 	hatch_payoff: Control,
 	appetite_display: Control,
+	belt_condition_display: Control,
 	bin_label: Label
 ) -> void:
 	_belt_slots = belt_slots
@@ -65,6 +67,7 @@ func configure(
 	_echo_trace = echo_trace
 	_hatch_payoff = hatch_payoff
 	_appetite_display = appetite_display
+	_belt_condition_display = belt_condition_display
 	_bin_label = bin_label
 
 
@@ -151,10 +154,10 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_swap(event, playback_generation)
 		"conveyor_advanced":
 			return await _present_conveyor(event, playback_generation)
-		"spoon_wear_prevented":
-			return await _present_spoon_wear_prevented(event, playback_generation)
-		"spoon_worn":
-			return await _present_spoon_wear(event, playback_generation)
+		"belt_condition_spent":
+			_belt_condition_display.render_condition(
+				int(event.remaining_condition), int(event.maximum_condition)
+			)
 		"egg_binned":
 			return await _present_bin(event, playback_generation)
 		"egg_entered":
@@ -165,32 +168,6 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_day_discard(playback_generation)
 		"day_ended":
 			pass
-	return true
-
-
-func _present_spoon_wear_prevented(event: Dictionary, playback_generation: int) -> bool:
-	var slot: Button = _belt_slots[int(event.slot_index)]
-	if _reduced_motion:
-		return true
-	var content: Control = slot.motion_content()
-	var hammer: Control = _hammers[int(event.slot_index)]
-	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	pulse.tween_property(content, "modulate", Color(0.42, 1.0, 0.67, 1.0), 0.08)
-	pulse.parallel().tween_property(content, "scale", Vector2(1.18, 0.82), 0.08)
-	pulse.parallel().tween_property(hammer, "modulate", Color(0.42, 1.0, 0.67, 1.0), 0.08)
-	pulse.tween_property(content, "modulate", Color.WHITE, 0.12)
-	pulse.parallel().tween_property(content, "scale", Vector2.ONE, 0.12)
-	pulse.parallel().tween_property(hammer, "modulate", Color.WHITE, 0.12)
-	return await _run_tween(pulse, playback_generation)
-
-
-func _present_spoon_wear(event: Dictionary, _playback_generation: int) -> bool:
-	var hammer: Control = _hammers[int(event.slot_index)]
-	hammer.render_integrity(int(event.remaining_integrity), int(event.starting_integrity))
-	_play(_impact_player)
-	# The circuit animation already shows the simultaneous physical impacts.
-	# Updating the pips here keeps paired wear simultaneous rather than adding a
-	# second, serial hit animation for each resolver fact.
 	return true
 
 

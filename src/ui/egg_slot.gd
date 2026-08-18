@@ -208,7 +208,7 @@ func _quality_name(tier: int) -> String:
 
 
 func _kind_display_name(kind: String) -> String:
-	return "Soft-Shelled" if kind == "soft_shelled" else kind.capitalize()
+	return kind.capitalize()
 
 
 func _draw() -> void:

@@ -66,11 +66,13 @@ func test_new_species_eggs_receive_their_effects_without_test_injection() -> voi
 		assert_eq(egg.all_other_effects.size(), 1)
 
 
-func test_day_exposes_spoon_integrity_without_legacy_patience_state() -> void:
+func test_day_exposes_belt_condition_without_legacy_pressure_state() -> void:
 	var state: Dictionary = ChickenDay.new(["chicken"]).snapshot()
 
-	assert_eq(state.starting_spoon_integrity, 4)
-	assert_eq(state.spoon_integrity, [4, 4, 4, 4, 4])
+	assert_eq(state.maximum_belt_condition, 12)
+	assert_eq(state.belt_condition, 12)
+	assert_false("starting_spoon_integrity" in state)
+	assert_false("spoon_integrity" in state)
 	assert_false("starting_patience" in state)
 	assert_false("current_patience" in state)
 	assert_false("remaining_thwacks" in state)
@@ -173,11 +175,11 @@ func test_fallen_egg_keeps_damage_and_recycles_when_the_hopper_is_empty() -> voi
 	assert_eq(_event_types(final_events), [
 		"circuit_fired",
 		"egg_damaged",
-		"spoon_worn",
 		"conveyor_advanced",
 		"egg_binned",
 		"bin_reshuffled",
 		"egg_entered",
+		"belt_condition_spent",
 	])
 	assert_eq(shuffler.shuffled_bins.size(), 1)
 	assert_eq(shuffler.shuffled_bins[0][0].kind, "spoonbill")
@@ -202,8 +204,8 @@ func test_empty_hopper_recycles_the_bin_immediately_while_the_conveyor_is_occupi
 
 	assert_eq(_event_types(events), [
 		"circuit_fired", "egg_damaged", "egg_damaged",
-		"spoon_worn", "spoon_worn", "conveyor_advanced", "egg_binned",
-		"bin_reshuffled", "egg_entered",
+		"conveyor_advanced", "egg_binned", "bin_reshuffled", "egg_entered",
+		"belt_condition_spent",
 	])
 	assert_eq(shuffler.shuffled_bins.size(), 1)
 	assert_eq(shuffler.shuffled_bins[0].size(), 1)
@@ -225,11 +227,10 @@ func test_red_fires_and_damages_both_occupied_starting_slots() -> void:
 		"egg_damaged",
 		"egg_damaged",
 		"egg_damaged",
-		"spoon_worn",
-		"spoon_worn",
 		"conveyor_advanced",
 		"egg_binned",
 		"egg_entered",
+		"belt_condition_spent",
 	])
 	assert_eq(events[0].circuit_id, "red")
 	assert_eq(events[0].slot_indices, [0, 2])
@@ -240,7 +241,7 @@ func test_red_fires_and_damages_both_occupied_starting_slots() -> void:
 	assert_eq(state.slots[1].toughness, 2)
 
 
-func test_empty_circuit_wears_its_spoons_and_advances_without_damage() -> void:
+func test_empty_circuit_advances_without_damage_and_spends_one_condition() -> void:
 	var day = ChickenDay.new(["chicken"], 99, 99)
 
 	var events: Array[Dictionary] = day.resolve_circuit("blue")
@@ -248,9 +249,8 @@ func test_empty_circuit_wears_its_spoons_and_advances_without_damage() -> void:
 
 	assert_eq(_event_types(events), [
 		"circuit_fired",
-		"spoon_worn",
-		"spoon_worn",
 		"conveyor_advanced",
+		"belt_condition_spent",
 	])
 	assert_eq(events[0].circuit_id, "blue")
 	assert_eq(events[0].slot_indices, [1, 3])
@@ -280,14 +280,12 @@ func test_red_damages_both_occupied_slots_before_a_cuckoo_between_them_echoes_tw
 		func(event: Dictionary) -> bool: return event.type == "egg_damaged"
 	)
 
-	assert_eq(_event_types(events).slice(0, 7), [
+	assert_eq(_event_types(events).slice(0, 5), [
 		"circuit_fired",
 		"egg_damaged",
 		"egg_damaged",
 		"egg_damaged",
 		"egg_damaged",
-		"spoon_worn",
-		"spoon_worn",
 	])
 	assert_eq(damage_events.map(func(event: Dictionary) -> int: return event.slot_index), [0, 2, 1, 1])
 	assert_eq(damage_events.map(func(event: Dictionary) -> String: return event.cause), [
@@ -445,46 +443,50 @@ func test_surviving_directly_struck_plover_retreats_one_bay_to_screen_left() -> 
 	assert_eq(state.slots[1].toughness, 4)
 
 
-func test_unhatched_egg_is_binned_while_the_hopper_still_has_a_waiting_egg() -> void:
+func test_loading_the_last_hopper_egg_immediately_reshuffles_the_bin() -> void:
+	var shuffler := ReverseShuffler.new()
 	var day = ChickenDay.new([
 		"chicken", "chicken", "chicken", "chicken", "spoonbill", "chicken",
-	], 99, 99)
+	], 99, 99, shuffler)
+	var opening: Dictionary = day.snapshot()
+	var binned_egg_id: int = opening.slots[4].egg_instance_id
+	var entering_egg_id: int = opening.pipe[0].egg_instance_id
 
 	var final_events: Array[Dictionary] = day.resolve_circuit("red")
 
-	var binned := final_events.filter(
-		func(event: Dictionary) -> bool: return event.type == "egg_binned"
-	)
-	assert_eq(binned.size(), 1)
-	assert_eq(binned[0].remaining_toughness, 5)
-	assert_eq(binned[0].bin_egg_count, 1)
+	assert_eq(_event_types(final_events).slice(-4), [
+		"egg_binned", "egg_entered", "bin_reshuffled", "belt_condition_spent",
+	])
+	assert_eq(shuffler.shuffled_bins.size(), 1)
+	assert_eq(shuffler.shuffled_bins[0][0].egg_instance_id, binned_egg_id)
+	assert_eq(shuffler.shuffled_bins[0][0].toughness, 5)
 	var state: Dictionary = day.snapshot()
-	assert_eq(state.bin_egg_count, 1)
-	assert_eq(state.bin.size(), 1)
-	assert_eq(state.bin[0].kind, "spoonbill")
-	assert_eq(state.bin[0].toughness, 5)
+	assert_eq(state.slots[0].egg_instance_id, entering_egg_id)
+	assert_eq(state.bin_egg_count, 0)
+	assert_eq(state.hopper_egg_count, 1)
+	assert_eq(state.pipe[0].egg_instance_id, binned_egg_id)
+	assert_eq(state.pipe[0].toughness, 5)
 
 
-func test_breaking_all_five_spoons_ends_day_and_rejects_further_requests() -> void:
+func test_spending_the_last_belt_condition_ends_day_and_rejects_further_requests() -> void:
 	var eggs: Array[String] = []
 	eggs.resize(12)
 	eggs.fill("chicken")
 	var day = ChickenDay.new(eggs, 99, 1)
 
-	for circuit_id in ["red", "blue", "pink"]:
-		var events: Array[Dictionary] = day.resolve_circuit(circuit_id)
-		assert_ne(events[0].type, "thwack_rejected")
+	var events: Array[Dictionary] = day.resolve_circuit("red")
+	assert_ne(events[0].type, "thwack_rejected")
 
 	var state: Dictionary = day.snapshot()
 	assert_true(state.ended)
-	assert_eq(state.spoon_integrity, [0, 0, 0, 0, 0])
+	assert_eq(state.belt_condition, 0)
 	assert_true(state.slots.all(func(egg: Dictionary) -> bool: return egg.is_empty()))
 	assert_true(state.pipe.is_empty())
 	var rejected: Array[Dictionary] = day.resolve_circuit("red")
 	assert_eq(rejected[0].reason, "day_ended")
 
 
-func test_satisfying_grandma_when_spoons_break_succeeds_after_full_resolution() -> void:
+func test_satisfying_grandma_when_condition_reaches_zero_succeeds_after_full_resolution() -> void:
 	var day = ChickenDay.new(["sparrow"], 1, 1)
 
 	var final_events: Array[Dictionary] = day.resolve_circuit("red")
@@ -493,29 +495,26 @@ func test_satisfying_grandma_when_spoons_break_succeeds_after_full_resolution() 
 	assert_eq(_event_types(final_events), [
 		"circuit_fired",
 		"egg_damaged",
-		"spoon_worn",
-		"spoon_worn",
 		"egg_hatched",
 		"conveyor_advanced",
+		"belt_condition_spent",
 		"day_remainder_discarded",
 		"day_ended",
 	])
-	assert_eq(state.spoon_integrity[0], 0)
+	assert_eq(state.belt_condition, 0)
 	assert_true(state.succeeded)
 	assert_true(final_events[-1].succeeded)
 
 
-func test_breaking_all_spoons_without_satisfying_grandma_fails() -> void:
+func test_spending_last_condition_without_satisfying_grandma_fails() -> void:
 	var eggs: Array[String] = []
 	eggs.resize(12)
 	eggs.fill("chicken")
 	var day = ChickenDay.new(eggs, 99, 1)
-	var final_events: Array[Dictionary] = []
-	for circuit_id in ["red", "blue", "pink"]:
-		final_events = day.resolve_circuit(circuit_id)
+	var final_events: Array[Dictionary] = day.resolve_circuit("red")
 	var state: Dictionary = day.snapshot()
 
-	assert_eq(state.spoon_integrity, [0, 0, 0, 0, 0])
+	assert_eq(state.belt_condition, 0)
 	assert_false(state.succeeded)
 	assert_false(final_events[-1].succeeded)
 
@@ -552,10 +551,7 @@ func test_day_fails_below_its_target() -> void:
 	spoonbill_pool.resize(24)
 	spoonbill_pool.fill("spoonbill")
 	var day = ChickenDay.new(spoonbill_pool, 20, 1)
-	var final_events: Array[Dictionary] = []
-
-	for circuit_id in ["red", "blue", "pink"]:
-		final_events = day.resolve_circuit(circuit_id)
+	var final_events: Array[Dictionary] = day.resolve_circuit("red")
 
 	assert_true(day.snapshot().ended)
 	assert_false(day.snapshot().succeeded)
@@ -565,7 +561,7 @@ func test_day_fails_below_its_target() -> void:
 		func(event: Dictionary) -> bool: return event.type == "day_ended"
 	)[0]
 	assert_eq(day_ended.target_score, 20)
-	assert_eq(day_ended.spoon_integrity, [0, 0, 0, 0, 0])
+	assert_eq(day_ended.belt_condition, 0)
 
 
 func _event_types(events: Array[Dictionary]) -> Array[String]:
