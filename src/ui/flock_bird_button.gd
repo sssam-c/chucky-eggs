@@ -1,12 +1,6 @@
 class_name FlockBirdButton
 extends Button
 
-const QualityPalette = preload("res://src/ui/quality_palette.gd")
-
-var _rarity_color := Color(0, 0, 0, 0)
-
-@onready var _rarity_tint: ColorRect = %RarityTint
-@onready var _rarity_stripe: ColorRect = %RarityStripe
 @onready var _portrait: Control = %Portrait
 @onready var _name_label: Label = %Name
 @onready var _stats_label: Label = %Stats
@@ -15,17 +9,15 @@ var _rarity_color := Color(0, 0, 0, 0)
 
 func render_bird(fact: Dictionary, price: int, can_remove: bool, removal_used := false) -> void:
 	var kind := String(fact.kind)
-	var tier := int(fact.get("tier", 0))
-	_apply_rarity(tier)
 	_portrait.set_bird_kind(kind)
-	_name_label.text = "%s %s" % [_quality_name(tier), kind.to_upper()]
+	_name_label.text = kind.to_upper()
 	var effect_description := _effect_description(String(fact.get("effect", "none")))
 	_stats_label.text = "%d SHELL  •  %d PTS  •  %s" % [
 		int(fact.toughness), int(fact.points), effect_description,
 	]
 	_remove_label.text = "REMOVAL USED" if removal_used else "REMOVE  £%d" % price
 	disabled = not can_remove
-	accessibility_name = "%s %s bird" % [_quality_name(tier).to_lower(), kind.capitalize()]
+	accessibility_name = "%s bird" % kind.capitalize()
 	accessibility_description = (
 		"Lays one egg per day with %d toughness worth %d points. %s Remove for %d pounds.%s"
 		% [
@@ -54,8 +46,12 @@ func _effect_description(effect: String) -> String:
 			return "Sulphurous"
 		"shockwave":
 			return "Shockwave"
-		"deceptively_filling":
-			return "Filling 8"
+		"oily":
+			return "Extra ▶"
+		"nostalgic":
+			return "Reverse ◀"
+		"gloopy":
+			return "Foul −1 • Jam ⚙"
 	return "No effect"
 
 
@@ -65,33 +61,3 @@ func portrait_kind() -> String:
 
 func card_text() -> String:
 	return " ".join([_name_label.text, _stats_label.text, _remove_label.text])
-
-
-func rarity_color() -> Color:
-	return _rarity_color
-
-
-func has_rarity_tint() -> bool:
-	return _rarity_tint.visible
-
-
-func _apply_rarity(tier: int) -> void:
-	_rarity_color = QualityPalette.rarity_color(tier)
-	var accented := _rarity_color.a > 0.0
-	_rarity_tint.visible = accented
-	_rarity_stripe.visible = accented
-	if not accented:
-		return
-	_rarity_tint.color = Color(_rarity_color, 0.18)
-	_rarity_stripe.color = _rarity_color
-
-
-func _quality_name(tier: int) -> String:
-	match tier:
-		0:
-			return "STANDARD"
-		1:
-			return "PRIZE"
-		2:
-			return "CHAMPION"
-	return "TIER %d" % tier

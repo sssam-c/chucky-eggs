@@ -8,7 +8,7 @@ const ChickenDay = preload("res://src/domain/chicken_day.gd")
 const ProducerFlock = preload("res://src/domain/producer_flock.gd")
 const MAX_STARTING_BELT_CONDITION := 99
 
-@onready var _species_buttons: VBoxContainer = %SpeciesButtons
+@onready var _species_buttons: GridContainer = %SpeciesButtons
 @onready var _egg_order_list: ItemList = %EggOrder
 @onready var _move_up: Button = %MoveUp
 @onready var _move_down: Button = %MoveDown

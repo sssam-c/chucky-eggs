@@ -114,6 +114,21 @@ func _effect_sections() -> Dictionary:
 			sections["ON HIT EFFECTS"] = (
 				"Pink weakness — a direct Pink strike deals 2 damage."
 			)
+		"oily":
+			sections["ON HIT EFFECTS"] = (
+				"Oily — a direct hit adds one ▶ before normal belt movement."
+			)
+		"nostalgic":
+			sections["ON HIT EFFECTS"] = (
+				"Nostalgic — a direct hit adds one ◀ before normal belt movement."
+			)
+		"gloopy":
+			sections["ON HIT EFFECTS"] = (
+				"Gloopy — a direct hit jams the next movement instruction."
+			)
+			sections["OTHER EFFECTS"] = (
+				"Foul — hatching produces −1 Yolk and lowers Satisfaction."
+			)
 
 	var extra_effects: Variant = _egg.get("all_other_effects", [])
 	if extra_effects is Array:
@@ -133,15 +148,7 @@ func _double_yolker_chance_text() -> String:
 
 
 func _display_name() -> String:
-	var animal_name := _kind().capitalize()
-	match int(_egg.get("tier", 0)):
-		1:
-			return "Prize %s" % animal_name
-		2:
-			return "Champion %s" % animal_name
-		var tier when tier > 2:
-			return "Tier %d %s" % [tier, animal_name]
-	return animal_name
+	return _kind().capitalize()
 
 
 func _kind() -> String:

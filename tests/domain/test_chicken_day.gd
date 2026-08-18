@@ -1,6 +1,7 @@
 extends GutTest
 
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
+const EggEffects = preload("res://src/domain/egg_effects.gd")
 const AUTHORED_PATTERN: Array[String] = [
 	"chicken", "cuckoo", "chicken", "spoonbill",
 	"cuckoo", "plover", "chicken", "chicken",
@@ -33,7 +34,7 @@ func test_sparrow_is_a_single_hit_single_point_egg() -> void:
 	})
 
 
-func test_new_effect_species_have_the_settled_base_egg_definitions() -> void:
+func test_current_effect_species_have_the_settled_base_egg_definitions() -> void:
 	assert_eq(ChickenDay.egg_definition("quail"), {
 		"kind": "quail", "toughness": 2, "points": 1, "effect": "appetiser",
 		"effects": [{"type": "appetiser"}],
@@ -46,16 +47,15 @@ func test_new_effect_species_have_the_settled_base_egg_definitions() -> void:
 		"kind": "ostrich", "toughness": 7, "points": 3, "effect": "shockwave",
 		"effects": [{"type": "shockwave"}],
 	})
-	assert_eq(ChickenDay.egg_definition("kiwi"), {
-		"kind": "kiwi", "toughness": 3, "points": 0,
-		"effect": "deceptively_filling",
-		"effects": [{"type": "deceptively_filling", "duration": 8}],
-	})
+	assert_eq(ChickenDay.egg_definition("kiwi"), {})
+	assert_eq(EggEffects.SUPPORTED_TYPES, [
+		"appetiser", "sulphurous", "shockwave",
+	])
 
 
 func test_new_species_eggs_receive_their_effects_without_test_injection() -> void:
 	var state: Dictionary = ChickenDay.new([
-		"quail", "maleo", "ostrich", "kiwi",
+		"quail", "maleo", "ostrich",
 	], 99).snapshot()
 	var eggs: Array[Dictionary] = [state.slots[0]]
 	for egg: Dictionary in state.pipe:
@@ -109,17 +109,17 @@ func test_sparrow_hatches_on_its_first_hit_and_doubles_its_point_when_rolled() -
 func test_daily_pool_exposes_three_preview_eggs_and_non_positional_hopper_contents() -> void:
 	var state: Dictionary = ChickenDay.new([
 		"chicken", "spoonbill", "plover", "cuckoo", "sparrow",
-		"maleo", "kiwi", "quail",
+		"maleo", "ostrich", "quail",
 	]).snapshot()
 
 	assert_eq(state.slots.map(func(egg: Dictionary) -> String: return egg.kind), [
 		"chicken", "spoonbill", "plover", "cuckoo", "sparrow",
 	])
 	assert_eq(state.pipe.map(func(egg: Dictionary) -> String: return egg.kind), [
-		"maleo", "kiwi", "quail",
+		"maleo", "ostrich", "quail",
 	])
 	assert_eq(state.hopper_contents.map(func(egg: Dictionary) -> String: return egg.kind), [
-		"kiwi", "maleo", "quail",
+		"maleo", "ostrich", "quail",
 	])
 	assert_false("hopper" in state)
 	assert_eq(state.hopper_egg_count, 3)
@@ -169,12 +169,11 @@ func test_fallen_egg_keeps_damage_and_recycles_when_the_hopper_is_empty() -> voi
 	}], 99, 20, shuffler)
 	var final_events: Array[Dictionary] = []
 
-	for circuit_id in ["red", "blue", "red", "blue", "pink"]:
+	for circuit_id in ["red", "blue", "red", "blue", "red"]:
 		final_events = day.resolve_circuit(circuit_id)
 
 	assert_eq(_event_types(final_events), [
 		"circuit_fired",
-		"egg_damaged",
 		"conveyor_advanced",
 		"egg_binned",
 		"bin_reshuffled",
@@ -183,13 +182,15 @@ func test_fallen_egg_keeps_damage_and_recycles_when_the_hopper_is_empty() -> voi
 	])
 	assert_eq(shuffler.shuffled_bins.size(), 1)
 	assert_eq(shuffler.shuffled_bins[0][0].kind, "spoonbill")
-	assert_eq(shuffler.shuffled_bins[0][0].toughness, 2)
+	assert_eq(shuffler.shuffled_bins[0][0].toughness, 1)
 	var state: Dictionary = day.snapshot()
 	assert_eq(state.bin_egg_count, 0)
 	assert_eq(state.hopper_egg_count, 0)
 	assert_eq(state.slots[0].kind, "spoonbill")
-	assert_eq(state.slots[0].toughness, 2)
-	assert_eq(state.slots[0].max_toughness, 8)
+	assert_eq(state.slots[0].toughness, 1)
+	assert_eq(state.slots[0].max_toughness, 5)
+	assert_false(state.slots[0].has("tier"))
+	assert_false(state.slots[0].has("exact_max_toughness"))
 	assert_false(state.ended)
 
 
@@ -357,7 +358,7 @@ func test_unsuccessful_double_yolker_roll_keeps_the_chicken_at_three_points() ->
 	assert_eq(hatch.points_awarded, 3)
 
 
-func test_quality_uses_exact_multiplier_but_rounds_gameplay_score_down() -> void:
+func test_legacy_quality_fields_do_not_scale_a_standard_egg() -> void:
 	var day = ChickenDay.new([{
 		"kind": "chicken",
 		"tier": 1,
@@ -366,22 +367,23 @@ func test_quality_uses_exact_multiplier_but_rounds_gameplay_score_down() -> void
 		"is_double_yolker": true,
 	}])
 	var initial_egg: Dictionary = day.snapshot().slots[0]
-	assert_eq(initial_egg.toughness, 5)
-	assert_eq(initial_egg.max_toughness, 5)
-	assert_almost_eq(float(initial_egg.exact_max_toughness), 4.5, 0.00001)
+	assert_eq(initial_egg.toughness, 3)
+	assert_eq(initial_egg.max_toughness, 3)
+	assert_false(initial_egg.has("tier"))
+	assert_false(initial_egg.has("exact_max_toughness"))
 
 	var events: Array[Dictionary] = []
-	for circuit_id in ["red", "blue", "red", "blue", "pink"]:
+	for circuit_id in ["red", "blue", "red"]:
 		events = day.resolve_circuit(circuit_id)
 	var hatch: Dictionary = events.filter(func(event: Dictionary) -> bool:
 		return event.type == "egg_hatched"
 	)[0]
 
-	assert_eq(hatch.base_points, 4)
-	assert_eq(hatch.points_awarded, 8)
-	assert_eq(hatch.score, 8)
-	assert_almost_eq(float(hatch.exact_base_points), 4.5, 0.00001)
-	assert_eq(hatch.tier, 1)
+	assert_eq(hatch.base_points, 3)
+	assert_eq(hatch.points_awarded, 6)
+	assert_eq(hatch.score, 6)
+	assert_false(hatch.has("exact_base_points"))
+	assert_false(hatch.has("tier"))
 
 
 func test_pink_deals_two_damage_to_a_spoonbill_in_slot_five() -> void:

@@ -14,19 +14,14 @@ func render_producer(fact: Dictionary) -> void:
 	production_fact = fact.duplicate(true)
 	var kind := String(fact.kind)
 	_portrait.set_bird_kind(kind)
-	var tier := int(fact.get("tier", 0))
-	_name_label.text = "%s%s" % [
-		"%s " % _quality_name(tier) if tier > 0 else "",
-		kind.to_upper(),
-	]
+	_name_label.text = kind.to_upper()
 	_yield_label.text = "LAYS ×1"
-	# Quality is already visible in the bird title and egg rings. Repeating exact
-	# odds on every loading tile would make this transition denser than the shop.
+	# Repeating exact odds on every loading tile would make this transition denser
+	# than the reward and flock views where the choice is actually made.
 	_odds_label.text = ""
 	_odds_label.visible = false
 	var egg := {
 		"kind": kind,
-		"tier": tier,
 		"toughness": int(fact.toughness),
 		"max_toughness": int(fact.toughness),
 		"points": int(fact.points),
@@ -41,12 +36,3 @@ func egg_origins_global() -> Array[Vector2]:
 
 func odds_text() -> String:
 	return _odds_label.text if _odds_label.visible else ""
-
-
-func _quality_name(tier: int) -> String:
-	match tier:
-		1:
-			return "PRIZE"
-		2:
-			return "CHAMPION"
-	return "TIER %d" % tier

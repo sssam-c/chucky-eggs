@@ -26,11 +26,11 @@ func test_starting_flock_has_eight_one_egg_producers_including_three_sparrows() 
 	assert_eq(egg_kinds.count("sparrow"), 3)
 	assert_eq(egg_kinds.count("plover"), 0)
 	assert_true(producers.all(func(producer: Dictionary) -> bool:
-		return producer.tier == 0
+		return producer.keys() == ["kind"]
 	))
 
 
-func test_starting_chickens_share_the_standard_quality_double_yolker_chance() -> void:
+func test_starting_chickens_share_the_settled_double_yolker_chance() -> void:
 	var flock = ProducerFlock.new()
 	var producers: Array[Dictionary] = flock.snapshot()
 	var laid_eggs: Array[Dictionary] = flock.lay_daily_eggs(EligibleEggsDoubleRoller.new())
@@ -45,9 +45,11 @@ func test_starting_chickens_share_the_standard_quality_double_yolker_chance() ->
 		return bool(egg.is_double_yolker)
 	).size(), 6)
 	assert_true(laid_eggs.all(func(egg: Dictionary) -> bool:
-		return egg.has_all([
-			"kind", "tier", "quality_multiplier", "double_yolk_chance", "is_double_yolker",
-		])
+		return (
+			egg.has_all(["kind", "double_yolk_chance", "is_double_yolker"])
+			and not egg.has("tier")
+			and not egg.has("quality_multiplier")
+		)
 	))
 
 
@@ -61,22 +63,23 @@ func test_standard_sparrows_have_five_percent_double_yolker_chance() -> void:
 	assert_true(laid_eggs[0].is_double_yolker)
 
 
-func test_new_effect_species_are_permanent_producers_with_settled_double_yolk_odds() -> void:
+func test_current_effect_species_are_permanent_producers_with_settled_double_yolk_odds() -> void:
 	assert_eq(ProducerFlock.PRODUCER_KINDS, [
 		"chicken", "cuckoo", "sparrow", "plover", "spoonbill",
-		"quail", "maleo", "ostrich", "kiwi",
+		"quail", "maleo", "ostrich", "oily", "nostalgic", "gloopy",
 	])
 	var laid_eggs: Array[Dictionary] = ProducerFlock.new([
-		{"kind": "quail"}, {"kind": "maleo"},
-		{"kind": "ostrich"}, {"kind": "kiwi"},
+		{"kind": "quail"}, {"kind": "maleo"}, {"kind": "ostrich"},
+		{"kind": "oily"}, {"kind": "nostalgic"}, {"kind": "gloopy"},
 	]).lay_daily_eggs(EligibleEggsDoubleRoller.new())
 
 	assert_eq(laid_eggs.map(func(egg: Dictionary) -> float:
 		return float(egg.double_yolk_chance)
-	), [0.0, 0.01, 0.01, 0.0])
+	), [0.0, 0.01, 0.01, 0.0, 0.0, 0.0])
 	assert_eq(laid_eggs.map(func(egg: Dictionary) -> bool:
 		return bool(egg.is_double_yolker)
-	), [false, true, true, false])
+	), [false, true, true, false, false, false])
+	assert_eq(ProducerFlock.producer_for_kind("kiwi"), {})
 
 
 func test_every_producer_lays_exactly_one_egg() -> void:
@@ -94,7 +97,7 @@ func test_adding_a_producer_adds_one_bird_and_one_daily_egg() -> void:
 
 	var added: Dictionary = flock.add_producer("spoonbill")
 
-	assert_eq(added, {"kind": "spoonbill", "tier": 0})
+	assert_eq(added, {"kind": "spoonbill"})
 	assert_eq(flock.snapshot().size(), original_daily_output + 1)
 	assert_eq(flock.lay_daily_egg_kinds().size(), original_daily_output + 1)
 	assert_eq(flock.lay_daily_egg_kinds().count("spoonbill"), 1)
@@ -108,24 +111,14 @@ func test_chicken_addition_contributes_one_egg() -> void:
 	assert_eq(flock.lay_daily_egg_kinds(), ["chicken"])
 
 
-func test_adding_an_offered_quality_preserves_that_birds_tier() -> void:
-	var flock = ProducerFlock.new([])
-
-	assert_eq(flock.add_producer("plover", 3), {"kind": "plover", "tier": 3})
-	assert_eq(flock.snapshot(), [{"kind": "plover", "tier": 3}])
-
-
-func test_quality_compounds_exactly_while_laid_eggs_keep_the_real_values() -> void:
-	var flock = ProducerFlock.new([
-		{"kind": "chicken", "tier": 2}, {"kind": "cuckoo", "tier": 1},
-	])
+func test_legacy_quality_fields_do_not_change_standard_producers_or_eggs() -> void:
+	var flock = ProducerFlock.new([{"kind": "chicken", "tier": 2}])
 	var eggs: Array[Dictionary] = flock.lay_daily_eggs(EligibleEggsDoubleRoller.new())
 
-	assert_almost_eq(float(eggs[0].quality_multiplier), 2.25, 0.00001)
-	assert_almost_eq(float(eggs[0].double_yolk_chance), 0.045, 0.00001)
-	assert_eq(eggs[0].tier, 2)
-	assert_almost_eq(float(eggs[1].quality_multiplier), 1.5, 0.00001)
-	assert_eq(eggs[1].double_yolk_chance, 0.0)
+	assert_eq(flock.snapshot(), [{"kind": "chicken"}])
+	assert_almost_eq(float(eggs[0].double_yolk_chance), 0.02, 0.00001)
+	assert_false(eggs[0].has("tier"))
+	assert_false(eggs[0].has("quality_multiplier"))
 
 
 func test_removing_by_overview_position_targets_that_exact_flock_entry() -> void:
@@ -133,12 +126,12 @@ func test_removing_by_overview_position_targets_that_exact_flock_entry() -> void
 		{"kind": "chicken", "tier": 1}, {"kind": "chicken"}, {"kind": "plover"},
 	])
 
-	assert_eq(flock.remove_producer_at(0), {"kind": "chicken", "tier": 1})
+	assert_eq(flock.remove_producer_at(0), {"kind": "chicken"})
 	assert_eq(flock.lay_daily_egg_kinds(), ["chicken", "plover"])
 	assert_true(flock.remove_producer_at(9).is_empty())
 	assert_eq(flock.snapshot().size(), 2)
 	assert_true(flock.snapshot().all(func(producer: Dictionary) -> bool:
-		return producer.has_all(["kind", "tier"])
+		return producer.keys() == ["kind"]
 	))
 
 

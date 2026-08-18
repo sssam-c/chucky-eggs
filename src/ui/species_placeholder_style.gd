@@ -12,7 +12,9 @@ const COLOURS := {
 	"quail": Color("9b72b8"),
 	"maleo": Color("df765e"),
 	"ostrich": Color("b69a62"),
-	"kiwi": Color("806044"),
+	"oily": Color("587b9b"),
+	"nostalgic": Color("c48755"),
+	"gloopy": Color("668f6e"),
 }
 
 const SHAPES := {
@@ -24,7 +26,9 @@ const SHAPES := {
 	"quail": "topknot",
 	"maleo": "casque",
 	"ostrich": "tall_neck",
-	"kiwi": "long_beak",
+	"oily": "status_oily",
+	"nostalgic": "status_nostalgic",
+	"gloopy": "status_gloopy",
 }
 
 static func colour(kind: String) -> Color:

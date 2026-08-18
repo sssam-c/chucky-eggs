@@ -1,4 +1,4 @@
-[gd_scene load_steps=25 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://src/ui/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
@@ -18,6 +18,19 @@
 [ext_resource type="PackedScene" path="res://src/ui/grandma_scorer.tscn" id="17_grandma"]
 [ext_resource type="PackedScene" path="res://src/ui/dev_egg_picker.tscn" id="18_dev_picker"]
 [ext_resource type="Script" path="res://src/ui/belt_condition_display.gd" id="19_belt_condition"]
+[ext_resource type="Script" path="res://src/ui/movement_instruction_preview.gd" id="20_movement_preview"]
+
+[sub_resource type="StyleBoxFlat" id="MovementPreviewPanel"]
+bg_color = Color(0.045, 0.052, 0.055, 0.96)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.42, 0.49, 0.45, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
 
 [sub_resource type="StyleBoxFlat" id="BeltConditionBackground"]
 bg_color = Color(0.035, 0.039, 0.043, 1)
@@ -354,6 +367,53 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="MovementPreview" type="PanelContainer" parent="Content/Stage/Belt"]
+unique_name_in_owner = true
+z_index = 5
+layout_mode = 0
+offset_left = 338.0
+offset_top = 202.0
+offset_right = 770.0
+offset_bottom = 258.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("MovementPreviewPanel")
+script = ExtResource("20_movement_preview")
+
+[node name="Layout" type="HBoxContainer" parent="Content/Stage/Belt/MovementPreview"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Content/Stage/Belt/MovementPreview/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(132, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.78, 0.73, 1)
+theme_override_font_sizes/font_size = 11
+text = "BELT INSTRUCTIONS"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Sequence" type="Label" parent="Content/Stage/Belt/MovementPreview/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(105, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.77, 0.36, 1)
+theme_override_font_sizes/font_size = 22
+text = "—"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Status" type="Label" parent="Content/Stage/Belt/MovementPreview/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.75, 0.9, 0.76, 1)
+theme_override_font_sizes/font_size = 11
+text = "FOCUS A LEVER TO PREVIEW"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
 
 [node name="BeltCondition" type="Control" parent="Content/Stage/Belt"]
 unique_name_in_owner = true

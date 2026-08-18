@@ -57,7 +57,6 @@ func _draw() -> void:
 	var radius_y := radii.y
 
 	_draw_placeholder_shell(center, radius_x, radius_y)
-	_draw_quality_rings(center, radius_x, radius_y)
 
 	var toughness: int = _egg.get("toughness", 4)
 	var max_toughness: int = _egg.get("max_toughness", 4)
@@ -220,37 +219,17 @@ func effect_emblem() -> String:
 			return "sulphurous"
 		"ostrich":
 			return "shockwave"
-		"kiwi":
-			return "filling"
+		"oily":
+			return "oily"
+		"nostalgic":
+			return "nostalgic"
+		"gloopy":
+			return "gloopy"
 	return ""
 
 
 func egg_kind() -> String:
 	return String(_egg.get("kind", ""))
-
-
-func quality_tier() -> int:
-	return int(_egg.get("tier", 0))
-
-
-func quality_ring_count() -> int:
-	return mini(quality_tier(), 3)
-
-
-func _draw_quality_rings(center: Vector2, radius_x: float, radius_y: float) -> void:
-	for ring_index in range(quality_ring_count()):
-		var inset := 6.0 + ring_index * 5.0
-		var ring_points := PackedVector2Array()
-		for point_index in range(40):
-			var angle := TAU * float(point_index) / 40.0
-			var vertical := sin(angle)
-			var taper := lerpf(0.78, 1.08, (vertical + 1.0) * 0.5)
-			ring_points.append(center + Vector2(
-				cos(angle) * maxf(radius_x - inset, 1.0) * taper,
-				vertical * maxf(radius_y - inset, 1.0)
-			))
-		ring_points.append(ring_points[0])
-		draw_polyline(ring_points, Color("f3cf62"), 2.2 if not _preview else 1.5, true)
 
 
 func _draw_information_marks(center: Vector2, radius_y: float) -> void:
@@ -270,23 +249,40 @@ func _draw_information_marks(center: Vector2, radius_y: float) -> void:
 			_draw_sulphurous_emblem(emblem_center, mark_scale)
 		"shockwave":
 			_draw_shockwave_emblem(emblem_center, mark_scale)
-		"filling":
-			_draw_filling_emblem(emblem_center, mark_scale)
+		"oily":
+			_draw_play_emblem(emblem_center, mark_scale, false)
+		"nostalgic":
+			_draw_play_emblem(emblem_center, mark_scale, true)
+		"gloopy":
+			_draw_jammed_cog_emblem(emblem_center, mark_scale)
 
 
 func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 	var outer_radius := 15.0 * mark_scale
+	var is_foul := score_seal_value() < 0
 	var seal_points := PackedVector2Array()
 	for point_index in range(20):
 		var angle := TAU * float(point_index) / 20.0 - PI * 0.5
 		var radius := outer_radius if point_index % 2 == 0 else outer_radius * 0.82
 		seal_points.append(center + Vector2(cos(angle), sin(angle)) * radius)
-	draw_colored_polygon(seal_points, Color("b66a2b"))
+	draw_colored_polygon(
+		seal_points, Color("436b3d") if is_foul else Color("b66a2b")
+	)
 	var outline := seal_points.duplicate()
 	outline.append(seal_points[0])
-	draw_polyline(outline, Color("4b2415"), 2.2 * mark_scale, true)
-	draw_circle(center, 10.5 * mark_scale, Color("f1bd55"))
-	draw_arc(center, 10.5 * mark_scale, 0.0, TAU, 20, Color("70401e"), 1.7 * mark_scale, true)
+	draw_polyline(
+		outline, Color("1d321b") if is_foul else Color("4b2415"),
+		2.2 * mark_scale, true
+	)
+	draw_circle(
+		center, 10.5 * mark_scale,
+		Color("a7d66d") if is_foul else Color("f1bd55")
+	)
+	draw_arc(
+		center, 10.5 * mark_scale, 0.0, TAU, 20,
+		Color("304e2a") if is_foul else Color("70401e"),
+		1.7 * mark_scale, true
+	)
 	var font_size := 16 if not _preview else 11
 	var text_width := 24.0 * mark_scale
 	draw_string(
@@ -296,7 +292,7 @@ func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 		HORIZONTAL_ALIGNMENT_CENTER,
 		text_width,
 		font_size,
-		Color("3a1b12")
+		Color("142314") if is_foul else Color("3a1b12")
 	)
 
 
@@ -397,11 +393,36 @@ func _draw_shockwave_emblem(center: Vector2, mark_scale: float) -> void:
 		)
 
 
-func _draw_filling_emblem(center: Vector2, mark_scale: float) -> void:
-	var ink := Color("352316")
-	draw_arc(center, 11.0 * mark_scale, 0.0, TAU, 24, ink, 2.4 * mark_scale, true)
-	for point in [Vector2(-4, -3), Vector2(3, -3), Vector2(0, 4)]:
-		draw_circle(center + point * mark_scale, 2.3 * mark_scale, ink)
+func _draw_play_emblem(center: Vector2, mark_scale: float, reversed: bool) -> void:
+	var direction := -1.0 if reversed else 1.0
+	var ink := Color("172b35") if not reversed else Color("4c2d18")
+	var points := PackedVector2Array([
+		center + Vector2(-7.0 * direction, -10.0) * mark_scale,
+		center + Vector2(10.0 * direction, 0.0) * mark_scale,
+		center + Vector2(-7.0 * direction, 10.0) * mark_scale,
+	])
+	draw_colored_polygon(points, Color(0.88, 0.95, 0.90, 0.78))
+	var outline := points.duplicate()
+	outline.append(points[0])
+	draw_polyline(outline, ink, 2.4 * mark_scale, true)
+
+
+func _draw_jammed_cog_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := Color("243a27")
+	for tooth_index in range(8):
+		var angle := TAU * float(tooth_index) / 8.0
+		draw_line(
+			center + Vector2.from_angle(angle) * 8.0 * mark_scale,
+			center + Vector2.from_angle(angle) * 13.0 * mark_scale,
+			ink, 3.0 * mark_scale, true
+		)
+	draw_circle(center, 9.0 * mark_scale, Color(0.77, 0.91, 0.66, 0.82))
+	draw_arc(center, 9.0 * mark_scale, 0.0, TAU, 20, ink, 2.2 * mark_scale, true)
+	draw_line(
+		center + Vector2(-9.0, 9.0) * mark_scale,
+		center + Vector2(9.0, -9.0) * mark_scale,
+		Color("6b241f"), 3.0 * mark_scale, true
+	)
 
 
 func _draw_crack(origin: Vector2, offsets: Array[Vector2]) -> void:

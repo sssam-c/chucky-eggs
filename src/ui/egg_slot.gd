@@ -114,8 +114,7 @@ func current_egg() -> Dictionary:
 func egg_summary() -> String:
 	if _egg.is_empty():
 		return "EMPTY"
-	return "%s%s EGG TOUGHNESS %d %d %s" % [
-		"%s " % _quality_name(int(_egg.get("tier", 0))) if int(_egg.get("tier", 0)) > 0 else "",
+	return "%s EGG TOUGHNESS %d %d %s" % [
 		_kind_display_name(String(_egg.kind)).to_upper(),
 		_egg.toughness,
 		_egg.points,
@@ -126,8 +125,7 @@ func egg_summary() -> String:
 func egg_description() -> String:
 	if _egg.is_empty():
 		return "No egg in this slot."
-	return "%s%s egg: %d toughness remaining, worth %d %s; %s." % [
-		"%s " % _quality_name(int(_egg.get("tier", 0))) if int(_egg.get("tier", 0)) > 0 else "",
+	return "%s egg: %d toughness remaining, worth %d %s; %s." % [
 		_kind_display_name(String(_egg.kind)),
 		_egg.toughness,
 		_egg.points,
@@ -146,14 +144,6 @@ func effect_emblem() -> String:
 
 func egg_kind() -> String:
 	return _egg.get("kind", "")
-
-
-func quality_tier() -> int:
-	return _egg_visual.quality_tier()
-
-
-func quality_ring_count() -> int:
-	return _egg_visual.quality_ring_count()
 
 
 func impact_global_position() -> Vector2:
@@ -196,17 +186,6 @@ func _effect_description(egg: Dictionary) -> String:
 	for description: Variant in egg.get("all_other_effects", []):
 		descriptions.append(String(description))
 	return "; ".join(descriptions) if not descriptions.is_empty() else "no extra effect"
-
-
-func _quality_name(tier: int) -> String:
-	match tier:
-		1:
-			return "Prize"
-		2:
-			return "Champion"
-	return "Tier %d" % tier
-
-
 func _kind_display_name(kind: String) -> String:
 	return kind.capitalize()
 

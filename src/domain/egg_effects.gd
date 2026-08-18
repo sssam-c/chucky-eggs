@@ -4,12 +4,10 @@ extends RefCounted
 const APPETISER := "appetiser"
 const SULPHUROUS := "sulphurous"
 const SHOCKWAVE := "shockwave"
-const DECEPTIVELY_FILLING := "deceptively_filling"
 const SUPPORTED_TYPES: Array[String] = [
 	APPETISER,
 	SULPHUROUS,
 	SHOCKWAVE,
-	DECEPTIVELY_FILLING,
 ]
 
 
@@ -22,12 +20,7 @@ static func normalize(raw_effects: Variant) -> Array[Dictionary]:
 		assert(raw_effect is Dictionary, "An egg effect must be a dictionary descriptor.")
 		var effect_type := String(raw_effect.get("type", ""))
 		assert(effect_type in SUPPORTED_TYPES, "Unknown egg effect: %s" % effect_type)
-		var effect := {"type": effect_type}
-		if effect_type == DECEPTIVELY_FILLING:
-			var duration := int(raw_effect.get("duration", 0))
-			assert(duration > 0, "Deceptively Filling needs a positive duration.")
-			effect["duration"] = duration
-		normalized.append(effect)
+		normalized.append({"type": effect_type})
 	return normalized
 
 
@@ -66,9 +59,4 @@ static func descriptions(effects: Array[Dictionary]) -> Array[String]:
 				result.append("Sulphurous: suppresses 2 Appetite for the rest of the day")
 			SHOCKWAVE:
 				result.append("Shockwave: strikes the adjacent slots when this egg hatches")
-			DECEPTIVELY_FILLING:
-				result.append(
-					"Deceptively Filling (%d): banks slow-release Yolk, releasing 1 each future thwack"
-					% int(effect.duration)
-				)
 	return result

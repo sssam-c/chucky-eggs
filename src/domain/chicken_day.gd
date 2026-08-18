@@ -23,8 +23,10 @@ const MALEO_TOUGHNESS := 6
 const MALEO_POINTS := 3
 const OSTRICH_TOUGHNESS := 7
 const OSTRICH_POINTS := 3
-const KIWI_TOUGHNESS := 3
-const KIWI_POINTS := 0
+const MOVEMENT_EGG_TOUGHNESS := 3
+const MOVEMENT_EGG_POINTS := 1
+const GLOOPY_TOUGHNESS := 2
+const GLOOPY_POINTS := -1
 var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
 var _bin: Array[Dictionary] = []
@@ -77,6 +79,7 @@ func snapshot() -> Dictionary:
 		"bin_egg_count": _bin.size(),
 		"daily_egg_count": _daily_egg_count,
 		"circuits": _circuits.duplicate(true),
+		"movement_previews": _movement_previews(),
 		"slot_count": _slots.size(),
 		"belt_condition": _belt_condition,
 		"maximum_belt_condition": _maximum_belt_condition,
@@ -101,7 +104,7 @@ func _egg_content_precedes(first: Dictionary, second: Dictionary) -> bool:
 	var second_kind := String(second.get("kind", ""))
 	if first_kind != second_kind:
 		return first_kind < second_kind
-	for key in ["tier", "toughness", "max_toughness", "points"]:
+	for key in ["toughness", "max_toughness", "points"]:
 		var first_value := float(first.get(key, 0.0))
 		var second_value := float(second.get(key, 0.0))
 		if not is_equal_approx(first_value, second_value):
@@ -124,9 +127,11 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 			occupied_slot_indices.append(slot_index)
 
 	var events: Array[Dictionary] = []
+	# Movement instructions belong to the eggs directly under the spoons at the
+	# instant of the thwack. Capture them before damage, hatches, and swaps alter
+	# the belt; echoes and shockwaves therefore cannot add instructions later.
+	var movement_plan := movement_preview(circuit_id)
 	_resolved_egg_ids_this_thwack.clear()
-	_score = _grandma_effects.begin_thwack(_target_score, _score, events)
-	_effective_target_score = _grandma_effects.effective_appetite(_target_score)
 	events.append({
 		"type": "circuit_fired",
 		"circuit_id": circuit_id,
@@ -141,7 +146,7 @@ func resolve_circuit(circuit_id: String) -> Array[Dictionary]:
 		-1
 	)
 	_retreat_surviving_plovers_left(occupied_slot_indices, events)
-	_move_belt(events, 1)
+	_resolve_movement_plan(movement_plan, events)
 
 	# Success takes precedence after the complete thwack, including the paid movement.
 	var succeeded_this_thwack: bool = _score >= _effective_target_score
@@ -242,7 +247,6 @@ func _resolve_hatches(events: Array[Dictionary], circuit_id: String) -> void:
 		_resolved_egg_ids_this_thwack[egg_instance_id] = true
 		_slots[slot_index] = {}
 		var base_points := int(egg.points)
-		var exact_base_points := float(egg.get("exact_base_points", base_points))
 		var is_double_yolker := bool(egg.get("is_double_yolker", false))
 		var yolk_produced := base_points * 2 if is_double_yolker else base_points
 		var appetiser_multiplier := _grandma_effects.appetiser_multiplier_for_yolk(
@@ -255,9 +259,7 @@ func _resolve_hatches(events: Array[Dictionary], circuit_id: String) -> void:
 			"egg_instance_id": egg_instance_id,
 			"slot_index": slot_index,
 			"kind": egg.kind,
-			"tier": int(egg.get("tier", 0)),
 			"base_points": base_points,
-			"exact_base_points": exact_base_points,
 			"double_yolker": is_double_yolker,
 			"yolk_produced": yolk_produced,
 			"appetiser_multiplier": appetiser_multiplier,
@@ -343,13 +345,113 @@ static func screen_left_destination(slot_index: int, slot_count := SLOT_COUNT) -
 	return slot_index - 1 if slot_index > 0 else -1
 
 
-func _move_belt(events: Array[Dictionary], movement_steps: int) -> void:
-	assert(movement_steps >= 0, "Belt movement cannot use negative steps.")
-	for _step_index in range(movement_steps):
-		_advance_conveyor(events)
-		_refill_belt(events)
-	if movement_steps == 0:
-		return
+func _movement_previews() -> Dictionary:
+	var previews := {}
+	for circuit: Dictionary in _circuits:
+		previews[String(circuit.id)] = movement_preview(String(circuit.id))
+	return previews
+
+
+func movement_preview(circuit_id: String) -> Dictionary:
+	var circuit := _circuit(circuit_id)
+	if circuit.is_empty():
+		return {}
+
+	var instructions: Array[Dictionary] = []
+	var slot_indices: Array[int] = []
+	slot_indices.assign(circuit.slot_indices)
+	slot_indices.sort()
+	for slot_index: int in slot_indices:
+		if _slots[slot_index].is_empty():
+			continue
+		var thwack_effect := String(_slots[slot_index].get("thwack_effect", ""))
+		match thwack_effect:
+			"oily":
+				instructions.append({
+					"type": "forward", "source": "oily", "source_slot_index": slot_index,
+				})
+			"nostalgic":
+				instructions.append({
+					"type": "reverse", "source": "nostalgic", "source_slot_index": slot_index,
+				})
+			"gloopy":
+				instructions.append({
+					"type": "jam", "source": "gloopy", "source_slot_index": slot_index,
+				})
+	# Every committed thwack ends with the machine's normal forward instruction.
+	instructions.append({
+		"type": "forward", "source": "normal", "source_slot_index": -1,
+	})
+
+	var sequence: Array[String] = []
+	var outcomes: Array[String] = []
+	var pending_jams := 0
+	for instruction: Dictionary in instructions:
+		var instruction_type := String(instruction.type)
+		sequence.append(instruction_type)
+		if instruction_type == "jam":
+			pending_jams += 1
+			outcomes.append("armed")
+		elif pending_jams > 0:
+			pending_jams -= 1
+			outcomes.append("blocked")
+		else:
+			outcomes.append("execute")
+	return {
+		"circuit_id": circuit_id,
+		"instructions": instructions,
+		"sequence": sequence,
+		"outcomes": outcomes,
+		"unused_jams": pending_jams,
+	}
+
+
+func _resolve_movement_plan(plan: Dictionary, events: Array[Dictionary]) -> void:
+	var instructions: Array[Dictionary] = []
+	instructions.assign(plan.get("instructions", []))
+	var outcomes: Array[String] = []
+	outcomes.assign(plan.get("outcomes", []))
+	var pending_jams := 0
+	var movement_steps := 0
+	for instruction_index in range(instructions.size()):
+		var instruction: Dictionary = instructions[instruction_index]
+		var instruction_type := String(instruction.type)
+		var outcome := outcomes[instruction_index]
+		if instruction_type == "jam":
+			pending_jams += 1
+			events.append({
+				"type": "movement_jam_added",
+				"source": String(instruction.source),
+				"source_slot_index": int(instruction.source_slot_index),
+				"pending_jams": pending_jams,
+			})
+			continue
+		if outcome == "blocked":
+			pending_jams -= 1
+			events.append({
+				"type": "movement_instruction_cancelled",
+				"instruction": instruction_type,
+				"source": String(instruction.source),
+				"source_slot_index": int(instruction.source_slot_index),
+				"pending_jams": pending_jams,
+			})
+			continue
+		movement_steps += 1
+		if instruction_type == "reverse":
+			_reverse_conveyor(events)
+		else:
+			_advance_conveyor(events)
+			_refill_belt(events)
+
+	if pending_jams > 0:
+		events.append({
+			"type": "movement_jams_expired",
+			"amount": pending_jams,
+		})
+	_spend_belt_condition(events, movement_steps)
+
+
+func _spend_belt_condition(events: Array[Dictionary], movement_steps: int) -> void:
 	_belt_condition = maxi(_belt_condition - 1, 0)
 	events.append({
 		"type": "belt_condition_spent",
@@ -358,6 +460,26 @@ func _move_belt(events: Array[Dictionary], movement_steps: int) -> void:
 		"remaining_condition": _belt_condition,
 		"maximum_condition": _maximum_belt_condition,
 	})
+
+
+func _reverse_conveyor(events: Array[Dictionary]) -> void:
+	var returned_egg: Dictionary = _slots[0]
+	for slot_index in range(_slots.size() - 1):
+		_slots[slot_index] = _slots[slot_index + 1]
+	_slots[-1] = {}
+	if not returned_egg.is_empty():
+		_hopper.push_front(returned_egg)
+	events.append({
+		"type": "conveyor_reversed",
+		"slots": _slots.duplicate(true),
+	})
+	if not returned_egg.is_empty():
+		events.append({
+			"type": "egg_returned_to_hopper",
+			"egg": returned_egg.duplicate(true),
+			"hopper_egg_count": _hopper.size(),
+			"pipe": _hopper.slice(0, PIPE_PREVIEW_COUNT).duplicate(true),
+		})
 
 
 func _advance_conveyor(events: Array[Dictionary]) -> void:
@@ -476,22 +598,8 @@ func _new_egg(laid_egg: Variant) -> Dictionary:
 		if laid_egg is Dictionary
 		else false
 	)
-	var tier := (
-		int(laid_egg.get("tier", 0))
-		if laid_egg is Dictionary
-		else 0
-	)
-	var quality_multiplier := (
-		float(laid_egg.get("quality_multiplier", 1.0))
-		if laid_egg is Dictionary
-		else 1.0
-	)
-	assert(tier >= 0, "An egg's quality tier cannot be negative.")
-	assert(quality_multiplier >= 1.0, "An egg's quality multiplier cannot be below one.")
 	assert(double_yolk_chance >= 0.0 and double_yolk_chance <= 1.0, "Double Yolker chance must be between zero and one.")
-	var exact_base_points := float(definition.points) * quality_multiplier
-	var exact_max_toughness := float(definition.toughness) * quality_multiplier
-	var max_toughness := ceili(exact_max_toughness)
+	var max_toughness := int(definition.toughness)
 	var raw_effects: Array = definition.get("effects", []).duplicate(true)
 	if laid_egg is Dictionary:
 		for supplied_effect: Variant in laid_egg.get("effects", []):
@@ -502,16 +610,14 @@ func _new_egg(laid_egg: Variant) -> Dictionary:
 	return {
 		"egg_instance_id": egg_instance_id,
 		"kind": definition.kind,
-		"tier": tier,
 		"toughness": max_toughness,
 		"max_toughness": max_toughness,
-		"exact_max_toughness": exact_max_toughness,
-		"points": floori(exact_base_points),
-		"exact_base_points": exact_base_points,
+		"points": int(definition.points),
 		"double_yolk_chance": double_yolk_chance,
 		"is_double_yolker": is_double_yolker,
 		"effects": effects,
 		"all_other_effects": EggEffects.descriptions(effects),
+		"thwack_effect": String(definition.get("thwack_effect", "")),
 	}
 
 
@@ -542,10 +648,20 @@ static func egg_definition(kind: String) -> Dictionary:
 				"kind": kind, "toughness": OSTRICH_TOUGHNESS, "points": OSTRICH_POINTS,
 				"effect": "shockwave", "effects": [{"type": EggEffects.SHOCKWAVE}],
 			}
-		"kiwi":
+		"oily", "nostalgic":
 			return {
-				"kind": kind, "toughness": KIWI_TOUGHNESS, "points": KIWI_POINTS,
-				"effect": "deceptively_filling",
-				"effects": [{"type": EggEffects.DECEPTIVELY_FILLING, "duration": 8}],
+				"kind": kind,
+				"toughness": MOVEMENT_EGG_TOUGHNESS,
+				"points": MOVEMENT_EGG_POINTS,
+				"effect": kind,
+				"thwack_effect": kind,
+			}
+		"gloopy":
+			return {
+				"kind": kind,
+				"toughness": GLOOPY_TOUGHNESS,
+				"points": GLOOPY_POINTS,
+				"effect": kind,
+				"thwack_effect": kind,
 			}
 	return {}

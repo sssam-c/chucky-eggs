@@ -18,6 +18,7 @@ const SETTINGS_DEV_EGGS := 2
 
 @onready var _grandma_scorer: Control = %GrandmaScorer
 @onready var _belt_condition_display: Control = %BeltCondition
+@onready var _movement_preview: Control = %MovementPreview
 @onready var _result_overlay: Control = %ResultOverlay
 @onready var _result_card: PanelContainer = $ResultOverlay/Card
 @onready var _result_label: Label = %Result
@@ -112,6 +113,7 @@ func _ready() -> void:
 		_hatch_payoff,
 		_grandma_scorer,
 		_belt_condition_display,
+		_movement_preview,
 		_bin_label
 	)
 	var requested_dev_day := _requested_dev_day()
@@ -477,6 +479,7 @@ func _render(events: Array[Dictionary], _fresh_day := false) -> void:
 		circuit_button.set_available(
 			state.phase == "day" and not _input_locked
 		)
+	_refresh_active_movement_preview(state)
 
 	var bird_offer_visible: bool = String(state.phase) == "bird_offer"
 	var shop_visible: bool = String(state.phase) == "shop"
@@ -786,7 +789,7 @@ func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
 						_belt_condition_display, "belt condition", Color("66f5ed")
 					)
 					condition_presented = true
-			"conveyor_advanced", "bin_reshuffled", "egg_entered":
+			"conveyor_advanced", "conveyor_reversed", "bin_reshuffled", "egg_entered", "egg_returned_to_hopper":
 				if not hopper_presented:
 					_ui_feedback.present_value(_hopper_inspect_button, "hopper", Color("66f5ed"))
 					hopper_presented = true
@@ -809,29 +812,16 @@ func _present_resolved_ui_feedback(events: Array[Dictionary]) -> void:
 				_ui_feedback.reject(_workshop_status_label)
 
 
-func _tier_name(tier: int) -> String:
-	match tier:
-		0:
-			return "STANDARD"
-		1:
-			return "PRIZE"
-		2:
-			return "CHAMPION"
-	return "TIER %d" % tier
-
-
 func _shop_status(events: Array[Dictionary], removal_used: bool) -> String:
 	if not events.is_empty():
 		var event: Dictionary = events[0]
 		match String(event.type):
 			"bird_offer_claimed":
-				return "%s %s JOINED YOUR FLOCK  •  NO CHARGE" % [
-					_tier_name(int(event.producer.tier)),
-					String(event.producer.kind).to_upper(),
-				]
+				return "%s JOINED YOUR FLOCK  •  NO CHARGE" % String(
+					event.producer.kind
+				).to_upper()
 			"bird_removed":
-				return "%s %s REMOVED  •  £%d REMAINING  •  NIGHTLY REMOVAL USED" % [
-					_tier_name(int(event.producer.tier)),
+				return "%s REMOVED  •  £%d REMAINING  •  NIGHTLY REMOVAL USED" % [
 					String(event.producer.kind).to_upper(),
 					int(event.cash_total),
 				]
@@ -971,14 +961,32 @@ func _circuit_button(circuit_id: String) -> Button:
 func _on_circuit_preview_changed(circuit_id: String, active: bool) -> void:
 	if active:
 		_machine_stage.set_highlighted_circuit(circuit_id)
+		_render_movement_preview(circuit_id)
 		return
 	if _machine_stage.highlighted_circuit_id() != circuit_id:
 		return
 	for circuit_button: Button in _circuit_buttons:
 		if circuit_button.visible and circuit_button.is_preview_active():
 			_machine_stage.set_highlighted_circuit(circuit_button.circuit_id)
+			_render_movement_preview(circuit_button.circuit_id)
 			return
 	_machine_stage.set_highlighted_circuit("")
+	_movement_preview.clear_preview()
+
+
+func _refresh_active_movement_preview(state: Dictionary) -> void:
+	for circuit_button: Button in _circuit_buttons:
+		if circuit_button.visible and circuit_button.is_preview_active():
+			var previews: Dictionary = state.get("movement_previews", {})
+			_movement_preview.render_preview(previews.get(circuit_button.circuit_id, {}))
+			return
+	_movement_preview.clear_preview()
+
+
+func _render_movement_preview(circuit_id: String) -> void:
+	var state: Dictionary = _session.state()
+	var previews: Dictionary = state.get("movement_previews", {})
+	_movement_preview.render_preview(previews.get(circuit_id, {}))
 
 
 func _on_presentation_event(event_type: String) -> void:

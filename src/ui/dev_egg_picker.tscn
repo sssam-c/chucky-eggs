@@ -85,7 +85,7 @@ size_flags_vertical = 3
 theme_override_constants/separation = 18
 
 [node name="Species" type="VBoxContainer" parent="Panel/Margin/Layout/Body"]
-custom_minimum_size = Vector2(220, 0)
+custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 theme_override_constants/separation = 3
 
@@ -95,11 +95,13 @@ theme_override_colors/font_color = Color(1, 0.72, 0.21, 1)
 text = "ADD EGG"
 horizontal_alignment = 1
 
-[node name="SpeciesButtons" type="VBoxContainer" parent="Panel/Margin/Layout/Body/Species"]
+[node name="SpeciesButtons" type="GridContainer" parent="Panel/Margin/Layout/Body/Species"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 1
+theme_override_constants/h_separation = 3
+theme_override_constants/v_separation = 1
+columns = 2
 
 [node name="Order" type="VBoxContainer" parent="Panel/Margin/Layout/Body"]
 layout_mode = 2

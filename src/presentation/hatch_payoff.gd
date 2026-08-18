@@ -29,6 +29,7 @@ var _shell_color := Color("e6bd7a")
 var _outline_color := Color("572719")
 var _active := false
 var _double_yolker := false
+var _negative := false
 
 
 func _ready() -> void:
@@ -49,11 +50,21 @@ func begin(
 	_set_shell_palette(kind)
 	_active = true
 	_double_yolker = double_yolker
+	_negative = points_awarded < 0
 	visible = true
 	burst_progress = 0.0
 	travel_progress = 0.0
 	arrival_progress = 0.0
-	_points_label.text = "+%d" % points_awarded
+	_points_label.text = (
+		"−%d" % absi(points_awarded) if _negative
+		else "+%d" % points_awarded
+	)
+	_points_label.add_theme_color_override(
+		"font_color", Color("a7d66d") if _negative else Color("ffd440")
+	)
+	_points_label.add_theme_color_override(
+		"font_shadow_color", Color("18230d") if _negative else Color("380e05")
+	)
 	_points_label.visible = true
 	_points_label.modulate = Color.WHITE
 	_jackpot_label.visible = _double_yolker
@@ -66,6 +77,7 @@ func begin(
 func reset_effect() -> void:
 	_active = false
 	_double_yolker = false
+	_negative = false
 	visible = false
 	burst_progress = 0.0
 	travel_progress = 0.0
@@ -130,6 +142,9 @@ func _set_shell_palette(kind: String) -> void:
 		"spoonbill":
 			_shell_color = Color("c9a6c8")
 			_outline_color = Color("4d2949")
+		"gloopy":
+			_shell_color = Color("668f6e")
+			_outline_color = Color("243a27")
 		_:
 			_shell_color = Color("e6bd7a")
 			_outline_color = Color("572719")
@@ -192,14 +207,18 @@ func _draw_score_arrival() -> void:
 		return
 	var ring_alpha := 1.0 - arrival_progress
 	var radius := 12.0 + arrival_progress * 26.0
-	draw_circle(_target, 24.0, Color(1.0, 0.68, 0.08, ring_alpha * 0.18))
-	draw_arc(_target, radius, 0.0, TAU, 36, Color(1.0, 0.80, 0.22, ring_alpha), 5.0, true)
+	var arrival_color := Color("9dcc63") if _negative else Color("ffcc38")
+	draw_circle(_target, 24.0, Color(arrival_color, ring_alpha * 0.18))
+	draw_arc(
+		_target, radius, 0.0, TAU, 36,
+		Color(arrival_color, ring_alpha), 5.0, true
+	)
 	for ray_index in range(8):
 		var direction := Vector2.from_angle(float(ray_index) * TAU / 8.0)
 		draw_line(
 			_target + direction * (15.0 + arrival_progress * 5.0),
 			_target + direction * (26.0 + arrival_progress * 10.0),
-			Color(1.0, 0.76, 0.20, ring_alpha),
+			Color(arrival_color, ring_alpha),
 			3.0,
 			true
 		)

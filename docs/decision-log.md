@@ -694,6 +694,46 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D069 only where the initial implementation placed the new bar in Grandma's rail. D069's resource rules, visibility requirement, and all gameplay behavior remain accepted.
 
+## D071 — Establish a Standard-only first balance baseline
+
+**Status:** accepted
+
+**Decision:** Remove quality tiers, rarity presentation, egg upgrades, and all remaining quality scaling from the current game. Every owned and offered bird uses its species' fixed Standard toughness, Yolk, effect, and intrinsic Double Yolker chance. Successful days continue to offer three free species and require exactly one selection before the separate £3-removal shop. Preserve historical merge decisions only as superseded design history; do not expose or generate Prize, Champion, numbered tiers, quality rings, rarity colours, or tier-scaled egg facts in the playable slice.
+
+**Reason:** Pair merging has already left the current progression loop, so its 1.5× density trade-off no longer justifies random quality arithmetic. Fixed species facts isolate the first useful balance question: whether the nine egg identities and compulsory flock choices remain interesting and viable under 12 Belt Condition. This removes dominated high-quality offers, unbounded toughness variance, and rarity framing while preserving species composition, intrinsic jackpots, and the existing reward/removal decisions.
+
+**Supersedes:** D033, D038, and D040's quality tiers, exact quality compounding, merge-preview facts, and tier-scaled toughness, score, and Double Yolker chance; D045's requirement to show egg quality; D050's any-quality bird candidates and preserved D040 scaling; D052's Standard/Prize/Champion rarity treatment; and D062–D063 only where they refer to quality scaling or fixed effect magnitude across quality tiers. Their unrelated species, effects, reward, removal, visibility, and deterministic-resolution rules remain accepted. Pair merging and factory upgrades remain removed under D050.
+
+## D072 — Defer Kiwi and slow-release Yolk
+
+**Status:** accepted
+
+**Decision:** Remove Kiwi from the playable producer roster, daily egg validation, post-success bird offers, development egg picker, and current presentation. Remove Deceptively Filling from the supported egg-effect vocabulary together with its shared reserve, beginning-of-thwack release events, status readout, and Appetiser exception. The remaining playable roster contains Chicken, Cuckoo, Sparrow, Plover, Spoonbill, Quail, Maleo, and Ostrich. Treat Kiwi and any slow-release replacement as deferred content requiring a new design slice rather than retaining a compatibility path in the current prototype.
+
+**Reason:** Under the 12-point Belt Condition clock, Kiwi's 3-toughness egg advertised 8 delayed Yolk against a later-day Appetite of 9. An early hatch could convert future paid movements into nearly an entire day's Satisfaction and reward low-value or empty thwacks, while a final hatch lost the complete advertised reserve when egg exhaustion ended the day. Cashing out the reserve would instead make the delayed timing cosmetic and the egg disproportionately reliable. Removing the premature mechanic keeps the first Standard-only balance pass focused on direct species and positional decisions.
+
+**Supersedes:** D060 and D061 only for Deceptively Filling and slow-release Yolk; D062 for Kiwi, the four-signature-species roster, and Kiwi's reward eligibility; and D071's reference to nine current egg identities. Appetiser, Sulphurous, Shockwave, the other eight species, deterministic resolver ownership, Standard-only facts, compulsory bird choice, and £3 flock removal remain accepted.
+
+## D073 — Prototype direct-thwack movement instructions
+
+**Status:** accepted
+
+**Decision:** Add three temporary Standard egg identities to the playable reward pool and development setup: Oily, Nostalgic, and Gloopy. Each currently has 3 toughness, 1 point, and 0% Double Yolker chance. When the originally selected circuit directly thwacks one of these eggs, capture its movement instruction before damage resolution: Oily adds one forward step, Nostalgic adds one reverse step, and Gloopy adds one Jam charge. Resolve captured instructions in screen-left-to-right slot order after all damage, hatches, secondary effects, and Plover retreats; append the machine's normal forward step last. Each Jam cancels the next forward or reverse instruction, stacks within that queue, and expires unused at the end of the thwack. A reverse step shifts eggs toward slot 1, returns an egg crossing slot 1 to the front of the hopper, and never retrieves from the bin. Echoes, Shockwaves, and other indirect damage do not add instructions. Every committed thwack spends exactly 1 Belt Condition after the entire queue, whether zero, one, or several movements execute. Show a resolver-derived instruction and cancellation preview on the belt, and use `▶`, `◀`, and a jammed-cog mark on the eggs. Keep these names, neutral status portraits, and numerical values explicitly provisional; do not assign bird mythology yet.
+
+**Reason:** Triggering on the spoon impact keeps egg effects inside the core choice instead of relegating them to a rarer hatch payoff. Left-to-right order makes paired strikes predictable and lets the same two effects compose differently when their positions swap. Charging the committed thwack closes the free-time build created by a movement pause while preserving Gloopy as a positional tool. Oily and Nostalgic then test opposite forms of tempo against the existing bin and hopper boundaries. Plain status identities isolate whether those interactions feel good before fiction and bespoke balance make them expensive to remove.
+
+**Supersedes:** D069's rule that Condition is spent only when a movement operation advances one or more slots, its zero-movement exemption, and its framing of pause as free tempo; D071 and D072 only where they describe the playable reward roster as eight identities. D069's single 12-point Belt Condition resource, complete-action timing, zero-condition failure, and success precedence remain accepted. D071's Standard-only facts and D072's Kiwi deferral remain accepted.
+
+## D074 — Make Gloopy a thin-shelled foul enabler
+
+**Status:** accepted
+
+**Decision:** Change Gloopy from the shared 3-toughness, 1-point movement-egg baseline to 2 toughness and −1 Yolk. Hatching Gloopy subtracts 1 Satisfaction and may take Satisfaction below zero. Negative Yolk receives no Appetiser multiplier and consumes no Appetiser charge. Preserve Gloopy's direct-thwack Jam, left-to-right sequencing, expiry, 0% Double Yolker chance, ordinary one-Condition thwack cost, and temporary status identity. Oily and Nostalgic remain 3-toughness, 1-point eggs.
+
+**Reason:** At 3 toughness and positive value, a Gloopy-heavy flock could repeatedly hold scoring eggs in favourable bays while also progressing its own low-speed route to victory. The thinner shell caps one Gloopy at two Jams. Negative Yolk makes additional Gloopy copies utility debt rather than an independent scoring engine, while still allowing a player to use one Jam and deliberately avoid the foul hatch. Allowing negative Satisfaction below zero prevents early hatches from erasing the promised cost. This targeted drawback preserves Oily and Nostalgic without adding a universal Condition surcharge or per-egg spent-state bookkeeping.
+
+**Supersedes:** D073 only for Gloopy's 3 toughness and 1 point and its claim that all three movement identities share those values. D073's instruction timing, Jam behavior, one Condition per committed thwack, temporary identities, Oily and Nostalgic values, and all other movement rules remain accepted.
+
 <!--
 Copy for the next entry:
 

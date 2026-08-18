@@ -40,6 +40,30 @@ func _draw() -> void:
 func _draw_placeholder_bird(center: Vector2, scale_value: float, color: Color) -> void:
 	var body_center := center + Vector2(-scale_value * 0.08, scale_value * 0.05)
 	match placeholder_shape():
+		"status_oily":
+			_draw_shape(PackedVector2Array([
+				center + Vector2(0.0, -0.68) * scale_value,
+				center + Vector2(0.46, 0.12) * scale_value,
+				center + Vector2(0.36, 0.48) * scale_value,
+				center + Vector2(0.0, 0.66) * scale_value,
+				center + Vector2(-0.36, 0.48) * scale_value,
+				center + Vector2(-0.46, 0.12) * scale_value,
+			]), color)
+		"status_nostalgic":
+			draw_arc(center, scale_value * 0.48, -2.35, 2.35, 24, color, maxf(4.0, scale_value * 0.15), true)
+			_draw_shape(PackedVector2Array([
+				center + Vector2(-0.66, -0.12) * scale_value,
+				center + Vector2(-0.24, -0.48) * scale_value,
+				center + Vector2(-0.20, 0.12) * scale_value,
+			]), color)
+		"status_gloopy":
+			for tooth_index in range(8):
+				var angle := TAU * float(tooth_index) / 8.0
+				var inner := center + Vector2.from_angle(angle) * scale_value * 0.42
+				var outer := center + Vector2.from_angle(angle) * scale_value * 0.66
+				draw_line(inner, outer, color, maxf(4.0, scale_value * 0.17), true)
+			draw_circle(center, scale_value * 0.48, color)
+			draw_circle(center, scale_value * 0.18, Color("303033"))
 		"long_tail":
 			_draw_shape(PackedVector2Array([
 				body_center + Vector2(-0.42, 0.05) * scale_value,

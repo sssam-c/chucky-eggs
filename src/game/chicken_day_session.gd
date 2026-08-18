@@ -8,12 +8,10 @@ const SeededChanceRoller = preload("res://src/core/seeded_chance_roller.gd")
 const SeededShuffler = preload("res://src/core/seeded_shuffler.gd")
 const DEFAULT_DAY_SEED := 20260813
 const REWARD_SEED_STEP := 1009
-const REWARD_QUALITY_SEED_STEP := 37
 const DOUBLE_YOLK_SEED_STEP := 9
 const DAY_ONE_TARGET := 10
 const LATER_DAY_TARGET := 9
 const REMOVE_BIRD_PRICE := 3
-const QUALITY_ADVANCE_CHANCE := 0.25
 const SUCCESS_CASH := 3
 
 
@@ -89,7 +87,7 @@ func state() -> Dictionary:
 	current_state["bird_offer_claimed"] = _bird_offer_claimed
 	current_state["removal_used_tonight"] = _removal_used_tonight
 	current_state["shop_stock"] = _shop_stock()
-	current_state["quality_groups"] = _quality_groups_snapshot()
+	current_state["species_groups"] = _species_groups_snapshot()
 	current_state["projected_flock_size"] = _flock.snapshot().size()
 	current_state["cash"] = _cash
 	current_state["last_cash_awarded"] = _last_cash_awarded
@@ -140,7 +138,7 @@ func claim_bird_offer(choice_index: int) -> Array[Dictionary]:
 		return [_shop_action_rejected("bird_offer", "not_offered")]
 
 	var selected: Dictionary = _bird_offer[choice_index]
-	var producer: Dictionary = _flock.add_producer(String(selected.kind), int(selected.tier))
+	var producer: Dictionary = _flock.add_producer(String(selected.kind))
 	_bird_offer.clear()
 	_bird_offer_claimed = true
 	_phase = "shop"
@@ -229,27 +227,17 @@ func _create_bird_offer() -> Array[Dictionary]:
 	var ordered_kinds: Array[String] = SeededShuffler.new(reward_seed).shuffle_strings(
 		ProducerFlock.PRODUCER_KINDS
 	)
-	var quality_roller = SeededChanceRoller.new(reward_seed + REWARD_QUALITY_SEED_STEP)
 	var choices: Array[Dictionary] = []
 	for kind: String in ordered_kinds.slice(0, 3):
-		var tier := 0
-		while quality_roller.roll(QUALITY_ADVANCE_CHANCE):
-			tier += 1
-		choices.append(_producer_offer(kind, tier))
+		choices.append(_producer_offer(kind))
 	return choices
 
 
-func _producer_offer(kind: String, tier: int) -> Dictionary:
-	var choice := ProducerFlock.producer_for_kind(kind, tier)
+func _producer_offer(kind: String) -> Dictionary:
+	var choice := ProducerFlock.producer_for_kind(kind)
 	var definition := ChickenDay.egg_definition(kind)
-	var multiplier := ProducerFlock.quality_multiplier(tier)
 	choice.merge(definition)
-	choice["tier"] = tier
-	choice["exact_toughness"] = float(definition.toughness) * multiplier
-	choice["toughness"] = ceili(float(choice.exact_toughness))
-	choice["exact_points"] = float(definition.points) * multiplier
-	choice["points"] = floori(float(choice.exact_points))
-	choice["double_yolk_chance"] = ProducerFlock.double_yolk_chance(kind, tier)
+	choice["double_yolk_chance"] = ProducerFlock.double_yolk_chance(kind)
 	choice["all_other_effects"] = EggEffects.descriptions(
 		EggEffects.normalize(choice.get("effects", []))
 	)
@@ -262,16 +250,12 @@ func _shop_stock() -> Dictionary:
 	return {"removal": {"price": REMOVE_BIRD_PRICE}}
 
 
-func _quality_groups_snapshot() -> Array[Dictionary]:
-	var groups: Array[Dictionary] = _flock.quality_groups_snapshot()
+func _species_groups_snapshot() -> Array[Dictionary]:
+	var groups: Array[Dictionary] = _flock.species_groups_snapshot()
 	for group: Dictionary in groups:
 		var definition := ChickenDay.egg_definition(String(group.kind))
-		var exact_points := float(definition.points) * float(group.quality_multiplier)
-		var exact_toughness := float(definition.toughness) * float(group.quality_multiplier)
-		group["exact_points"] = exact_points
-		group["points"] = floori(exact_points)
-		group["exact_toughness"] = exact_toughness
-		group["toughness"] = ceili(exact_toughness)
+		group["points"] = int(definition.points)
+		group["toughness"] = int(definition.toughness)
 		group["display_double_yolk_percent"] = floori(float(group.double_yolk_chance) * 100.0)
 	return groups
 
@@ -288,15 +272,8 @@ func _production_snapshot() -> Array[Dictionary]:
 	var production: Array[Dictionary] = []
 	for producer: Dictionary in _flock.snapshot():
 		var produced_egg := ChickenDay.egg_definition(String(producer.kind))
-		var tier := int(producer.tier)
-		var multiplier := ProducerFlock.quality_multiplier(tier)
-		produced_egg["tier"] = tier
-		produced_egg["exact_toughness"] = float(produced_egg.toughness) * multiplier
-		produced_egg["toughness"] = ceili(float(produced_egg.toughness) * multiplier)
-		produced_egg["exact_points"] = float(produced_egg.points) * multiplier
-		produced_egg["points"] = floori(float(produced_egg.points) * multiplier)
 		produced_egg["double_yolk_chance"] = ProducerFlock.double_yolk_chance(
-			String(producer.kind), tier
+			String(producer.kind)
 		)
 		produced_egg["all_other_effects"] = EggEffects.descriptions(
 			EggEffects.normalize(produced_egg.get("effects", []))

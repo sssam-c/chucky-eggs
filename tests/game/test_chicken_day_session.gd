@@ -39,7 +39,7 @@ func test_session_builds_an_eight_egg_day_with_twelve_belt_condition() -> void:
 	assert_eq(state.cash, 0)
 	assert_eq(state.last_cash_awarded, 0)
 	assert_eq(state.producers.size(), 8)
-	assert_eq(state.producers.count({"kind": "sparrow", "tier": 0}), 3)
+	assert_eq(state.producers.count({"kind": "sparrow"}), 3)
 	assert_eq(state.daily_egg_count, 8)
 	assert_eq(state.hopper_egg_count, 3)
 	assert_eq(state.pipe.size(), 3)
@@ -65,11 +65,11 @@ func test_equal_day_seeds_replay_the_same_visible_shuffle() -> void:
 
 func test_starting_flock_exposes_species_level_double_yolk_progress() -> void:
 	var state: Dictionary = ChickenDaySession.new(42).state()
-	var chicken_group: Dictionary = state.quality_groups.filter(
-		func(group: Dictionary) -> bool: return group.kind == "chicken" and group.tier == 0
+	var chicken_group: Dictionary = state.species_groups.filter(
+		func(group: Dictionary) -> bool: return group.kind == "chicken"
 	)[0]
-	var sparrow_group: Dictionary = state.quality_groups.filter(
-		func(group: Dictionary) -> bool: return group.kind == "sparrow" and group.tier == 0
+	var sparrow_group: Dictionary = state.species_groups.filter(
+		func(group: Dictionary) -> bool: return group.kind == "sparrow"
 	)[0]
 
 	assert_eq(chicken_group.bird_count, 3)
@@ -130,7 +130,7 @@ func test_session_can_initialize_day_three_on_the_single_track_for_dev_tools() -
 func test_dev_session_uses_exactly_the_selected_starting_egg_species() -> void:
 	var session = ChickenDaySession.create_dev_session(
 		3,
-		["kiwi", "quail", "quail", "ostrich"],
+		["maleo", "quail", "quail", "ostrich"],
 		18,
 		IdentityShuffler.new()
 	)
@@ -141,7 +141,7 @@ func test_dev_session_uses_exactly_the_selected_starting_egg_species() -> void:
 			starting_kinds.append(String(egg.kind))
 	for egg: Dictionary in state.hopper_contents:
 		starting_kinds.append(String(egg.kind))
-	var expected_kinds: Array[String] = ["kiwi", "quail", "quail", "ostrich"]
+	var expected_kinds: Array[String] = ["maleo", "quail", "quail", "ostrich"]
 	starting_kinds.sort()
 	var sorted_expected := expected_kinds.duplicate()
 	sorted_expected.sort()
@@ -151,7 +151,7 @@ func test_dev_session_uses_exactly_the_selected_starting_egg_species() -> void:
 	assert_eq(state.producers.map(func(producer: Dictionary) -> String:
 		return String(producer.kind)
 	), expected_kinds)
-	assert_eq(state.slots[0].kind, "kiwi")
+	assert_eq(state.slots[0].kind, "maleo")
 	assert_eq(state.slots.slice(1, 4).map(func(egg: Dictionary) -> String:
 		return String(egg.kind)
 	), ["quail", "quail", "ostrich"])
@@ -164,7 +164,7 @@ func test_dev_session_uses_exactly_the_selected_starting_egg_species() -> void:
 	session.submit_circuit("red")
 	session.restart()
 	assert_eq(session.state().belt_condition, 18)
-	assert_eq(session.state().slots[0].kind, "kiwi")
+	assert_eq(session.state().slots[0].kind, "maleo")
 
 
 func test_session_is_the_request_pathway_and_returns_a_safe_snapshot() -> void:
@@ -213,7 +213,6 @@ func test_restart_clears_active_grandma_effects() -> void:
 	assert_eq(session.state().grandma_effects, {
 		"appetiser_charges": 0,
 		"sulphurous_suppression": 0,
-		"deceptively_filling_reserve": 0,
 	})
 
 
@@ -230,14 +229,14 @@ func test_success_opens_a_deterministic_bird_offer_before_the_shop() -> void:
 	assert_true(state.bird_offer.all(func(offer: Dictionary) -> bool:
 		return (
 			offer.kind in ProducerFlock.PRODUCER_KINDS
-			and int(offer.tier) >= 0
 			and not offer.has("price")
 			and offer.has_all(["toughness", "points", "double_yolk_chance"])
+			and not offer.has("tier")
+			and not offer.has("quality_multiplier")
+			and not offer.has("exact_toughness")
+			and not offer.has("exact_points")
 		)
 	))
-	assert_true(state.bird_offer.any(func(offer: Dictionary) -> bool:
-		return int(offer.tier) > 0
-	), "the deterministic fixture proves offers are not limited to Standard quality")
 	assert_true(state.shop_stock.is_empty())
 	assert_false(state.bird_offer_claimed)
 
@@ -254,7 +253,7 @@ func test_claiming_one_free_bird_opens_the_separate_removal_shop_exactly_once() 
 	var after: Dictionary = session.state()
 
 	assert_eq(events[0].type, "bird_offer_claimed")
-	assert_eq(events[0].producer, {"kind": selected.kind, "tier": selected.tier})
+	assert_eq(events[0].producer, {"kind": selected.kind})
 	assert_eq(after.cash, before.cash)
 	assert_eq(after.phase, "shop")
 	assert_eq(after.shop_stock, {"removal": {"price": 3}})
@@ -328,8 +327,8 @@ func test_success_banks_the_fixed_day_payout_exactly_once() -> void:
 
 
 func test_fixed_payout_does_not_depend_on_remaining_belt_condition() -> void:
-	var lower_condition_session = _early_success_session(0, 20)
-	var higher_condition_session = _early_success_session(0, 99)
+	var lower_condition_session = _early_success_session(20)
+	var higher_condition_session = _early_success_session(99)
 
 	var lower_events: Array[Dictionary] = _complete_early_successful_day(lower_condition_session)
 	var higher_events: Array[Dictionary] = _complete_early_successful_day(higher_condition_session)
@@ -459,10 +458,10 @@ func _successful_day_session():
 	return ChickenDaySession.new(42, ProducerFlock.new(producers), IdentityShuffler.new(), 1, 99)
 
 
-func _early_success_session(tier := 0, starting_belt_condition := 99):
+func _early_success_session(starting_belt_condition := 99):
 	var producers: Array[Dictionary] = []
 	for egg_index in range(7):
-		producers.append({"kind": "chicken", "tier": tier})
+		producers.append({"kind": "chicken"})
 	return ChickenDaySession.new(
 		42,
 		ProducerFlock.new(producers),

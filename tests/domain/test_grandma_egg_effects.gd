@@ -65,30 +65,6 @@ func test_appetiser_can_affect_later_but_not_earlier_egg_in_same_batch() -> void
 	assert_eq(later_day.snapshot().grandma_effects.appetiser_charges, 1)
 
 
-func test_appetiser_ignores_deceptively_filling_slow_release_yolk() -> void:
-	var day = ChickenDay.new([
-		_effect_egg("deceptively_filling", 2),
-		_effect_egg("appetiser"),
-		"chicken",
-	], 99)
-	day.resolve_circuit("red")
-	day.resolve_circuit("red")
-	assert_eq(day.snapshot().grandma_effects.appetiser_charges, 1)
-
-	var opening_events: Array[Dictionary] = day.resolve_circuit("blue")
-	var filling := opening_events.filter(
-		func(event: Dictionary) -> bool: return event.type == "satisfaction_added"
-	)
-	assert_eq(filling.size(), 1)
-	assert_eq(filling[0].amount, 1)
-	assert_eq(filling[0].yolk_released, 1)
-	assert_eq(filling[0].source, "deceptively_filling")
-	assert_eq(day.snapshot().grandma_effects.appetiser_charges, 1)
-
-	var hatch: Dictionary = _resolve_until_hatch(day)
-	assert_eq(hatch.points_awarded, 6)
-
-
 func test_each_sulphurous_egg_permanently_suppresses_two_appetite_once() -> void:
 	var day = ChickenDay.new([
 		_effect_egg("sulphurous"),
@@ -144,53 +120,6 @@ func test_sulphurous_can_succeed_on_its_hatching_thwack_without_lowering_appetit
 	)[0].effective_target_score, 1)
 	assert_eq(day.snapshot().target_score, 2)
 	assert_eq(day.snapshot().effective_target_score, 1)
-
-
-func test_deceptively_filling_adds_to_one_reserve_released_once_per_thwack() -> void:
-	var day = ChickenDay.new([
-		_effect_egg("deceptively_filling", 3),
-		_effect_egg("deceptively_filling", 2),
-		"chicken",
-	], 99, 20)
-	var breaking_events: Array[Dictionary] = day.resolve_circuit("red")
-	assert_false(_event_types(breaking_events).has("satisfaction_added"))
-	var second_break: Array[Dictionary] = day.resolve_circuit("red")
-	assert_eq(_filling_amount(second_break), 1)
-	assert_eq(day.snapshot().grandma_effects.deceptively_filling_reserve, 4)
-
-	var first_tick: Array[Dictionary] = day.resolve_circuit("blue")
-	assert_eq(_filling_amount(first_tick), 1)
-	assert_eq(first_tick.filter(func(event: Dictionary) -> bool:
-		return event.type == "satisfaction_added"
-	)[0].reserve_after, 3)
-	assert_eq(day.snapshot().grandma_effects.deceptively_filling_reserve, 3)
-	var second_tick: Array[Dictionary] = day.resolve_circuit("pink")
-	assert_eq(_filling_amount(second_tick), 1)
-	assert_eq(day.snapshot().grandma_effects.deceptively_filling_reserve, 2)
-	assert_eq(_filling_amount(day.resolve_circuit("blue")), 1)
-	assert_eq(_filling_amount(day.resolve_circuit("pink")), 1)
-	assert_eq(day.snapshot().grandma_effects.deceptively_filling_reserve, 0)
-
-
-func test_opening_filling_success_still_resolves_damage_and_paid_movement() -> void:
-	var day = ChickenDay.new([
-		_effect_egg("deceptively_filling", 1),
-		"chicken",
-		"chicken",
-	], 2)
-	var events: Array[Dictionary] = day.resolve_circuit("red")
-	assert_eq(day.snapshot().score, 1)
-
-	var completing: Array[Dictionary] = day.resolve_circuit("blue")
-	assert_eq(_event_types(completing).slice(0, 6), [
-		"grandma_effects_started",
-		"satisfaction_added",
-		"circuit_fired",
-		"egg_damaged",
-		"conveyor_advanced",
-		"belt_condition_spent",
-	])
-	assert_true(completing[-1].type == "day_ended" and completing[-1].succeeded)
 
 
 func test_shockwave_strikes_both_neighbours_without_extra_movement() -> void:
@@ -287,7 +216,7 @@ func test_shockwave_inherits_pink_and_uses_spoonbill_direct_vulnerability() -> v
 
 
 func test_ending_a_day_clears_all_grandma_effects() -> void:
-	var day = ChickenDay.new([_effect_egg("deceptively_filling", 3)], 1)
+	var day = ChickenDay.new([_effect_egg("appetiser")], 99)
 	var events: Array[Dictionary] = day.resolve_circuit("red")
 	assert_true(events.any(func(event: Dictionary) -> bool:
 		return event.type == "day_ended"
@@ -295,15 +224,11 @@ func test_ending_a_day_clears_all_grandma_effects() -> void:
 	assert_eq(day.snapshot().grandma_effects, {
 		"appetiser_charges": 0,
 		"sulphurous_suppression": 0,
-		"deceptively_filling_reserve": 0,
 	})
 
 
-func _effect_egg(effect_type: String, duration := 0) -> Dictionary:
-	var effect := {"type": effect_type}
-	if duration > 0:
-		effect["duration"] = duration
-	return {"kind": "sparrow", "effects": [effect]}
+func _effect_egg(effect_type: String) -> Dictionary:
+	return {"kind": "sparrow", "effects": [{"type": effect_type}]}
 
 
 func _hatches(events: Array[Dictionary]) -> Array[Dictionary]:
@@ -319,14 +244,6 @@ func _event_types(events: Array[Dictionary]) -> Array[String]:
 	for event: Dictionary in events:
 		types.append(String(event.type))
 	return types
-
-
-func _filling_amount(events: Array[Dictionary]) -> int:
-	return events.filter(func(event: Dictionary) -> bool:
-		return event.type == "satisfaction_added" and event.source == "deceptively_filling"
-	).reduce(func(total: int, event: Dictionary) -> int:
-		return total + int(event.amount)
-	, 0)
 
 
 func _resolve_until_hatch(day) -> Dictionary:

@@ -2,20 +2,20 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Active validation slice — Free bird rewards and visible flock thinning
+## Active validation slice — Standard-species rewards and visible flock thinning
 
 ### Question
 
-Does choosing one of three free, potentially high-quality birds after each successful day create an interesting build direction, and does removing an exact bird from the whole-flock overview for £3 provide enough control over compulsory flock growth?
+Do three free Standard producer choices create an interesting build direction under 12 Belt Condition, and does removing an exact producer for £3 provide enough control over compulsory flock growth?
 
 ### Status
 
-The deterministic and player-visible path now opens a dedicated bird-offer screen after a successful day, presents three candidates with seeded species and quality facts, and requires exactly one selection. That selection closes the offer and opens a separate shop where every owned bird is its own £3 removal control in a scrollable flock overview, but only one bird can be removed during that visit. Standard cards have no rarity tint, Prize cards are green, and Champion-or-higher cards are blue with written tier names retained. Recruitment purchases, pairing, merge queues, and factory upgrades are removed. Failed attempts still retry without between-day progression. The next worthwhile work is a human run through several rewards to observe whether flock growth, quality variance, and removal pricing create meaningful tension.
+The deterministic and player-visible path now opens a dedicated bird-offer screen after a successful day, presents three seeded candidates from eleven fixed Standard identities, and requires exactly one selection. Eight retain their species framing; Oily, Nostalgic, and Gloopy are deliberately plain prototype identities until their movement mechanics feel worthwhile. That selection closes the offer and opens a separate shop where every owned producer is its own £3 removal control in a scrollable flock overview, but only one can be removed during that visit. Quality tiers, rarity presentation, recruitment purchases, pairing, merge queues, egg upgrades, factory upgrades, Kiwi, and Deceptively Filling are removed from the current game. Failed attempts still retry without between-day progression.
 
 ### Settled rules preserved
 
 - Every bird lays exactly one egg per day; the starting pool is three Chicken, two Cuckoo, and three Sparrow eggs.
-- The belt starts each day with 12 Condition. Any movement operation that advances one or more slots costs exactly 1; success takes precedence if Condition reaches 0 during the target-reaching thwack. A successful day pays a fixed £3.
+- The belt starts each day with 12 Condition. Every committed thwack costs exactly 1 after its movement queue, even when Jam prevents all movement; success takes precedence if Condition reaches 0 during the target-reaching thwack. A successful day pays a fixed £3.
 - Day 1 requires 10 points and each later day requires 9.
 - Red strikes slots 1+3, Blue strikes 2+4, and Pink strikes slot 5. All three remain available during an unlocked day, including when their complete circuit is empty. Pink still deals 2 direct damage to Spoonbills.
 - Cuckoo echoes, Plover retreat, simultaneous damage, hatch order, cash, retries, success-only shop access, and one request-to-resolver pathway remain unchanged.
@@ -32,7 +32,7 @@ Three one-hit Sparrows should make the complete hatch-and-score payoff legible d
 
 At a 10-point target, candidate routes include all three Chickens plus one Sparrow; two Chickens, both Cuckoos, and two Sparrows; or two Chickens, one Cuckoo, and all three Sparrows. These arithmetic routes are hypotheses rather than evidence that each route is equally achievable across shuffled positions.
 
-Offered quality should create occasional excitement without making high tiers routine. The current prototype independently gives each candidate a 25% chance to advance one tier, repeated until a roll fails. This geometric distribution has no fixed maximum, so every quality is possible while Standard remains common. The 25% continuation rate is an implementation hypothesis, not a settled rule; observe its results before tuning it into rule truth.
+Fixed Standard facts should isolate whether each current identity offers a useful tactical promise and whether compulsory flock growth creates interesting composition choices. Intrinsic Double Yolker chances retain a small jackpot without adding an upgrade axis.
 
 ### Implemented prototype scope
 
@@ -40,17 +40,15 @@ Offered quality should create occasional excitement without making high tiers ro
 - Every lever is usable throughout an unlocked day. A spoon over an empty bay still fires and the conveyor still advances, spending 1 Belt Condition without dealing damage.
 - Visible hopper and bin counts at their physical containers. Clicking the hopper opens a non-positional egg collection without revealing queue order beyond the three pipe previews; clicking the bin opens every stored egg with retained toughness and states that return order will shuffle.
 - Resolver events for an egg entering the bin, the complete bin reshuffling into an empty hopper, and the next egg entering slot 1.
-- Binned eggs retain remaining toughness, tier, score, Double Yolker result, and every other egg fact.
+- Binned eggs retain remaining toughness, score, Double Yolker result, and every other egg fact.
 - The injected shuffler owns every recycle order, preserving deterministic retries.
 - Existing hopper eggs feed normally. Whenever the hopper is empty, the bin reshuffles immediately and may rejoin eggs still travelling on the conveyor; at most one egg enters slot 1 per thwack.
-- Quality uses exact `1.5^tier` multiplication for score, maximum toughness, and Double Yolker chance.
-- Gameplay score and displayed percentages floor to whole numbers. Maximum toughness rounds up to the whole amount of damage actually required. Later tiers retain exact values.
-- A dedicated reward screen shows three cards with species, quality, shell toughness, score, effect, and one daily egg before selection. It contains no shop or removal controls. Standard cards have no rarity tint, Prize cards use green, and Champion-or-higher cards use blue without replacing their text labels.
-- After selection, a separate shop screen shows the complete flock as individual cards with species, quality, egg facts, and £3 removal actions. After one removal, all remaining cards visibly report that the nightly removal was used. The last bird and unaffordable removals are also unavailable.
-- Existing production loading shows the scaled toughness of the egg each quality tier lays.
+- A dedicated reward screen shows three cards with species, fixed shell toughness, Yolk, effect, intrinsic Double Yolker chance, and one daily egg before selection. It contains no quality, rarity, shop, or removal controls.
+- After selection, a separate shop screen shows the complete flock as individual species cards with fixed egg facts and £3 removal actions. After one removal, all remaining cards visibly report that the nightly removal was used. The last bird and unaffordable removals are also unavailable.
+- Existing production loading shows the fixed egg laid by each bird.
 - Every species uses one flat temporary colour across a generic egg and a simple bird silhouette throughout the belt, pipe, loading, reward, and flock-overview views. Species names sit outside the art. Occupied eggs use a magnifying-glass cursor to advertise inspection. A wrapped hover card top-aligns beside its egg, flips sides at the viewport edge, and presents the egg's name, prominent points and Double Yolker facts, and only its applicable effect sections. Generated raster experiments are excluded from the running game and exports; final production assets are deferred to an artist.
 - The default flock contains three Chickens, two Cuckoos, and three Sparrows, with 12 starting Belt Condition, a 10-point Day 1 target, and a 9-point later target.
-- One domain-owned Belt Condition value replaces individual spoon Integrity. Each current thwack advances once and spends exactly 1 after movement and refill; Shockwave strikes add no movement cost, and reaching 0 fails unless the completed thwack already succeeded.
+- One domain-owned Belt Condition value replaces individual spoon Integrity. Each committed thwack spends exactly 1 after its complete movement queue; Shockwave strikes add no instructions or cost, and reaching 0 fails unless the completed thwack already succeeded.
 - A full-height information rail to the right presents the unchanged score and target as Grandma's appetite alongside settings, while one labelled Belt Condition bar sits directly on the conveyor housing. Awarded points fill a yolk meter proportionally, overflow remains numeric, reduced motion stops her placeholder idle animation, and the reusable scene reserves status and left-expanding dialogue regions without yet authoring dialogue behavior.
 - The workshop spends its remaining area on the existing machine: a bottom-anchored hopper lift shares a deck line with the larger clickable bin, carries its clickable count on that loading deck, raises three preview eggs toward a short conveyor-height exit, and then pushes the top egg sideways into a lowered five-lane playfield with slightly larger eggs and taller stored spoons. Moving eggs show a readable backward lean followed by a damped counter-wobble and always settle upright. The conveyor curves once after slot five into the bin, the same three circuit controls occupy a compact bottom fascia, and no decorative yolk pipe or additional readout implies new functionality.
 
@@ -62,37 +60,69 @@ Offered quality should create occasional excitement without making high tiers ro
 - The starting flock contains 14 total base points and 20 total base toughness. Day 1's 10-point target leaves four points of composition slack.
 - Sparrows provide one point per direct damage before positional waste, and a directly struck Sparrow can also cause adjacent Cuckoo echoes. Guard against their combination making the quickest route obvious across most seeds.
 - A small flock cycles more often, but can still fail by hatching every available egg below the target.
-- Rounding makes some first-tier ratios uneven. A Prize Chicken requires 5 damage and awards 4 points from exact values of 4.5 and 4.5.
-- A Prize Cuckoo currently requires 6 damage but remains worth 1 displayed point and has no Double Yolker chance. A free high-quality offer can therefore still be strategically unattractive; keep complete candidate facts visible.
-- A Prize Sparrow currently requires 2 damage, remains worth 1 displayed point, and shows a 7% Double Yolker chance from an exact 7.5%. The offer must make that shell-for-odds trade legible rather than presenting quality as universally better.
 - The fixed £3 success payout keeps the economy independent from current Belt Condition tuning. Guard against a deterministic retry that cannot reach the shop.
 
 ### Explicitly deferred
 
-- Further target, Belt Condition, toughness, score, reward-quality distribution, and £3 removal-price tuning after playtest evidence.
+- Further target, Belt Condition, toughness, score, species weighting, and £3 removal-price tuning after playtest evidence.
 - Bin capacity, player-controlled rerolls, selective retrieval, damage healing, or bin upgrades.
-- Pairing, merging, hybrid recipes, inherited effects, and authored hybrid art.
+- Quality tiers, rarity, pairing, merging, egg upgrades, hybrid recipes, inherited effects, and authored hybrid art.
+- Kiwi and slow-release Yolk. Any return needs a new slice that avoids turning future Belt Condition into low-agency Satisfaction and defines honest value at egg exhaustion.
 - Paid recruitment, factory upgrades, a campaign map, reward rerolls, discounts, selling, elite conditions, and production art.
 - A replacement for the removed Day 3 factory milestone or any positional spoon-upgrade ladder.
 
 ### Exit evidence
 
-- Domain tests prove damage-preserving bin transfer, exact hopper-empty recycling, empty-impact paid advancement, one Belt Condition loss per positive movement operation, free non-movement Shockwaves, success precedence at zero, resolver event order, deterministic reshuffle, slot-1 refill, quality toughness scaling, and whole required-damage rounding.
-- Session tests prove the default eight-egg flock, 12 starting Belt Condition, fixed £3 payout, 10/9 targets, Sparrow probability, five slots and three circuits, deterministic three-bird offers, exact free selection, one £3 targeted removal per shop visit, and deterministic failure/retry behavior.
-- UI tests prove the dedicated reward screen exposes free species-and-quality facts without flock controls, Standard/Prize/Champion cards carry neutral/green/blue rarity treatment, selecting a reward opens the separate shop, the whole flock appears there as individual removal controls, all removals disable after one selected bird disappears for £3, dynamic controls do not accumulate stale registrations, and cancellation/input-lock contracts still hold.
+- Domain tests prove fixed identity facts, intrinsic Double Yolker odds, damage-preserving bin transfer, exact hopper-empty recycling, left-to-right movement programs, Jam stacking and expiry, one Belt Condition loss per thwack, indirect-hit exclusion, success precedence at zero, resolver event order, deterministic reshuffle, and slot-1 refill.
+- Session tests prove the default eight-egg flock, 12 starting Belt Condition, fixed £3 payout, 10/9 targets, deterministic Standard-only three-choice offers drawn from eleven eligible identities, exact free selection, one £3 targeted removal per shop visit, and deterministic failure/retry behavior.
+- UI tests prove reward and flock cards present species without quality or rarity controls, selecting a reward opens the separate shop, the whole flock appears there as individual removal controls, all removals disable after one selected bird disappears for £3, dynamic controls do not accumulate stale registrations, and cancellation/input-lock contracts still hold.
 - The 2026-08-16 automated strategy probe predates Belt Condition and immediate bin circulation. Rerun exact and heuristic sweeps against the accepted eight-egg daily pool before using it as current balance evidence.
 - A running-game check at 1280×720 and 1024×576 must verify the bin reads as the conveyor destination, the bin and hopper counts remain legible and clickable, both content inspectors fit and scroll, recycled eggs visibly return through the pipe, and no removed hairpin controls leave empty or overlapping space.
-- Play one seeded run through at least three bird offers. Record whether candidate quality is understood, whether a clearly stronger quality dominates species choice, when the player first considers paying £3 to thin the flock, and whether removing from the full overview feels precise and trustworthy.
+- Play one seeded run through at least three bird offers. Record which species are immediately attractive or dismissible, when the player first considers paying £3 to thin the flock, and whether removing from the full overview feels precise and trustworthy.
 
-## Implemented supporting slice — First Grandma-facing egg effects
+## Active mechanic slice — Direct-thwack movement eggs
 
 ### Question
 
-Can four reusable egg effects establish a coherent, deterministic vocabulary for Yolk, Satisfaction, Appetite, and future-thwack timing before the ten-day curve is balanced?
+Do a visible left-to-right instruction queue and three plain movement eggs create interesting positional choices without making Belt Condition or effect timing hard to read?
 
 ### Status
 
-Accepted and implemented. Appetiser, Sulphurous, Shockwave, and Deceptively Filling are reusable egg descriptors resolved by the canonical day resolver. A subsequent supporting slice assigned them to permanent reward species; ten-day balance remains deferred.
+Implemented for feel testing. Oily, Nostalgic, and Gloopy are available in rewards and development setup under temporary mechanic names. Oily and Nostalgic use a neutral 3-toughness, 1-point baseline. Gloopy is deliberately an enabling cost rather than a scoring route: 2 toughness, −1 foul Yolk, and 0% Double Yolker. Their mythology, permanent species assignments, and final numerical balance remain hypotheses.
+
+### Implemented prototype scope
+
+- Capture movement instructions only from the eggs directly beneath the selected circuit's original spoons, before damage and hatches change the belt.
+- Resolve those instructions in slot order from screen left to right, then append normal forward movement.
+- Oily adds `▶`; Nostalgic adds `◀`; Gloopy adds one Jam that cancels the next movement. Jams stack and unused Jams expire at the thwack boundary.
+- Hatching Gloopy subtracts 1 Satisfaction and may take the total below zero. Negative Yolk is never doubled and never consumes Appetiser.
+- Nostalgic returns an egg crossing slot 1 to the front of the hopper and never retrieves from the bin. Each executed forward step uses the existing bin and refill rules.
+- Every committed thwack spends exactly 1 Belt Condition after the queue, including a fully jammed thwack. Echo and Shockwave damage add no movement instructions or extra cost.
+- A belt-mounted preview shows the selected circuit's symbols, blocked instructions, written Jam outcome, and left-to-right order before commitment. Resolver events drive forward, reverse, Jam, cancellation, hopper-return, and expiry playback through the existing presentation barrier.
+- Status emblems and neutral status portraits distinguish the three eggs without inventing bird mythology.
+
+### Balancing constraints and unknowns
+
+- Test whether Oily's extra circulation is worth accelerating valuable eggs toward the bin, and whether 1 point is enough compensation for its positional risk.
+- Test whether Nostalgic creates new targeting alignments rather than merely undoing normal movement in most layouts.
+- Test whether two possible Jams justify Gloopy's −1 Yolk, whether players intentionally leave a one-toughness Gloopy unhatched, and whether mandatory offers make foul-egg dilution feel interesting rather than hopeless.
+- Observe reward desirability before changing toughness, point values, offer weighting, or assigning permanent species.
+
+### Exit evidence
+
+- Domain tests cover instruction capture, left-to-right resolution, extra forward movement, reverse boundary behavior, Jam cancellation, stacking, expiry, one Condition per thwack, indirect-hit exclusion, negative Satisfaction below zero, Appetiser exclusion, and domain-authored previews.
+- UI coverage checks instruction emblems, written preview results, reverse-before-forward playback, hopper return, cancellation without conveyor motion, foul `−1` payoff, negative Satisfaction display, and Condition presentation.
+- Run human tests with mixed Oily/Nostalgic/Gloopy pairs and record whether the predicted queue matches the felt result without explanation.
+
+## Implemented supporting slice — Current Grandma-facing egg effects
+
+### Question
+
+Can three reusable egg effects establish a coherent, deterministic vocabulary for Yolk, Satisfaction, and Appetite before the ten-day curve is balanced?
+
+### Status
+
+Accepted and implemented. Appetiser, Sulphurous, and Shockwave are reusable egg descriptors resolved by the canonical day resolver. Deceptively Filling was removed as premature when its future-thwack payoff conflicted with the Belt Condition clock and egg-exhaustion ending; ten-day balance remains deferred.
 
 ### Settled rules to preserve
 
@@ -106,8 +136,7 @@ Accepted and implemented. Appetiser, Sulphurous, Shockwave, and Deceptively Fill
 - Appetiser queues ×2 charges for future positive-Yolk eggs. Stacking adds eligible eggs of duration rather than increasing the multiplier; one charge is consumed per eligible egg.
 - Each Sulphurous egg suppresses 2 Appetite exactly once when it hatches. Suppression stacks, persists for the rest of the day, cannot lower effective Appetite below 1, and clears at the day boundary.
 - Shockwave emits resolver-owned left/right strike batches with inherited circuit identity, Cuckoo/Plover/Spoonbill composition, deterministic chains, and exactly-once hatch guards.
-- Deceptively Filling adds slow-release Yolk to one shared reserve. The reserve releases exactly 1 Yolk at the start of each later thwack, so additional activations extend duration rather than increasing the release rate; a release cannot cancel a committed action.
-- All Grandma effects clear at day end and on retry. Compact statuses show Appetiser charges, total day-long Sulphurous suppression, and the remaining Filling reserve. The appetite bar fills Yolk from the left and green suppression from the right while its numeric denominator shows effective Appetite.
+- All Grandma effects clear at day end and on retry. Compact statuses show Appetiser charges and total day-long Sulphurous suppression. The appetite bar fills Yolk from the left and green suppression from the right while its numeric denominator shows effective Appetite.
 
 ### Explicitly deferred
 
@@ -117,41 +146,41 @@ Accepted and implemented. Appetiser, Sulphurous, Shockwave, and Deceptively Fill
 
 ### Exit evidence
 
-- Domain coverage proves charge-based Appetiser duration, same-batch ordering, immediate-Yolk-only eligibility, permanent fixed Sulphurous stacking and exactly-once activation, one-per-thwack Filling release from an additive reserve, complete committed thwacks, Shockwave boundaries/chains/circuit inheritance, and exactly-once resolution.
+- Domain coverage proves charge-based Appetiser duration, same-batch ordering, permanent fixed Sulphurous stacking and exactly-once activation, complete committed thwacks, Shockwave boundaries/chains/circuit inheritance, and exactly-once resolution.
 - Session coverage proves retry clears active Grandma effects.
-- UI coverage proves the compact status area exposes Appetiser charges, total Sulphurous Appetite suppression, and the remaining Filling reserve without adding another major panel; the appetite meter exposes suppression from the opposite direction with a numeric alternative to colour.
+- UI coverage proves the compact status area exposes Appetiser charges and total Sulphurous Appetite suppression without adding another major panel; the appetite meter exposes suppression from the opposite direction with a numeric alternative to colour.
 
 ## Implemented supporting slice — Signature effect species
 
 ### Question
 
-Can one permanent bird per effect make the Grandma-facing vocabulary legible as flock-building choices without changing the opening flock?
+Can one permanent bird per current effect make the Grandma-facing vocabulary legible as flock-building choices without changing the opening flock?
 
 ### Status
 
-Accepted and implemented. Quail, Maleo, Ostrich, and Kiwi are immediately available in the post-success reward pool alongside the five existing species. The starting flock remains three Chickens, two Cuckoos, and three Sparrows.
+Accepted and implemented. Quail, Maleo, and Ostrich are immediately available in the post-success reward pool alongside the five existing species. Kiwi was removed from the current roster with Deceptively Filling. The starting flock remains three Chickens, two Cuckoos, and three Sparrows.
 
 ### Implemented behavior
 
 - Quail lays a 2-toughness, 1-Yolk Appetiser egg with no Double Yolker chance.
 - Maleo lays a 6-toughness, 3-Yolk Sulphurous egg with a 1% Standard Double Yolker chance.
 - Ostrich lays a 7-toughness, 3-Yolk Shockwave egg with a 1% Standard Double Yolker chance.
-- Kiwi lays a 3-toughness, 0-immediate-Yolk Deceptively Filling (8) egg with no Double Yolker chance.
-- Quality scales toughness, immediate Yolk, and non-zero Double Yolker chance by the existing exact ×1.5 rule. Signature effects do not scale with quality.
+- Every signature species uses its fixed Standard toughness, Yolk, effect, and intrinsic Double Yolker chance.
 - Reward, flock-overview, loading, conveyor, hopper, bin, and hover-card views reuse the existing species paths with distinct temporary colours, silhouettes, effect marks, and written effect descriptions.
 
 ### Explicitly deferred
 
 - Ten-day Appetite tuning, reward weighting or staged unlocks, starting-flock changes, and bespoke final art.
-- Playtest evidence about whether the expanded nine-species reward pool is too dilute or whether any signature egg dominates its nearest existing alternative.
+- Playtest evidence about whether the eight-species reward pool is too dilute or whether any signature egg dominates its nearest existing alternative.
+- Kiwi and Deceptively Filling remain deferred until they have a role that does not reward stalling or lose an advertised payload at egg exhaustion.
 
 ### Exit evidence
 
-- Domain tests cover all four definitions, their built-in descriptors, permanent producer validation, Double Yolker odds, quality composition, and deterministic effect behavior.
+- Domain tests cover all three definitions, their built-in descriptors, permanent producer validation, intrinsic Double Yolker odds, and deterministic effect behavior.
 - Session tests cover deterministic three-choice rewards drawn from the expanded permanent species list.
 - UI tests cover distinct placeholder identities and complete reward-card explanations for every signature egg.
 
-## Accepted foundational slice — Belt Condition as the unified day clock
+## Superseded foundational slice — Movement-linked Belt Condition
 
 ### Question
 
@@ -159,14 +188,14 @@ Does replacing per-spoon wear with one movement-linked Belt Condition clock crea
 
 ### Status
 
-Accepted and implemented as the authoritative daily-pressure system. A single highly visible Belt Condition bar replaces spoon Integrity and Soft-Shelled protection. The cost belongs to movement rather than the lever press: a movement operation that advances one or more slots costs exactly 1, while zero-slot movement costs none. The current base thwack advances one slot; pause, multi-slot advance, repair, armour, and damage effects remain future content.
+This was the implemented foundation for the Belt Condition prototype, but its movement-linked cost rule is now superseded by the direct-thwack movement slice above. The single visible resource, 12-point starting value, complete-action timing, success precedence, and removal of spoon Integrity remain current; every committed thwack now costs 1 even when Jam prevents movement.
 
 ### Settled behavior
 
 - At day start, load the first five shuffled eggs across slots 1–5, or every available egg when the daily pool contains fewer than five. Only eggs beyond those opening five remain in the hopper and pipe preview.
 - Belt Condition starts at 12. Every circuit remains available until the day ends; spoons have no individual health, wear, or broken state.
-- Each current thwack advances the belt once. The complete movement and refill resolve before 1 Condition is spent.
-- A single movement operation costs 1 if it advances any positive number of slots and costs none if it advances zero. Additional strikes without movement, including Shockwave chains, cost no extra Condition.
+- Historical foundation: each thwack advanced the belt once and a positive movement operation cost 1 after refill. D073 supersedes this with an ordered movement queue and exactly 1 Condition per committed thwack.
+- Additional indirect strikes, including Shockwave chains, still add no movement instruction or extra Condition cost.
 - The day fails when Belt Condition reaches 0 and Appetite remains unmet; success still takes precedence after the complete action.
 - Soft-Shelled and its development-only test egg are removed.
 - Debug setup can choose ordered eggs and set starting Belt Condition.
@@ -175,11 +204,11 @@ Accepted and implemented as the authoritative daily-pressure system. A single hi
 
 ### Explicitly deferred
 
-- Egg effects that pause movement, bundle several movement steps into one paid operation, repair or armour the belt, or damage its Condition.
+- Further movement instructions, repair or armour for the belt, or direct Condition damage.
 - Final starting-Condition tuning, Belt Condition progression, and production art for the new bar.
 
 ### Exit evidence
 
-- Domain coverage proves one Condition loss after positive movement, no extra cost for Shockwave strikes, failure at zero, success precedence at zero, five-egg opening order, and same-thwack bin circulation.
+- Historical domain coverage proved one Condition loss after positive movement; current D073 coverage supersedes that assertion with one Condition loss per committed thwack. Shockwave cost, failure at zero, success precedence, five-egg opening order, and same-thwack bin circulation remain covered.
 - Presentation coverage proves one labelled progress bar on the conveyor housing renders the resolved Condition value inside the existing input barrier, reduced motion resolves immediately, and cancellation restores stable transforms.
 - Continue playtesting ordinary five-egg openings. Record whether 12 Condition gives enough room for deliberate bin circulation, whether free non-movement strikes are valuable without dominating, and which pause, multi-step, or repair egg should be the first content test.

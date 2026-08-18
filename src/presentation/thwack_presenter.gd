@@ -27,6 +27,7 @@ var _echo_trace: Control
 var _hatch_payoff: Control
 var _appetite_display: Control
 var _belt_condition_display: Control
+var _movement_preview: Control
 var _bin_label: Label
 var _generation := 0
 var _busy := false
@@ -58,6 +59,7 @@ func configure(
 	hatch_payoff: Control,
 	appetite_display: Control,
 	belt_condition_display: Control,
+	movement_preview: Control,
 	bin_label: Label
 ) -> void:
 	_belt_slots = belt_slots
@@ -68,6 +70,7 @@ func configure(
 	_hatch_payoff = hatch_payoff
 	_appetite_display = appetite_display
 	_belt_condition_display = belt_condition_display
+	_movement_preview = movement_preview
 	_bin_label = bin_label
 
 
@@ -142,8 +145,6 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_damage(event, playback_generation)
 		"egg_hatched":
 			return await _present_hatch(event, playback_generation)
-		"satisfaction_added":
-			return await _present_satisfaction(event, playback_generation)
 		"grandma_effect_activated":
 			if event.effect_type == "sulphurous":
 				return await _present_sulphurous(event, playback_generation)
@@ -154,6 +155,16 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_swap(event, playback_generation)
 		"conveyor_advanced":
 			return await _present_conveyor(event, playback_generation)
+		"conveyor_reversed":
+			return await _present_reverse_conveyor(event, playback_generation)
+		"movement_jam_added":
+			_movement_preview.show_jam_count(int(event.pending_jams))
+		"movement_instruction_cancelled":
+			_movement_preview.show_cancellation(
+				String(event.source), int(event.pending_jams)
+			)
+		"movement_jams_expired":
+			_movement_preview.show_expiry(int(event.amount))
 		"belt_condition_spent":
 			_belt_condition_display.render_condition(
 				int(event.remaining_condition), int(event.maximum_condition)
@@ -162,6 +173,8 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_bin(event, playback_generation)
 		"egg_entered":
 			return await _present_pipe_entry(event, playback_generation)
+		"egg_returned_to_hopper":
+			_render_pipe(event.pipe)
 		"bin_reshuffled":
 			return await _present_bin_reshuffle(event, playback_generation)
 		"day_remainder_discarded":
@@ -205,26 +218,6 @@ func _present_shockwave(event: Dictionary, playback_generation: int) -> bool:
 				fired_hammers[hammer_index], "strike_amount", 0.0, 0.12
 			)
 	return await _run_tween(recovery, playback_generation)
-
-
-func _present_satisfaction(event: Dictionary, playback_generation: int) -> bool:
-	_appetite_display.render_appetite(
-		event.score,
-		event.target_score,
-		int(event.get("sulphurous_suppression", 0))
-	)
-	_play(_score_player)
-	score_committed.emit(event.amount, event.score)
-	if _reduced_motion:
-		return true
-	var feedback: Control = _appetite_display.feedback_control()
-	feedback.pivot_offset = feedback.size * 0.5
-	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	pulse.tween_property(feedback, "scale", Vector2(1.09, 1.09), 0.07)
-	pulse.parallel().tween_property(feedback, "modulate", Color(0.75, 1.0, 0.72, 1.0), 0.07)
-	pulse.tween_property(feedback, "scale", Vector2.ONE, 0.10)
-	pulse.parallel().tween_property(feedback, "modulate", Color.WHITE, 0.10)
-	return await _run_tween(pulse, playback_generation)
 
 
 func _present_sulphurous(event: Dictionary, playback_generation: int) -> bool:
@@ -397,11 +390,13 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 
 	_commit_score(event)
 	var appetite_feedback: Control = _appetite_display.feedback_control()
+	var is_foul := int(event.points_awarded) < 0
+	var feedback_color := Color("86b957") if is_foul else Color(1.0, 0.88, 0.32, 1.0)
 	appetite_feedback.pivot_offset = appetite_feedback.size * 0.5
 	var arrival := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	arrival.tween_property(_hatch_payoff, "arrival_progress", 1.0, 0.20)
 	arrival.parallel().tween_property(appetite_feedback, "scale", Vector2(1.24, 1.24) if is_double_yolker else Vector2(1.12, 1.12), 0.075)
-	arrival.parallel().tween_property(appetite_feedback, "modulate", Color(1.0, 0.88, 0.32, 1.0), 0.075)
+	arrival.parallel().tween_property(appetite_feedback, "modulate", feedback_color, 0.075)
 	arrival.tween_property(appetite_feedback, "scale", Vector2.ONE, 0.125)
 	arrival.parallel().tween_property(appetite_feedback, "modulate", Color.WHITE, 0.125)
 	if not await _run_tween(arrival, playback_generation):
@@ -416,7 +411,7 @@ func _commit_score(event: Dictionary) -> void:
 		event.get("target_score", 15),
 		int(event.get("sulphurous_suppression", 0))
 	)
-	_play(_score_player)
+	_play(_loss_player if int(event.points_awarded) < 0 else _score_player)
 	score_committed.emit(event.points_awarded, event.score)
 
 
@@ -472,7 +467,7 @@ func _present_conveyor(event: Dictionary, playback_generation: int) -> bool:
 			continue
 		has_motion = true
 		var content: Control = slot.motion_content()
-		var route_step := (
+		var route_step: Vector2 = (
 			_belt_slots[slot_index + 1].global_position - slot.global_position
 			if slot_index < active_slot_count - 1
 			else _bin_label.global_position + _bin_label.size * 0.5
@@ -481,6 +476,36 @@ func _present_conveyor(event: Dictionary, playback_generation: int) -> bool:
 		var target := content.position + route_step
 		_add_momentum_motion(move, content, content.position, target, 0.20, 0.12)
 		if slot_index == active_slot_count - 1:
+			move.tween_property(content, "modulate:a", 0.35, 0.20)
+	if has_motion and not await _run_tween(move, playback_generation):
+		return false
+	_render_belt(event.slots)
+	return true
+
+
+func _present_reverse_conveyor(event: Dictionary, playback_generation: int) -> bool:
+	_play(_belt_player)
+	if _reduced_motion:
+		_render_belt(event.slots)
+		return true
+
+	var move := create_tween().set_parallel(true)
+	var has_motion := false
+	for slot_index in range(_belt_slots.size()):
+		var slot: Button = _belt_slots[slot_index]
+		if slot.current_egg().is_empty():
+			continue
+		has_motion = true
+		var content: Control = slot.motion_content()
+		var route_step: Vector2 = (
+			_belt_slots[slot_index - 1].global_position - slot.global_position
+			if slot_index > 0
+			else _pipe_slots[0].hatch_global_position() - slot.hatch_global_position()
+		)
+		_add_momentum_motion(
+			move, content, content.position, content.position + route_step, 0.20, 0.12, -1.0
+		)
+		if slot_index == 0:
 			move.tween_property(content, "modulate:a", 0.35, 0.20)
 	if has_motion and not await _run_tween(move, playback_generation):
 		return false

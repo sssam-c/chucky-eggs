@@ -77,33 +77,119 @@ func test_each_species_uses_matching_placeholder_colour_and_distinct_bird_shape(
 	assert_false(egg_visual.has_method("placeholder_mark"))
 
 
-func test_bird_cards_use_no_standard_accent_green_prize_and_blue_champion() -> void:
+func test_movement_eggs_show_their_instruction_emblems() -> void:
+	var egg_visual := EggVisual.new()
+	add_child_autofree(egg_visual)
+	for kind: String in ["oily", "nostalgic", "gloopy"]:
+		egg_visual.set_egg({
+			"kind": kind, "toughness": 3, "max_toughness": 3, "points": 1,
+		})
+		assert_eq(egg_visual.effect_emblem(), kind)
+
+
+func test_belt_preview_shows_left_to_right_jam_resolution_for_focused_lever() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"gloopy", "chicken", "oily", "chicken", "chicken", "chicken",
+	])
+	var red: Button = main.get_node("Content/Stage/CircuitBank/RedCircuit")
+	red.grab_focus()
+	await get_tree().process_frame
+	var preview: Control = main.get_node("Content/Stage/Belt/MovementPreview")
+
+	assert_eq(preview.sequence_text(), "⚙  ×▶  ▶")
+	assert_string_contains(preview.status_text(), "GLOOPY BLOCKS OILY")
+	assert_string_contains(preview.accessibility_description, "left to right")
+	for label_path in ["Layout/Title", "Layout/Sequence", "Layout/Status"]:
+		assert_true(preview.get_global_rect().encloses(
+			preview.get_node(label_path).get_global_rect()
+		))
+	assert_lte(
+		preview.get_global_rect().end.y,
+		main.get_node("Content/Stage/Belt/Slots/Slot1").get_global_rect().position.y
+	)
+
+
+func test_nostalgic_reverse_and_return_are_presented_before_normal_forward_motion() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"nostalgic", "chicken", "chicken", "chicken", "chicken", "chicken",
+	])
+	main.set_reduced_motion(true)
+	var presented: Array[String] = []
+	main.presentation_event.connect(func(event_type: String) -> void:
+		presented.append(event_type)
+	)
+
+	await _press_and_wait(main, "RedCircuit")
+
+	assert_lt(presented.find("conveyor_reversed"), presented.find("conveyor_advanced"))
+	assert_lt(presented.find("egg_returned_to_hopper"), presented.find("conveyor_advanced"))
+	assert_string_contains(
+		main.get_node("Content/Stage/Belt/Slots/Slot1").egg_summary(), "NOSTALGIC"
+	)
+
+
+func test_gloopy_cancellation_is_presented_without_conveyor_motion() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"gloopy", "chicken", "chicken", "chicken", "chicken", "chicken",
+	])
+	main.set_reduced_motion(true)
+	var presented: Array[String] = []
+	main.presentation_event.connect(func(event_type: String) -> void:
+		presented.append(event_type)
+	)
+
+	await _press_and_wait(main, "RedCircuit")
+
+	assert_true("movement_jam_added" in presented)
+	assert_true("movement_instruction_cancelled" in presented)
+	assert_false("conveyor_advanced" in presented)
+	assert_eq(main.get_node("Content/Stage/Belt/BeltCondition/BeltConditionLabel").text, "BELT CONDITION  11 / 12")
+
+
+func test_foul_gloopy_hatch_visibly_subtracts_satisfaction() -> void:
+	var main := _add_main_for_ordered_eggs([
+		"gloopy", "chicken", "chicken", "chicken", "chicken", "chicken",
+	])
+	main.set_reduced_motion(true)
+	var payoff_text := [""]
+	main.get_node("Presentation").hatch_payoff_started.connect(
+		func(_slot_index: int, _points_awarded: int) -> void:
+			payoff_text[0] = main.get_node("Content/HatchPayoff").point_text()
+	)
+
+	await _press_and_wait(main, "RedCircuit")
+	await _press_and_wait(main, "RedCircuit")
+
+	assert_eq(payoff_text[0], "−1")
+	assert_eq(
+		main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text,
+		"APPETITE -1 / 10"
+	)
+	assert_eq(main.get_node("Content/HUD/GrandmaScorer").appetite_ratio(), 0.0)
+
+
+func test_bird_cards_present_species_without_quality_or_rarity_controls() -> void:
 	var choice = load("res://src/ui/producer_choice_button.tscn").instantiate()
 	var flock_bird = load("res://src/ui/flock_bird_button.tscn").instantiate()
 	add_child_autofree(choice)
 	add_child_autofree(flock_bird)
 	await get_tree().process_frame
 
-	for tier in range(3):
-		var fact := {
-			"kind": "chicken",
-			"tier": tier,
-			"toughness": 3,
-			"points": 3,
-			"effect": "none",
-			"double_yolk_chance": 0.02,
-		}
-		choice.render_choice(fact)
-		flock_bird.render_bird(fact, 3, true)
-		assert_eq(choice.rarity_color(), flock_bird.rarity_color())
-		assert_eq(choice.has_rarity_tint(), tier > 0)
-		assert_eq(flock_bird.has_rarity_tint(), tier > 0)
-		if tier == 0:
-			assert_eq(choice.rarity_color(), Color(0, 0, 0, 0))
-		elif tier == 1:
-			assert_eq(choice.rarity_color(), Color("55b86a"))
-		else:
-			assert_eq(choice.rarity_color(), Color("4d89e8"))
+	var legacy_fact := {
+		"kind": "chicken", "tier": 2, "toughness": 3, "points": 3,
+		"effect": "none", "double_yolk_chance": 0.02,
+	}
+	choice.render_choice(legacy_fact)
+	flock_bird.render_bird(legacy_fact, 3, true)
+	assert_string_contains(choice.card_text(), "CHICKEN")
+	assert_string_contains(flock_bird.card_text(), "CHICKEN")
+	for removed_word in ["STANDARD", "PRIZE", "CHAMPION", "TIER"]:
+		assert_false(choice.card_text().contains(removed_word))
+		assert_false(flock_bird.card_text().contains(removed_word))
+	assert_false(choice.has_node("RarityTint"))
+	assert_false(choice.has_node("RarityStripe"))
+	assert_false(flock_bird.has_node("RarityTint"))
+	assert_false(flock_bird.has_node("RarityStripe"))
 
 
 func test_new_species_reward_cards_explain_their_signature_eggs() -> void:
@@ -114,7 +200,9 @@ func test_new_species_reward_cards_explain_their_signature_eggs() -> void:
 		"quail": "Appetiser",
 		"maleo": "2 Appetite",
 		"ostrich": "Shockwave",
-		"kiwi": "8 slow-release Yolk",
+		"oily": "one ▶",
+		"nostalgic": "one ◀",
+		"gloopy": "next movement",
 	}
 	for kind: String in expected_effect_text:
 		var fact: Dictionary = ChickenDaySession.new(42, ProducerFlock.new([
@@ -124,6 +212,10 @@ func test_new_species_reward_cards_explain_their_signature_eggs() -> void:
 		assert_eq(choice.portrait_kind(), kind)
 		assert_eq(choice.preview_egg_kind(), kind)
 		assert_string_contains(choice.card_text(), expected_effect_text[kind])
+		if kind == "gloopy":
+			assert_string_contains(choice.card_text(), "2 TOUGHNESS")
+			assert_string_contains(choice.card_text(), "-1 POINTS")
+			assert_string_contains(choice.card_text(), "−1 Yolk")
 
 
 func test_occupied_egg_hover_uses_a_custom_magnifying_glass_cursor() -> void:
@@ -217,7 +309,6 @@ func test_egg_hover_builds_a_clear_wrapped_information_card() -> void:
 	add_child_autofree(egg_visual)
 	egg_visual.set_egg({
 		"kind": "chicken",
-		"tier": 0,
 		"toughness": 3,
 		"max_toughness": 3,
 		"points": 3,
@@ -269,6 +360,16 @@ func test_egg_hover_card_includes_only_applicable_effect_sections() -> void:
 	assert_eq(spoonbill_card.visible_effect_sections(), ["ON HIT EFFECTS"])
 	assert_string_contains(spoonbill_card.card_text(), "Pink strike deals 2 damage")
 
+	egg_visual.set_egg({
+		"kind": "gloopy", "points": -1, "double_yolk_chance": 0.0,
+	})
+	var gloopy_card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(gloopy_card)
+	assert_eq(gloopy_card.visible_effect_sections(), ["ON HIT EFFECTS", "OTHER EFFECTS"])
+	assert_string_contains(gloopy_card.card_text(), "jams the next movement")
+	assert_string_contains(gloopy_card.card_text(), "Foul")
+	assert_string_contains(gloopy_card.card_text(), "−1 Yolk")
+
 
 func test_main_stage_exposes_anchored_egg_hover_cards_without_blocking_levers() -> void:
 	var main := _add_main_for_ordered_eggs(["cuckoo"])
@@ -294,9 +395,8 @@ func test_egg_hover_card_top_aligns_with_egg_and_stays_inside_viewport() -> void
 	add_child_autofree(egg_visual)
 	egg_visual.set_egg({
 		"kind": "plover",
-		"tier": 1,
-		"points": 6,
-		"double_yolk_chance": 0.075,
+		"points": 4,
+		"double_yolk_chance": 0.0,
 	})
 	assert_true(egg_visual.has_method("show_hover_card"))
 	assert_true(egg_visual.has_method("hover_card_rect"))
@@ -456,18 +556,16 @@ func test_grandma_compactly_lists_each_active_egg_effect() -> void:
 	grandma.render_effects({
 		"appetiser_charges": 2,
 		"sulphurous_suppression": 4,
-		"deceptively_filling_reserve": 8,
 	})
 	var effects: Label = grandma.get_node("Layout/Effects")
 	assert_string_contains(effects.text, "APPETISER ×2 · 2 EGGS")
 	assert_string_contains(effects.text, "SULPHUROUS · −4 APPETITE THIS DAY")
-	assert_string_contains(effects.text, "FILLING · 8 YOLK LEFT")
+	assert_false(effects.text.contains("FILLING"))
 	assert_string_contains(effects.accessibility_name, "two Appetiser charges")
 
 	grandma.render_effects({
 		"appetiser_charges": 0,
 		"sulphurous_suppression": 0,
-		"deceptively_filling_reserve": 0,
 	})
 	assert_eq(effects.text, "NO ACTIVE EGG EFFECTS")
 
@@ -746,14 +844,14 @@ func test_debug_settings_picker_starts_with_the_selected_egg_species() -> void:
 	assert_eq(picker.total_egg_count(), 8)
 	assert_eq(picker.starting_belt_condition(), 12)
 
-	picker.set_egg_order(["kiwi", "quail", "ostrich"])
+	picker.set_egg_order(["maleo", "quail", "ostrich"])
 	picker.move_egg(2, 0)
 	picker.set_starting_belt_condition(18)
 	picker.submit_selection()
 
 	assert_false(picker.visible)
 	assert_true(main.is_dev_mode())
-	assert_eq(main.dev_starting_egg_kinds(), ["ostrich", "kiwi", "quail"])
+	assert_eq(main.dev_starting_egg_kinds(), ["ostrich", "maleo", "quail"])
 	assert_eq(main.dev_starting_belt_condition(), 18)
 	assert_eq(main.dev_day_number(), 3)
 	assert_eq(main.get_node("Content/HUD/GrandmaScorer/Layout/Appetite/Score").text, "APPETITE 0 / 9")
@@ -788,7 +886,7 @@ func test_dev_egg_picker_fits_default_and_constrained_viewports() -> void:
 		))
 		assert_eq(
 			picker.get_node("Panel/Margin/Layout/Body/Species/SpeciesButtons").get_child_count(),
-			9
+			ProducerFlock.PRODUCER_KINDS.size()
 		)
 		assert_eq(picker.total_egg_count(), 8)
 
@@ -803,23 +901,22 @@ func test_plover_shell_information_shows_the_four_point_payoff() -> void:
 	assert_eq(slot.effect_emblem(), "screen_left")
 
 
-func test_quality_egg_shows_its_tier_and_floored_gameplay_score() -> void:
+func test_legacy_quality_fields_do_not_change_standard_egg_presentation() -> void:
 	var flock = ProducerFlock.new([{"kind": "chicken", "tier": 1}])
 	var session = ChickenDaySession.new(42, flock, IdentityShuffler.new())
 	var main := _add_main()
 	main.replace_session(session)
 	var slot = main.get_node("Content/Stage/Belt/Slots/Slot1")
 
-	assert_eq(slot.current_egg().tier, 1)
-	assert_almost_eq(float(slot.current_egg().exact_base_points), 4.5, 0.00001)
-	assert_eq(slot.current_egg().max_toughness, 5)
-	assert_almost_eq(float(slot.current_egg().exact_max_toughness), 4.5, 0.00001)
-	assert_string_contains(slot.egg_summary(), "TOUGHNESS 5")
-	assert_string_contains(slot.egg_summary(), "4 POINTS")
-	assert_false(slot.egg_summary().contains("4.5"))
-	assert_string_contains(slot.egg_description(), "Prize")
-	assert_eq(slot.quality_tier(), 1)
-	assert_eq(slot.quality_ring_count(), 1)
+	assert_false(slot.current_egg().has("tier"))
+	assert_false(slot.current_egg().has("exact_base_points"))
+	assert_false(slot.current_egg().has("exact_max_toughness"))
+	assert_eq(slot.current_egg().max_toughness, 3)
+	assert_string_contains(slot.egg_summary(), "TOUGHNESS 3")
+	assert_string_contains(slot.egg_summary(), "3 POINTS")
+	assert_false(slot.egg_description().contains("Prize"))
+	assert_false(slot.has_method("quality_tier"))
+	assert_false(slot.has_method("quality_ring_count"))
 
 
 func test_fallen_egg_visibly_recycles_with_its_damage_intact() -> void:
@@ -831,7 +928,7 @@ func test_fallen_egg_visibly_recycles_with_its_damage_intact() -> void:
 	var presented: Array[String] = []
 	main.presentation_event.connect(func(event_type: String) -> void: presented.append(event_type))
 
-	for circuit_name in ["RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit", "PinkCircuit"]:
+	for circuit_name in ["RedCircuit", "BlueCircuit", "RedCircuit", "BlueCircuit", "RedCircuit"]:
 		await _press_and_wait(main, circuit_name)
 
 	assert_true(presented.has("egg_binned"))
@@ -843,8 +940,9 @@ func test_fallen_egg_visibly_recycles_with_its_damage_intact() -> void:
 		"Content/Stage/Belt/Slots/Slot1"
 	).current_egg()
 	assert_eq(recycled_egg.kind, "spoonbill")
-	assert_eq(recycled_egg.toughness, 2)
-	assert_eq(recycled_egg.max_toughness, 8)
+	assert_eq(recycled_egg.toughness, 1)
+	assert_eq(recycled_egg.max_toughness, 5)
+	assert_false(recycled_egg.has("tier"))
 
 
 func test_stage_colours_belt_sections_and_keeps_five_spoons_neutral() -> void:
@@ -1577,7 +1675,7 @@ func test_result_reveal_is_cancelled_when_the_session_is_replaced() -> void:
 	assert_false(main.get_node("ResultOverlay").visible)
 
 
-func test_success_opens_three_free_quality_offers_on_a_separate_screen() -> void:
+func test_success_opens_three_free_standard_species_offers_on_a_separate_screen() -> void:
 	var main := _add_authored_main()
 	main.set_reduced_motion(true)
 
@@ -1594,6 +1692,10 @@ func test_success_opens_three_free_quality_offers_on_a_separate_screen() -> void
 		assert_string_contains(choice.card_text(), "TOUGHNESS")
 		assert_string_contains(choice.card_text(), "POINT")
 		assert_string_contains(choice.card_text(), "FREE")
+		for removed_word in ["STANDARD", "PRIZE", "CHAMPION", "TIER"]:
+			assert_false(choice.card_text().contains(removed_word))
+		assert_false(choice.has_node("RarityTint"))
+		assert_false(choice.has_node("RarityStripe"))
 		assert_eq(choice.tooltip_text, "")
 	assert_false(main.get_node("ResultOverlay").visible)
 	assert_true(main.get_node("BirdOfferOverlay").visible)

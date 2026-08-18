@@ -77,10 +77,6 @@ func render_effects(effects: Dictionary) -> void:
 			"Sulphurous suppresses %d Appetite for the rest of this day"
 			% sulphurous_suppression
 		)
-	var filling_reserve := int(effects.get("deceptively_filling_reserve", 0))
-	if filling_reserve > 0:
-		lines.append("FILLING · %d YOLK LEFT" % filling_reserve)
-		accessible.append("Deceptively Filling has %d slow-release Yolk left" % filling_reserve)
 	if lines.is_empty():
 		_effects_label.text = "NO ACTIVE EGG EFFECTS"
 		_effects_label.accessibility_name = "No active egg effects"

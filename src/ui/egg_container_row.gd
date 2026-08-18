@@ -14,10 +14,8 @@ func render_egg(egg: Dictionary, position_text: String) -> void:
 	_egg = egg.duplicate(true)
 	_position_label.text = position_text
 	_egg_visual.set_egg(_egg, true)
-	var tier := int(_egg.get("tier", 0))
 	var kind := String(_egg.get("kind", "egg"))
-	var display_name := kind.to_upper()
-	_name_label.text = "%s %s" % [_quality_name(tier), display_name]
+	_name_label.text = kind.to_upper()
 	var toughness := int(_egg.get("toughness", 0))
 	var max_toughness := int(_egg.get("max_toughness", toughness))
 	var points := int(_egg.get("points", 0))
@@ -48,19 +46,6 @@ func visible_text() -> String:
 	return "\n".join([
 		_position_label.text, _name_label.text, _facts_label.text, _effect_label.text,
 	])
-
-
-func _quality_name(tier: int) -> String:
-	match tier:
-		0:
-			return "STANDARD"
-		1:
-			return "PRIZE"
-		2:
-			return "CHAMPION"
-	return "TIER %d" % tier
-
-
 func _effect_text(kind: String) -> String:
 	match kind:
 		"cuckoo":
@@ -75,6 +60,10 @@ func _effect_text(kind: String) -> String:
 			return "SULPHUROUS  •  SUPPRESSES 2 APPETITE THIS DAY"
 		"ostrich":
 			return "SHOCKWAVE  •  STRIKES BOTH ADJACENT SLOTS"
-		"kiwi":
-			return "FILLING 8  •  RELEASES 1 YOLK PER FUTURE THWACK"
+		"oily":
+			return "OILY  •  DIRECT HIT ADDS ONE ▶"
+		"nostalgic":
+			return "NOSTALGIC  •  DIRECT HIT ADDS ONE ◀"
+		"gloopy":
+			return "GLOOPY  •  JAMS NEXT MOVEMENT  •  HATCHES FOR −1 YOLK"
 	return "NO EXTRA EFFECT"
