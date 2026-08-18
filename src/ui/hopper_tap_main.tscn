@@ -1,0 +1,363 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/ui/hopper_tap_main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
+[ext_resource type="PackedScene" path="res://src/ui/spoon_circuit_button.tscn" id="3_lever"]
+[ext_resource type="PackedScene" path="res://src/presentation/spoon_hammer.tscn" id="4_hammer"]
+[ext_resource type="Script" path="res://src/presentation/hopper_tap_presenter.gd" id="5_presenter"]
+[ext_resource type="Theme" path="res://src/ui/workshop_theme.tres" id="6_theme"]
+
+[node name="HopperTapPrototype" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("6_theme")
+script = ExtResource("1_main")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.055, 0.047, 0.043, 1)
+
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_left = 28.0
+offset_top = 18.0
+offset_right = 610.0
+offset_bottom = 57.0
+theme_override_colors/font_color = Color(1, 0.79, 0.37, 1)
+theme_override_font_sizes/font_size = 28
+text = "GRANDMA'S FIVE-EGG COMBONTRON"
+
+[node name="Instructions" type="Label" parent="."]
+layout_mode = 0
+offset_left = 30.0
+offset_top = 60.0
+offset_right = 730.0
+offset_bottom = 88.0
+theme_override_colors/font_color = Color(0.82, 0.79, 0.7, 1)
+theme_override_font_sizes/font_size = 16
+text = "Pull one lever. Break an egg. Route the next hopper egg into its spoon position."
+
+[node name="Score" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 800.0
+offset_top = 22.0
+offset_right = 1025.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(1, 0.88, 0.32, 1)
+theme_override_font_sizes/font_size = 20
+text = "APPETITE  0 / 10"
+horizontal_alignment = 2
+
+[node name="Pulls" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1045.0
+offset_top = 22.0
+offset_right = 1250.0
+offset_bottom = 56.0
+theme_override_colors/font_color = Color(0.67, 0.86, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "SPOON PULLS  12 / 12"
+horizontal_alignment = 2
+
+[node name="Hopper" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 112.0
+offset_right = 196.0
+offset_bottom = 692.0
+
+[node name="Title" type="Label" parent="Hopper"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 160.0
+offset_bottom = 48.0
+theme_override_colors/font_color = Color(0.94, 0.68, 0.31, 1)
+theme_override_font_sizes/font_size = 22
+text = "HOPPER"
+horizontal_alignment = 1
+
+[node name="HopperCount" type="Label" parent="Hopper"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 48.0
+offset_right = 160.0
+offset_bottom = 74.0
+theme_override_colors/font_color = Color(0.74, 0.71, 0.64, 1)
+text = "7 WAITING"
+horizontal_alignment = 1
+
+[node name="Preview" type="Control" parent="Hopper"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 76.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Next1" parent="Hopper/Preview" instance=ExtResource("2_egg")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 29.0
+offset_top = 0.0
+offset_right = 199.0
+offset_bottom = 170.0
+scale = Vector2(0.7, 0.7)
+
+[node name="Next2" parent="Hopper/Preview" instance=ExtResource("2_egg")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 29.0
+offset_top = 150.0
+offset_right = 199.0
+offset_bottom = 320.0
+scale = Vector2(0.7, 0.7)
+
+[node name="Next3" parent="Hopper/Preview" instance=ExtResource("2_egg")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 29.0
+offset_top = 300.0
+offset_right = 199.0
+offset_bottom = 470.0
+scale = Vector2(0.7, 0.7)
+
+[node name="Stage" type="Control" parent="."]
+layout_mode = 0
+offset_left = 210.0
+offset_top = 104.0
+offset_right = 1260.0
+offset_bottom = 704.0
+
+[node name="LaneLabels" type="Control" parent="Stage"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Lane1" type="Label" parent="Stage/LaneLabels"]
+unique_name_in_owner = true
+offset_left = 18.0
+offset_top = 0.0
+offset_right = 188.0
+offset_bottom = 30.0
+theme_override_font_sizes/font_size = 18
+text = "RED  ◆"
+horizontal_alignment = 1
+[node name="Lane2" type="Label" parent="Stage/LaneLabels"]
+unique_name_in_owner = true
+offset_left = 220.0
+offset_top = 0.0
+offset_right = 390.0
+offset_bottom = 30.0
+theme_override_font_sizes/font_size = 18
+text = "BLUE  ○"
+horizontal_alignment = 1
+[node name="Lane3" type="Label" parent="Stage/LaneLabels"]
+unique_name_in_owner = true
+offset_left = 422.0
+offset_top = 0.0
+offset_right = 592.0
+offset_bottom = 30.0
+theme_override_font_sizes/font_size = 18
+text = "PINK  ✦"
+horizontal_alignment = 1
+[node name="Lane4" type="Label" parent="Stage/LaneLabels"]
+unique_name_in_owner = true
+offset_left = 624.0
+offset_top = 0.0
+offset_right = 794.0
+offset_bottom = 30.0
+theme_override_font_sizes/font_size = 18
+text = "RED  ◆"
+horizontal_alignment = 1
+[node name="Lane5" type="Label" parent="Stage/LaneLabels"]
+unique_name_in_owner = true
+offset_left = 826.0
+offset_top = 0.0
+offset_right = 996.0
+offset_bottom = 30.0
+theme_override_font_sizes/font_size = 18
+text = "BLUE  ○"
+horizontal_alignment = 1
+
+[node name="Hammers" type="Control" parent="Stage"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+[node name="Hammer1" parent="Stage/Hammers" instance=ExtResource("4_hammer")]
+unique_name_in_owner = true
+offset_left = 10.0
+offset_top = 28.0
+offset_right = 195.0
+offset_bottom = 278.0
+[node name="Hammer2" parent="Stage/Hammers" instance=ExtResource("4_hammer")]
+unique_name_in_owner = true
+offset_left = 212.0
+offset_top = 28.0
+offset_right = 397.0
+offset_bottom = 278.0
+[node name="Hammer3" parent="Stage/Hammers" instance=ExtResource("4_hammer")]
+unique_name_in_owner = true
+offset_left = 414.0
+offset_top = 28.0
+offset_right = 599.0
+offset_bottom = 278.0
+[node name="Hammer4" parent="Stage/Hammers" instance=ExtResource("4_hammer")]
+unique_name_in_owner = true
+offset_left = 616.0
+offset_top = 28.0
+offset_right = 801.0
+offset_bottom = 278.0
+[node name="Hammer5" parent="Stage/Hammers" instance=ExtResource("4_hammer")]
+unique_name_in_owner = true
+offset_left = 818.0
+offset_top = 28.0
+offset_right = 1003.0
+offset_bottom = 278.0
+
+[node name="Bays" type="Control" parent="Stage"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+[node name="Slot1" parent="Stage/Bays" instance=ExtResource("2_egg")]
+unique_name_in_owner = true
+offset_left = 18.0
+offset_top = 248.0
+offset_right = 188.0
+offset_bottom = 418.0
+[node name="Slot2" parent="Stage/Bays" instance=ExtResource("2_egg")]
+unique_name_in_owner = true
+offset_left = 220.0
+offset_top = 248.0
+offset_right = 390.0
+offset_bottom = 418.0
+[node name="Slot3" parent="Stage/Bays" instance=ExtResource("2_egg")]
+unique_name_in_owner = true
+offset_left = 422.0
+offset_top = 248.0
+offset_right = 592.0
+offset_bottom = 418.0
+[node name="Slot4" parent="Stage/Bays" instance=ExtResource("2_egg")]
+unique_name_in_owner = true
+offset_left = 624.0
+offset_top = 248.0
+offset_right = 794.0
+offset_bottom = 418.0
+[node name="Slot5" parent="Stage/Bays" instance=ExtResource("2_egg")]
+unique_name_in_owner = true
+offset_left = 826.0
+offset_top = 248.0
+offset_right = 996.0
+offset_bottom = 418.0
+
+[node name="Levers" type="Control" parent="Stage"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+[node name="Lever1" parent="Stage/Levers" instance=ExtResource("3_lever")]
+unique_name_in_owner = true
+offset_left = 18.0
+offset_top = 430.0
+offset_right = 188.0
+offset_bottom = 542.0
+[node name="Lever2" parent="Stage/Levers" instance=ExtResource("3_lever")]
+unique_name_in_owner = true
+offset_left = 220.0
+offset_top = 430.0
+offset_right = 390.0
+offset_bottom = 542.0
+[node name="Lever3" parent="Stage/Levers" instance=ExtResource("3_lever")]
+unique_name_in_owner = true
+offset_left = 422.0
+offset_top = 430.0
+offset_right = 592.0
+offset_bottom = 542.0
+[node name="Lever4" parent="Stage/Levers" instance=ExtResource("3_lever")]
+unique_name_in_owner = true
+offset_left = 624.0
+offset_top = 430.0
+offset_right = 794.0
+offset_bottom = 542.0
+[node name="Lever5" parent="Stage/Levers" instance=ExtResource("3_lever")]
+unique_name_in_owner = true
+offset_left = 826.0
+offset_top = 430.0
+offset_right = 996.0
+offset_bottom = 542.0
+
+[node name="ResultPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 20
+layout_mode = 0
+offset_left = 420.0
+offset_top = 220.0
+offset_right = 860.0
+offset_bottom = 500.0
+
+[node name="Content" type="VBoxContainer" parent="ResultPanel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+[node name="ResultLabel" type="Label" parent="ResultPanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.86, 0.34, 1)
+theme_override_font_sizes/font_size = 28
+text = "GRANDMA IS SATISFIED!"
+horizontal_alignment = 1
+[node name="ResultRestart" type="Button" parent="ResultPanel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "RESET THE COMBONTRON"
+
+[node name="Restart" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 1090.0
+offset_top = 64.0
+offset_right = 1250.0
+offset_bottom = 100.0
+text = "RESTART"
+
+[node name="TapPresenter" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("5_presenter")
+[node name="Audio" type="Node" parent="TapPresenter"]
+[node name="Lever" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
+[node name="Impact" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
+[node name="Echo" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
+[node name="Hatch" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
+[node name="Score" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
+[node name="Pipe" type="AudioStreamPlayer" parent="TapPresenter/Audio"]

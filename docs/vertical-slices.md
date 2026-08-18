@@ -2,6 +2,55 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
+## Branch experiment — Hopper-fed individual spoon combos
+
+### Question
+
+Does directly tapping one of five stationary eggs feel more tactile and strategically expressive when opening an egg routes the next visible hopper egg into that same coloured spoon position?
+
+### Status
+
+Branch-only prototype on `codex/hopper-tap-combos`. This is a design hypothesis and does not supersede the canonical conveyor rules unless a later playtest and deliberate decision accept it.
+
+### End-to-end player path
+
+- Begin with five occupied bays, five individually operated coloured spoons, a visible three-egg hopper preview, a small pool of spoon pulls, and Grandma's Appetite.
+- Pull one lever to strike only the egg in its matching bay. Exact remaining toughness and Yolk stay visible.
+- Resolve direct damage, Cuckoo echoes, hatches, and any positional response as one deterministic cascade.
+- Keep every vacancy empty until that cascade finishes, then route hopper eggs into vacancies in hatch order; simultaneous hatches use bay order from left to right.
+- Free reactions never spend another pull. After refill, choose the next individual spoon until Appetite is met, pulls run out, or no eggs remain.
+
+### Hypotheses
+
+- One lever per egg will make every input feel direct and let the player invest repeated taps deliberately.
+- A visible hopper turns opening an egg into positional routing: the player chooses which spoon colour and neighbours the next egg inherits.
+- Fixed spoon colours, Cuckoo adjacency, Spoonbill's Pink weakness, and Plover's surviving-hit swap provide enough initial combontronics without movement instructions or a conveyor.
+- Short, resolver-authored cascades can feel powerful without becoming an incremental or idle loop.
+
+### Settled rules preserved inside the experiment
+
+- Five simultaneous egg positions, exact visible toughness, Yolk scoring, Grandma's Appetite, deterministic resolution, and a three-egg hopper preview.
+- Chicken remains plain, Cuckoo copies damage from an adjacent directly struck egg, Spoonbill takes two direct damage from Pink, and a surviving directly struck Plover swaps left.
+- Rule ownership remains in the domain; UI and animation only submit one spoon request and present its ordered events.
+
+### Implementation conveniences, not rules
+
+- The first build uses an authored egg order and fixed spoon colours to expose a reliable opening combination.
+- Existing placeholder egg, lever, spoon, sound, and Appetite assets may be reused to shorten the learning loop.
+- Initial Appetite and pull counts are tuning controls rather than accepted balance.
+
+### Explicitly deferred
+
+- Flock rewards, cash, removal, multiple days, random shuffles, the bin, recycling, automatic conveyor movement, paired circuits, movement eggs, production art, and permanent progression.
+- New egg identities or multi-rule eggs beyond the existing compact interaction vocabulary.
+
+### Exit evidence
+
+- Domain specs prove one-spoon targeting, fixed spoon colour, direct and echo order, post-cascade vacancy refill, deterministic multi-vacancy routing, one paid pull per request, and end conditions.
+- UI specs prove five individually operable levers, exact egg facts, three preview eggs, input locking, ordered damage/hatch/refill presentation, and restart.
+- A muted running-game check at 1280×720 and 1024×576 verifies contact alignment, fast tactile feedback, readable colour-plus-symbol identity, and no stale input after cancellation.
+- Play the authored opening without explanation and record whether the player notices that opening Pink's first egg deliberately routes the incoming Spoonbill under Pink.
+
 ## Active validation slice — Standard-species rewards and visible flock thinning
 
 ### Question
