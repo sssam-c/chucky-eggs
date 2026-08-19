@@ -8,7 +8,7 @@
 [ext_resource type="Theme" path="res://src/ui/workshop_theme.tres" id="6_theme"]
 [ext_resource type="PackedScene" path="res://src/ui/grandma_hunger_panel.tscn" id="7_grandma"]
 
-[node name="HopperTapPrototype" type="Control"]
+[node name="HopperTapGame" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

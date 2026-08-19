@@ -1,10 +1,10 @@
 extends GutTest
 
-const PrototypeScene = preload("res://src/ui/hopper_tap_main.tscn")
+const MainScene = preload("res://src/ui/hopper_tap_main.tscn")
 
 
-func test_prototype_exposes_five_individual_spoons_and_three_hopper_previews() -> void:
-	var main := await _add_prototype()
+func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> void:
+	var main := await _add_game()
 	var grandma = main.get_node_or_null("GrandmaSidebar")
 	var stage: Control = main.get_node("Stage")
 
@@ -33,7 +33,7 @@ func test_prototype_exposes_five_individual_spoons_and_three_hopper_previews() -
 	assert_null(main.get_node_or_null("Hunger"))
 	assert_null(main.get_node_or_null("HungerIntent"))
 
-	var state: Dictionary = main.prototype_state()
+	var state: Dictionary = main.game_state()
 	assert_eq(state.slots[2].kind, "sparrow")
 	assert_eq(state.pipe[0].kind, "spoonbill")
 	assert_eq(state.hunger, 10)
@@ -50,7 +50,7 @@ func test_prototype_exposes_five_individual_spoons_and_three_hopper_previews() -
 
 
 func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup() -> void:
-	var main := await _add_prototype()
+	var main := await _add_game()
 	main.set_reduced_motion(true)
 	assert_false(main.get_node("GrandmaSidebar").is_idle_motion_active())
 	var drops: Array[Dictionary] = []
@@ -66,7 +66,7 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 	main.get_node("Stage/SpoonControls/SpoonButton3").pressed.emit()
 	await main.playback_completed
 	await get_tree().process_frame
-	var state: Dictionary = main.prototype_state()
+	var state: Dictionary = main.game_state()
 
 	assert_eq(state.hunger, 9)
 	assert_eq(state.taps_remaining, 4)
@@ -82,7 +82,7 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 
 
 func test_second_input_is_ignored_while_a_tap_cascade_is_playing() -> void:
-	var main := await _add_prototype()
+	var main := await _add_game()
 	var spoon_button: Button = main.get_node("Stage/SpoonControls/SpoonButton1")
 	spoon_button.pressed.emit()
 	spoon_button.pressed.emit()
@@ -90,11 +90,11 @@ func test_second_input_is_ignored_while_a_tap_cascade_is_playing() -> void:
 	await main.playback_completed
 	await get_tree().process_frame
 
-	assert_eq(main.prototype_state().taps_remaining, 4)
+	assert_eq(main.game_state().taps_remaining, 4)
 
 
 func test_fifth_tap_presents_grandmas_response_before_refreshing_taps() -> void:
-	var main := await _add_prototype()
+	var main := await _add_game()
 	main.set_reduced_motion(true)
 	var presented: Array[String] = []
 	var phase_was_owned_by_grandma := [false]
@@ -111,7 +111,7 @@ func test_fifth_tap_presents_grandmas_response_before_refreshing_taps() -> void:
 		await main.playback_completed
 		await get_tree().process_frame
 
-	var state: Dictionary = main.prototype_state()
+	var state: Dictionary = main.game_state()
 	assert_eq(state.tap_phase, 2)
 	assert_eq(state.hunger, 4)
 	assert_eq(state.taps_remaining, 5)
@@ -127,7 +127,7 @@ func test_fifth_tap_presents_grandmas_response_before_refreshing_taps() -> void:
 
 
 func test_restart_restores_the_authored_opening() -> void:
-	var main := await _add_prototype()
+	var main := await _add_game()
 	main.set_reduced_motion(true)
 	main.get_node("Stage/SpoonControls/SpoonButton3").pressed.emit()
 	await main.playback_completed
@@ -135,17 +135,17 @@ func test_restart_restores_the_authored_opening() -> void:
 
 	main.get_node("Restart").pressed.emit()
 
-	assert_eq(main.prototype_state().hunger, 10)
-	assert_eq(main.prototype_state().taps_remaining, 5)
-	assert_eq(main.prototype_state().tap_phase, 1)
-	assert_eq(main.prototype_state().slots[2].kind, "sparrow")
-	assert_eq(main.prototype_state().pipe[0].kind, "spoonbill")
+	assert_eq(main.game_state().hunger, 10)
+	assert_eq(main.game_state().taps_remaining, 5)
+	assert_eq(main.game_state().tap_phase, 1)
+	assert_eq(main.game_state().slots[2].kind, "sparrow")
+	assert_eq(main.game_state().pipe[0].kind, "spoonbill")
 	assert_eq(main.get_node("GrandmaSidebar").hunger_value(), 10)
 	assert_eq(main.get_node("GrandmaSidebar").next_increase(), 1)
 
 
-func _add_prototype() -> Control:
-	var main: Control = PrototypeScene.instantiate()
+func _add_game() -> Control:
+	var main: Control = MainScene.instantiate()
 	add_child_autofree(main)
 	await get_tree().process_frame
 	return main

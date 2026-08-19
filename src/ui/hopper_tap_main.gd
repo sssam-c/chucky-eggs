@@ -78,7 +78,7 @@ func _ready() -> void:
 	_spoon_buttons[0].grab_focus.call_deferred()
 
 
-func prototype_state() -> Dictionary:
+func game_state() -> Dictionary:
 	return _session.state()
 
 
