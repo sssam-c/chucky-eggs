@@ -4,7 +4,8 @@ extends Node
 signal event_presented(event_type: String)
 signal playback_finished
 signal egg_drop_started(slot_index: int, origin: Vector2, destination: Vector2)
-signal streak_announced(streak: int, callout: String, pooled_yolk: int)
+signal yolk_merge_started(base_yolk: int, origin: Vector2, destination: Vector2)
+signal combo_announced(combo_count: int, callout: String, total_yolk: int)
 signal yolk_delivery_started(total_yolk: int, origin: Vector2, destination: Vector2)
 signal hunger_subtraction_presented(hunger_before: int, amount: int, hunger_after: int)
 
@@ -22,7 +23,7 @@ var _pipe_slots: Array[Button] = []
 var _spoon_buttons: Array[Button] = []
 var _spoons: Array[Control] = []
 var _hopper_drop_point: Control
-var _yolk_streak_display: Control
+var _yolk_combo_display: Control
 var _grandma_hunger_panel: Control
 var _tap_pips_label: Label
 var _generation := 0
@@ -30,6 +31,7 @@ var _busy := false
 var _muted := false
 var _reduced_motion := false
 var _active_tween: Tween
+var _pending_yolk_origins: Array[Vector2] = []
 
 
 func _ready() -> void:
@@ -47,7 +49,7 @@ func configure(
 	spoon_buttons: Array[Button],
 	spoons: Array[Control],
 	hopper_drop_point: Control,
-	yolk_streak_display: Control,
+	yolk_combo_display: Control,
 	grandma_hunger_panel: Control,
 	tap_pips_label: Label
 ) -> void:
@@ -56,7 +58,7 @@ func configure(
 	_spoon_buttons = spoon_buttons
 	_spoons = spoons
 	_hopper_drop_point = hopper_drop_point
-	_yolk_streak_display = yolk_streak_display
+	_yolk_combo_display = yolk_combo_display
 	_grandma_hunger_panel = grandma_hunger_panel
 	_tap_pips_label = tap_pips_label
 
@@ -65,6 +67,7 @@ func play_events(events: Array[Dictionary]) -> bool:
 	_generation += 1
 	var playback_generation := _generation
 	_busy = true
+	_pending_yolk_origins.clear()
 	await get_tree().process_frame
 	for event: Dictionary in events:
 		if playback_generation != _generation:
@@ -94,6 +97,8 @@ func cancel_playback() -> void:
 
 func set_reduced_motion(reduced: bool) -> void:
 	_reduced_motion = reduced
+	if _yolk_combo_display != null:
+		_yolk_combo_display.set_reduced_motion(reduced)
 	if _grandma_hunger_panel != null:
 		_grandma_hunger_panel.set_reduced_motion(reduced)
 
@@ -122,8 +127,6 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_hatch(event, playback_generation)
 		"yolk_delivered":
 			return await _present_yolk_delivery(event, playback_generation)
-		"break_streak_reset":
-			return await _present_break_streak_reset(event, playback_generation)
 		"eggs_swapped":
 			return await _present_swap(event, playback_generation)
 		"egg_entered":
@@ -185,25 +188,11 @@ func _present_damage(event: Dictionary, playback_generation: int) -> bool:
 
 func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	var slot: Button = _slots[int(event.slot_index)]
-	var yolk_origin: Vector2 = slot.hatch_global_position()
-	var streak := int(event.break_streak)
-	var base_yolk := int(event.base_yolk)
-	var awarded_yolk := int(event.yolk)
-	var callout_hold := 0.58 if streak > 1 else 0.40
-	var result_hold := 0.48 if streak > 1 else 0.34
+	_pending_yolk_origins.append(slot.hatch_global_position())
 	_play(_hatch_player)
 	if _reduced_motion:
 		slot.clear_visual()
-		_yolk_streak_display.add_hatch(base_yolk, streak, awarded_yolk)
-		streak_announced.emit(
-			streak, _yolk_streak_display.callout_text(),
-			_yolk_streak_display.pooled_yolk()
-		)
-		if not await _pause(callout_hold, playback_generation):
-			return false
-		_yolk_streak_display.resolve_award(awarded_yolk)
-		_play(_hunger_player)
-		return await _pause(result_hold, playback_generation)
+		return true
 	var content: Control = slot.motion_content()
 	content.pivot_offset = content.size * 0.5
 	var burst := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -213,129 +202,127 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	if not await _run_tween(burst, playback_generation):
 		return false
 	slot.clear_visual()
-	var token: Label = _yolk_streak_display.create_yolk_token(yolk_origin, base_yolk)
-	var token_size := token.custom_minimum_size
-	var target_position: Vector2 = (
-		_yolk_streak_display.bowl_global_position() - token_size * 0.5
-	)
-	token.pivot_offset = token_size * 0.5
-	var collect := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	collect.tween_property(token, "global_position", target_position, 0.26)
-	collect.parallel().tween_property(token, "scale", Vector2(1.20, 1.20), 0.16)
-	collect.parallel().tween_property(token, "rotation", 0.08, 0.26)
-	if not await _run_tween(collect, playback_generation):
-		return false
-	token.queue_free()
-	_yolk_streak_display.add_hatch(base_yolk, streak, awarded_yolk)
-	streak_announced.emit(
-		streak, _yolk_streak_display.callout_text(),
-		_yolk_streak_display.pooled_yolk()
-	)
-	var award_panel: Control = _yolk_streak_display.award_control()
-	award_panel.pivot_offset = award_panel.size * 0.5
-	award_panel.scale = Vector2(0.82, 0.82)
-	var callout := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	callout.tween_property(award_panel, "scale", Vector2(1.08, 1.08), 0.14)
-	callout.tween_property(award_panel, "scale", Vector2.ONE, 0.12)
-	if not await _run_tween(callout, playback_generation):
-		return false
-	if not await _pause(callout_hold, playback_generation):
-		return false
-	_yolk_streak_display.resolve_award(awarded_yolk)
-	_play(_hunger_player)
-	var calculation: Control = _yolk_streak_display.calculation_control()
-	calculation.pivot_offset = calculation.size * 0.5
-	calculation.scale = Vector2(0.72, 0.72)
-	var resolve := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	resolve.tween_property(calculation, "scale", Vector2(1.24, 1.24), 0.13)
-	resolve.tween_property(calculation, "scale", Vector2.ONE, 0.14)
-	if not await _run_tween(resolve, playback_generation):
-		return false
-	return await _pause(result_hold, playback_generation)
+	return true
 
 
 func _present_yolk_delivery(event: Dictionary, playback_generation: int) -> bool:
 	var total_yolk := int(event.total_yolk)
 	var hunger_before := int(event.hunger_before)
 	var hunger_after := int(event.hunger)
-	var origin: Vector2 = _yolk_streak_display.bowl_global_position()
+	var combo_count := int(event.eggs_broken)
+	var is_combo := combo_count >= 2
+	var base_yolks: Array = event.base_yolks
+	_yolk_combo_display.begin_pool(combo_count)
+	if not await _present_yolk_merges(base_yolks, playback_generation):
+		return false
+	_yolk_combo_display.show_multiplier(combo_count, total_yolk)
+	if is_combo:
+		combo_announced.emit(combo_count, _yolk_combo_display.callout_text(), total_yolk)
+		if playback_generation != _generation:
+			return false
+		if not await _present_multiplier_surge(playback_generation):
+			return false
+	var origin: Vector2 = _yolk_combo_display.ball_global_position()
 	var destination: Vector2 = _grandma_hunger_panel.delivery_global_position()
 	yolk_delivery_started.emit(total_yolk, origin, destination)
+	if playback_generation != _generation:
+		return false
 	if _reduced_motion:
-		_yolk_streak_display.finish_delivery()
+		if not await _pause(0.08 if is_combo else 0.04, playback_generation):
+			return false
+		_yolk_combo_display.finish_delivery()
 		_grandma_hunger_panel.show_hunger_subtraction(
 			hunger_before, total_yolk, hunger_after
 		)
 		hunger_subtraction_presented.emit(hunger_before, total_yolk, hunger_after)
-		if not await _pause(0.48, playback_generation):
-			return false
 		_commit_hunger(event)
-		if not await _pause(0.58, playback_generation):
+		if not await _pause(0.10 if is_combo else 0.06, playback_generation):
 			return false
 		_grandma_hunger_panel.hide_hunger_subtraction()
 		return true
-	var parcel: Label = _yolk_streak_display.begin_delivery(total_yolk)
-	var parcel_size := parcel.custom_minimum_size
-	var parcel_destination := destination - parcel_size * 0.5
+	var ball: Control = _yolk_combo_display.begin_delivery()
+	var ball_size := ball.size
 	var deliver := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	deliver.tween_property(parcel, "global_position", parcel_destination, 0.42)
-	deliver.parallel().tween_property(parcel, "scale", Vector2(0.88, 0.88), 0.42)
+	deliver.tween_property(ball, "global_position", destination - ball_size * 0.5, 0.20)
+	deliver.parallel().tween_property(ball, "scale", Vector2(0.76, 0.88), 0.20)
+	deliver.parallel().tween_property(ball, "rotation", 0.08, 0.10)
+	deliver.tween_property(ball, "scale", Vector2(1.05, 0.68), 0.045)
 	if not await _run_tween(deliver, playback_generation):
 		return false
-	parcel.queue_free()
-	_yolk_streak_display.finish_delivery()
+	_yolk_combo_display.finish_delivery()
 	_grandma_hunger_panel.show_hunger_subtraction(hunger_before, total_yolk, hunger_after)
 	hunger_subtraction_presented.emit(hunger_before, total_yolk, hunger_after)
 	var change_feedback: Control = _grandma_hunger_panel.hunger_change_control()
 	change_feedback.pivot_offset = change_feedback.size * 0.5
-	change_feedback.scale = Vector2(0.82, 0.82)
+	change_feedback.scale = Vector2(0.90, 0.90)
 	var reveal := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	reveal.tween_property(change_feedback, "scale", Vector2(1.12, 1.12), 0.14)
-	reveal.tween_property(change_feedback, "scale", Vector2.ONE, 0.12)
+	reveal.tween_property(change_feedback, "scale", Vector2(1.08, 1.08), 0.06)
+	reveal.tween_property(change_feedback, "scale", Vector2.ONE, 0.05)
 	if not await _run_tween(reveal, playback_generation):
-		return false
-	if not await _pause(0.32, playback_generation):
 		return false
 	_commit_hunger(event)
 	var hunger_feedback: Control = _grandma_hunger_panel.feedback_control()
 	hunger_feedback.pivot_offset = hunger_feedback.size * 0.5
 	var hunger_pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	hunger_pulse.tween_property(hunger_feedback, "scale", Vector2(1.16, 1.16), 0.14)
-	hunger_pulse.tween_property(hunger_feedback, "scale", Vector2.ONE, 0.16)
+	hunger_pulse.tween_property(hunger_feedback, "scale", Vector2(1.12, 1.12), 0.07)
+	hunger_pulse.tween_property(hunger_feedback, "scale", Vector2.ONE, 0.08)
 	if not await _run_tween(hunger_pulse, playback_generation):
 		return false
-	if not await _pause(0.42, playback_generation):
+	if not await _pause(0.15 if is_combo else 0.08, playback_generation):
 		return false
 	_grandma_hunger_panel.hide_hunger_subtraction()
 	return true
 
 
-func _present_break_streak_reset(event: Dictionary, playback_generation: int) -> bool:
-	if String(event.reason) != "empty_tap":
-		_yolk_streak_display.finish_reset()
-		return true
-	_yolk_streak_display.show_reset(int(event.previous_streak))
-	if _reduced_motion:
-		if not await _pause(0.72, playback_generation):
+func _present_yolk_merges(base_yolks: Array, playback_generation: int) -> bool:
+	var subtotal := 0
+	var destination: Vector2 = _yolk_combo_display.ball_global_position()
+	for yolk_index in range(base_yolks.size()):
+		var base_yolk := maxi(0, int(base_yolks[yolk_index]))
+		var origin := destination
+		if yolk_index < _pending_yolk_origins.size():
+			origin = _pending_yolk_origins[yolk_index]
+		var drop: Control = _yolk_combo_display.create_yolk_drop(origin, base_yolk)
+		yolk_merge_started.emit(base_yolk, origin, destination)
+		if playback_generation != _generation:
 			return false
-		_yolk_streak_display.finish_reset()
-		return true
-	var award_panel: Control = _yolk_streak_display.award_control()
-	award_panel.pivot_offset = award_panel.size * 0.5
-	var break_feedback := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	break_feedback.tween_property(award_panel, "rotation", -0.035, 0.06)
-	break_feedback.tween_property(award_panel, "rotation", 0.035, 0.08)
-	break_feedback.tween_property(award_panel, "rotation", 0.0, 0.06)
-	if not await _run_tween(break_feedback, playback_generation):
-		return false
-	if not await _pause(0.55, playback_generation):
-		return false
-	var dismiss := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	dismiss.tween_property(award_panel, "modulate:a", 0.0, 0.20)
-	if not await _run_tween(dismiss, playback_generation):
-		return false
-	_yolk_streak_display.finish_reset()
+		if not _reduced_motion:
+			var drop_destination := destination - drop.size * 0.5
+			var merge := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			merge.tween_property(drop, "global_position", drop_destination, 0.12)
+			merge.parallel().tween_property(drop, "scale", Vector2(0.62, 0.78), 0.12)
+			merge.parallel().tween_property(drop, "modulate:a", 0.78, 0.12)
+			if not await _run_tween(merge, playback_generation):
+				return false
+		drop.queue_free()
+		subtotal += base_yolk
+		_yolk_combo_display.merge_yolk(subtotal)
+		if not _reduced_motion:
+			var ball: Control = _yolk_combo_display.ball_control()
+			var settled_scale: Vector2 = ball.scale
+			ball.scale = settled_scale * Vector2(1.14, 0.88)
+			var absorb := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			absorb.tween_property(ball, "scale", settled_scale, 0.075)
+			if not await _run_tween(absorb, playback_generation):
+				return false
+	_pending_yolk_origins.clear()
 	return true
+
+
+func _present_multiplier_surge(playback_generation: int) -> bool:
+	if _reduced_motion:
+		return await _pause(0.08, playback_generation)
+	var ball: Control = _yolk_combo_display.ball_control()
+	var settled_scale: Vector2 = ball.scale
+	ball.pivot_offset = ball.size * 0.5
+	var surge := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	surge.tween_property(ball, "scale", settled_scale * Vector2(1.28, 1.16), 0.10)
+	surge.parallel().tween_property(ball, "rotation", -0.07, 0.10)
+	surge.tween_property(ball, "scale", settled_scale, 0.09)
+	surge.parallel().tween_property(ball, "rotation", 0.0, 0.09)
+	if not await _run_tween(surge, playback_generation):
+		return false
+	return await _pause(0.10, playback_generation)
 
 
 func _present_swap(event: Dictionary, _playback_generation: int) -> bool:
@@ -443,10 +430,11 @@ func _render_pipe(eggs: Array) -> void:
 
 
 func _reset_mechanisms() -> void:
+	_pending_yolk_origins.clear()
 	if _grandma_hunger_panel != null:
 		_grandma_hunger_panel.reset_feedback()
-	if _yolk_streak_display != null:
-		_yolk_streak_display.reset_transient()
+	if _yolk_combo_display != null:
+		_yolk_combo_display.reset_transient()
 	for spoon_button: Button in _spoon_buttons:
 		spoon_button.reset_pose()
 	for spoon: Control in _spoons:

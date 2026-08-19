@@ -161,3 +161,27 @@ The current 8-point opening is a forgiving tutorial and is consistent with the p
 **Interpretation:** Stable ownership matters more than keeping scoring physically central. Grandma's rail can contain the complete round state without feeling like an abstract HUD when the table preserves large eggs, physical cups, neutral spoon motion, and chunky controls. Environmental structure and warm light make negative space support the workshop rather than read as unfinished UI.
 
 **Proposed response:** Implement the accepted composition without changing cascade rules, score timing, phase timing, or resolver ownership. Retain the unique Red Diamond, Blue Circle, Pink Star, Green Triangle, and Gold Square buttons and verify readability at both supported viewports.
+
+## 2026-08-19 — Persistent scoring interrupts the tapping rhythm
+
+**Question:** Did the consolidated score card solve readability without slowing the tactile loop?
+
+**Context:** Informal playtest of the implemented workshop interface with the accepted cross-tap break streak, per-hatch equation, compact delivery, explicit subtraction, and locked presentation barrier.
+
+**Observed:** The scoring was described as “too slow and unresponsive” and “quite interruptive.” A same-tap alternative—Double and Triple Yolker only when several eggs break from one tap—was proposed and accepted.
+
+**Interpretation:** The earlier presentation solved simultaneous information competition by serializing every representation of the result. That made ordinary success remove control for much longer than the physical tap and gave single breaks nearly the same ceremony as jackpots. Counting only same-tap breaks makes the multiplier causally visible, removes persistent bookkeeping, and lets celebration frequency track event rarity.
+
+**Proposed response:** Replace the persistent streak with a flat same-tap multiplier over combined printed Yolk. Give misses no scoring feedback, make single breaks update Hunger directly, and reserve one short resolved equation for multi-break taps. Measure the complete ordinary-break and two-break interaction paths and human-test whether Cuckoo supplies enough combo opportunities.
+
+## 2026-08-19 — Same-tap scoring happens outside the action
+
+**Question:** Does the compact same-tap score treatment make the result visible without interrupting the tapping rhythm?
+
+**Context:** Informal developer playtest after replacing the cross-tap streak with same-tap Double and Triple Yolker results, while retaining the temporary arithmetic and delivery inside Grandma's sidebar.
+
+**Observed:** The scores and named combo results were described as insufficiently visible in the centre of play and as happening “off screen.” A shimmering, gluey, semi-liquid numbered Yolk ball was proposed: Yolk from broken eggs would merge into it, it would grow and resolve the multiplier, then travel straight to Grandma and lower Hunger on arrival. The direction was accepted for implementation.
+
+**Interpretation:** The short duration is no longer the main readability problem. The player's gaze remains on the cups and breaking eggs, while the score appears in a peripheral status rail. Keeping the result in that rail spatially disconnects cause from value even when the arithmetic is concise.
+
+**Proposed response:** Materialise each scoring tap as one transient central Yolk ball. Animate resolver-authored hatch contributions into it, keep one crisp total on its face, reserve the surge and callout for multi-breaks, and make that same object the delivery to Grandma. Preserve a static reduced-motion equivalent and remove the obsolete sidebar score card.

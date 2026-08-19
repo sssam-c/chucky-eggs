@@ -22,7 +22,7 @@ const APPEARANCES := [
 @onready var _spoons: Array[Control] = [%Spoon1, %Spoon2, %Spoon3, %Spoon4, %Spoon5]
 @onready var _hopper_drop_point: Control = %HopperDropPoint
 @onready var _grandma_hunger_panel: Control = %GrandmaSidebar
-@onready var _yolk_streak_display: Control = _grandma_hunger_panel.yolk_streak_display()
+@onready var _yolk_combo_display: Control = %YolkComboDisplay
 @onready var _tap_pips_label: Label = _grandma_hunger_panel.tap_pips_control()
 @onready var _hopper_count_label: Label = %HopperCount
 @onready var _result_panel: PanelContainer = %ResultPanel
@@ -66,7 +66,7 @@ func _ready() -> void:
 		_spoon_buttons,
 		_spoons,
 		_hopper_drop_point,
-		_yolk_streak_display,
+		_yolk_combo_display,
 		_grandma_hunger_panel,
 		_tap_pips_label,
 	)
@@ -137,7 +137,7 @@ func _render() -> void:
 		HopperTapSession.STARTING_HUNGER
 	)
 	_tap_pips_label.text = _tap_pips(int(state.taps_remaining), int(state.taps_per_phase))
-	_yolk_streak_display.set_streak(int(state.break_streak))
+	_yolk_combo_display.reset_transient()
 	_hopper_count_label.text = "%d WAITING" % int(state.hopper_egg_count)
 	for slot_index in range(_slots.size()):
 		var egg: Dictionary = state.slots[slot_index]

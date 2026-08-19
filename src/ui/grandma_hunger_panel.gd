@@ -3,7 +3,6 @@ extends Control
 
 @onready var _portrait: Control = %GrandmaPortrait
 @onready var _tap_pips_label: Label = %TapPips
-@onready var _yolk_streak_display: Control = %YolkStreakDisplay
 @onready var _hunger_card: Control = %HungerCard
 @onready var _hunger_value_label: Label = %HungerValue
 @onready var _hunger_change_label: Label = %HungerChange
@@ -56,10 +55,6 @@ func feedback_control() -> Control:
 
 func tap_pips_control() -> Label:
 	return _tap_pips_label
-
-
-func yolk_streak_display() -> Control:
-	return _yolk_streak_display
 
 
 func delivery_global_position() -> Vector2:

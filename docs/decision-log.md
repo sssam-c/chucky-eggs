@@ -774,6 +774,26 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D075's directly clickable coloured spoons and Red, Blue, Pink, Red, Blue mapping; D077's fixed centre-stage badge and bowl. D075's five-cup round and D077's one-calculation award, compact delivery, explicit subtraction, presentation barrier, and restart cancellation remain accepted. D076's break-streak rules remain unchanged.
 
+## D079 — Count break combos within one tap
+
+**Status:** accepted
+
+**Decision:** Remove the persistent break streak. For each paid tap, count every egg opened by its complete resolver-authored cascade, add those eggs' printed Yolk, and multiply the combined value by that count. Breaks on separate taps never combine. A tap that opens no eggs emits no score or reset event. Present single breaks as a direct, brief Hunger update. Only taps that open at least two eggs receive one Double Yolker, Triple Yolker, or higher callout, one already-resolved equation, and one compact delivery to Hunger. Keep input locked until the complete ordered presentation ends, but use short feedback without explanatory holds.
+
+**Reason:** Persistent streak scoring made isolated breaks across separate taps feel abstract and required ongoing UI state. Its readability pass then serialized hatch collection, callout, arithmetic, delivery, subtraction, and Hunger feedback into a mandatory cutscene: a basic break held control for roughly 3.7 seconds before refill. A same-tap combo makes the multiplier identical to the visible causal event, preserves strategic setup through distributed damage and Cuckoo relationships, removes miss bookkeeping, and reserves celebration for exceptional cascades.
+
+**Supersedes:** D076's cross-tap streak, sequential per-egg multipliers, zero-break reset, and Hunger-phase reset; D077's per-hatch unresolved/resolved scoring sequence and readable holds; D078's resting streak state. D076's setup-and-payoff objective and resolver-authored pooled result, D077's one compact delivery and cancellation requirements, and D078's Grandma-owned score location remain accepted.
+
+## D080 — Materialise each tap's Yolk in the playfield
+
+**Status:** accepted
+
+**Decision:** For every scoring tap, create one transient shimmering Yolk ball above the eggs. Move each opened egg's printed Yolk from its hatch position into that ball and update the number on the ball as the contributions merge. For a multi-break tap, show the Double Yolker, Triple Yolker, or higher callout at that same playfield location, visibly surge the subtotal through the already-resolved same-tap multiplier, then move the completed ball directly to Grandma's Hunger. Commit the visible Hunger reduction only when it arrives. Give a single break the same short numbered-ball route without a combo callout. Keep the ball absent between scoring taps, preserve reduced-motion equivalents without continuous shimmer, and let the resolver remain the sole owner of every base value, multiplier, total, and Hunger result.
+
+**Reason:** The compact sidebar card made score events occur outside the player's focal area, so the eggs appeared to break while their value happened elsewhere. Reusing one liquid object for collection, multiplication, and delivery makes the full causal chain spatially continuous: egg to shared payoff to Grandma. A number on the object preserves exact arithmetic, while merging and growth supply the tactile jackpot sensation without adding permanent HUD state or another explanatory hold.
+
+**Supersedes:** D078 and D079 only where they place temporary combo arithmetic in Grandma's score card and deliver a separate compact parcel. Grandma continues to own persistent Taps, Hunger, next response, phase feedback, and the final consequence; D079's same-tap multiplier, lack of cross-tap state, exceptional combo callout, short playback, locking, and resolver ownership remain accepted.
+
 <!--
 Copy for the next entry:
 

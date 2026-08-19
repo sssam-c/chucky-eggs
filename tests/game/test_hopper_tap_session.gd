@@ -35,33 +35,29 @@ func test_restart_restores_the_authored_combo_opening() -> void:
 	assert_eq(state.pipe[0].kind, "spoonbill")
 
 
-func test_authored_pink_route_builds_a_double_break_jackpot() -> void:
+func test_authored_red_route_builds_a_same_tap_double_break_jackpot() -> void:
 	var session = HopperTapSession.new()
-	session.submit_spoon(2)
-	session.submit_spoon(2)
-	var setup_events: Array[Dictionary] = session.submit_spoon(2)
-	var winning_events: Array[Dictionary] = session.submit_spoon(2)
+	session.submit_spoon(0)
+	session.submit_spoon(0)
+	session.submit_spoon(1)
+	var combo_events: Array[Dictionary] = session.submit_spoon(0)
 	var final_state: Dictionary = session.state()
-	var setup_hatch: Dictionary = setup_events.filter(
+	var hatches: Array = combo_events.filter(
 		func(event: Dictionary) -> bool: return String(event.type) == "egg_hatched"
-	)[0]
-	var winning_hatch: Dictionary = winning_events.filter(
-		func(event: Dictionary) -> bool: return String(event.type) == "egg_hatched"
-	)[0]
-	var delivery: Dictionary = winning_events.filter(
+	)
+	var delivery: Dictionary = combo_events.filter(
 		func(event: Dictionary) -> bool: return String(event.type) == "yolk_delivered"
 	)[0]
 
-	assert_eq(setup_hatch.kind, "cuckoo")
-	assert_eq(setup_hatch.break_streak, 1)
-	assert_eq(setup_hatch.yolk, 1)
-	assert_eq(winning_hatch.kind, "spoonbill")
-	assert_eq(winning_hatch.break_streak, 2)
-	assert_eq(winning_hatch.yolk, 8)
+	assert_eq(hatches.map(func(event: Dictionary) -> String: return String(event.kind)), [
+		"chicken", "cuckoo",
+	])
+	assert_eq(hatches.map(func(event: Dictionary) -> int: return int(event.combo_count)), [2, 2])
+	assert_eq(hatches.map(func(event: Dictionary) -> int: return int(event.yolk)), [6, 2])
+	assert_eq(delivery.base_yolks, [3, 1])
+	assert_eq(delivery.combo_multiplier, 2)
 	assert_eq(delivery.total_yolk, 8)
-	assert_eq(final_state.hunger, 0)
+	assert_eq(final_state.hunger, 2)
 	assert_eq(final_state.tap_phase, 1)
 	assert_eq(final_state.taps_remaining, 1)
-	assert_true(final_state.ended)
-	assert_true(final_state.succeeded)
-	assert_eq(winning_events[-1].type, "day_ended")
+	assert_false(final_state.ended)

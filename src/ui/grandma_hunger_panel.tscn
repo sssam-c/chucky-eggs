@@ -1,8 +1,7 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://src/ui/grandma_hunger_panel.gd" id="1_panel"]
 [ext_resource type="Script" path="res://src/ui/grandma_portrait.gd" id="2_portrait"]
-[ext_resource type="PackedScene" path="res://src/ui/yolk_streak_display.tscn" id="3_yolk"]
 
 [sub_resource type="StyleBoxFlat" id="SidebarPanel"]
 bg_color = Color(0.075, 0.047, 0.029, 0.995)
@@ -129,21 +128,13 @@ text = "TAPS  ● ● ● ● ●"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="YolkStreakDisplay" parent="." instance=ExtResource("3_yolk")]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 12.0
-offset_top = 300.0
-offset_right = 238.0
-offset_bottom = 378.0
-
 [node name="HungerCard" type="Panel" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 12.0
-offset_top = 386.0
+offset_top = 306.0
 offset_right = 238.0
-offset_bottom = 524.0
+offset_bottom = 444.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("HungerCardPanel")
 
@@ -210,9 +201,9 @@ visible = false
 z_index = 5
 layout_mode = 0
 offset_left = 12.0
-offset_top = 534.0
+offset_top = 454.0
 offset_right = 238.0
-offset_bottom = 578.0
+offset_bottom = 498.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("PhasePanel")
 

@@ -32,6 +32,11 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 	assert_not_null(main.get_node_or_null("Stage/Table/Apron"))
 	assert_not_null(main.get_node_or_null("Hopper/Chute"))
 	assert_null(main.get_node_or_null("Stage/YolkStreakDisplay"))
+	var yolk_display: Control = main.get_node("Stage/YolkComboDisplay")
+	assert_not_null(yolk_display.get_node_or_null("YolkBall"))
+	assert_null(yolk_display.get_node_or_null("AwardPanel"))
+	assert_lt(yolk_display.ball_global_position().y, main.get_node("Stage/Bays/Slot3").get_global_rect().get_center().y)
+	assert_true(stage.get_global_rect().has_point(yolk_display.ball_global_position()))
 	assert_not_null(main.get_node_or_null("Hopper/HopperDropPoint"))
 	assert_null(main.get_node_or_null("Stage/Levers"))
 	assert_not_null(grandma)
@@ -39,9 +44,8 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 		return
 	assert_not_null(grandma.get_node_or_null("GrandmaPortrait"))
 	assert_not_null(grandma.get_node_or_null("TapCard/TapPips"))
-	assert_not_null(grandma.get_node_or_null("YolkStreakDisplay"))
-	assert_not_null(grandma.get_node_or_null("YolkStreakDisplay/StreakBadge"))
-	assert_not_null(grandma.get_node_or_null("YolkStreakDisplay/AwardPanel"))
+	assert_null(grandma.get_node_or_null("YolkStreakDisplay"))
+	assert_null(grandma.get_node_or_null("YolkComboDisplay"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/HungerValue"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/HungerChange"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/NextIncrease"))
@@ -54,6 +58,7 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 	assert_eq(state.slots[2].kind, "sparrow")
 	assert_eq(state.pipe[0].kind, "spoonbill")
 	assert_eq(state.hunger, 10)
+	assert_false(state.has("break_streak"))
 	assert_eq(state.taps_remaining, 5)
 	assert_eq(grandma.hunger_value(), 10)
 	assert_eq(grandma.next_increase(), 1)
@@ -75,7 +80,8 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 	main.set_reduced_motion(true)
 	assert_false(main.get_node("GrandmaSidebar").is_idle_motion_active())
 	var drops: Array[Dictionary] = []
-	var streaks: Array[Dictionary] = []
+	var combos: Array[Dictionary] = []
+	var merges: Array[Dictionary] = []
 	var deliveries: Array[Dictionary] = []
 	var hunger_changes: Array[Dictionary] = []
 	main.get_node("TapPresenter").egg_drop_started.connect(
@@ -86,12 +92,20 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 				"destination": destination,
 			})
 	)
-	main.get_node("TapPresenter").streak_announced.connect(
-		func(streak: int, callout: String, pooled_yolk: int) -> void:
-			streaks.append({
-				"streak": streak,
+	main.get_node("TapPresenter").combo_announced.connect(
+		func(combo_count: int, callout: String, total_yolk: int) -> void:
+			combos.append({
+				"combo_count": combo_count,
 				"callout": callout,
-				"pooled_yolk": pooled_yolk,
+				"total_yolk": total_yolk,
+			})
+	)
+	main.get_node("TapPresenter").yolk_merge_started.connect(
+		func(base_yolk: int, origin: Vector2, destination: Vector2) -> void:
+			merges.append({
+				"base_yolk": base_yolk,
+				"origin": origin,
+				"destination": destination,
 			})
 	)
 	main.get_node("TapPresenter").yolk_delivery_started.connect(
@@ -127,18 +141,21 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 	assert_eq(drops[0].slot_index, 2)
 	assert_eq(drops[0].origin, main.get_node("Hopper/HopperDropPoint").get_global_rect().get_center())
 	assert_lt(drops[0].origin.y, drops[0].destination.y)
-	assert_eq(streaks, [{"streak": 1, "callout": "YOLK!", "pooled_yolk": 1}])
+	assert_true(combos.is_empty())
+	assert_eq(merges.size(), 1)
+	assert_eq(merges[0].base_yolk, 1)
+	assert_eq(merges[0].origin, main.get_node("Stage/Bays/Slot3").hatch_global_position())
+	assert_eq(merges[0].destination, main.get_node("Stage/YolkComboDisplay").ball_global_position())
 	assert_eq(deliveries.size(), 1)
 	assert_eq(deliveries[0].total_yolk, 1)
 	assert_eq(
 		deliveries[0].destination,
 		main.get_node("GrandmaSidebar").delivery_global_position()
 	)
-	assert_gt(deliveries[0].destination.y, deliveries[0].origin.y)
+	assert_eq(deliveries[0].origin, main.get_node("Stage/YolkComboDisplay").ball_global_position())
+	assert_gt(deliveries[0].destination.x, deliveries[0].origin.x)
 	assert_eq(hunger_changes, [{"before": 10, "amount": 1, "after": 9}])
-	assert_true(main.get_node("GrandmaSidebar/YolkStreakDisplay").visible)
-	assert_false(main.get_node("GrandmaSidebar/YolkStreakDisplay").is_award_visible())
-	assert_eq(main.get_node("GrandmaSidebar/YolkStreakDisplay").streak_text(), "STREAK  ×1")
+	assert_false(main.get_node("Stage/YolkComboDisplay").visible)
 	assert_false(main.get_node("GrandmaSidebar/HungerCard/HungerChange").visible)
 
 
@@ -154,7 +171,7 @@ func test_second_input_is_ignored_while_a_tap_cascade_is_playing() -> void:
 	assert_eq(main.game_state().taps_remaining, 4)
 
 
-func test_zero_break_tap_presents_and_completes_the_streak_reset() -> void:
+func test_zero_break_tap_has_no_combo_reset_interruption() -> void:
 	var main := await _add_game()
 	main.set_reduced_motion(true)
 	var presented: Array[String] = []
@@ -171,11 +188,84 @@ func test_zero_break_tap_presents_and_completes_the_streak_reset() -> void:
 	await main.playback_completed
 	await get_tree().process_frame
 
-	assert_true(presented.has("break_streak_reset"))
-	assert_eq(main.game_state().break_streak, 0)
+	assert_false(presented.has("break_streak_reset"))
+	assert_false(main.game_state().has("break_streak"))
 	assert_eq(main.game_state().hunger, 9)
-	assert_eq(main.get_node("GrandmaSidebar/YolkStreakDisplay").streak_text(), "NEXT BREAK  ×1")
-	assert_false(main.get_node("GrandmaSidebar/YolkStreakDisplay").is_award_visible())
+	assert_false(main.get_node("Stage/YolkComboDisplay").visible)
+	assert_false(main.is_input_locked())
+
+
+func test_same_tap_double_break_announces_one_flat_combo() -> void:
+	var main := await _add_game()
+	main.set_reduced_motion(true)
+	var combos: Array[Dictionary] = []
+	main.get_node("TapPresenter").combo_announced.connect(
+		func(combo_count: int, callout: String, total_yolk: int) -> void:
+			combos.append({
+				"combo_count": combo_count,
+				"callout": callout,
+				"total_yolk": total_yolk,
+				"ball_amount": main.get_node("Stage/YolkComboDisplay").ball_amount(),
+				"ball_visible": main.get_node("Stage/YolkComboDisplay").visible,
+			})
+	)
+	var route: Array[Button] = [
+		main.get_node("Stage/SpoonControls/SpoonButton1"),
+		main.get_node("Stage/SpoonControls/SpoonButton1"),
+		main.get_node("Stage/SpoonControls/SpoonButton2"),
+		main.get_node("Stage/SpoonControls/SpoonButton1"),
+	]
+	for spoon_button: Button in route:
+		spoon_button.pressed.emit()
+		await main.playback_completed
+		await get_tree().process_frame
+
+	assert_eq(combos, [{
+		"combo_count": 2,
+		"callout": "DOUBLE YOLKER!",
+		"total_yolk": 8,
+		"ball_amount": 8,
+		"ball_visible": true,
+	}])
+	assert_eq(main.game_state().hunger, 2)
+	assert_false(main.get_node("Stage/YolkComboDisplay").visible)
+	assert_false(main.is_input_locked())
+
+
+func test_restart_cancels_an_active_combo_without_stale_score_state() -> void:
+	var main := await _add_game()
+	main.set_reduced_motion(true)
+	var setup_route: Array[Button] = [
+		main.get_node("Stage/SpoonControls/SpoonButton1"),
+		main.get_node("Stage/SpoonControls/SpoonButton1"),
+		main.get_node("Stage/SpoonControls/SpoonButton2"),
+	]
+	for spoon_button: Button in setup_route:
+		spoon_button.pressed.emit()
+		await main.playback_completed
+		await get_tree().process_frame
+	main.set_reduced_motion(false)
+	var combo_started := [false]
+	var presenter: Node = main.get_node("TapPresenter")
+	presenter.combo_announced.connect(
+		func(_combo_count: int, _callout: String, _total_yolk: int) -> void:
+			combo_started[0] = true
+			main.get_node("Restart").pressed.emit()
+	,
+		CONNECT_ONE_SHOT
+	)
+
+	main.get_node("Stage/SpoonControls/SpoonButton1").pressed.emit()
+	await presenter.combo_announced
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_true(combo_started[0])
+	assert_eq(main.game_state().hunger, 10)
+	assert_eq(main.game_state().taps_remaining, 5)
+	assert_eq(main.game_state().slots[0].kind, "chicken")
+	assert_false(main.get_node("Stage/YolkComboDisplay").visible)
+	assert_false(main.get_node("GrandmaSidebar/HungerCard/HungerChange").visible)
 	assert_false(main.is_input_locked())
 
 

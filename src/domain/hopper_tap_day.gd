@@ -22,7 +22,6 @@ var _hunger: int
 var _taps_remaining: int
 var _taps_per_phase: int
 var _tap_phase := 1
-var _break_streak := 0
 var _next_hunger_increase: int
 var _hunger_growth: int
 var _ended := false
@@ -69,7 +68,6 @@ func snapshot() -> Dictionary:
 		"taps_remaining": _taps_remaining,
 		"taps_per_phase": _taps_per_phase,
 		"tap_phase": _tap_phase,
-		"break_streak": _break_streak,
 		"next_hunger_increase": _next_hunger_increase,
 		"ended": _ended,
 		"succeeded": _succeeded,
@@ -97,19 +95,21 @@ func resolve_spoon(slot_index: int) -> Array[Dictionary]:
 	var damage_amount := _direct_damage_amount(slot_index, String(spoon.color))
 	_apply_damage(slot_index, damage_amount, "spoon", slot_index, String(spoon.color), events)
 	_apply_cuckoo_echoes(slot_index, damage_amount, String(spoon.color), events)
-	var total_yolk := _resolve_hatches(events)
+	var hatch_result: Dictionary = _resolve_hatches(events)
+	var total_yolk := int(hatch_result.total_yolk)
 	if total_yolk > 0:
 		var hunger_before := _hunger
 		_hunger = maxi(_hunger - total_yolk, 0)
 		events.append({
 			"type": "yolk_delivered",
+			"base_yolks": hatch_result.base_yolks,
+			"base_yolk_total": int(hatch_result.base_yolk_total),
+			"eggs_broken": int(hatch_result.eggs_broken),
+			"combo_multiplier": int(hatch_result.combo_multiplier),
 			"total_yolk": total_yolk,
 			"hunger_before": hunger_before,
 			"hunger": _hunger,
-			"break_streak": _break_streak,
 		})
-	else:
-		_reset_break_streak(events, "empty_tap")
 	_retreat_surviving_direct_plover(slot_index, events)
 	_refill_vacancies(events)
 
@@ -182,8 +182,9 @@ func _apply_damage(
 	})
 
 
-func _resolve_hatches(events: Array[Dictionary]) -> int:
-	var total_yolk := 0
+func _resolve_hatches(events: Array[Dictionary]) -> Dictionary:
+	var hatched_eggs: Array[Dictionary] = []
+	var base_yolks: Array[int] = []
 	for slot_index in range(SLOT_COUNT):
 		if _slots[slot_index].is_empty() or int(_slots[slot_index].toughness) > 0:
 			continue
@@ -194,22 +195,40 @@ func _resolve_hatches(events: Array[Dictionary]) -> int:
 		_resolved_egg_ids[egg_instance_id] = true
 		_slots[slot_index] = {}
 		_vacancy_slots_in_hatch_order.append(slot_index)
-		_break_streak += 1
 		var base_yolk := int(egg.points)
-		var yolk := base_yolk * _break_streak
-		total_yolk += yolk
-		events.append({
-			"type": "egg_hatched",
+		base_yolks.append(base_yolk)
+		hatched_eggs.append({
 			"egg_instance_id": egg_instance_id,
 			"slot_index": slot_index,
 			"kind": String(egg.kind),
 			"base_yolk": base_yolk,
+		})
+
+	var combo_count := hatched_eggs.size()
+	var combo_multiplier := maxi(combo_count, 1)
+	var base_yolk_total := 0
+	for base_yolk: int in base_yolks:
+		base_yolk_total += base_yolk
+	for hatched_egg: Dictionary in hatched_eggs:
+		var yolk := int(hatched_egg.base_yolk) * combo_multiplier
+		events.append({
+			"type": "egg_hatched",
+			"egg_instance_id": int(hatched_egg.egg_instance_id),
+			"slot_index": int(hatched_egg.slot_index),
+			"kind": String(hatched_egg.kind),
+			"base_yolk": int(hatched_egg.base_yolk),
 			"points_awarded": yolk,
 			"yolk": yolk,
-			"break_streak": _break_streak,
-			"streak_multiplier": _break_streak,
+			"combo_count": combo_count,
+			"combo_multiplier": combo_multiplier,
 		})
-	return total_yolk
+	return {
+		"base_yolks": base_yolks,
+		"base_yolk_total": base_yolk_total,
+		"eggs_broken": combo_count,
+		"combo_multiplier": combo_multiplier,
+		"total_yolk": base_yolk_total * combo_multiplier,
+	}
 
 
 func _retreat_surviving_direct_plover(
@@ -254,7 +273,6 @@ func _refill_vacancies(events: Array[Dictionary]) -> void:
 
 
 func _resolve_hunger_phase(events: Array[Dictionary]) -> void:
-	_reset_break_streak(events, "hunger_phase")
 	events.append({
 		"type": "tap_phase_ended",
 		"tap_phase": _tap_phase,
@@ -279,19 +297,6 @@ func _resolve_hunger_phase(events: Array[Dictionary]) -> void:
 		"taps_per_phase": _taps_per_phase,
 		"next_hunger_increase": _next_hunger_increase,
 		"hunger": _hunger,
-	})
-
-
-func _reset_break_streak(events: Array[Dictionary], reason: String) -> void:
-	if _break_streak <= 0:
-		return
-	var previous_streak := _break_streak
-	_break_streak = 0
-	events.append({
-		"type": "break_streak_reset",
-		"previous_streak": previous_streak,
-		"break_streak": _break_streak,
-		"reason": reason,
 	})
 
 

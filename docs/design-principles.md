@@ -18,17 +18,17 @@ Treat five taps as renewable action economy, not a dwindling run-wide allowance.
 
 Grandma's announced increase is enemy intent. Her response should create a round boundary and pressure efficient combinations, not merely interrupt the tapping rhythm. If defensive eggs are explored later, they should contest the announced increase directly rather than introduce another global survival meter.
 
-## Break streaks turn setup into payoff
+## Same-tap combos turn setup into payoff
 
-Reward a route of prepared breaks instead of charging the player to move between spoons. Every paid input must remain one physical tap; spatial commitment comes from preserving the break streak, ordering valuable eggs late, and avoiding a zero-break tap.
+Reward a board of prepared eggs instead of charging the player to move between spoons. Every paid input must remain one physical tap; spatial commitment comes from weakening several eggs and arranging one strike that opens them together before Grandma responds.
 
-The streak multiplier is the round's explosive payoff. It may produce deliberately large jackpots, but it must remain possible to understand which egg advanced the streak and how much multiplied Yolk it contributed. Keep persistent streak state in a compact row in Grandma's sidebar and transient payout information to one callout, one calculation, and one resolved award in the same place. Avoid simultaneous dots, labels, and moving cards that restate the same amount. Watch for an authored route that becomes automatic or for base Yolk values that make every non-streak break irrelevant.
+The combo multiplier is the round's explosive payoff. Count only eggs opened by one tap, add their printed Yolk, and multiply once by that count. This makes the jackpot causally identical to the visible cascade and removes persistent score bookkeeping. Materialise those facts as one liquid Yolk ball where the eggs break: contributions merge into it, its number changes once through the multiplier, and the same object leaves for Grandma. Single breaks use that route briefly; misses do nothing; reserve the named callout and multiplier surge for multi-break taps. Watch for an authored route that becomes automatic, for Cuckoo becoming the only practical combo enabler, or for the flat multiplier making single breaks irrelevant.
 
 ## Grandma owns Hunger
 
-Hunger is Grandma's changing condition, not an abstract score. Keep her portrait, Taps, streak, temporary Yolk arithmetic, current Hunger, next increase, and phase response together in one persistent sidebar. Separate them with compact internal cards so each state remains scannable.
+Hunger is Grandma's changing condition, not an abstract score. Keep her portrait, Taps, current Hunger, next increase, and phase response together in one persistent sidebar. The playfield may briefly own the source of a change—the Yolk visibly produced by the eggs—but Grandma owns its destination and consequence.
 
-Yolk lowers Hunger; Grandma's response raises it. Resolve the hatch arithmetic in Grandma's score card, then move only a compact final parcel downward to Hunger. Show the subtraction before committing the new Hunger value, so the player sees both the combo calculation and its recipient without chasing a moving reading surface. Use that directional language consistently. Do not reintroduce Appetite, Satisfaction, Patience, or Belt Condition as aliases for the same current loop.
+Yolk lowers Hunger; Grandma's response raises it. Use one physicalised chain for scoring: hatch-position contributions merge into a numbered ball, the ball resolves any same-tap multiplier, it travels straight to Grandma, and Hunger changes on impact. Do not duplicate that fact in a sidebar score card or serialize tokens, unresolved arithmetic, resolved arithmetic, a replacement parcel, and repeated holds. The central ball is transient, never resting HUD state. Use the direction from eggs to Grandma consistently. Do not reintroduce Appetite, Satisfaction, Patience, or Belt Condition as aliases for the same current loop.
 
 ## Consequences stay legible
 
@@ -56,4 +56,4 @@ Do not add progression, economies, or a large species roster to compensate for a
 
 ## Decisions before decoration
 
-Keep the current authored round reproducible while its strategic texture is tested. Add randomness, content, and progression only when they answer a demonstrated problem. Production art can replace the existing placeholders without changing the scene's causal hierarchy: hopper on the left, eggs, cups, neutral spoons, and controls at the centre, Grandma and all round status on the right. Until bespoke art is justified, use native shapes, panels, planks, light pools, and other inexpensive environmental cues to make negative space feel intentional.
+Keep the current authored round reproducible while its strategic texture is tested. Add randomness, content, and progression only when they answer a demonstrated problem. Production art can replace the existing placeholders without changing the scene's causal hierarchy: hopper on the left; eggs, cups, neutral spoons, controls, and transient Yolk at the centre; Grandma and persistent round status on the right. Until bespoke art is justified, use native shapes, panels, planks, light pools, and other inexpensive environmental cues to make negative space feel intentional.
