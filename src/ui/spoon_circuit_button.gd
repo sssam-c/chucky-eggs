@@ -6,8 +6,8 @@ signal preview_changed(circuit_id: String, active: bool)
 @export var circuit_id := "red"
 @export var slot_indices: Array[int] = []
 @export var circuit_color := Color("b6322c")
-@export_enum("diamond", "circle", "triangle", "hexagon", "spark") var circuit_symbol := "diamond"
-@export_enum("lever", "spoon") var control_style := "lever"
+@export_enum("diamond", "circle", "triangle", "square", "hexagon", "spark") var circuit_symbol := "diamond"
+@export_enum("lever", "spoon", "button") var control_style := "lever"
 
 var press_amount := 0.0:
 	set(value):
@@ -115,6 +115,9 @@ func _refresh_accessibility() -> void:
 
 
 func _draw() -> void:
+	if control_style == "button":
+		_draw_shape_button()
+		return
 	if control_style == "spoon":
 		_draw_spoon_hit_area()
 		return
@@ -181,6 +184,98 @@ func _draw_spoon_hit_area() -> void:
 	_draw_symbol(badge_center, Color("fff0cf") if _available else Color("8e8377"))
 
 
+func _draw_shape_button() -> void:
+	var highlighted := (is_hovered() or has_focus()) and _available
+	var live_color := circuit_color if _available else circuit_color.darkened(0.58)
+	var pressed_offset := roundf(press_amount * 7.0)
+	var outer_rect := Rect2(5.0, 5.0 + pressed_offset, size.x - 10.0, size.y - 14.0)
+	var shadow_rect := Rect2(
+		outer_rect.position + Vector2(0.0, 8.0 - pressed_offset * 0.35),
+		outer_rect.size
+	)
+	draw_style_box(_button_shadow_style(), shadow_rect)
+	draw_style_box(_button_outer_style(live_color, highlighted), outer_rect)
+	var face_rect := outer_rect.grow(-9.0)
+	draw_style_box(_button_face_style(live_color, highlighted), face_rect)
+	var symbol_center := face_rect.get_center() - Vector2(0.0, 1.0)
+	_draw_filled_symbol(symbol_center, live_color, highlighted)
+
+
+func _button_shadow_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.0, 0.0, 0.0, 0.62)
+	style.set_corner_radius_all(10)
+	return style
+
+
+func _button_outer_style(_color: Color, highlighted: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("24150e")
+	style.border_color = Color("d18a35") if highlighted else Color("79502a")
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(9)
+	return style
+
+
+func _button_face_style(color: Color, highlighted: bool) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color("2b1911") if _available else Color("181311")
+	style.border_color = color.lightened(0.36) if highlighted else color.darkened(0.12)
+	style.set_border_width_all(3)
+	style.set_corner_radius_all(6)
+	return style
+
+
+func _draw_filled_symbol(center: Vector2, color: Color, highlighted: bool) -> void:
+	var fill := color.lightened(0.12) if highlighted else color
+	var outline := Color("fff1c4") if highlighted else color.lightened(0.34)
+	var symbol_scale := minf(size.x / 150.0, size.y / 84.0)
+	var radius := 22.0 * symbol_scale
+	match circuit_symbol:
+		"circle":
+			draw_circle(center + Vector2(0.0, 4.0), radius + 2.0, Color(0.0, 0.0, 0.0, 0.48))
+			draw_circle(center, radius, fill)
+			draw_arc(center, radius, 0.0, TAU, 28, outline, 3.0, true)
+		"triangle":
+			_draw_filled_polygon(_regular_polygon(center, radius * 1.15, 3, -PI * 0.5), fill, outline)
+		"square":
+			var square := PackedVector2Array([
+				center + Vector2(-radius, -radius), center + Vector2(radius, -radius),
+				center + Vector2(radius, radius), center + Vector2(-radius, radius),
+			])
+			_draw_filled_polygon(square, fill, outline)
+		"spark":
+			var star := PackedVector2Array()
+			for point_index in range(10):
+				var point_radius := radius if point_index % 2 == 0 else radius * 0.46
+				star.append(center + Vector2.from_angle(-PI * 0.5 + TAU * point_index / 10.0) * point_radius)
+			_draw_filled_polygon(star, fill, outline)
+		_:
+			var diamond := PackedVector2Array([
+				center + Vector2(0.0, -radius), center + Vector2(radius, 0.0),
+				center + Vector2(0.0, radius), center + Vector2(-radius, 0.0),
+			])
+			_draw_filled_polygon(diamond, fill, outline)
+
+
+func _regular_polygon(center: Vector2, radius: float, sides: int, start_angle: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for point_index in range(sides):
+		points.append(center + Vector2.from_angle(start_angle + TAU * point_index / float(sides)) * radius)
+	return points
+
+
+func _draw_filled_polygon(points: PackedVector2Array, fill: Color, outline: Color) -> void:
+	var shadow := PackedVector2Array()
+	for point: Vector2 in points:
+		shadow.append(point + Vector2(0.0, 5.0))
+	draw_colored_polygon(shadow, Color(0.0, 0.0, 0.0, 0.48))
+	draw_colored_polygon(points, fill)
+	var closed := points.duplicate()
+	closed.append(points[0])
+	draw_polyline(closed, outline, 3.0, true)
+
+
 func _get_spoon_highlight_style(color: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(color, 0.055 + press_amount * 0.08)
@@ -210,6 +305,8 @@ func _draw_symbol(center: Vector2, color: Color) -> void:
 				center + Vector2(0, -10), center + Vector2(10, 8),
 				center + Vector2(-10, 8), center + Vector2(0, -10),
 			]), color, 3.0, true)
+		"square":
+			draw_rect(Rect2(center - Vector2(8.0, 8.0), Vector2(16.0, 16.0)), color, false, 3.0)
 		"hexagon":
 			var points := PackedVector2Array()
 			for point_index in range(7):

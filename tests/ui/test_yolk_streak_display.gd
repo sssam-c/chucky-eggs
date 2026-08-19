@@ -3,7 +3,7 @@ extends GutTest
 const YolkStreakScene = preload("res://src/ui/yolk_streak_display.tscn")
 
 
-func test_break_callouts_accumulate_in_a_stable_bowl_with_one_calculation() -> void:
+func test_break_callouts_accumulate_in_grandmas_compact_score_card() -> void:
 	var display: Control = YolkStreakScene.instantiate()
 	add_child_autofree(display)
 	await get_tree().process_frame
@@ -20,11 +20,11 @@ func test_break_callouts_accumulate_in_a_stable_bowl_with_one_calculation() -> v
 	assert_eq(display.callout_text(), "TRIPLE YOLKER!")
 	assert_eq(display.pooled_yolk(), 19)
 	assert_eq(display.get_node("AwardPanel/CalculationLabel").text, "4 YOLK  ×3")
-	assert_eq(display.get_node("YolkBowl/BowlTotal").text, "19")
 	display.resolve_award(12)
-	assert_eq(display.get_node("AwardPanel/CalculationLabel").text, "+12")
+	assert_eq(display.get_node("AwardPanel/CalculationLabel").text, "4 YOLK  ×3 = +12")
 	assert_not_null(display.get_node_or_null("StreakBadge"))
-	assert_not_null(display.get_node_or_null("YolkBowl"))
+	assert_not_null(display.get_node_or_null("BowlLanding"))
+	assert_null(display.get_node_or_null("YolkBowl"))
 	assert_null(display.get_node_or_null("YolkIcons"))
 	assert_null(display.get_node_or_null("PoolLabel"))
 	assert_true(display.is_award_visible())

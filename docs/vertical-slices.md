@@ -14,8 +14,8 @@ Accepted as the authoritative game baseline on 2026-08-19. `res://src/ui/hopper_
 
 ### End-to-end player path
 
-- Begin with five occupied cups, five directly clickable coloured spoons, a visible three-egg hopper preview, five available taps, and Grandma visibly owning 10 Hunger and her announced next increase.
-- Choose one occupied spoon. Resolve direct damage, adjacent Cuckoo copies, left-to-right hatches, multiplied Yolk pooling and delivery, surviving Plover movement, then visible hopper-to-cup refills as one deterministic cascade.
+- Begin with five occupied cups, five neutral spoons, five large colour-and-shape buttons, a visible three-egg hopper chute, and Grandma visibly owning five available taps, 10 Hunger, and her announced next increase.
+- Choose one occupied cup's button. Resolve its spoon's direct damage, adjacent Cuckoo copies, left-to-right hatches, multiplied Yolk calculation and delivery, surviving Plover movement, then visible hopper-to-cup refills as one deterministic cascade.
 - Every broken egg advances the current streak and multiplies its printed Yolk. A tap with no break ends the streak.
 - Spend one tap only after the complete cascade. Free reactions never spend another tap.
 - If Hunger reaches zero, satisfy Grandma immediately and skip her response.
@@ -24,13 +24,13 @@ Accepted as the authoritative game baseline on 2026-08-19. `res://src/ui/hopper_
 
 ### Settled baseline
 
-- Five fixed cups and one spoon per cup: Red, Blue, Pink, Red, Blue.
+- Five fixed cups with one neutral spoon and one button each: Red Diamond, Blue Circle, Pink Star, Green Triangle, and Gold Square.
 - Exact visible toughness, Yolk, positional effects, current Hunger, taps, and the next three hopper eggs.
 - Chicken is plain, Sparrow is quick, Cuckoo copies adjacent direct damage, Spoonbill takes two direct damage from Pink, and a surviving directly tapped Plover swaps left.
 - Opened cups refill only after the cascade and receive hopper eggs in hatch order.
 - Five taps per phase, 10 starting Hunger, a first response of +1, and +1 growth after every response.
 - A phase-local break streak that increases per egg, multiplies that egg's Yolk, resets on a zero-break tap, and resets before Grandma's response.
-- A persistent centre-stage badge shows the current streak. Resolver-authored awards use one temporary callout and calculation, collect in a fixed bowl, then travel as one compact parcel before Grandma shows the subtraction and commits Hunger.
+- Grandma's sidebar owns taps, a compact resting streak badge, temporary callout and calculation, Hunger, and next response. Resolver-authored awards travel downward as one compact parcel before Grandma shows the subtraction and commits Hunger; there is no permanent centre-stage score object.
 - One request-to-resolver path and resolver-authored event order; presentation owns only playback and its cancellation barrier.
 
 ### Open hypotheses
@@ -38,9 +38,9 @@ Accepted as the authoritative game baseline on 2026-08-19. `res://src/ui/hopper_
 - Position, spoon colour, adjacency, and previewed refill order will create several plausible tap choices during one authored game.
 - Players will sometimes delay immediate Yolk to construct a stronger later cascade.
 - Players will distribute setup damage across positions, then choose an ordered run of breaks that keeps the streak alive and places valuable eggs late.
-- “Double Yolker!” and higher centre-stage callouts will make the multiplied payoff feel legible and celebratory rather than like hidden score arithmetic.
+- “Double Yolker!” and higher callouts in Grandma's score card will make the multiplied payoff feel legible and celebratory rather than like hidden score arithmetic.
 - Renewable five-tap phases will feel like tactical rounds, while Grandma's escalating response provides pressure without becoming an arbitrary countdown.
-- Large eggs, clickable spoons, cups, hopper travel, and Grandma's sidebar will make the complete causal chain understandable without explanation.
+- Large eggs, shape-coded buttons, neutral spoons, cups, hopper travel, and Grandma's consolidated sidebar will make the complete causal chain understandable without explanation.
 - The current exact information can support competence while later egg-specific uncertainty supplies lottery sensation without obscuring every plan.
 
 ### Implementation conveniences, not permanent design commitments
@@ -59,8 +59,8 @@ Accepted as the authoritative game baseline on 2026-08-19. `res://src/ui/hopper_
 ### Exit evidence
 
 - Domain specs prove one-spoon targeting, fixed colours, direct and copied damage order, per-egg streak multiplication, zero-break and phase resets, pooled Yolk reducing Hunger, post-cascade refill, one paid tap per request, victory before Grandma's response, explicit fifth-tap phase order, escalating Hunger, tap refresh, exhaustion failure, and restart.
-- UI specs prove five spoon targets, large eggs in cups, exact visible facts, three previews, five tap indicators, persistent streak state, one-calculation awards, a fixed Yolk bowl, explicit Grandma subtraction, input locking, ordered playback, exact hopper destinations, cancellation, and restart.
-- Muted running-game checks at 1280×720 and 1024×576 verify cup seating, spoon hit targets, hopper travel, the calculation-to-bowl-to-parcel sequence, Grandma's subtraction, Hunger-phase feedback, and readable composition.
+- UI specs prove five large shape-coded button targets, neutral spoons, large eggs in cups, exact visible facts, three previews, five tap indicators, Grandma-owned streak and one-calculation awards, explicit subtraction, input locking, ordered playback, exact hopper destinations, cancellation, and restart.
+- Muted running-game checks at 1280×720 and 1024×576 verify cup seating, button hit targets, neutral spoon feedback, hopper travel, calculation-to-parcel delivery, Grandma's subtraction, Hunger-phase feedback, and readable warm-workshop composition.
 - Play the authored opening without explanation. Record whether the player finds at least two plausible moves on several taps, deliberately makes a setup tap, changes a decision because of the hopper preview, anticipates the fifth-tap response, and can explain a resulting cascade.
 
 ## Historical slices

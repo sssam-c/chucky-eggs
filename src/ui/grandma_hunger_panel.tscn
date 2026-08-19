@@ -1,22 +1,35 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://src/ui/grandma_hunger_panel.gd" id="1_panel"]
 [ext_resource type="Script" path="res://src/ui/grandma_portrait.gd" id="2_portrait"]
+[ext_resource type="PackedScene" path="res://src/ui/yolk_streak_display.tscn" id="3_yolk"]
 
 [sub_resource type="StyleBoxFlat" id="SidebarPanel"]
-bg_color = Color(0.065, 0.043, 0.031, 0.998)
+bg_color = Color(0.075, 0.047, 0.029, 0.995)
 border_width_left = 4
 border_width_top = 4
 border_width_right = 4
 border_width_bottom = 6
 border_color = Color(0.47, 0.28, 0.13, 1)
-corner_radius_top_left = 9
-corner_radius_top_right = 24
-corner_radius_bottom_right = 9
-corner_radius_bottom_left = 9
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 shadow_color = Color(0, 0, 0, 0.62)
 shadow_size = 10
 shadow_offset = Vector2(0, 5)
+
+[sub_resource type="StyleBoxFlat" id="CompactPanel"]
+bg_color = Color(0.055, 0.045, 0.04, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.43, 0.28, 0.15, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
 
 [sub_resource type="StyleBoxFlat" id="HungerCardPanel"]
 bg_color = Color(0.16, 0.075, 0.045, 1)
@@ -46,11 +59,11 @@ corner_radius_bottom_right = 7
 corner_radius_bottom_left = 7
 
 [node name="GrandmaHungerPanel" type="Control"]
-custom_minimum_size = Vector2(240, 580)
+custom_minimum_size = Vector2(250, 622)
 layout_mode = 3
 anchors_preset = 0
-offset_right = 240.0
-offset_bottom = 580.0
+offset_right = 250.0
+offset_bottom = 622.0
 mouse_filter = 2
 script = ExtResource("1_panel")
 
@@ -64,40 +77,81 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_styles/panel = SubResource("SidebarPanel")
 
+[node name="PortraitGlow" type="ColorRect" parent="."]
+layout_mode = 0
+offset_left = 18.0
+offset_top = 16.0
+offset_right = 232.0
+offset_bottom = 230.0
+mouse_filter = 2
+color = Color(0.34, 0.18, 0.075, 0.22)
+
 [node name="GrandmaPortrait" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 12.0
-offset_top = 8.0
-offset_right = 228.0
-offset_bottom = 292.0
+offset_top = 6.0
+offset_right = 238.0
+offset_bottom = 238.0
 mouse_filter = 2
 script = ExtResource("2_portrait")
 
 [node name="PortraitDivider" type="ColorRect" parent="."]
 layout_mode = 0
 offset_left = 16.0
-offset_top = 278.0
-offset_right = 224.0
-offset_bottom = 282.0
+offset_top = 234.0
+offset_right = 234.0
+offset_bottom = 238.0
 mouse_filter = 2
-color = Color(0.38, 0.20, 0.11, 1)
+color = Color(0.45, 0.25, 0.12, 1)
+
+[node name="TapCard" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 244.0
+offset_right = 238.0
+offset_bottom = 292.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("CompactPanel")
+
+[node name="TapPips" type="Label" parent="TapCard"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.58, 0.82, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "TAPS  ● ● ● ● ●"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="YolkStreakDisplay" parent="." instance=ExtResource("3_yolk")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 12.0
+offset_top = 300.0
+offset_right = 238.0
+offset_bottom = 378.0
 
 [node name="HungerCard" type="Panel" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 12.0
-offset_top = 294.0
-offset_right = 228.0
-offset_bottom = 448.0
+offset_top = 386.0
+offset_right = 238.0
+offset_bottom = 524.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("HungerCardPanel")
 
 [node name="HungerTitle" type="Label" parent="HungerCard"]
 layout_mode = 0
-offset_top = 10.0
-offset_right = 216.0
-offset_bottom = 36.0
+offset_top = 8.0
+offset_right = 226.0
+offset_bottom = 34.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.72, 0.32, 1)
 theme_override_font_sizes/font_size = 18
@@ -108,13 +162,13 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 0
 offset_top = 30.0
-offset_right = 216.0
+offset_right = 226.0
 offset_bottom = 101.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.32, 1)
 theme_override_colors/font_shadow_color = Color(0.18, 0.07, 0.02, 1)
 theme_override_constants/shadow_outline_size = 3
-theme_override_font_sizes/font_size = 52
+theme_override_font_sizes/font_size = 50
 text = "10"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -122,13 +176,13 @@ vertical_alignment = 1
 [node name="NextIncrease" type="Label" parent="HungerCard"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_top = 119.0
-offset_right = 216.0
-offset_bottom = 146.0
+offset_top = 101.0
+offset_right = 226.0
+offset_bottom = 132.0
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.94, 0.64, 0.45, 1)
-theme_override_font_sizes/font_size = 17
-text = "NEXT +1"
+theme_override_colors/font_color = Color(0.86, 0.78, 0.64, 1)
+theme_override_font_sizes/font_size = 15
+text = "NEXT RESPONSE +1"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -138,14 +192,14 @@ visible = false
 z_index = 2
 layout_mode = 0
 offset_left = 6.0
-offset_top = 92.0
-offset_right = 210.0
-offset_bottom = 124.0
+offset_top = 96.0
+offset_right = 220.0
+offset_bottom = 132.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.28, 1)
 theme_override_colors/font_shadow_color = Color(0.25, 0.05, 0.01, 1)
 theme_override_constants/shadow_outline_size = 3
-theme_override_font_sizes/font_size = 21
+theme_override_font_sizes/font_size = 20
 text = "8 − 8 → 0"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -156,9 +210,9 @@ visible = false
 z_index = 5
 layout_mode = 0
 offset_left = 12.0
-offset_top = 460.0
-offset_right = 228.0
-offset_bottom = 522.0
+offset_top = 534.0
+offset_right = 238.0
+offset_bottom = 578.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("PhasePanel")
 
@@ -171,15 +225,3 @@ theme_override_font_sizes/font_size = 16
 text = "HUNGER RISES  +1"
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="Goal" type="Label" parent="."]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 534.0
-offset_right = 228.0
-offset_bottom = 562.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.76, 0.71, 0.61, 1)
-theme_override_font_sizes/font_size = 13
-text = "FEED HER TO ZERO"
-horizontal_alignment = 1

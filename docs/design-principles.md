@@ -4,7 +4,7 @@ These principles interpret the current rules. They guide choices but do not over
 
 ## Tactility carries deliberate choice
 
-The core action is clicking a physical spoon and seeing one egg respond immediately. Preserve large eggs, generous spoon targets, fast impact feedback, visible cracking, and brief rebound. Tactility should make a meaningful choice pleasurable; it must not disguise a choice that has collapsed into repetitive tapping.
+The core action is pressing a large colour-and-shape button, seeing its neutral spoon fire, and watching one egg respond immediately. Preserve large eggs, generous button targets, fast impact feedback, visible cracking, and brief rebound. Tactility should make a meaningful choice pleasurable; it must not disguise a choice that has collapsed into repetitive tapping.
 
 ## Combontronics comes from position
 
@@ -22,13 +22,13 @@ Grandma's announced increase is enemy intent. Her response should create a round
 
 Reward a route of prepared breaks instead of charging the player to move between spoons. Every paid input must remain one physical tap; spatial commitment comes from preserving the break streak, ordering valuable eggs late, and avoiding a zero-break tap.
 
-The streak multiplier is the round's explosive payoff. It may produce deliberately large jackpots, but it must remain possible to understand which egg advanced the streak and how much multiplied Yolk it contributed. Keep persistent streak state in a fixed badge and transient payout information to one callout, one calculation, and one resolved award. Avoid simultaneous dots, labels, and moving cards that restate the same amount. Watch for an authored route that becomes automatic or for base Yolk values that make every non-streak break irrelevant.
+The streak multiplier is the round's explosive payoff. It may produce deliberately large jackpots, but it must remain possible to understand which egg advanced the streak and how much multiplied Yolk it contributed. Keep persistent streak state in a compact row in Grandma's sidebar and transient payout information to one callout, one calculation, and one resolved award in the same place. Avoid simultaneous dots, labels, and moving cards that restate the same amount. Watch for an authored route that becomes automatic or for base Yolk values that make every non-streak break irrelevant.
 
 ## Grandma owns Hunger
 
-Hunger is Grandma's changing condition, not an abstract score. Keep her portrait, bowl, current Hunger, next increase, and phase response together in one persistent sidebar. Keep Taps visually separate as the player's current opportunity.
+Hunger is Grandma's changing condition, not an abstract score. Keep her portrait, Taps, streak, temporary Yolk arithmetic, current Hunger, next increase, and phase response together in one persistent sidebar. Separate them with compact internal cards so each state remains scannable.
 
-Yolk lowers Hunger; Grandma's response raises it. Let resolved Yolk collect in one fixed bowl above the table, then move only a compact final parcel to Grandma. Show the subtraction in her sidebar before committing the new Hunger value, so the player sees both the combo calculation and its recipient without chasing a moving reading surface. Use that directional language consistently. Do not reintroduce Appetite, Satisfaction, Patience, or Belt Condition as aliases for the same current loop.
+Yolk lowers Hunger; Grandma's response raises it. Resolve the hatch arithmetic in Grandma's score card, then move only a compact final parcel downward to Hunger. Show the subtraction before committing the new Hunger value, so the player sees both the combo calculation and its recipient without chasing a moving reading surface. Use that directional language consistently. Do not reintroduce Appetite, Satisfaction, Patience, or Belt Condition as aliases for the same current loop.
 
 ## Consequences stay legible
 
@@ -56,4 +56,4 @@ Do not add progression, economies, or a large species roster to compensate for a
 
 ## Decisions before decoration
 
-Keep the current authored round reproducible while its strategic texture is tested. Add randomness, content, and progression only when they answer a demonstrated problem. Production art can replace the existing placeholders without changing the scene's causal hierarchy: hopper on the left, eggs and spoons at the centre, Grandma and Hunger on the right.
+Keep the current authored round reproducible while its strategic texture is tested. Add randomness, content, and progression only when they answer a demonstrated problem. Production art can replace the existing placeholders without changing the scene's causal hierarchy: hopper on the left, eggs, cups, neutral spoons, and controls at the centre, Grandma and all round status on the right. Until bespoke art is justified, use native shapes, panels, planks, light pools, and other inexpensive environmental cues to make negative space feel intentional.

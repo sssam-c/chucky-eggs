@@ -14,8 +14,8 @@ func test_five_individual_spoons_expose_fixed_colours_and_hopper_preview() -> vo
 		{"id": "red_1", "slot_index": 0, "color": "red"},
 		{"id": "blue_2", "slot_index": 1, "color": "blue"},
 		{"id": "pink_3", "slot_index": 2, "color": "pink"},
-		{"id": "red_4", "slot_index": 3, "color": "red"},
-		{"id": "blue_5", "slot_index": 4, "color": "blue"},
+		{"id": "green_4", "slot_index": 3, "color": "green"},
+		{"id": "gold_5", "slot_index": 4, "color": "gold"},
 	])
 	assert_eq(state.slots.map(func(egg: Dictionary) -> String: return egg.kind), [
 		"chicken", "cuckoo", "sparrow", "plover", "chicken",
@@ -44,7 +44,7 @@ func test_one_spoon_damages_only_its_egg_without_moving_the_board() -> void:
 
 	assert_eq(_event_types(events), ["spoon_fired", "egg_damaged", "tap_spent"])
 	assert_eq(events[0].slot_index, 3)
-	assert_eq(events[0].spoon_color, "red")
+	assert_eq(events[0].spoon_color, "green")
 	assert_eq(events[1].slot_index, 3)
 	assert_eq(state.slots[3].toughness, 2)
 	assert_eq(state.slots.map(func(egg: Dictionary) -> int: return int(egg.egg_instance_id)), before_ids)

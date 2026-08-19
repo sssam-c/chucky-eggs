@@ -2,6 +2,8 @@ class_name GrandmaHungerPanel
 extends Control
 
 @onready var _portrait: Control = %GrandmaPortrait
+@onready var _tap_pips_label: Label = %TapPips
+@onready var _yolk_streak_display: Control = %YolkStreakDisplay
 @onready var _hunger_card: Control = %HungerCard
 @onready var _hunger_value_label: Label = %HungerValue
 @onready var _hunger_change_label: Label = %HungerChange
@@ -50,6 +52,14 @@ func hunger_ratio() -> float:
 
 func feedback_control() -> Control:
 	return _hunger_value_label
+
+
+func tap_pips_control() -> Label:
+	return _tap_pips_label
+
+
+func yolk_streak_display() -> Control:
+	return _yolk_streak_display
 
 
 func delivery_global_position() -> Vector2:
@@ -115,7 +125,7 @@ func is_idle_motion_active() -> bool:
 
 func _refresh_hunger() -> void:
 	_hunger_value_label.text = str(_hunger)
-	_next_increase_label.text = "NEXT +%d" % _next_hunger_increase
+	_next_increase_label.text = "NEXT RESPONSE +%d" % _next_hunger_increase
 	# GrandmaPortrait uses 0 for ravenous and 1 for fully fed.
 	var fed_ratio := 1.0 - clampf(
 		float(_hunger) / float(_starting_hunger), 0.0, 1.0

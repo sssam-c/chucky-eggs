@@ -7,11 +7,11 @@ signal playback_completed
 const HopperTapSession = preload("res://src/game/hopper_tap_session.gd")
 
 const APPEARANCES := [
-	{"color": Color("c43b36"), "symbol": "diamond", "label": "RED  ◆"},
-	{"color": Color("287cbd"), "symbol": "circle", "label": "BLUE  ○"},
-	{"color": Color("cf4f8b"), "symbol": "spark", "label": "PINK  ✦"},
-	{"color": Color("c43b36"), "symbol": "diamond", "label": "RED  ◆"},
-	{"color": Color("287cbd"), "symbol": "circle", "label": "BLUE  ○"},
+	{"color": Color("c43b36"), "symbol": "diamond"},
+	{"color": Color("287cbd"), "symbol": "circle"},
+	{"color": Color("cf4f8b"), "symbol": "spark"},
+	{"color": Color("58a83f"), "symbol": "triangle"},
+	{"color": Color("efa91a"), "symbol": "square"},
 ]
 
 @onready var _slots: Array[Button] = [%Slot1, %Slot2, %Slot3, %Slot4, %Slot5]
@@ -20,11 +20,10 @@ const APPEARANCES := [
 	%SpoonButton1, %SpoonButton2, %SpoonButton3, %SpoonButton4, %SpoonButton5,
 ]
 @onready var _spoons: Array[Control] = [%Spoon1, %Spoon2, %Spoon3, %Spoon4, %Spoon5]
-@onready var _lane_labels: Array[Label] = [%Lane1, %Lane2, %Lane3, %Lane4, %Lane5]
 @onready var _hopper_drop_point: Control = %HopperDropPoint
-@onready var _yolk_streak_display: Control = %YolkStreakDisplay
 @onready var _grandma_hunger_panel: Control = %GrandmaSidebar
-@onready var _tap_pips_label: Label = %TapPips
+@onready var _yolk_streak_display: Control = _grandma_hunger_panel.yolk_streak_display()
+@onready var _tap_pips_label: Label = _grandma_hunger_panel.tap_pips_control()
 @onready var _hopper_count_label: Label = %HopperCount
 @onready var _result_panel: PanelContainer = %ResultPanel
 @onready var _result_label: Label = %ResultLabel
@@ -52,14 +51,10 @@ func _ready() -> void:
 		_spoon_buttons[slot_index].slot_indices.assign([slot_index])
 		_spoon_buttons[slot_index].circuit_color = appearance.color
 		_spoon_buttons[slot_index].circuit_symbol = String(appearance.symbol)
-		_spoon_buttons[slot_index].control_style = "spoon"
+		_spoon_buttons[slot_index].control_style = "button"
 		_spoon_buttons[slot_index].circuit_requested.connect(_on_spoon_requested)
 		_spoons[slot_index].slot_index = slot_index
-		_spoons[slot_index].circuit_id = String(spoon.id)
-		_spoons[slot_index].circuit_color = appearance.color
-		_spoons[slot_index].circuit_symbol = String(appearance.symbol)
-		_lane_labels[slot_index].text = String(appearance.label)
-		_lane_labels[slot_index].add_theme_color_override("font_color", appearance.color.lightened(0.28))
+		_spoons[slot_index].set_neutral_appearance()
 	_restart_button.pressed.connect(restart)
 	_result_restart_button.pressed.connect(restart)
 	_presenter.event_presented.connect(

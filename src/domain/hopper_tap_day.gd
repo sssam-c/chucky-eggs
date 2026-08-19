@@ -12,8 +12,8 @@ const SPOONS: Array[Dictionary] = [
 	{"id": "red_1", "slot_index": 0, "color": "red"},
 	{"id": "blue_2", "slot_index": 1, "color": "blue"},
 	{"id": "pink_3", "slot_index": 2, "color": "pink"},
-	{"id": "red_4", "slot_index": 3, "color": "red"},
-	{"id": "blue_5", "slot_index": 4, "color": "blue"},
+	{"id": "green_4", "slot_index": 3, "color": "green"},
+	{"id": "gold_5", "slot_index": 4, "color": "gold"},
 ]
 
 var _slots: Array[Dictionary] = []

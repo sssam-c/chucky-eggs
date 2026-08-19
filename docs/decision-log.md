@@ -764,6 +764,16 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D076 only where it describes the temporary centre-stage pool presentation. D076's break-streak rule, multiplication, hatch order, zero-break and phase resets, per-tap resolver-authored total, and delivery-before-Hunger ordering remain accepted.
 
+## D078 — Consolidate interaction and status into the tabletop workshop
+
+**Status:** accepted
+
+**Decision:** Remove the title and instruction banners. Operate the five neutral spoons with large fixed buttons beneath their cups: Red Diamond, Blue Circle, Pink Star, Green Triangle, and Gold Square. Pink remains the Spoonbill weakness; the two new identities replace the repeated fourth Red and fifth Blue without adding new egg rules. Put Taps, the resting streak state, temporary Yolk callout and formula, Hunger, next response, and phase feedback in Grandma's right-hand rail. Deliver one compact resolver-authored parcel downward from the score card to Hunger. Present the hopper as a visible chute and use code-native planks, table structure, station backplates, and warm light pools to make the workshop's negative space intentional without requiring new assets.
+
+**Reason:** The title, central permanent score artifact, repeated control colours, and broad dark voids competed with the eggs without clarifying a choice. The accepted mockups were judged substantially cleaner, and unique colour-and-shape buttons provide larger, more accessible targets while leaving the spoon itself readable as the physical consequence. Consolidating round status around Grandma gives the payoff one stable destination and frees the table for egg state and position.
+
+**Supersedes:** D075's directly clickable coloured spoons and Red, Blue, Pink, Red, Blue mapping; D077's fixed centre-stage badge and bowl. D075's five-cup round and D077's one-calculation award, compact delivery, explicit subtraction, presentation barrier, and restart cancellation remain accepted. D076's break-streak rules remain unchanged.
+
 <!--
 Copy for the next entry:
 

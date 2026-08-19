@@ -18,11 +18,11 @@ Invest five tactile spoon taps across a table of interacting eggs. Prepare conse
 - Five ordered cups sit on Grandma's table. At the start, the first five eggs occupy those cups and every later egg waits in the hopper.
 - The authored current egg order is Chicken, Cuckoo, Sparrow, Plover, Chicken, Spoonbill, Cuckoo, Sparrow, Chicken, Spoonbill, Plover, Cuckoo.
 - The hopper shows its total waiting count and previews its next three eggs in order.
-- Each cup has one directly clickable spoon. From left to right, their fixed colours are Red, Blue, Pink, Red, and Blue.
+- Each cup has one neutral spoon operated by the large colour-and-shape button beneath it. From left to right, the fixed button identities are Red Diamond, Blue Circle, Pink Star, Green Triangle, and Gold Square.
 - The interface always shows each egg's remaining toughness, Yolk value, applicable effect emblem, current position, available taps, Grandma's current Hunger, and her announced next Hunger increase.
-- Grandma, her waiting bowl, Hunger, next increase, and Hunger-phase feedback occupy one persistent right-hand sidebar.
-- A persistent badge above the eggs shows the current break streak and the multiplier on the next break. Each hatch briefly shows one callout and one calculation, then adds its award to the fixed Yolk bowl beneath the badge.
-- After the tap's hatches finish, one compact parcel carries the bowl total to Grandma. Her sidebar shows the subtraction before the Hunger number changes.
+- Grandma's portrait, available taps, current break streak, transient Yolk calculation, Hunger, next increase, and Hunger-phase feedback occupy one persistent right-hand sidebar.
+- At rest, a compact badge in Grandma's sidebar shows the current break streak and the multiplier on the next break. Each hatch temporarily replaces it with one callout and one calculation.
+- After the tap's hatches finish, one compact parcel carries the resolver-authored total downward to Hunger. The sidebar shows the subtraction before the Hunger number changes.
 
 ## Eggs
 
@@ -36,8 +36,8 @@ Invest five tactile spoon taps across a table of interacting eggs. Prepare conse
 ## Tap phases
 
 - Each Tap phase begins with five paid taps.
-- Clicking an occupied spoon spends exactly one tap after its complete damage, hatch, movement, and refill cascade.
-- A spoon above an empty cup cannot be selected.
+- Pressing the button beneath an occupied cup spends exactly one tap after its complete damage, hatch, movement, and refill cascade.
+- The button beneath an empty cup cannot be selected.
 - Free Cuckoo reactions and other resolver-authored consequences never spend another tap.
 - Every Tap phase begins with a break streak of zero. Each opened egg increases it by one and provides its printed Yolk multiplied by that new streak value.
 - Several eggs opened by one cascade advance the streak individually in left-to-right hatch order.
@@ -48,9 +48,9 @@ Invest five tactile spoon taps across a table of interacting eggs. Prepare conse
 
 ## Tap resolution
 
-Resolve one selected spoon in this order:
+Resolve one selected button in this order:
 
-1. Fire the selected spoon and deal its direct damage to the egg in that cup.
+1. Fire that cup's spoon and deal its direct damage to the egg in that cup.
 2. Damage each adjacent Cuckoo by the same amount as the direct tap.
 3. After the complete damage batch, open every zero-toughness egg from left to right. Increase the break streak for each egg and add its printed Yolk multiplied by that streak to one temporary Yolk pool.
 4. After all hatches, deliver the complete Yolk pool to Grandma and reduce Hunger by that amount, never below zero. If no egg opened, reset the streak instead.

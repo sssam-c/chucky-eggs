@@ -149,3 +149,15 @@ The current 8-point opening is a forgiving tutorial and is consistent with the p
 **Interpretation:** The mechanic's affective payoff is promising; the immediate problem is presentation bandwidth. Showing the streak, formula, countable pool, score, and delivery together makes several representations compete during a short cascade.
 
 **Proposed response:** Keep the streak rule unchanged. Test a fixed streak badge and bowl, one formula resolving to one award, a compact final parcel, and an explicit subtraction on Grandma before Hunger updates.
+
+## 2026-08-19 — Consolidated workshop interface
+
+**Question:** Can the table remain tactile and celebratory while reducing permanent score clutter and making the dark workshop space feel intentional?
+
+**Context:** Iterative visual mockups removed the title, moved Taps, streak arithmetic, Hunger, and response state into Grandma's sidebar, replaced clickable spoons with large shape-coded buttons, and added a hopper chute plus code-native workshop structure and lighting.
+
+**Observed:** The consolidated sidebar was described as “a lot cleaner”; the warmer workshop treatment looked “MUCH better”; and the unique button colours and shapes “look great.” The final mockup was accepted with neutral spoon heads and approved for implementation.
+
+**Interpretation:** Stable ownership matters more than keeping scoring physically central. Grandma's rail can contain the complete round state without feeling like an abstract HUD when the table preserves large eggs, physical cups, neutral spoon motion, and chunky controls. Environmental structure and warm light make negative space support the workshop rather than read as unfinished UI.
+
+**Proposed response:** Implement the accepted composition without changing cascade rules, score timing, phase timing, or resolver ownership. Retain the unique Red Diamond, Blue Circle, Pink Star, Green Triangle, and Gold Square buttons and verify readability at both supported viewports.

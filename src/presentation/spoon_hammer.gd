@@ -3,7 +3,7 @@ extends Control
 @export var slot_index := -1
 @export var circuit_id := "red"
 @export var circuit_color := Color("b6322c")
-@export_enum("diamond", "circle", "triangle", "hexagon", "spark") var circuit_symbol := "diamond"
+@export_enum("diamond", "circle", "triangle", "square", "hexagon", "spark") var circuit_symbol := "diamond"
 
 const DEFAULT_SINGLE_CONTACT := Vector2(85.0, 170.0)
 const SINGLE_HINGE_TO_CONTACT := 16.0
@@ -263,6 +263,8 @@ func _draw_circuit_symbol(center: Vector2, color: Color) -> void:
 				center + Vector2(0, -9), center + Vector2(9, 7),
 				center + Vector2(-9, 7), center + Vector2(0, -9),
 			]), color, 3.0, true)
+		"square":
+			draw_rect(Rect2(center - Vector2(7.0, 7.0), Vector2(14.0, 14.0)), color, false, 3.0)
 		"hexagon":
 			var points := PackedVector2Array()
 			for point_index in range(7):

@@ -238,13 +238,6 @@ func _draw_egg_cup(center: Vector2) -> void:
 	draw_polyline(body_outline, Color("6f4d34"), 4.0, true)
 	_draw_oval(cup_top, Vector2(61.0, 18.0), Color("6f4d34"))
 	_draw_oval(cup_top - Vector2(0.0, 2.0), Vector2(54.0, 13.0), Color("2a1c16"))
-	draw_line(
-		center + Vector2(-36.0, 20.0),
-		center + Vector2(36.0, 20.0),
-		_circuit_color.lightened(0.18),
-		5.0,
-		true
-	)
 
 
 func _draw_oval(center: Vector2, radii: Vector2, color: Color) -> void:

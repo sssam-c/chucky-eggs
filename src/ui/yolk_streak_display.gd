@@ -2,15 +2,16 @@ class_name YolkStreakDisplay
 extends Control
 
 @onready var _streak_text: Label = %StreakText
+@onready var _streak_badge: Control = $StreakBadge
 @onready var _award_panel: Control = %AwardPanel
 @onready var _callout_label: Label = %CalloutLabel
 @onready var _calculation_label: Label = %CalculationLabel
-@onready var _bowl_total: Label = %BowlTotal
 @onready var _bowl_landing: Control = %BowlLanding
 @onready var _token_layer: Control = %TokenLayer
 
 var _pooled_yolk := 0
 var _last_streak := 0
+var _last_calculation := ""
 
 
 func _ready() -> void:
@@ -23,6 +24,7 @@ func set_streak(streak: int) -> void:
 	_streak_text.text = (
 		"NEXT BREAK  ×1" if _last_streak == 0 else "STREAK  ×%d" % _last_streak
 	)
+	_streak_badge.visible = not _award_panel.visible
 	visible = true
 
 
@@ -30,13 +32,13 @@ func add_hatch(base_yolk: int, streak: int, awarded_yolk: int) -> void:
 	_pooled_yolk += maxi(0, awarded_yolk)
 	set_streak(streak)
 	_callout_label.text = streak_callout(_last_streak)
-	_calculation_label.add_theme_font_size_override("font_size", 22)
-	_calculation_label.text = "%d YOLK  ×%d" % [
+	_calculation_label.add_theme_font_size_override("font_size", 17)
+	_last_calculation = "%d YOLK  ×%d" % [
 		maxi(0, base_yolk), _last_streak,
 	]
-	_bowl_total.text = str(_pooled_yolk)
-	_bowl_total.visible = true
+	_calculation_label.text = _last_calculation
 	_award_panel.visible = true
+	_streak_badge.visible = false
 	_award_panel.modulate = Color.WHITE
 	_award_panel.scale = Vector2.ONE
 	_award_panel.rotation = 0.0
@@ -50,8 +52,10 @@ func add_hatch(base_yolk: int, streak: int, awarded_yolk: int) -> void:
 
 
 func resolve_award(awarded_yolk: int) -> void:
-	_calculation_label.add_theme_font_size_override("font_size", 30)
-	_calculation_label.text = "+%d" % maxi(0, awarded_yolk)
+	_calculation_label.add_theme_font_size_override("font_size", 17)
+	_calculation_label.text = "%s = +%d" % [
+		_last_calculation, maxi(0, awarded_yolk),
+	]
 	accessibility_name = "%s Plus %d Yolk" % [
 		_callout_label.text, maxi(0, awarded_yolk),
 	]
@@ -62,10 +66,11 @@ func show_reset(previous_streak: int) -> void:
 	_last_streak = 0
 	_streak_text.text = "STREAK LOST"
 	_callout_label.text = "STREAK BROKEN"
-	_calculation_label.add_theme_font_size_override("font_size", 22)
+	_last_calculation = "NO EGG BROKE"
+	_calculation_label.add_theme_font_size_override("font_size", 17)
 	_calculation_label.text = "NO EGG BROKE"
-	_bowl_total.visible = false
 	_award_panel.visible = true
+	_streak_badge.visible = false
 	_award_panel.modulate = Color.WHITE
 	_award_panel.scale = Vector2.ONE
 	_award_panel.rotation = 0.0
@@ -97,7 +102,6 @@ func create_delivery_parcel(total_yolk: int) -> Label:
 
 func begin_delivery(total_yolk: int) -> Label:
 	_award_panel.visible = false
-	_bowl_total.visible = false
 	return create_delivery_parcel(total_yolk)
 
 
@@ -135,17 +139,18 @@ func is_award_visible() -> bool:
 
 func finish_delivery() -> void:
 	_pooled_yolk = 0
-	_bowl_total.visible = false
 	reset_transient()
 
 
 func reset_transient() -> void:
 	_award_panel.visible = false
+	_streak_badge.visible = true
 	_award_panel.modulate = Color.WHITE
 	_award_panel.scale = Vector2.ONE
 	_award_panel.rotation = 0.0
 	_callout_label.text = ""
 	_calculation_label.text = ""
+	_last_calculation = ""
 	if _token_layer != null:
 		for token: Node in _token_layer.get_children():
 			token.queue_free()
@@ -160,7 +165,6 @@ func reset_all() -> void:
 	rotation = 0.0
 	if _streak_text != null:
 		set_streak(0)
-		_bowl_total.visible = false
 		reset_transient()
 
 
