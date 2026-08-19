@@ -19,11 +19,8 @@ var _pipe_slots: Array[Button] = []
 var _spoon_buttons: Array[Button] = []
 var _spoons: Array[Control] = []
 var _hopper_drop_point: Control
-var _hunger_label: Label
+var _grandma_hunger_panel: Control
 var _tap_pips_label: Label
-var _hunger_intent_label: Label
-var _hunger_phase_panel: Control
-var _hunger_phase_label: Label
 var _generation := 0
 var _busy := false
 var _muted := false
@@ -46,22 +43,16 @@ func configure(
 	spoon_buttons: Array[Button],
 	spoons: Array[Control],
 	hopper_drop_point: Control,
-	hunger_label: Label,
-	tap_pips_label: Label,
-	hunger_intent_label: Label,
-	hunger_phase_panel: Control,
-	hunger_phase_label: Label
+	grandma_hunger_panel: Control,
+	tap_pips_label: Label
 ) -> void:
 	_slots = slots
 	_pipe_slots = pipe_slots
 	_spoon_buttons = spoon_buttons
 	_spoons = spoons
 	_hopper_drop_point = hopper_drop_point
-	_hunger_label = hunger_label
+	_grandma_hunger_panel = grandma_hunger_panel
 	_tap_pips_label = tap_pips_label
-	_hunger_intent_label = hunger_intent_label
-	_hunger_phase_panel = hunger_phase_panel
-	_hunger_phase_label = hunger_phase_label
 
 
 func play_events(events: Array[Dictionary]) -> bool:
@@ -97,6 +88,8 @@ func cancel_playback() -> void:
 
 func set_reduced_motion(reduced: bool) -> void:
 	_reduced_motion = reduced
+	if _grandma_hunger_panel != null:
+		_grandma_hunger_panel.set_reduced_motion(reduced)
 
 
 func set_muted(muted: bool) -> void:
@@ -244,32 +237,33 @@ func _present_entry(event: Dictionary, playback_generation: int) -> bool:
 
 
 func _commit_hunger(event: Dictionary) -> void:
-	_hunger_label.text = "HUNGER  %d" % int(event.hunger)
+	_grandma_hunger_panel.set_hunger(int(event.hunger))
 	_play(_hunger_player)
 
 
 func _present_hunger_phase_start(event: Dictionary, playback_generation: int) -> bool:
-	_hunger_phase_label.text = "GRANDMA'S HUNGER  +%d" % int(event.hunger_increase)
-	_hunger_phase_panel.modulate.a = 1.0 if _reduced_motion else 0.0
-	_hunger_phase_panel.visible = true
+	_grandma_hunger_panel.show_phase(int(event.hunger_increase))
+	var phase_panel: Control = _grandma_hunger_panel.phase_control()
+	phase_panel.modulate.a = 1.0 if _reduced_motion else 0.0
 	if _reduced_motion:
 		return true
 	var reveal := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	reveal.tween_property(_hunger_phase_panel, "modulate:a", 1.0, 0.12)
+	reveal.tween_property(phase_panel, "modulate:a", 1.0, 0.12)
 	reveal.tween_interval(0.16)
 	return await _run_tween(reveal, playback_generation)
 
 
 func _present_hunger_increase(event: Dictionary, playback_generation: int) -> bool:
-	_hunger_label.text = "HUNGER  %d" % int(event.hunger)
-	_hunger_phase_label.text = "GRANDMA'S HUNGER  +%d" % int(event.amount)
+	_grandma_hunger_panel.set_hunger(int(event.hunger))
+	_grandma_hunger_panel.show_phase(int(event.amount))
 	_play(_impact_player)
 	if _reduced_motion:
 		return true
-	_hunger_label.pivot_offset = _hunger_label.size * 0.5
+	var hunger_feedback: Control = _grandma_hunger_panel.feedback_control()
+	hunger_feedback.pivot_offset = hunger_feedback.size * 0.5
 	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	pulse.tween_property(_hunger_label, "scale", Vector2(1.18, 1.18), 0.10)
-	pulse.tween_property(_hunger_label, "scale", Vector2.ONE, 0.14)
+	pulse.tween_property(hunger_feedback, "scale", Vector2(1.18, 1.18), 0.10)
+	pulse.tween_property(hunger_feedback, "scale", Vector2.ONE, 0.14)
 	return await _run_tween(pulse, playback_generation)
 
 
@@ -277,19 +271,16 @@ func _present_tap_phase_start(event: Dictionary, playback_generation: int) -> bo
 	_tap_pips_label.text = _tap_pips(
 		int(event.taps_remaining), int(event.taps_per_phase)
 	)
-	_hunger_intent_label.text = (
-		"GRANDMA NEXT  +%d HUNGER" % int(event.next_hunger_increase)
-	)
+	_grandma_hunger_panel.set_next_increase(int(event.next_hunger_increase))
+	var phase_panel: Control = _grandma_hunger_panel.phase_control()
 	if _reduced_motion:
-		_hunger_phase_panel.visible = false
-		_hunger_phase_panel.modulate.a = 1.0
+		_grandma_hunger_panel.hide_phase()
 		return true
 	var dismiss := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	dismiss.tween_property(_hunger_phase_panel, "modulate:a", 0.0, 0.12)
+	dismiss.tween_property(phase_panel, "modulate:a", 0.0, 0.12)
 	if not await _run_tween(dismiss, playback_generation):
 		return false
-	_hunger_phase_panel.visible = false
-	_hunger_phase_panel.modulate.a = 1.0
+	_grandma_hunger_panel.hide_phase()
 	return true
 
 
@@ -307,11 +298,8 @@ func _render_pipe(eggs: Array) -> void:
 
 
 func _reset_mechanisms() -> void:
-	if _hunger_phase_panel != null:
-		_hunger_phase_panel.visible = false
-		_hunger_phase_panel.modulate.a = 1.0
-	if _hunger_label != null:
-		_hunger_label.scale = Vector2.ONE
+	if _grandma_hunger_panel != null:
+		_grandma_hunger_panel.reset_feedback()
 	for spoon_button: Button in _spoon_buttons:
 		spoon_button.reset_pose()
 	for spoon: Control in _spoons:

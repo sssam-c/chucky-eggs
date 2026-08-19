@@ -22,11 +22,8 @@ const APPEARANCES := [
 @onready var _spoons: Array[Control] = [%Spoon1, %Spoon2, %Spoon3, %Spoon4, %Spoon5]
 @onready var _lane_labels: Array[Label] = [%Lane1, %Lane2, %Lane3, %Lane4, %Lane5]
 @onready var _hopper_drop_point: Control = %HopperDropPoint
-@onready var _hunger_label: Label = %Hunger
+@onready var _grandma_hunger_panel: Control = %GrandmaSidebar
 @onready var _tap_pips_label: Label = %TapPips
-@onready var _hunger_intent_label: Label = %HungerIntent
-@onready var _hunger_phase_panel: Control = %HungerPhasePanel
-@onready var _hunger_phase_label: Label = %HungerPhaseLabel
 @onready var _hopper_count_label: Label = %HopperCount
 @onready var _result_panel: PanelContainer = %ResultPanel
 @onready var _result_label: Label = %ResultLabel
@@ -73,11 +70,8 @@ func _ready() -> void:
 		_spoon_buttons,
 		_spoons,
 		_hopper_drop_point,
-		_hunger_label,
+		_grandma_hunger_panel,
 		_tap_pips_label,
-		_hunger_intent_label,
-		_hunger_phase_panel,
-		_hunger_phase_label
 	)
 	_render()
 	_configure_hammer_contacts.call_deferred()
@@ -141,9 +135,11 @@ func _submit_spoon(slot_index: int) -> void:
 
 func _render() -> void:
 	var state: Dictionary = _session.state()
-	_hunger_label.text = "HUNGER  %d" % int(state.hunger)
+	_grandma_hunger_panel.render_hunger(
+		int(state.hunger), int(state.next_hunger_increase),
+		HopperTapSession.STARTING_HUNGER
+	)
 	_tap_pips_label.text = _tap_pips(int(state.taps_remaining), int(state.taps_per_phase))
-	_hunger_intent_label.text = "GRANDMA NEXT  +%d HUNGER" % int(state.next_hunger_increase)
 	_hopper_count_label.text = "%d WAITING" % int(state.hopper_egg_count)
 	for slot_index in range(_slots.size()):
 		var egg: Dictionary = state.slots[slot_index]

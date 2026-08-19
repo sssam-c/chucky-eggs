@@ -14,7 +14,7 @@ Branch-only prototype on `codex/hopper-tap-combos`. This is a design hypothesis 
 
 ### End-to-end player path
 
-- Begin with five occupied bays, five individually operated coloured spoons, a visible three-egg hopper preview, five available taps, and Grandma's remaining Hunger.
+- Begin with five occupied bays, five individually operated coloured spoons, a visible three-egg hopper preview, five available taps, and Grandma beside the table visibly owning her remaining Hunger and announced next increase.
 - Click one spoon to strike only the egg in its matching cup. Exact remaining toughness and Yolk stay visible.
 - Resolve direct damage, Cuckoo echoes, hatches, Yolk reducing Hunger, and any positional response as one deterministic cascade.
 - Keep every vacancy empty until that cascade finishes, then route hopper eggs into vacancies in hatch order; simultaneous hatches use bay order from left to right.
@@ -29,6 +29,7 @@ Branch-only prototype on `codex/hopper-tap-combos`. This is a design hypothesis 
 - Fixed spoon colours, Cuckoo adjacency, Spoonbill's Pink weakness, and Plover's surviving-hit swap provide enough initial combontronics without movement instructions or a conveyor.
 - Five renewable taps will feel like a short tactical opportunity rather than a dwindling global allowance.
 - A separate, telegraphed Hunger phase will make Grandma's response feel consequential without making every individual tap feel punitive.
+- Keeping Grandma, her waiting bowl, current Hunger, next increase, and Hunger-phase response in one persistent sidebar will make Hunger read as her changing condition rather than an abstract global counter.
 - Escalating Hunger will discourage endless setup, while resolver-authored free reactions make efficient combinations outperform plain repeated tapping without becoming an incremental or idle loop.
 
 ### Settled rules preserved inside the experiment
@@ -40,7 +41,7 @@ Branch-only prototype on `codex/hopper-tap-combos`. This is a design hypothesis 
 ### Implementation conveniences, not rules
 
 - The first build uses an authored egg order and fixed spoon colours to expose a reliable opening combination.
-- Existing placeholder egg, spoon, sound, and Grandma assets may be reused to shorten the learning loop; the table, cups, and hopper chute are prototype presentation rather than new rules.
+- Existing placeholder egg, spoon, sound, and Grandma portrait assets may be reused to shorten the learning loop; the table, cups, hopper chute, and dedicated Hunger sidebar are prototype presentation rather than new rules or final art.
 - Five taps, 10 starting Hunger, a first Hunger increase of 1, and increasing that amount by 1 after each Hunger phase are tuning controls rather than accepted balance.
 
 ### Explicitly deferred
@@ -51,8 +52,8 @@ Branch-only prototype on `codex/hopper-tap-combos`. This is a design hypothesis 
 ### Exit evidence
 
 - Domain specs prove one-spoon targeting, fixed spoon colour, direct and echo order, Yolk reducing Hunger, post-cascade vacancy refill, exactly one paid tap per request, victory before Grandma's response, explicit fifth-tap phase order, escalating Hunger, tap refresh, exhaustion failure, and restart.
-- UI specs prove five individually operable spoon targets, large eggs seated in cups, exact egg facts, three preview eggs, five physical tap indicators, visible next-Hunger intent, input locking through Grandma's response, ordered damage/hatch/refill/Hunger presentation, exact hopper-to-vacancy routing, and restart.
-- A muted running-game check at 1280×720 and 1024×576 verifies cup seating, spoon hit targets, hopper-to-cup travel, contact alignment, fast tactile feedback, readable tap and Hunger intent, a distinct but brief Hunger response, and no stale input after cancellation.
+- UI specs prove five individually operable spoon targets, large eggs seated in cups, exact egg facts, three preview eggs, five physical tap indicators, Grandma's persistent Hunger ownership and next-Hunger intent, input locking through her response, ordered damage/hatch/refill/Hunger presentation, exact hopper-to-vacancy routing, and restart.
+- A muted running-game check at 1280×720 and 1024×576 verifies cup seating, spoon hit targets, hopper-to-cup travel, contact alignment, fast tactile feedback, readable taps, Grandma-owned Hunger intent, a distinct but brief response inside her sidebar, and no stale input after cancellation.
 - Play the authored opening without explanation. Record whether the player clicks the spoons naturally, understands which cup a hopper egg will refill, plans around the fifth tap, understands that Yolk lowers Hunger, anticipates Grandma's announced increase, and experiences the refreshed five taps as a new opportunity rather than a reset counter.
 
 ## Active validation slice — Standard-species rewards and visible flock thinning
