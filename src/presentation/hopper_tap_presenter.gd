@@ -3,6 +3,7 @@ extends Node
 
 signal event_presented(event_type: String)
 signal playback_finished
+signal egg_drop_started(slot_index: int, origin: Vector2, destination: Vector2)
 
 const CrunchAudio = preload("res://src/presentation/crunch_audio.gd")
 
@@ -15,8 +16,9 @@ const CrunchAudio = preload("res://src/presentation/crunch_audio.gd")
 
 var _slots: Array[Button] = []
 var _pipe_slots: Array[Button] = []
-var _levers: Array[Button] = []
-var _hammers: Array[Control] = []
+var _spoon_buttons: Array[Button] = []
+var _spoons: Array[Control] = []
+var _hopper_drop_point: Control
 var _hunger_label: Label
 var _tap_pips_label: Label
 var _hunger_intent_label: Label
@@ -41,8 +43,9 @@ func _ready() -> void:
 func configure(
 	slots: Array[Button],
 	pipe_slots: Array[Button],
-	levers: Array[Button],
-	hammers: Array[Control],
+	spoon_buttons: Array[Button],
+	spoons: Array[Control],
+	hopper_drop_point: Control,
 	hunger_label: Label,
 	tap_pips_label: Label,
 	hunger_intent_label: Label,
@@ -51,8 +54,9 @@ func configure(
 ) -> void:
 	_slots = slots
 	_pipe_slots = pipe_slots
-	_levers = levers
-	_hammers = hammers
+	_spoon_buttons = spoon_buttons
+	_spoons = spoons
+	_hopper_drop_point = hopper_drop_point
 	_hunger_label = hunger_label
 	_tap_pips_label = tap_pips_label
 	_hunger_intent_label = hunger_intent_label
@@ -136,27 +140,27 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 
 func _present_spoon(slot_index: int, playback_generation: int) -> bool:
 	_play(_lever_player)
-	var lever: Button = _levers[slot_index]
-	var hammer: Control = _hammers[slot_index]
+	var spoon_button: Button = _spoon_buttons[slot_index]
+	var spoon: Control = _spoons[slot_index]
 	if _reduced_motion:
-		lever.set_press_amount(1.0)
-		hammer.set_strike_amount(1.0)
-		lever.reset_pose()
-		hammer.reset_pose()
+		spoon_button.set_press_amount(1.0)
+		spoon.set_strike_amount(1.0)
+		spoon_button.reset_pose()
+		spoon.reset_pose()
 		return true
 	var anticipation := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	anticipation.tween_property(lever, "press_amount", 0.35, 0.045)
-	anticipation.parallel().tween_property(hammer, "strike_amount", -0.10, 0.045)
+	anticipation.tween_property(spoon_button, "press_amount", 0.35, 0.045)
+	anticipation.parallel().tween_property(spoon, "strike_amount", -0.10, 0.045)
 	if not await _run_tween(anticipation, playback_generation):
 		return false
 	var strike := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	strike.tween_property(lever, "press_amount", 1.0, 0.105)
-	strike.parallel().tween_property(hammer, "strike_amount", 1.0, 0.105)
+	strike.tween_property(spoon_button, "press_amount", 1.0, 0.105)
+	strike.parallel().tween_property(spoon, "strike_amount", 1.0, 0.105)
 	if not await _run_tween(strike, playback_generation):
 		return false
 	var recovery := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	recovery.tween_property(lever, "press_amount", 0.0, 0.09)
-	recovery.parallel().tween_property(hammer, "strike_amount", 0.0, 0.09)
+	recovery.tween_property(spoon_button, "press_amount", 0.0, 0.09)
+	recovery.parallel().tween_property(spoon, "strike_amount", 0.0, 0.09)
 	return await _run_tween(recovery, playback_generation)
 
 
@@ -208,16 +212,35 @@ func _present_entry(event: Dictionary, playback_generation: int) -> bool:
 	slot.render_egg(event.egg, false)
 	_render_pipe(event.pipe)
 	_play(_pipe_player)
+	var content: Control = slot.motion_content()
+	var origin: Vector2 = _hopper_drop_point.get_global_rect().get_center()
+	var destination: Vector2 = slot.hatch_global_position()
+	egg_drop_started.emit(int(event.slot_index), origin, destination)
 	if _reduced_motion:
 		return true
-	var content: Control = slot.motion_content()
+	var destination_position := content.position
+	var destination_scale := content.scale
+	var parent_inverse: Transform2D = content.get_parent().get_global_transform().affine_inverse()
+	var origin_local: Vector2 = parent_inverse * origin
+	content.position = origin_local - content.size * 0.5
 	content.pivot_offset = content.size * 0.5
-	content.scale = Vector2(0.56, 1.28)
-	content.modulate.a = 0.35
-	var arrival := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	arrival.tween_property(content, "scale", Vector2.ONE, 0.13)
-	arrival.parallel().tween_property(content, "modulate:a", 1.0, 0.08)
-	return await _run_tween(arrival, playback_generation)
+	content.scale = destination_scale * 0.68
+	content.modulate.a = 0.72
+	content.z_index = 12
+	var hover_position := destination_position - Vector2(0.0, 92.0)
+	var route := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	route.tween_property(content, "position", hover_position, 0.20)
+	route.parallel().tween_property(content, "scale", destination_scale * 0.90, 0.20)
+	route.parallel().tween_property(content, "modulate:a", 1.0, 0.12)
+	if not await _run_tween(route, playback_generation):
+		return false
+	var drop := create_tween().set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	drop.tween_property(content, "position", destination_position, 0.18)
+	drop.parallel().tween_property(content, "scale", destination_scale, 0.15)
+	if not await _run_tween(drop, playback_generation):
+		return false
+	content.z_index = 0
+	return true
 
 
 func _commit_hunger(event: Dictionary) -> void:
@@ -289,10 +312,10 @@ func _reset_mechanisms() -> void:
 		_hunger_phase_panel.modulate.a = 1.0
 	if _hunger_label != null:
 		_hunger_label.scale = Vector2.ONE
-	for lever: Button in _levers:
-		lever.reset_pose()
-	for hammer: Control in _hammers:
-		hammer.reset_pose()
+	for spoon_button: Button in _spoon_buttons:
+		spoon_button.reset_pose()
+	for spoon: Control in _spoons:
+		spoon.reset_pose()
 	for slot: Button in _slots:
 		slot.reset_motion()
 

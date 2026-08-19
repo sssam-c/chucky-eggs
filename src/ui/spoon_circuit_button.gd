@@ -7,6 +7,7 @@ signal preview_changed(circuit_id: String, active: bool)
 @export var slot_indices: Array[int] = []
 @export var circuit_color := Color("b6322c")
 @export_enum("diamond", "circle", "triangle", "hexagon", "spark") var circuit_symbol := "diamond"
+@export_enum("lever", "spoon") var control_style := "lever"
 
 var press_amount := 0.0:
 	set(value):
@@ -58,7 +59,7 @@ func reset_pose() -> void:
 
 
 func control_form() -> String:
-	return "lever"
+	return control_style
 
 
 func mapping_text() -> String:
@@ -82,7 +83,9 @@ func lever_handle_center() -> Vector2:
 
 func _refresh_accessibility() -> void:
 	tooltip_text = ""
-	accessibility_name = "%s %s lever" % [circuit_id.capitalize(), circuit_symbol]
+	accessibility_name = "%s %s %s" % [
+		circuit_id.capitalize(), circuit_symbol, control_style,
+	]
 	var slot_names: Array[String] = []
 	for slot_index: int in slot_indices:
 		slot_names.append(str(slot_index + 1))
@@ -112,6 +115,9 @@ func _refresh_accessibility() -> void:
 
 
 func _draw() -> void:
+	if control_style == "spoon":
+		_draw_spoon_hit_area()
+		return
 	var highlighted := (is_hovered() or has_focus()) and _available
 	var pivot := _lever_pivot()
 	var handle := lever_handle_center()
@@ -158,6 +164,30 @@ func _draw() -> void:
 	draw_arc(handle, 18.0, 0.0, TAU, 24, Color("fff0cf") if highlighted else outline, 3.0, true)
 	draw_circle(handle - Vector2(5, 5), 4.0, Color(1.0, 0.88, 0.72, 0.40))
 	_draw_symbol(handle, Color("fff0cf") if _available else Color("8e8377"))
+
+
+func _draw_spoon_hit_area() -> void:
+	var highlighted := (is_hovered() or has_focus()) and _available
+	var live_color := circuit_color if _available else circuit_color.darkened(0.52)
+	var bounds := Rect2(Vector2(28.0, 8.0), size - Vector2(56.0, 28.0))
+	if highlighted:
+		draw_style_box(
+			_get_spoon_highlight_style(live_color),
+			bounds
+		)
+	var badge_center := Vector2(size.x * 0.5, 24.0)
+	draw_circle(badge_center, 15.0, Color("111316"))
+	draw_circle(badge_center, 11.0, live_color)
+	_draw_symbol(badge_center, Color("fff0cf") if _available else Color("8e8377"))
+
+
+func _get_spoon_highlight_style(color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(color, 0.055 + press_amount * 0.08)
+	style.border_color = Color(color.lightened(0.42), 0.90)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(14)
+	return style
 
 func _lever_pivot() -> Vector2:
 	return Vector2(size.x * 0.5, size.y - 36.0)

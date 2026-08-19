@@ -16,9 +16,12 @@ const APPEARANCES := [
 
 @onready var _slots: Array[Button] = [%Slot1, %Slot2, %Slot3, %Slot4, %Slot5]
 @onready var _pipe_slots: Array[Button] = [%Next1, %Next2, %Next3]
-@onready var _levers: Array[Button] = [%Lever1, %Lever2, %Lever3, %Lever4, %Lever5]
-@onready var _hammers: Array[Control] = [%Hammer1, %Hammer2, %Hammer3, %Hammer4, %Hammer5]
+@onready var _spoon_buttons: Array[Button] = [
+	%SpoonButton1, %SpoonButton2, %SpoonButton3, %SpoonButton4, %SpoonButton5,
+]
+@onready var _spoons: Array[Control] = [%Spoon1, %Spoon2, %Spoon3, %Spoon4, %Spoon5]
 @onready var _lane_labels: Array[Label] = [%Lane1, %Lane2, %Lane3, %Lane4, %Lane5]
+@onready var _hopper_drop_point: Control = %HopperDropPoint
 @onready var _hunger_label: Label = %Hunger
 @onready var _tap_pips_label: Label = %TapPips
 @onready var _hunger_intent_label: Label = %HungerIntent
@@ -45,15 +48,18 @@ func _ready() -> void:
 		_slots[slot_index].set_circuit_appearance(
 			String(spoon.id), appearance.color, String(appearance.symbol)
 		)
-		_levers[slot_index].circuit_id = String(spoon.id)
-		_levers[slot_index].slot_indices.assign([slot_index])
-		_levers[slot_index].circuit_color = appearance.color
-		_levers[slot_index].circuit_symbol = String(appearance.symbol)
-		_levers[slot_index].circuit_requested.connect(_on_spoon_requested)
-		_hammers[slot_index].slot_index = slot_index
-		_hammers[slot_index].circuit_id = String(spoon.id)
-		_hammers[slot_index].circuit_color = appearance.color
-		_hammers[slot_index].circuit_symbol = String(appearance.symbol)
+		_slots[slot_index].set_egg_cup_mode(true)
+		_slots[slot_index].set_stage_content_scale(1.18)
+		_spoon_buttons[slot_index].circuit_id = String(spoon.id)
+		_spoon_buttons[slot_index].slot_indices.assign([slot_index])
+		_spoon_buttons[slot_index].circuit_color = appearance.color
+		_spoon_buttons[slot_index].circuit_symbol = String(appearance.symbol)
+		_spoon_buttons[slot_index].control_style = "spoon"
+		_spoon_buttons[slot_index].circuit_requested.connect(_on_spoon_requested)
+		_spoons[slot_index].slot_index = slot_index
+		_spoons[slot_index].circuit_id = String(spoon.id)
+		_spoons[slot_index].circuit_color = appearance.color
+		_spoons[slot_index].circuit_symbol = String(appearance.symbol)
 		_lane_labels[slot_index].text = String(appearance.label)
 		_lane_labels[slot_index].add_theme_color_override("font_color", appearance.color.lightened(0.28))
 	_restart_button.pressed.connect(restart)
@@ -64,8 +70,9 @@ func _ready() -> void:
 	_presenter.configure(
 		_slots,
 		_pipe_slots,
-		_levers,
-		_hammers,
+		_spoon_buttons,
+		_spoons,
+		_hopper_drop_point,
 		_hunger_label,
 		_tap_pips_label,
 		_hunger_intent_label,
@@ -74,7 +81,7 @@ func _ready() -> void:
 	)
 	_render()
 	_configure_hammer_contacts.call_deferred()
-	_levers[0].grab_focus.call_deferred()
+	_spoon_buttons[0].grab_focus.call_deferred()
 
 
 func prototype_state() -> Dictionary:
@@ -100,7 +107,7 @@ func restart() -> void:
 	_input_locked = false
 	_result_panel.visible = false
 	_render()
-	_levers[0].grab_focus.call_deferred()
+	_spoon_buttons[0].grab_focus.call_deferred()
 
 
 func _on_spoon_requested(spoon_id: String) -> void:
@@ -122,7 +129,7 @@ func _submit_spoon(slot_index: int) -> void:
 	_input_locked = true
 	_request_generation += 1
 	var request_generation := _request_generation
-	_set_levers_available(false)
+	_set_spoons_available(false)
 	playback_started.emit()
 	var completed: bool = await _presenter.play_events(events)
 	if not completed or request_generation != _request_generation:
@@ -145,11 +152,11 @@ func _render() -> void:
 		target_descriptions.append(
 			"empty" if egg.is_empty() else _slots[slot_index].egg_description()
 		)
-		_levers[slot_index].set_target_descriptions(target_descriptions)
+		_spoon_buttons[slot_index].set_target_descriptions(target_descriptions)
 	for preview_index in range(_pipe_slots.size()):
 		var egg: Dictionary = state.pipe[preview_index] if preview_index < state.pipe.size() else {}
 		_pipe_slots[preview_index].render_egg(egg, false, true)
-	_set_levers_available(not bool(state.ended) and not _input_locked)
+	_set_spoons_available(not bool(state.ended) and not _input_locked)
 	_result_panel.visible = bool(state.ended)
 	if state.ended:
 		_result_label.text = (
@@ -167,17 +174,17 @@ func _tap_pips(remaining: int, total: int) -> String:
 	return "TAPS  %s" % " ".join(pips)
 
 
-func _set_levers_available(enabled: bool) -> void:
+func _set_spoons_available(enabled: bool) -> void:
 	var state: Dictionary = _session.state()
-	for slot_index in range(_levers.size()):
+	for slot_index in range(_spoon_buttons.size()):
 		var occupied: bool = not state.slots[slot_index].is_empty()
-		_levers[slot_index].set_available(enabled and occupied)
+		_spoon_buttons[slot_index].set_available(enabled and occupied)
 
 
 func _configure_hammer_contacts() -> void:
-	for slot_index in range(_hammers.size()):
+	for slot_index in range(_spoons.size()):
 		var contact_global: Vector2 = _slots[slot_index].impact_global_position()
 		var contact_local: Vector2 = (
-			_hammers[slot_index].get_global_transform().affine_inverse() * contact_global
+			_spoons[slot_index].get_global_transform().affine_inverse() * contact_global
 		)
-		_hammers[slot_index].configure_wall_spoon(contact_local)
+		_spoons[slot_index].configure_wall_spoon(contact_local)

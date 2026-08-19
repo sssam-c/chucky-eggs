@@ -3,6 +3,7 @@ extends Button
 const PREVIEW_CONTENT_SCALE := Vector2(0.82, 0.82)
 
 @export var slot_index := -1
+@export var egg_cup_mode := false
 
 @onready var _content: Control = %EggContent
 @onready var _egg_visual: Control = %EggVisual
@@ -70,6 +71,17 @@ func set_bare_belt_mode(enabled: bool) -> void:
 
 func is_bare_belt_mode() -> bool:
 	return _bare_belt_mode
+
+
+func set_egg_cup_mode(enabled: bool) -> void:
+	if egg_cup_mode == enabled:
+		return
+	egg_cup_mode = enabled
+	queue_redraw()
+
+
+func is_egg_cup_mode() -> bool:
+	return egg_cup_mode
 
 
 func set_stage_content_scale(value: float) -> void:
@@ -194,6 +206,9 @@ func _draw() -> void:
 	if _preview:
 		return
 	var center := Vector2(size.x * 0.5, size.y - 30.0)
+	if egg_cup_mode:
+		_draw_egg_cup(center)
+		return
 	if _bare_belt_mode:
 		# The machine stage colours the belt section. The slot adds only a soft
 		# contact shadow so eggs remain seated without looking like separate pads.
@@ -206,6 +221,30 @@ func _draw() -> void:
 	draw_line(center + Vector2(-57, 2), center + Vector2(57, 2), Color("0b0b0c"), 5.0)
 	draw_circle(center + Vector2(-54, 0), 4.0, Color("bd7742"))
 	draw_circle(center + Vector2(54, 0), 4.0, Color("bd7742"))
+
+
+func _draw_egg_cup(center: Vector2) -> void:
+	var cup_top := center - Vector2(0.0, 13.0)
+	_draw_oval(center + Vector2(3.0, 27.0), Vector2(62.0, 15.0), Color(0.0, 0.0, 0.0, 0.34))
+	var body := PackedVector2Array([
+		cup_top + Vector2(-58.0, 2.0),
+		cup_top + Vector2(58.0, 2.0),
+		center + Vector2(40.0, 29.0),
+		center + Vector2(-40.0, 29.0),
+	])
+	draw_colored_polygon(body, Color("e7d7b7"))
+	var body_outline := body.duplicate()
+	body_outline.append(body[0])
+	draw_polyline(body_outline, Color("6f4d34"), 4.0, true)
+	_draw_oval(cup_top, Vector2(61.0, 18.0), Color("6f4d34"))
+	_draw_oval(cup_top - Vector2(0.0, 2.0), Vector2(54.0, 13.0), Color("2a1c16"))
+	draw_line(
+		center + Vector2(-36.0, 20.0),
+		center + Vector2(36.0, 20.0),
+		_circuit_color.lightened(0.18),
+		5.0,
+		true
+	)
 
 
 func _draw_oval(center: Vector2, radii: Vector2, color: Color) -> void:
