@@ -45,30 +45,42 @@ offset_right = 730.0
 offset_bottom = 88.0
 theme_override_colors/font_color = Color(0.82, 0.79, 0.7, 1)
 theme_override_font_sizes/font_size = 16
-text = "Pull one lever. Break an egg. Route the next hopper egg into its spoon position."
+text = "Five taps before Grandma responds. Hatch eggs to bring her Hunger to zero."
 
-[node name="Score" type="Label" parent="."]
+[node name="Hunger" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 800.0
 offset_top = 22.0
-offset_right = 1025.0
+offset_right = 990.0
 offset_bottom = 56.0
 theme_override_colors/font_color = Color(1, 0.88, 0.32, 1)
 theme_override_font_sizes/font_size = 20
-text = "APPETITE  0 / 10"
+text = "HUNGER  10"
 horizontal_alignment = 2
 
-[node name="Pulls" type="Label" parent="."]
+[node name="TapPips" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 1045.0
+offset_left = 1010.0
 offset_top = 22.0
 offset_right = 1250.0
 offset_bottom = 56.0
 theme_override_colors/font_color = Color(0.67, 0.86, 1, 1)
-theme_override_font_sizes/font_size = 20
-text = "SPOON PULLS  12 / 12"
+theme_override_font_sizes/font_size = 18
+text = "TAPS  ● ● ● ● ●"
+horizontal_alignment = 2
+
+[node name="HungerIntent" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 760.0
+offset_top = 65.0
+offset_right = 1065.0
+offset_bottom = 96.0
+theme_override_colors/font_color = Color(0.9, 0.64, 0.46, 1)
+theme_override_font_sizes/font_size = 16
+text = "GRANDMA NEXT  +1 HUNGER"
 horizontal_alignment = 2
 
 [node name="Hopper" type="Panel" parent="."]
@@ -341,6 +353,25 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 text = "RESET THE COMBONTRON"
+
+[node name="HungerPhasePanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+z_index = 15
+layout_mode = 0
+offset_left = 430.0
+offset_top = 112.0
+offset_right = 850.0
+offset_bottom = 186.0
+
+[node name="HungerPhaseLabel" type="Label" parent="HungerPhasePanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.55, 0.34, 1)
+theme_override_font_sizes/font_size = 24
+text = "GRANDMA'S HUNGER  +1"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Restart" type="Button" parent="."]
 unique_name_in_owner = true

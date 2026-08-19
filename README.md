@@ -1,6 +1,6 @@
 # Chucky Eggs
 
-> **Branch prototype:** `codex/hopper-tap-combos` launches a branch-only five-bay experiment. Each bay has one individually operated coloured spoon; opening an egg refills that same position from the visible hopper after the complete tap cascade. The canonical conveyor game remains available at `res://src/ui/main.tscn` and its settled rules are unchanged pending playtest evidence.
+> **Branch prototype:** `codex/hopper-tap-combos` launches a branch-only five-bay experiment. Each bay has one individually operated coloured spoon; opening an egg refills that same position from the visible hopper after the complete tap cascade. Five paid taps form a Tap phase. If Yolk has not reduced Grandma's Hunger to zero, her telegraphed Hunger increase resolves and the next five taps begin. The canonical conveyor game remains available at `res://src/ui/main.tscn` and its settled rules are unchanged pending playtest evidence.
 
 A tactical conveyor game about choosing which eggs deserve the spoon. Every thwack fires a fixed coloured spoon circuit, Cuckoos copy damage dealt to neighboring eggs, Plovers retreat to the left after surviving a direct hit, and every survivor moves closer to the recycling bin.
 

@@ -4,8 +4,10 @@ extends RefCounted
 const ChickenDay = preload("res://src/domain/chicken_day.gd")
 const SLOT_COUNT := 5
 const PIPE_PREVIEW_COUNT := 3
-const DEFAULT_PULLS := 12
-const DEFAULT_TARGET_SCORE := 10
+const DEFAULT_STARTING_HUNGER := 10
+const DEFAULT_TAPS_PER_PHASE := 5
+const DEFAULT_FIRST_HUNGER_INCREASE := 1
+const DEFAULT_HUNGER_GROWTH := 1
 const SPOONS: Array[Dictionary] = [
 	{"id": "red_1", "slot_index": 0, "color": "red"},
 	{"id": "blue_2", "slot_index": 1, "color": "blue"},
@@ -16,10 +18,12 @@ const SPOONS: Array[Dictionary] = [
 
 var _slots: Array[Dictionary] = []
 var _hopper: Array[Dictionary] = []
-var _score := 0
-var _target_score: int
-var _pulls_remaining: int
-var _maximum_pulls: int
+var _hunger: int
+var _taps_remaining: int
+var _taps_per_phase: int
+var _tap_phase := 1
+var _next_hunger_increase: int
+var _hunger_growth: int
 var _ended := false
 var _succeeded := false
 var _next_egg_instance_id := 1
@@ -29,15 +33,21 @@ var _vacancy_slots_in_hatch_order: Array[int] = []
 
 func _init(
 	daily_eggs: Array,
-	target_score := DEFAULT_TARGET_SCORE,
-	starting_pulls := DEFAULT_PULLS
+	starting_hunger := DEFAULT_STARTING_HUNGER,
+	taps_per_phase := DEFAULT_TAPS_PER_PHASE,
+	first_hunger_increase := DEFAULT_FIRST_HUNGER_INCREASE,
+	hunger_growth := DEFAULT_HUNGER_GROWTH
 ) -> void:
 	assert(not daily_eggs.is_empty(), "A tap-combo round needs at least one egg.")
-	assert(target_score > 0, "A tap-combo round needs a positive Appetite.")
-	assert(starting_pulls > 0, "A tap-combo round needs at least one spoon pull.")
-	_target_score = target_score
-	_pulls_remaining = starting_pulls
-	_maximum_pulls = starting_pulls
+	assert(starting_hunger > 0, "A tap-combo day needs positive starting Hunger.")
+	assert(taps_per_phase > 0, "A Tap phase needs at least one paid tap.")
+	assert(first_hunger_increase > 0, "Grandma's Hunger phase must add Hunger.")
+	assert(hunger_growth >= 0, "Hunger escalation cannot be negative.")
+	_hunger = starting_hunger
+	_taps_remaining = taps_per_phase
+	_taps_per_phase = taps_per_phase
+	_next_hunger_increase = first_hunger_increase
+	_hunger_growth = hunger_growth
 	for slot_index in range(SLOT_COUNT):
 		_slots.append({})
 	for laid_egg: Variant in daily_eggs:
@@ -54,10 +64,11 @@ func snapshot() -> Dictionary:
 		"hopper_egg_count": _hopper.size(),
 		"spoons": SPOONS.duplicate(true),
 		"slot_count": SLOT_COUNT,
-		"score": _score,
-		"target_score": _target_score,
-		"pulls_remaining": _pulls_remaining,
-		"maximum_pulls": _maximum_pulls,
+		"hunger": _hunger,
+		"taps_remaining": _taps_remaining,
+		"taps_per_phase": _taps_per_phase,
+		"tap_phase": _tap_phase,
+		"next_hunger_increase": _next_hunger_increase,
 		"ended": _ended,
 		"succeeded": _succeeded,
 	}
@@ -65,7 +76,7 @@ func snapshot() -> Dictionary:
 
 func resolve_spoon(slot_index: int) -> Array[Dictionary]:
 	if _ended:
-		return [{"type": "spoon_rejected", "reason": "round_ended"}]
+		return [{"type": "spoon_rejected", "reason": "day_ended"}]
 	if slot_index < 0 or slot_index >= SLOT_COUNT:
 		return [{"type": "spoon_rejected", "reason": "invalid_slot"}]
 	if _slots[slot_index].is_empty():
@@ -88,17 +99,20 @@ func resolve_spoon(slot_index: int) -> Array[Dictionary]:
 	_retreat_surviving_direct_plover(slot_index, events)
 	_refill_vacancies(events)
 
-	_pulls_remaining = maxi(_pulls_remaining - 1, 0)
+	_taps_remaining = maxi(_taps_remaining - 1, 0)
 	events.append({
-		"type": "pull_spent",
-		"remaining_pulls": _pulls_remaining,
-		"maximum_pulls": _maximum_pulls,
+		"type": "tap_spent",
+		"taps_remaining": _taps_remaining,
+		"taps_per_phase": _taps_per_phase,
+		"tap_phase": _tap_phase,
 	})
 
-	if _score >= _target_score:
-		_end_round(events, true)
-	elif _pulls_remaining <= 0 or (_hopper.is_empty() and _all_slots_empty()):
-		_end_round(events, false)
+	if _hunger <= 0:
+		_end_day(events, true)
+	elif _hopper.is_empty() and _all_slots_empty():
+		_end_day(events, false)
+	elif _taps_remaining <= 0:
+		_resolve_hunger_phase(events)
 	return events
 
 
@@ -165,15 +179,16 @@ func _resolve_hatches(events: Array[Dictionary]) -> void:
 		_resolved_egg_ids[egg_instance_id] = true
 		_slots[slot_index] = {}
 		_vacancy_slots_in_hatch_order.append(slot_index)
-		_score += int(egg.points)
+		var yolk := int(egg.points)
+		_hunger = maxi(_hunger - yolk, 0)
 		events.append({
 			"type": "egg_hatched",
 			"egg_instance_id": egg_instance_id,
 			"slot_index": slot_index,
 			"kind": String(egg.kind),
-			"points_awarded": int(egg.points),
-			"score": _score,
-			"target_score": _target_score,
+			"points_awarded": yolk,
+			"yolk": yolk,
+			"hunger": _hunger,
 		})
 
 
@@ -218,14 +233,42 @@ func _refill_vacancies(events: Array[Dictionary]) -> void:
 		})
 
 
-func _end_round(events: Array[Dictionary], succeeded: bool) -> void:
+func _resolve_hunger_phase(events: Array[Dictionary]) -> void:
+	events.append({
+		"type": "tap_phase_ended",
+		"tap_phase": _tap_phase,
+		"hunger": _hunger,
+		"hunger_increase": _next_hunger_increase,
+	})
+	var applied_increase := _next_hunger_increase
+	_hunger += applied_increase
+	events.append({
+		"type": "hunger_increased",
+		"tap_phase": _tap_phase,
+		"amount": applied_increase,
+		"hunger": _hunger,
+	})
+	_tap_phase += 1
+	_next_hunger_increase += _hunger_growth
+	_taps_remaining = _taps_per_phase
+	events.append({
+		"type": "tap_phase_started",
+		"tap_phase": _tap_phase,
+		"taps_remaining": _taps_remaining,
+		"taps_per_phase": _taps_per_phase,
+		"next_hunger_increase": _next_hunger_increase,
+		"hunger": _hunger,
+	})
+
+
+func _end_day(events: Array[Dictionary], succeeded: bool) -> void:
 	_ended = true
 	_succeeded = succeeded
 	events.append({
-		"type": "round_ended",
-		"score": _score,
-		"target_score": _target_score,
-		"pulls_remaining": _pulls_remaining,
+		"type": "day_ended",
+		"hunger": _hunger,
+		"tap_phase": _tap_phase,
+		"taps_remaining": _taps_remaining,
 		"succeeded": _succeeded,
 	})
 

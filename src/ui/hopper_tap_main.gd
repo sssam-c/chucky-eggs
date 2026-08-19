@@ -19,8 +19,11 @@ const APPEARANCES := [
 @onready var _levers: Array[Button] = [%Lever1, %Lever2, %Lever3, %Lever4, %Lever5]
 @onready var _hammers: Array[Control] = [%Hammer1, %Hammer2, %Hammer3, %Hammer4, %Hammer5]
 @onready var _lane_labels: Array[Label] = [%Lane1, %Lane2, %Lane3, %Lane4, %Lane5]
-@onready var _score_label: Label = %Score
-@onready var _pulls_label: Label = %Pulls
+@onready var _hunger_label: Label = %Hunger
+@onready var _tap_pips_label: Label = %TapPips
+@onready var _hunger_intent_label: Label = %HungerIntent
+@onready var _hunger_phase_panel: Control = %HungerPhasePanel
+@onready var _hunger_phase_label: Label = %HungerPhaseLabel
 @onready var _hopper_count_label: Label = %HopperCount
 @onready var _result_panel: PanelContainer = %ResultPanel
 @onready var _result_label: Label = %ResultLabel
@@ -58,7 +61,17 @@ func _ready() -> void:
 	_presenter.event_presented.connect(
 		func(event_type: String) -> void: presentation_event.emit(event_type)
 	)
-	_presenter.configure(_slots, _pipe_slots, _levers, _hammers, _score_label, _pulls_label)
+	_presenter.configure(
+		_slots,
+		_pipe_slots,
+		_levers,
+		_hammers,
+		_hunger_label,
+		_tap_pips_label,
+		_hunger_intent_label,
+		_hunger_phase_panel,
+		_hunger_phase_label
+	)
 	_render()
 	_configure_hammer_contacts.call_deferred()
 	_levers[0].grab_focus.call_deferred()
@@ -121,10 +134,9 @@ func _submit_spoon(slot_index: int) -> void:
 
 func _render() -> void:
 	var state: Dictionary = _session.state()
-	_score_label.text = "APPETITE  %d / %d" % [int(state.score), int(state.target_score)]
-	_pulls_label.text = "SPOON PULLS  %d / %d" % [
-		int(state.pulls_remaining), int(state.maximum_pulls),
-	]
+	_hunger_label.text = "HUNGER  %d" % int(state.hunger)
+	_tap_pips_label.text = _tap_pips(int(state.taps_remaining), int(state.taps_per_phase))
+	_hunger_intent_label.text = "GRANDMA NEXT  +%d HUNGER" % int(state.next_hunger_increase)
 	_hopper_count_label.text = "%d WAITING" % int(state.hopper_egg_count)
 	for slot_index in range(_slots.size()):
 		var egg: Dictionary = state.slots[slot_index]
@@ -141,11 +153,18 @@ func _render() -> void:
 	_result_panel.visible = bool(state.ended)
 	if state.ended:
 		_result_label.text = (
-			"GRANDMA IS SATISFIED!\n%d / %d YOLK"
+			"GRANDMA IS SATISFIED!\nHUNGER 0"
 			if state.succeeded
-			else "OUT OF SPOON PULLS\n%d / %d YOLK"
-		) % [int(state.score), int(state.target_score)]
+			else "NO EGGS LEFT\nHUNGER %d" % int(state.hunger)
+		)
 		_result_restart_button.grab_focus.call_deferred()
+
+
+func _tap_pips(remaining: int, total: int) -> String:
+	var pips: Array[String] = []
+	for tap_index in range(total):
+		pips.append("●" if tap_index < remaining else "○")
+	return "TAPS  %s" % " ".join(pips)
 
 
 func _set_levers_available(enabled: bool) -> void:

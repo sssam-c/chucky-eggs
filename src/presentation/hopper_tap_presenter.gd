@@ -10,15 +10,18 @@ const CrunchAudio = preload("res://src/presentation/crunch_audio.gd")
 @onready var _impact_player: AudioStreamPlayer = $Audio/Impact
 @onready var _echo_player: AudioStreamPlayer = $Audio/Echo
 @onready var _hatch_player: AudioStreamPlayer = $Audio/Hatch
-@onready var _score_player: AudioStreamPlayer = $Audio/Score
+@onready var _hunger_player: AudioStreamPlayer = $Audio/Score
 @onready var _pipe_player: AudioStreamPlayer = $Audio/Pipe
 
 var _slots: Array[Button] = []
 var _pipe_slots: Array[Button] = []
 var _levers: Array[Button] = []
 var _hammers: Array[Control] = []
-var _score_label: Label
-var _pulls_label: Label
+var _hunger_label: Label
+var _tap_pips_label: Label
+var _hunger_intent_label: Label
+var _hunger_phase_panel: Control
+var _hunger_phase_label: Label
 var _generation := 0
 var _busy := false
 var _muted := false
@@ -31,7 +34,7 @@ func _ready() -> void:
 	_impact_player.stream = CrunchAudio.impact()
 	_echo_player.stream = CrunchAudio.echo()
 	_hatch_player.stream = CrunchAudio.hatch()
-	_score_player.stream = CrunchAudio.score()
+	_hunger_player.stream = CrunchAudio.score()
 	_pipe_player.stream = CrunchAudio.pipe()
 
 
@@ -40,15 +43,21 @@ func configure(
 	pipe_slots: Array[Button],
 	levers: Array[Button],
 	hammers: Array[Control],
-	score_label: Label,
-	pulls_label: Label
+	hunger_label: Label,
+	tap_pips_label: Label,
+	hunger_intent_label: Label,
+	hunger_phase_panel: Control,
+	hunger_phase_label: Label
 ) -> void:
 	_slots = slots
 	_pipe_slots = pipe_slots
 	_levers = levers
 	_hammers = hammers
-	_score_label = score_label
-	_pulls_label = pulls_label
+	_hunger_label = hunger_label
+	_tap_pips_label = tap_pips_label
+	_hunger_intent_label = hunger_intent_label
+	_hunger_phase_panel = hunger_phase_panel
+	_hunger_phase_label = hunger_phase_label
 
 
 func play_events(events: Array[Dictionary]) -> bool:
@@ -76,7 +85,7 @@ func cancel_playback() -> void:
 		_active_tween.kill()
 	for player: AudioStreamPlayer in [
 		_lever_player, _impact_player, _echo_player,
-		_hatch_player, _score_player, _pipe_player,
+		_hatch_player, _hunger_player, _pipe_player,
 	]:
 		player.stop()
 	_reset_mechanisms()
@@ -91,7 +100,7 @@ func set_muted(muted: bool) -> void:
 	if muted:
 		for player: AudioStreamPlayer in [
 			_lever_player, _impact_player, _echo_player,
-			_hatch_player, _score_player, _pipe_player,
+			_hatch_player, _hunger_player, _pipe_player,
 		]:
 			player.stop()
 
@@ -112,10 +121,16 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 			return await _present_swap(event, playback_generation)
 		"egg_entered":
 			return await _present_entry(event, playback_generation)
-		"pull_spent":
-			_pulls_label.text = "SPOON PULLS  %d / %d" % [
-				int(event.remaining_pulls), int(event.maximum_pulls),
-			]
+		"tap_spent":
+			_tap_pips_label.text = _tap_pips(
+				int(event.taps_remaining), int(event.taps_per_phase)
+			)
+		"tap_phase_ended":
+			return await _present_hunger_phase_start(event, playback_generation)
+		"hunger_increased":
+			return await _present_hunger_increase(event, playback_generation)
+		"tap_phase_started":
+			return await _present_tap_phase_start(event, playback_generation)
 	return true
 
 
@@ -166,7 +181,7 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	_play(_hatch_player)
 	if _reduced_motion:
 		slot.clear_visual()
-		_commit_score(event)
+		_commit_hunger(event)
 		return true
 	var content: Control = slot.motion_content()
 	content.pivot_offset = content.size * 0.5
@@ -177,7 +192,7 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	if not await _run_tween(burst, playback_generation):
 		return false
 	slot.clear_visual()
-	_commit_score(event)
+	_commit_hunger(event)
 	return true
 
 
@@ -205,9 +220,61 @@ func _present_entry(event: Dictionary, playback_generation: int) -> bool:
 	return await _run_tween(arrival, playback_generation)
 
 
-func _commit_score(event: Dictionary) -> void:
-	_score_label.text = "APPETITE  %d / %d" % [int(event.score), int(event.target_score)]
-	_play(_score_player)
+func _commit_hunger(event: Dictionary) -> void:
+	_hunger_label.text = "HUNGER  %d" % int(event.hunger)
+	_play(_hunger_player)
+
+
+func _present_hunger_phase_start(event: Dictionary, playback_generation: int) -> bool:
+	_hunger_phase_label.text = "GRANDMA'S HUNGER  +%d" % int(event.hunger_increase)
+	_hunger_phase_panel.modulate.a = 1.0 if _reduced_motion else 0.0
+	_hunger_phase_panel.visible = true
+	if _reduced_motion:
+		return true
+	var reveal := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	reveal.tween_property(_hunger_phase_panel, "modulate:a", 1.0, 0.12)
+	reveal.tween_interval(0.16)
+	return await _run_tween(reveal, playback_generation)
+
+
+func _present_hunger_increase(event: Dictionary, playback_generation: int) -> bool:
+	_hunger_label.text = "HUNGER  %d" % int(event.hunger)
+	_hunger_phase_label.text = "GRANDMA'S HUNGER  +%d" % int(event.amount)
+	_play(_impact_player)
+	if _reduced_motion:
+		return true
+	_hunger_label.pivot_offset = _hunger_label.size * 0.5
+	var pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pulse.tween_property(_hunger_label, "scale", Vector2(1.18, 1.18), 0.10)
+	pulse.tween_property(_hunger_label, "scale", Vector2.ONE, 0.14)
+	return await _run_tween(pulse, playback_generation)
+
+
+func _present_tap_phase_start(event: Dictionary, playback_generation: int) -> bool:
+	_tap_pips_label.text = _tap_pips(
+		int(event.taps_remaining), int(event.taps_per_phase)
+	)
+	_hunger_intent_label.text = (
+		"GRANDMA NEXT  +%d HUNGER" % int(event.next_hunger_increase)
+	)
+	if _reduced_motion:
+		_hunger_phase_panel.visible = false
+		_hunger_phase_panel.modulate.a = 1.0
+		return true
+	var dismiss := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	dismiss.tween_property(_hunger_phase_panel, "modulate:a", 0.0, 0.12)
+	if not await _run_tween(dismiss, playback_generation):
+		return false
+	_hunger_phase_panel.visible = false
+	_hunger_phase_panel.modulate.a = 1.0
+	return true
+
+
+func _tap_pips(remaining: int, total: int) -> String:
+	var pips: Array[String] = []
+	for tap_index in range(total):
+		pips.append("●" if tap_index < remaining else "○")
+	return "TAPS  %s" % " ".join(pips)
 
 
 func _render_pipe(eggs: Array) -> void:
@@ -217,6 +284,11 @@ func _render_pipe(eggs: Array) -> void:
 
 
 func _reset_mechanisms() -> void:
+	if _hunger_phase_panel != null:
+		_hunger_phase_panel.visible = false
+		_hunger_phase_panel.modulate.a = 1.0
+	if _hunger_label != null:
+		_hunger_label.scale = Vector2.ONE
 	for lever: Button in _levers:
 		lever.reset_pose()
 	for hammer: Control in _hammers:
