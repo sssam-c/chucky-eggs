@@ -21,8 +21,11 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 		assert_not_null(main.get_node_or_null("Hopper/Preview/Next%d" % preview_number))
 	assert_not_null(main.get_node_or_null("Stage/Table"))
 	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay"))
-	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay/StreakLabel"))
-	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay/PoolLabel"))
+	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay/StreakBadge"))
+	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay/AwardPanel"))
+	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay/YolkBowl"))
+	assert_null(main.get_node_or_null("Stage/YolkStreakDisplay/YolkIcons"))
+	assert_null(main.get_node_or_null("Stage/YolkStreakDisplay/PoolLabel"))
 	assert_not_null(main.get_node_or_null("Hopper/HopperDropPoint"))
 	assert_null(main.get_node_or_null("Stage/Levers"))
 	assert_not_null(grandma)
@@ -30,6 +33,7 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 		return
 	assert_not_null(grandma.get_node_or_null("GrandmaPortrait"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/HungerValue"))
+	assert_not_null(grandma.get_node_or_null("HungerCard/HungerChange"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/NextIncrease"))
 	assert_gt(grandma.get_global_rect().get_center().x, stage.get_global_rect().get_center().x)
 	assert_false(grandma.get_global_rect().intersects(stage.get_global_rect()))
@@ -59,6 +63,7 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 	var drops: Array[Dictionary] = []
 	var streaks: Array[Dictionary] = []
 	var deliveries: Array[Dictionary] = []
+	var hunger_changes: Array[Dictionary] = []
 	main.get_node("TapPresenter").egg_drop_started.connect(
 		func(slot_index: int, origin: Vector2, destination: Vector2) -> void:
 			drops.append({
@@ -81,6 +86,14 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 				"total_yolk": total_yolk,
 				"origin": origin,
 				"destination": destination,
+			})
+	)
+	main.get_node("TapPresenter").hunger_subtraction_presented.connect(
+		func(hunger_before: int, amount: int, hunger_after: int) -> void:
+			hunger_changes.append({
+				"before": hunger_before,
+				"amount": amount,
+				"after": hunger_after,
 			})
 	)
 
@@ -108,7 +121,11 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 		main.get_node("GrandmaSidebar").delivery_global_position()
 	)
 	assert_gt(deliveries[0].destination.x, deliveries[0].origin.x)
-	assert_false(main.get_node("Stage/YolkStreakDisplay").visible)
+	assert_eq(hunger_changes, [{"before": 10, "amount": 1, "after": 9}])
+	assert_true(main.get_node("Stage/YolkStreakDisplay").visible)
+	assert_false(main.get_node("Stage/YolkStreakDisplay").is_award_visible())
+	assert_eq(main.get_node("Stage/YolkStreakDisplay").streak_text(), "STREAK  ×1")
+	assert_false(main.get_node("GrandmaSidebar/HungerCard/HungerChange").visible)
 
 
 func test_second_input_is_ignored_while_a_tap_cascade_is_playing() -> void:
@@ -143,7 +160,8 @@ func test_zero_break_tap_presents_and_completes_the_streak_reset() -> void:
 	assert_true(presented.has("break_streak_reset"))
 	assert_eq(main.game_state().break_streak, 0)
 	assert_eq(main.game_state().hunger, 9)
-	assert_false(main.get_node("Stage/YolkStreakDisplay").visible)
+	assert_eq(main.get_node("Stage/YolkStreakDisplay").streak_text(), "NEXT BREAK  ×1")
+	assert_false(main.get_node("Stage/YolkStreakDisplay").is_award_visible())
 	assert_false(main.is_input_locked())
 
 

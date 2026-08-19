@@ -22,13 +22,13 @@ Grandma's announced increase is enemy intent. Her response should create a round
 
 Reward a route of prepared breaks instead of charging the player to move between spoons. Every paid input must remain one physical tap; spatial commitment comes from preserving the break streak, ordering valuable eggs late, and avoiding a zero-break tap.
 
-The streak multiplier is the round's explosive payoff. It may produce deliberately large jackpots, but it must remain possible to understand which egg advanced the streak and how much multiplied Yolk it contributed. Watch for an authored route that becomes automatic or for base Yolk values that make every non-streak break irrelevant.
+The streak multiplier is the round's explosive payoff. It may produce deliberately large jackpots, but it must remain possible to understand which egg advanced the streak and how much multiplied Yolk it contributed. Keep persistent streak state in a fixed badge and transient payout information to one callout, one calculation, and one resolved award. Avoid simultaneous dots, labels, and moving cards that restate the same amount. Watch for an authored route that becomes automatic or for base Yolk values that make every non-streak break irrelevant.
 
 ## Grandma owns Hunger
 
 Hunger is Grandma's changing condition, not an abstract score. Keep her portrait, bowl, current Hunger, next increase, and phase response together in one persistent sidebar. Keep Taps visually separate as the player's current opportunity.
 
-Yolk lowers Hunger; Grandma's response raises it. Let resolved Yolk collect above the table before moving as one readable payload to Grandma, so the player sees both the combo calculation and its recipient. Use that directional language consistently. Do not reintroduce Appetite, Satisfaction, Patience, or Belt Condition as aliases for the same current loop.
+Yolk lowers Hunger; Grandma's response raises it. Let resolved Yolk collect in one fixed bowl above the table, then move only a compact final parcel to Grandma. Show the subtraction in her sidebar before committing the new Hunger value, so the player sees both the combo calculation and its recipient without chasing a moving reading surface. Use that directional language consistently. Do not reintroduce Appetite, Satisfaction, Patience, or Belt Condition as aliases for the same current loop.
 
 ## Consequences stay legible
 

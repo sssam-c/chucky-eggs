@@ -21,7 +21,8 @@ Invest five tactile spoon taps across a table of interacting eggs. Prepare conse
 - Each cup has one directly clickable spoon. From left to right, their fixed colours are Red, Blue, Pink, Red, and Blue.
 - The interface always shows each egg's remaining toughness, Yolk value, applicable effect emblem, current position, available taps, Grandma's current Hunger, and her announced next Hunger increase.
 - Grandma, her waiting bowl, Hunger, next increase, and Hunger-phase feedback occupy one persistent right-hand sidebar.
-- Multiplied Yolk gathers temporarily above the eggs, then travels to Grandma before her Hunger display changes.
+- A persistent badge above the eggs shows the current break streak and the multiplier on the next break. Each hatch briefly shows one callout and one calculation, then adds its award to the fixed Yolk bowl beneath the badge.
+- After the tap's hatches finish, one compact parcel carries the bowl total to Grandma. Her sidebar shows the subtraction before the Hunger number changes.
 
 ## Eggs
 

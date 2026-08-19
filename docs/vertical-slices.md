@@ -30,7 +30,7 @@ Accepted as the authoritative game baseline on 2026-08-19. `res://src/ui/hopper_
 - Opened cups refill only after the cascade and receive hopper eggs in hatch order.
 - Five taps per phase, 10 starting Hunger, a first response of +1, and +1 growth after every response.
 - A phase-local break streak that increases per egg, multiplies that egg's Yolk, resets on a zero-break tap, and resets before Grandma's response.
-- Resolver-authored Yolk pools accumulate above the eggs and travel to Grandma before Hunger changes visibly.
+- A persistent centre-stage badge shows the current streak. Resolver-authored awards use one temporary callout and calculation, collect in a fixed bowl, then travel as one compact parcel before Grandma shows the subtraction and commits Hunger.
 - One request-to-resolver path and resolver-authored event order; presentation owns only playback and its cancellation barrier.
 
 ### Open hypotheses
@@ -59,8 +59,8 @@ Accepted as the authoritative game baseline on 2026-08-19. `res://src/ui/hopper_
 ### Exit evidence
 
 - Domain specs prove one-spoon targeting, fixed colours, direct and copied damage order, per-egg streak multiplication, zero-break and phase resets, pooled Yolk reducing Hunger, post-cascade refill, one paid tap per request, victory before Grandma's response, explicit fifth-tap phase order, escalating Hunger, tap refresh, exhaustion failure, and restart.
-- UI specs prove five spoon targets, large eggs in cups, exact visible facts, three previews, five tap indicators, centre-stage streak wording and Yolk pooling, delivery to Grandma-owned Hunger, input locking, ordered playback, exact hopper destinations, cancellation, and restart.
-- Muted running-game checks at 1280×720 and 1024×576 verify cup seating, spoon hit targets, hopper travel, Grandma's sidebar, Hunger-phase feedback, and readable composition.
+- UI specs prove five spoon targets, large eggs in cups, exact visible facts, three previews, five tap indicators, persistent streak state, one-calculation awards, a fixed Yolk bowl, explicit Grandma subtraction, input locking, ordered playback, exact hopper destinations, cancellation, and restart.
+- Muted running-game checks at 1280×720 and 1024×576 verify cup seating, spoon hit targets, hopper travel, the calculation-to-bowl-to-parcel sequence, Grandma's subtraction, Hunger-phase feedback, and readable composition.
 - Play the authored opening without explanation. Record whether the player finds at least two plausible moves on several taps, deliberately makes a setup tap, changes a decision because of the hopper preview, anticipates the fifth-tap response, and can explain a resulting cascade.
 
 ## Historical slices

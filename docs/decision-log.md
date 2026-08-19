@@ -754,6 +754,16 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D075's rule that each opened egg reduces Hunger only by its printed Yolk and its presentation of Yolk as an immediate per-egg Hunger change. D075's five paid taps, phase timing, complete-cascade ownership, current egg identities, exact visible information, Hunger objective, and all deferred progression remain accepted.
 
+## D077 — Separate persistent streak state from transient Yolk payout
+
+**Status:** accepted
+
+**Decision:** Keep the current break streak in a fixed centre-stage badge and place one fixed Yolk bowl beneath it. For each opening, show only the multiplier callout and one base-Yolk calculation, resolve that calculation to one `+Yolk` result, and add it to the bowl. After the tap's complete hatch sequence, hide the temporary award panel and move only one compact parcel containing the resolver-authored total to Grandma. Show `Hunger before − Yolk → Hunger after` in Grandma's sidebar before committing the visible Hunger number. Preserve readable holds in normal and reduced-motion playback, keep input locked through the complete presentation barrier, and clear every temporary token on restart or replacement. Remove countable Yolk dots, the redundant “Yolk Pool” label, and whole-card travel.
+
+**Reason:** The first celebratory streak pass felt good but its score advanced too quickly and was difficult to parse. Persistent state, per-egg arithmetic, pooled total, and delivery were represented simultaneously, then the main reading surface moved away. Giving each fact one stable place produces a causal sequence—streak, calculation, bowl, parcel, subtraction—while retaining the tactile jackpot sensation and Grandma as the visible recipient.
+
+**Supersedes:** D076 only where it describes the temporary centre-stage pool presentation. D076's break-streak rule, multiplication, hatch order, zero-break and phase resets, per-tap resolver-authored total, and delivery-before-Hunger ordering remain accepted.
+
 <!--
 Copy for the next entry:
 

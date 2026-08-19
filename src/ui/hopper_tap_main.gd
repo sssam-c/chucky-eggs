@@ -142,6 +142,7 @@ func _render() -> void:
 		HopperTapSession.STARTING_HUNGER
 	)
 	_tap_pips_label.text = _tap_pips(int(state.taps_remaining), int(state.taps_per_phase))
+	_yolk_streak_display.set_streak(int(state.break_streak))
 	_hopper_count_label.text = "%d WAITING" % int(state.hopper_egg_count)
 	for slot_index in range(_slots.size()):
 		var egg: Dictionary = state.slots[slot_index]

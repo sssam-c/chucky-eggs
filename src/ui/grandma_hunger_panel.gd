@@ -4,6 +4,7 @@ extends Control
 @onready var _portrait: Control = %GrandmaPortrait
 @onready var _hunger_card: Control = %HungerCard
 @onready var _hunger_value_label: Label = %HungerValue
+@onready var _hunger_change_label: Label = %HungerChange
 @onready var _next_increase_label: Label = %NextIncrease
 @onready var _phase_panel: Control = %PhasePanel
 @onready var _phase_label: Label = %PhaseLabel
@@ -55,6 +56,31 @@ func delivery_global_position() -> Vector2:
 	return _hunger_value_label.get_global_rect().get_center()
 
 
+func show_hunger_subtraction(hunger_before: int, amount: int, hunger_after: int) -> void:
+	_hunger_change_label.text = "%d − %d → %d" % [
+		maxi(0, hunger_before), maxi(0, amount), maxi(0, hunger_after),
+	]
+	_hunger_change_label.visible = true
+	_next_increase_label.visible = false
+
+
+func hide_hunger_subtraction() -> void:
+	_hunger_change_label.visible = false
+	_next_increase_label.visible = true
+
+
+func hunger_change_text() -> String:
+	return _hunger_change_label.text
+
+
+func is_hunger_change_visible() -> bool:
+	return _hunger_change_label.visible
+
+
+func hunger_change_control() -> Control:
+	return _hunger_change_label
+
+
 func phase_control() -> Control:
 	return _phase_panel
 
@@ -75,6 +101,7 @@ func is_phase_visible() -> bool:
 
 func reset_feedback() -> void:
 	_hunger_value_label.scale = Vector2.ONE
+	hide_hunger_subtraction()
 	hide_phase()
 
 

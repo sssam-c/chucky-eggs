@@ -137,3 +137,15 @@ The current Day 1 exact routes always retained at least two thwacks. At target 9
 The current 8-point opening is a forgiving tutorial and is consistent with the prior human observation that Day 1 feels easy. Raising every starting shell by one is likely the wrong response: it suppresses ordinary-policy success sharply and delays hatches, while the post-merge flock is already tight enough that one third of exact samples need all ten pulls. A 9-point target creates a stronger but still completely solvable puzzle with the existing hatch cadence. A 9-thwack opening is a gentler alternative that preserves both 8-point scoring routes, but giving the opening day less time than later days is harder to explain and causes successful tactical play to bypass recycling more often. These are balance and strategic-potential inferences; no automated policy establishes whether the choices feel fun or legible to a new player.
 
 **Proposed response:** Keep all levers active and do not increase starting or merged-egg toughness. Human-test the current 8-point opening against a 9-point opening under the same ten-thwack budget, watching whether the higher target improves tension without collapsing the perceived scoring routes into “hatch all three Chickens.” If an immediate numeric prototype is needed, target 9 has stronger support than tougher shells; retain the 8-point version as the control.
+
+## 2026-08-19 — Streak scoring readability
+
+**Question:** Does the centre-stage break-streak celebration make the multiplied Yolk payoff satisfying and understandable?
+
+**Context:** Informal playtest of the accepted five-cup Hunger game after adding consecutive-break multipliers, named “Double Yolker!” and higher callouts, a temporary Yolk pool, and delivery to Grandma.
+
+**Observed:** The scoring felt good, but it advanced too quickly and was difficult to parse.
+
+**Interpretation:** The mechanic's affective payoff is promising; the immediate problem is presentation bandwidth. Showing the streak, formula, countable pool, score, and delivery together makes several representations compete during a short cascade.
+
+**Proposed response:** Keep the streak rule unchanged. Test a fixed streak badge and bowl, one formula resolving to one award, a compact final parcel, and an explicit subtraction on Grandma before Hunger updates.
