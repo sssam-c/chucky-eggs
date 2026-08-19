@@ -744,6 +744,16 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D009's three paired spoon circuits as the current input grammar; D011, D013–D017, D030–D033, D038, D040–D044, and D050–D052's current flock, economy, multi-day, and progression loop; D039, D066, and D068's conveyor/bin circulation as current play; D059 and D067–D070's Patience, spoon wear, and Belt Condition pressure systems; and D071–D074's expanded Standard roster and movement-effect baseline as current scope. It replaces D053–D054's Appetite presentation with Hunger while preserving their accepted principle that Grandma is the visible recipient in a right-hand information rail. D005's adjacent Cuckoo identity, D010's Pink Spoonbill weakness, D012/D023's high-value left-moving Plover, deterministic resolver ownership, complete-cascade timing, success precedence, and the separation of rules from presentation remain accepted where applicable.
 
+## D076 — Make consecutive breaks the Yolk multiplier
+
+**Status:** accepted
+
+**Decision:** Begin every Tap phase with a break streak of zero. Whenever an egg opens, increase the streak by one and award that egg's printed Yolk multiplied by the new streak. Resolve several openings individually in left-to-right hatch order. Preserve the streak across paid taps only while every tap opens at least one egg; any paid zero-break tap resets it, as does the Hunger-phase boundary. Gather every multiplied award from one tap into a temporary centre-stage Yolk pool, announce the current multiplier as “Double Yolker!”, “Triple Yolker!”, and so on, then deliver the complete resolver-authored pool to Grandma before visibly updating Hunger. Keep five taps as five physical spoon strikes and add no movement cost or permanent score resource in this slice.
+
+**Reason:** A break streak creates the missing setup-and-payoff axis without making navigation consume the tactile actions. Exact toughness, spoon colour, adjacency, Plover movement, and hopper order can now support preparing several eggs and choosing the order in which their value explodes. Pooling the multiplied result above the eggs makes the arithmetic legible and gives the jackpot a shared visual destination before Grandma receives it. Resetting on a zero-break tap makes maintaining the run a player-authored risk rather than passive accumulation.
+
+**Supersedes:** D075's rule that each opened egg reduces Hunger only by its printed Yolk and its presentation of Yolk as an immediate per-egg Hunger change. D075's five paid taps, phase timing, complete-cascade ownership, current egg identities, exact visible information, Hunger objective, and all deferred progression remain accepted.
+
 <!--
 Copy for the next entry:
 

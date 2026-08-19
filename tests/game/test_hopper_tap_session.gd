@@ -35,23 +35,33 @@ func test_restart_restores_the_authored_combo_opening() -> void:
 	assert_eq(state.pipe[0].kind, "spoonbill")
 
 
-func test_authored_combo_route_survives_one_hunger_phase_and_satisfies_grandma() -> void:
+func test_authored_pink_route_builds_a_double_break_jackpot() -> void:
 	var session = HopperTapSession.new()
-	for tap_index in range(5):
-		session.submit_spoon(2)
-
-	var after_first_phase: Dictionary = session.state()
-	assert_eq(after_first_phase.hunger, 4)
-	assert_eq(after_first_phase.tap_phase, 2)
-	assert_eq(after_first_phase.taps_remaining, 5)
-
 	session.submit_spoon(2)
-	session.submit_spoon(0)
-	session.submit_spoon(0)
-	var winning_events: Array[Dictionary] = session.submit_spoon(0)
+	session.submit_spoon(2)
+	var setup_events: Array[Dictionary] = session.submit_spoon(2)
+	var winning_events: Array[Dictionary] = session.submit_spoon(2)
 	var final_state: Dictionary = session.state()
+	var setup_hatch: Dictionary = setup_events.filter(
+		func(event: Dictionary) -> bool: return String(event.type) == "egg_hatched"
+	)[0]
+	var winning_hatch: Dictionary = winning_events.filter(
+		func(event: Dictionary) -> bool: return String(event.type) == "egg_hatched"
+	)[0]
+	var delivery: Dictionary = winning_events.filter(
+		func(event: Dictionary) -> bool: return String(event.type) == "yolk_delivered"
+	)[0]
 
+	assert_eq(setup_hatch.kind, "cuckoo")
+	assert_eq(setup_hatch.break_streak, 1)
+	assert_eq(setup_hatch.yolk, 1)
+	assert_eq(winning_hatch.kind, "spoonbill")
+	assert_eq(winning_hatch.break_streak, 2)
+	assert_eq(winning_hatch.yolk, 8)
+	assert_eq(delivery.total_yolk, 8)
 	assert_eq(final_state.hunger, 0)
+	assert_eq(final_state.tap_phase, 1)
+	assert_eq(final_state.taps_remaining, 1)
 	assert_true(final_state.ended)
 	assert_true(final_state.succeeded)
 	assert_eq(winning_events[-1].type, "day_ended")

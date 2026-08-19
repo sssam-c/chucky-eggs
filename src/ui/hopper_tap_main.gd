@@ -22,6 +22,7 @@ const APPEARANCES := [
 @onready var _spoons: Array[Control] = [%Spoon1, %Spoon2, %Spoon3, %Spoon4, %Spoon5]
 @onready var _lane_labels: Array[Label] = [%Lane1, %Lane2, %Lane3, %Lane4, %Lane5]
 @onready var _hopper_drop_point: Control = %HopperDropPoint
+@onready var _yolk_streak_display: Control = %YolkStreakDisplay
 @onready var _grandma_hunger_panel: Control = %GrandmaSidebar
 @onready var _tap_pips_label: Label = %TapPips
 @onready var _hopper_count_label: Label = %HopperCount
@@ -70,6 +71,7 @@ func _ready() -> void:
 		_spoon_buttons,
 		_spoons,
 		_hopper_drop_point,
+		_yolk_streak_display,
 		_grandma_hunger_panel,
 		_tap_pips_label,
 	)

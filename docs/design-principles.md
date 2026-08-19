@@ -18,11 +18,17 @@ Treat five taps as renewable action economy, not a dwindling run-wide allowance.
 
 Grandma's announced increase is enemy intent. Her response should create a round boundary and pressure efficient combinations, not merely interrupt the tapping rhythm. If defensive eggs are explored later, they should contest the announced increase directly rather than introduce another global survival meter.
 
+## Break streaks turn setup into payoff
+
+Reward a route of prepared breaks instead of charging the player to move between spoons. Every paid input must remain one physical tap; spatial commitment comes from preserving the break streak, ordering valuable eggs late, and avoiding a zero-break tap.
+
+The streak multiplier is the round's explosive payoff. It may produce deliberately large jackpots, but it must remain possible to understand which egg advanced the streak and how much multiplied Yolk it contributed. Watch for an authored route that becomes automatic or for base Yolk values that make every non-streak break irrelevant.
+
 ## Grandma owns Hunger
 
 Hunger is Grandma's changing condition, not an abstract score. Keep her portrait, bowl, current Hunger, next increase, and phase response together in one persistent sidebar. Keep Taps visually separate as the player's current opportunity.
 
-Yolk lowers Hunger; Grandma's response raises it. Use that directional language consistently. Do not reintroduce Appetite, Satisfaction, Patience, or Belt Condition as aliases for the same current loop.
+Yolk lowers Hunger; Grandma's response raises it. Let resolved Yolk collect above the table before moving as one readable payload to Grandma, so the player sees both the combo calculation and its recipient. Use that directional language consistently. Do not reintroduce Appetite, Satisfaction, Patience, or Belt Condition as aliases for the same current loop.
 
 ## Consequences stay legible
 

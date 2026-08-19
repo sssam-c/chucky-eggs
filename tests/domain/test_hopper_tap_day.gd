@@ -28,6 +28,7 @@ func test_five_individual_spoons_expose_fixed_colours_and_hopper_preview() -> vo
 	assert_eq(state.taps_per_phase, 5)
 	assert_eq(state.tap_phase, 1)
 	assert_eq(state.next_hunger_increase, 1)
+	assert_eq(state.break_streak, 0)
 
 
 func test_one_spoon_damages_only_its_egg_without_moving_the_board() -> void:
@@ -79,7 +80,7 @@ func test_all_hatches_finish_before_hopper_refills_vacancies_in_hatch_order() ->
 
 	assert_eq(_event_types(events), [
 		"spoon_fired", "egg_damaged", "egg_damaged",
-		"egg_hatched", "egg_hatched",
+		"egg_hatched", "egg_hatched", "yolk_delivered",
 		"egg_entered", "egg_entered", "tap_spent",
 	])
 	var first_entry_index := _event_types(events).find("egg_entered")
@@ -101,11 +102,91 @@ func test_yolk_reduces_hunger_before_the_paid_tap_is_recorded() -> void:
 	var events: Array[Dictionary] = day.resolve_spoon(0)
 
 	assert_eq(_event_types(events), [
-		"spoon_fired", "egg_damaged", "egg_hatched", "egg_entered", "tap_spent",
+		"spoon_fired", "egg_damaged", "egg_hatched", "yolk_delivered",
+		"egg_entered", "tap_spent",
 	])
 	assert_eq(events[2].yolk, 1)
-	assert_eq(events[2].hunger, 9)
+	assert_eq(events[2].base_yolk, 1)
+	assert_eq(events[2].break_streak, 1)
+	assert_eq(events[2].streak_multiplier, 1)
+	assert_eq(events[3].total_yolk, 1)
+	assert_eq(events[3].hunger, 9)
 	assert_eq(day.snapshot().hunger, 9)
+	assert_eq(day.snapshot().break_streak, 1)
+
+
+func test_consecutive_breaks_multiply_each_eggs_yolk_by_the_current_streak() -> void:
+	var day = HopperTapDay.new([
+		"sparrow", "sparrow", "chicken", "chicken", "chicken",
+	], 20)
+
+	var first_events: Array[Dictionary] = day.resolve_spoon(0)
+	var second_events: Array[Dictionary] = day.resolve_spoon(1)
+	var first_hatch: Dictionary = _events_of_type(first_events, "egg_hatched")[0]
+	var second_hatch: Dictionary = _events_of_type(second_events, "egg_hatched")[0]
+
+	assert_eq(first_hatch.break_streak, 1)
+	assert_eq(first_hatch.yolk, 1)
+	assert_eq(second_hatch.break_streak, 2)
+	assert_eq(second_hatch.streak_multiplier, 2)
+	assert_eq(second_hatch.yolk, 2)
+	assert_eq(_events_of_type(second_events, "yolk_delivered")[0].total_yolk, 2)
+	assert_eq(day.snapshot().hunger, 17)
+	assert_eq(day.snapshot().break_streak, 2)
+
+
+func test_zero_break_tap_resets_the_streak_before_the_next_break() -> void:
+	var day = HopperTapDay.new([
+		"sparrow", "sparrow", "chicken", "chicken", "chicken",
+	], 20)
+	day.resolve_spoon(0)
+
+	var reset_events: Array[Dictionary] = day.resolve_spoon(2)
+	var next_break_events: Array[Dictionary] = day.resolve_spoon(1)
+	var next_hatch: Dictionary = _events_of_type(next_break_events, "egg_hatched")[0]
+
+	assert_eq(_events_of_type(reset_events, "break_streak_reset").size(), 1)
+	assert_eq(_events_of_type(reset_events, "break_streak_reset")[0].reason, "empty_tap")
+	assert_eq(next_hatch.break_streak, 1)
+	assert_eq(next_hatch.yolk, 1)
+	assert_eq(day.snapshot().break_streak, 1)
+
+
+func test_one_cascade_advances_the_streak_for_each_left_to_right_break() -> void:
+	var day = HopperTapDay.new([
+		"sparrow", "cuckoo", "chicken", "chicken", "chicken",
+	], 99)
+	day.resolve_spoon(1)
+	day.resolve_spoon(1)
+	day.resolve_spoon(1)
+
+	var events: Array[Dictionary] = day.resolve_spoon(0)
+	var hatches: Array[Dictionary] = _events_of_type(events, "egg_hatched")
+
+	assert_eq(hatches.map(func(event: Dictionary) -> int: return int(event.slot_index)), [0, 1])
+	assert_eq(hatches.map(func(event: Dictionary) -> int: return int(event.break_streak)), [1, 2])
+	assert_eq(hatches.map(func(event: Dictionary) -> int: return int(event.yolk)), [1, 2])
+	assert_eq(_events_of_type(events, "yolk_delivered")[0].total_yolk, 3)
+	assert_eq(day.snapshot().hunger, 96)
+
+
+func test_hunger_phase_resets_a_streak_extended_by_the_fifth_tap() -> void:
+	var day = HopperTapDay.new([
+		"chicken", "sparrow", "chicken", "chicken", "chicken",
+	], 20)
+	day.resolve_spoon(0)
+	day.resolve_spoon(2)
+	day.resolve_spoon(3)
+	day.resolve_spoon(4)
+
+	var events: Array[Dictionary] = day.resolve_spoon(1)
+	var reset: Dictionary = _events_of_type(events, "break_streak_reset")[0]
+
+	assert_eq(_events_of_type(events, "egg_hatched")[0].break_streak, 1)
+	assert_eq(reset.reason, "hunger_phase")
+	assert_lt(_event_types(events).find("tap_spent"), _event_types(events).find("break_streak_reset"))
+	assert_lt(_event_types(events).find("break_streak_reset"), _event_types(events).find("tap_phase_ended"))
+	assert_eq(day.snapshot().break_streak, 0)
 
 
 func test_fifth_tap_resolves_before_hunger_rises_and_the_next_phase_refreshes() -> void:
@@ -137,7 +218,7 @@ func test_fifth_tap_resolves_before_hunger_rises_and_the_next_phase_refreshes() 
 func test_victory_on_the_fifth_tap_skips_grandmas_hunger_phase() -> void:
 	var day = HopperTapDay.new([
 		"chicken", "plover", "plover", "plover", "plover", "sparrow", "sparrow",
-	], 5)
+	], 8)
 	for tap_index in range(4):
 		day.resolve_spoon(0)
 
@@ -145,7 +226,8 @@ func test_victory_on_the_fifth_tap_skips_grandmas_hunger_phase() -> void:
 	var state: Dictionary = day.snapshot()
 
 	assert_eq(_event_types(events), [
-		"spoon_fired", "egg_damaged", "egg_hatched", "tap_spent", "day_ended",
+		"spoon_fired", "egg_damaged", "egg_hatched", "yolk_delivered",
+		"tap_spent", "day_ended",
 	])
 	assert_eq(state.hunger, 0)
 	assert_true(state.ended)
@@ -160,7 +242,8 @@ func test_exhausting_every_egg_above_zero_hunger_fails_without_a_hunger_phase() 
 	var state: Dictionary = day.snapshot()
 
 	assert_eq(_event_types(events), [
-		"spoon_fired", "egg_damaged", "egg_hatched", "tap_spent", "day_ended",
+		"spoon_fired", "egg_damaged", "egg_hatched", "yolk_delivered",
+		"tap_spent", "day_ended",
 	])
 	assert_eq(state.hunger, 1)
 	assert_true(state.ended)
@@ -173,3 +256,11 @@ func _event_types(events: Array[Dictionary]) -> Array[String]:
 	for event: Dictionary in events:
 		types.append(String(event.type))
 	return types
+
+
+func _events_of_type(events: Array[Dictionary], event_type: String) -> Array[Dictionary]:
+	var matches: Array[Dictionary] = []
+	for event: Dictionary in events:
+		if String(event.type) == event_type:
+			matches.append(event)
+	return matches

@@ -20,6 +20,9 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 	for preview_number in range(1, 4):
 		assert_not_null(main.get_node_or_null("Hopper/Preview/Next%d" % preview_number))
 	assert_not_null(main.get_node_or_null("Stage/Table"))
+	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay"))
+	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay/StreakLabel"))
+	assert_not_null(main.get_node_or_null("Stage/YolkStreakDisplay/PoolLabel"))
 	assert_not_null(main.get_node_or_null("Hopper/HopperDropPoint"))
 	assert_null(main.get_node_or_null("Stage/Levers"))
 	assert_not_null(grandma)
@@ -54,10 +57,28 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 	main.set_reduced_motion(true)
 	assert_false(main.get_node("GrandmaSidebar").is_idle_motion_active())
 	var drops: Array[Dictionary] = []
+	var streaks: Array[Dictionary] = []
+	var deliveries: Array[Dictionary] = []
 	main.get_node("TapPresenter").egg_drop_started.connect(
 		func(slot_index: int, origin: Vector2, destination: Vector2) -> void:
 			drops.append({
 				"slot_index": slot_index,
+				"origin": origin,
+				"destination": destination,
+			})
+	)
+	main.get_node("TapPresenter").streak_announced.connect(
+		func(streak: int, callout: String, pooled_yolk: int) -> void:
+			streaks.append({
+				"streak": streak,
+				"callout": callout,
+				"pooled_yolk": pooled_yolk,
+			})
+	)
+	main.get_node("TapPresenter").yolk_delivery_started.connect(
+		func(total_yolk: int, origin: Vector2, destination: Vector2) -> void:
+			deliveries.append({
+				"total_yolk": total_yolk,
 				"origin": origin,
 				"destination": destination,
 			})
@@ -79,6 +100,15 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 	assert_eq(drops[0].slot_index, 2)
 	assert_eq(drops[0].origin, main.get_node("Hopper/HopperDropPoint").get_global_rect().get_center())
 	assert_lt(drops[0].origin.y, drops[0].destination.y)
+	assert_eq(streaks, [{"streak": 1, "callout": "YOLK!", "pooled_yolk": 1}])
+	assert_eq(deliveries.size(), 1)
+	assert_eq(deliveries[0].total_yolk, 1)
+	assert_eq(
+		deliveries[0].destination,
+		main.get_node("GrandmaSidebar").delivery_global_position()
+	)
+	assert_gt(deliveries[0].destination.x, deliveries[0].origin.x)
+	assert_false(main.get_node("Stage/YolkStreakDisplay").visible)
 
 
 func test_second_input_is_ignored_while_a_tap_cascade_is_playing() -> void:
@@ -93,6 +123,30 @@ func test_second_input_is_ignored_while_a_tap_cascade_is_playing() -> void:
 	assert_eq(main.game_state().taps_remaining, 4)
 
 
+func test_zero_break_tap_presents_and_completes_the_streak_reset() -> void:
+	var main := await _add_game()
+	main.set_reduced_motion(true)
+	var presented: Array[String] = []
+	main.presentation_event.connect(
+		func(event_type: String) -> void: presented.append(event_type)
+	)
+	var pink_spoon: Button = main.get_node("Stage/SpoonControls/SpoonButton3")
+	pink_spoon.pressed.emit()
+	await main.playback_completed
+	await get_tree().process_frame
+	presented.clear()
+
+	pink_spoon.pressed.emit()
+	await main.playback_completed
+	await get_tree().process_frame
+
+	assert_true(presented.has("break_streak_reset"))
+	assert_eq(main.game_state().break_streak, 0)
+	assert_eq(main.game_state().hunger, 9)
+	assert_false(main.get_node("Stage/YolkStreakDisplay").visible)
+	assert_false(main.is_input_locked())
+
+
 func test_fifth_tap_presents_grandmas_response_before_refreshing_taps() -> void:
 	var main := await _add_game()
 	main.set_reduced_motion(true)
@@ -104,22 +158,28 @@ func test_fifth_tap_presents_grandmas_response_before_refreshing_taps() -> void:
 			if event_type == "tap_phase_ended":
 				phase_was_owned_by_grandma[0] = main.get_node("GrandmaSidebar").is_phase_visible()
 	)
-	var spoon_button: Button = main.get_node("Stage/SpoonControls/SpoonButton3")
+	var plover_route: Array[Button] = [
+		main.get_node("Stage/SpoonControls/SpoonButton4"),
+		main.get_node("Stage/SpoonControls/SpoonButton3"),
+		main.get_node("Stage/SpoonControls/SpoonButton2"),
+		main.get_node("Stage/SpoonControls/SpoonButton1"),
+		main.get_node("Stage/SpoonControls/SpoonButton1"),
+	]
 
-	for tap_index in range(5):
+	for spoon_button: Button in plover_route:
 		spoon_button.pressed.emit()
 		await main.playback_completed
 		await get_tree().process_frame
 
 	var state: Dictionary = main.game_state()
 	assert_eq(state.tap_phase, 2)
-	assert_eq(state.hunger, 4)
+	assert_eq(state.hunger, 11)
 	assert_eq(state.taps_remaining, 5)
 	assert_eq(state.next_hunger_increase, 2)
 	assert_eq(presented.slice(presented.size() - 3), [
 		"tap_phase_ended", "hunger_increased", "tap_phase_started",
 	])
-	assert_eq(main.get_node("GrandmaSidebar").hunger_value(), 4)
+	assert_eq(main.get_node("GrandmaSidebar").hunger_value(), 11)
 	assert_eq(main.get_node("GrandmaSidebar").next_increase(), 2)
 	assert_string_contains(main.get_node("TapPips").text, "● ● ● ● ●")
 	assert_true(phase_was_owned_by_grandma[0])

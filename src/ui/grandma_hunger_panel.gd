@@ -51,6 +51,10 @@ func feedback_control() -> Control:
 	return _hunger_value_label
 
 
+func delivery_global_position() -> Vector2:
+	return _hunger_value_label.get_global_rect().get_center()
+
+
 func phase_control() -> Control:
 	return _phase_panel
 

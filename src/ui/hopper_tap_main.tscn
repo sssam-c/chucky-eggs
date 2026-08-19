@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://src/ui/hopper_tap_main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://src/presentation/hopper_tap_presenter.gd" id="5_presenter"]
 [ext_resource type="Theme" path="res://src/ui/workshop_theme.tres" id="6_theme"]
 [ext_resource type="PackedScene" path="res://src/ui/grandma_hunger_panel.tscn" id="7_grandma"]
+[ext_resource type="PackedScene" path="res://src/ui/yolk_streak_display.tscn" id="8_yolk_streak"]
 
 [node name="HopperTapGame" type="Control"]
 layout_mode = 3
@@ -46,7 +47,7 @@ offset_right = 730.0
 offset_bottom = 88.0
 theme_override_colors/font_color = Color(0.82, 0.79, 0.7, 1)
 theme_override_font_sizes/font_size = 16
-text = "Click a spoon to tap its egg. Five taps before Grandma responds."
+text = "Break an egg every tap to grow the Yolk multiplier. Five taps before Grandma responds."
 
 [node name="TapPips" type="Label" parent="."]
 unique_name_in_owner = true
@@ -183,6 +184,15 @@ offset_left = 210.0
 offset_top = 104.0
 offset_right = 1010.0
 offset_bottom = 704.0
+
+[node name="YolkStreakDisplay" parent="Stage" instance=ExtResource("8_yolk_streak")]
+unique_name_in_owner = true
+z_index = 18
+layout_mode = 0
+offset_left = 205.0
+offset_top = 4.0
+offset_right = 595.0
+offset_bottom = 172.0
 
 [node name="Table" type="Control" parent="Stage"]
 layout_mode = 1
