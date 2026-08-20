@@ -86,7 +86,7 @@ func _draw() -> void:
 		])
 
 	# Keep decision-critical marks above shell decoration and accumulated cracks.
-	_draw_information_marks(center, radius_y)
+	_draw_information_marks()
 
 
 func _sync_hover_card() -> void:
@@ -139,11 +139,44 @@ func _exit_tree() -> void:
 
 
 func score_icon_local_position() -> Vector2:
-	return _shell_center() + Vector2(0.0, -_shell_radii().y * 0.61)
+	var horizontal_offset := 0.0
+	if effect_layout_region() == "crack":
+		horizontal_offset = -17.0 * _mark_scale()
+	return _shell_center() + Vector2(
+		horizontal_offset, _shell_radii().y * 0.61
+	)
 
 
 func effect_icon_local_position() -> Vector2:
-	return _shell_center() + Vector2(0.0, _shell_radii().y * 0.48)
+	match effect_layout_region():
+		"tap":
+			return tap_effect_icon_local_position()
+		"crack":
+			return crack_effect_icon_local_position()
+	return toughness_local_position()
+
+
+func toughness_local_position() -> Vector2:
+	return _shell_center()
+
+
+func tap_effect_icon_local_position() -> Vector2:
+	return _shell_center() - Vector2(0.0, _shell_radii().y * 0.58)
+
+
+func crack_effect_icon_local_position() -> Vector2:
+	return _shell_center() + Vector2(
+		18.0 * _mark_scale(), _shell_radii().y * 0.61
+	)
+
+
+func echo_wave_local_centers() -> Array[Vector2]:
+	var center := toughness_local_position()
+	var horizontal_offset := _shell_radii().x * 0.57
+	return [
+		center - Vector2(horizontal_offset, 0.0),
+		center + Vector2(horizontal_offset, 0.0),
+	]
 
 
 func _shell_center() -> Vector2:
@@ -228,66 +261,88 @@ func effect_emblem() -> String:
 	return ""
 
 
+func effect_layout_region() -> String:
+	match effect_emblem():
+		"echo":
+			return "adjacency"
+		"screen_left", "spark", "oily", "nostalgic", "gloopy":
+			return "tap"
+		"appetiser", "sulphurous", "shockwave":
+			return "crack"
+	return ""
+
+
 func egg_kind() -> String:
 	return String(_egg.get("kind", ""))
 
 
-func _draw_information_marks(center: Vector2, radius_y: float) -> void:
+func _draw_information_marks() -> void:
 	var mark_scale := _mark_scale()
 	_draw_score_seal(score_icon_local_position(), mark_scale)
-	var emblem_center := effect_icon_local_position()
-	match effect_emblem():
-		"echo":
-			_draw_echo_emblem(emblem_center, mark_scale)
+	var emblem := effect_emblem()
+	if emblem == "echo":
+		_draw_echo_adjacency_marks(echo_wave_local_centers(), mark_scale)
+		return
+	_draw_effect_emblem(emblem, effect_icon_local_position(), mark_scale)
+
+
+func _draw_effect_emblem(emblem: String, center: Vector2, mark_scale: float) -> void:
+	match emblem:
 		"screen_left":
-			_draw_left_emblem(emblem_center, mark_scale)
+			_draw_left_emblem(center, mark_scale)
 		"spark":
-			_draw_spark_emblem(emblem_center, mark_scale)
+			_draw_spark_emblem(center, mark_scale)
 		"appetiser":
-			_draw_appetiser_emblem(emblem_center, mark_scale)
+			_draw_appetiser_emblem(center, mark_scale * 0.84)
 		"sulphurous":
-			_draw_sulphurous_emblem(emblem_center, mark_scale)
+			_draw_sulphurous_emblem(center, mark_scale * 0.84)
 		"shockwave":
-			_draw_shockwave_emblem(emblem_center, mark_scale)
+			_draw_shockwave_emblem(center, mark_scale * 0.84)
 		"oily":
-			_draw_play_emblem(emblem_center, mark_scale, false)
+			_draw_play_emblem(center, mark_scale, false)
 		"nostalgic":
-			_draw_play_emblem(emblem_center, mark_scale, true)
+			_draw_play_emblem(center, mark_scale, true)
 		"gloopy":
-			_draw_jammed_cog_emblem(emblem_center, mark_scale)
+			_draw_jammed_cog_emblem(center, mark_scale)
 
 
 func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
-	var outer_radius := 15.0 * mark_scale
 	var is_foul := score_seal_value() < 0
-	var seal_points := PackedVector2Array()
-	for point_index in range(20):
-		var angle := TAU * float(point_index) / 20.0 - PI * 0.5
-		var radius := outer_radius if point_index % 2 == 0 else outer_radius * 0.82
-		seal_points.append(center + Vector2(cos(angle), sin(angle)) * radius)
+	var drop_center := center - Vector2(8.0, 0.0) * mark_scale
+	var drop_points := PackedVector2Array([
+		drop_center + Vector2(0.0, -12.0) * mark_scale,
+		drop_center + Vector2(6.5, -3.5) * mark_scale,
+		drop_center + Vector2(8.0, 3.0) * mark_scale,
+		drop_center + Vector2(5.0, 9.0) * mark_scale,
+		drop_center + Vector2(0.0, 11.0) * mark_scale,
+		drop_center + Vector2(-5.0, 9.0) * mark_scale,
+		drop_center + Vector2(-8.0, 3.0) * mark_scale,
+		drop_center + Vector2(-6.5, -3.5) * mark_scale,
+	])
 	draw_colored_polygon(
-		seal_points, Color("436b3d") if is_foul else Color("b66a2b")
+		drop_points, Color("a7d66d") if is_foul else Color("f1bd55")
 	)
-	var outline := seal_points.duplicate()
-	outline.append(seal_points[0])
+	var outline := drop_points.duplicate()
+	outline.append(drop_points[0])
 	draw_polyline(
-		outline, Color("1d321b") if is_foul else Color("4b2415"),
-		2.2 * mark_scale, true
-	)
-	draw_circle(
-		center, 10.5 * mark_scale,
-		Color("a7d66d") if is_foul else Color("f1bd55")
+		outline, Color("304e2a") if is_foul else Color("70401e"),
+		1.8 * mark_scale, true
 	)
 	draw_arc(
-		center, 10.5 * mark_scale, 0.0, TAU, 20,
-		Color("304e2a") if is_foul else Color("70401e"),
-		1.7 * mark_scale, true
+		drop_center - Vector2(1.5, 0.5) * mark_scale,
+		4.2 * mark_scale,
+		-2.75,
+		-1.25,
+		8,
+		Color(1.0, 0.93, 0.64, 0.72),
+		1.2 * mark_scale,
+		true
 	)
 	var font_size := 16 if not _preview else 11
-	var text_width := 24.0 * mark_scale
+	var text_width := 25.0 * mark_scale
 	draw_string(
 		ThemeDB.fallback_font,
-		center + Vector2(-text_width * 0.5, 5.5 * mark_scale),
+		center + Vector2(1.0, 5.5 * mark_scale),
 		str(score_seal_value()),
 		HORIZONTAL_ALIGNMENT_CENTER,
 		text_width,
@@ -296,14 +351,36 @@ func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 	)
 
 
-func _draw_echo_emblem(center: Vector2, mark_scale: float) -> void:
+func _draw_echo_adjacency_marks(centers: Array[Vector2], mark_scale: float) -> void:
 	var ink := Color("143a3e")
 	var shine := Color(0.71, 0.96, 0.92, 0.72)
-	draw_circle(center, 2.8 * mark_scale, ink)
-	for radius in [7.0, 12.0]:
-		draw_arc(center, radius * mark_scale, -0.72, 0.72, 10, ink, 2.7 * mark_scale, true)
-		draw_arc(center, radius * mark_scale, PI - 0.72, PI + 0.72, 10, ink, 2.7 * mark_scale, true)
-	draw_arc(center, 7.0 * mark_scale, -0.58, 0.58, 8, shine, 1.0 * mark_scale, true)
+	if centers.size() != 2:
+		return
+	for center_index in range(centers.size()):
+		var center := centers[center_index]
+		var facing_angle := PI if center_index == 0 else 0.0
+		draw_circle(center, 2.2 * mark_scale, ink)
+		for radius in [5.5, 9.5]:
+			draw_arc(
+				center,
+				radius * mark_scale,
+				facing_angle - 0.72,
+				facing_angle + 0.72,
+				10,
+				ink,
+				2.3 * mark_scale,
+				true
+			)
+		draw_arc(
+			center,
+			5.5 * mark_scale,
+			facing_angle - 0.56,
+			facing_angle + 0.56,
+			8,
+			shine,
+			0.9 * mark_scale,
+			true
+		)
 
 
 func _draw_left_emblem(center: Vector2, mark_scale: float) -> void:

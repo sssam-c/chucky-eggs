@@ -77,6 +77,60 @@ func test_each_species_uses_matching_placeholder_colour_and_distinct_bird_shape(
 	assert_false(egg_visual.has_method("placeholder_mark"))
 
 
+func test_egg_face_uses_toughness_as_the_temporal_information_divider() -> void:
+	var egg_visual := EggVisual.new()
+	egg_visual.size = Vector2(132.0, 148.0)
+	add_child_autofree(egg_visual)
+	egg_visual.set_egg({
+		"kind": "plover", "toughness": 6, "max_toughness": 6, "points": 4,
+	})
+
+	assert_eq(egg_visual.effect_layout_region(), "tap")
+	assert_lt(
+		egg_visual.tap_effect_icon_local_position().y,
+		egg_visual.toughness_local_position().y
+	)
+	assert_gt(
+		egg_visual.score_icon_local_position().y,
+		egg_visual.toughness_local_position().y
+	)
+
+	egg_visual.set_egg({
+		"kind": "quail", "toughness": 2, "max_toughness": 2, "points": 1,
+	})
+	assert_eq(egg_visual.effect_layout_region(), "crack")
+	assert_gt(
+		egg_visual.crack_effect_icon_local_position().y,
+		egg_visual.toughness_local_position().y
+	)
+	assert_almost_eq(
+		egg_visual.crack_effect_icon_local_position().y,
+		egg_visual.score_icon_local_position().y,
+		0.01
+	)
+
+
+func test_cuckoo_echo_uses_lateral_marks_outside_both_temporal_lanes() -> void:
+	var egg_visual := EggVisual.new()
+	egg_visual.size = Vector2(132.0, 148.0)
+	add_child_autofree(egg_visual)
+	egg_visual.set_egg({
+		"kind": "cuckoo", "toughness": 4, "max_toughness": 4, "points": 1,
+	})
+
+	assert_eq(egg_visual.effect_layout_region(), "adjacency")
+	var echo_centers: Array[Vector2] = egg_visual.echo_wave_local_centers()
+	assert_eq(echo_centers.size(), 2)
+	assert_lt(echo_centers[0].x, egg_visual.toughness_local_position().x)
+	assert_gt(echo_centers[1].x, egg_visual.toughness_local_position().x)
+	assert_almost_eq(
+		echo_centers[0].y, egg_visual.toughness_local_position().y, 0.01
+	)
+	assert_almost_eq(
+		echo_centers[1].y, egg_visual.toughness_local_position().y, 0.01
+	)
+
+
 func test_movement_eggs_show_their_instruction_emblems() -> void:
 	var egg_visual := EggVisual.new()
 	add_child_autofree(egg_visual)

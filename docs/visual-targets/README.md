@@ -10,6 +10,12 @@ The current build intentionally does not use these mockups or any generated rast
 
 - `day-1-gameplay-ui.png`: the five-bay Day 1 machine, redesigned as one integrated brass, enamel, cast-iron, and dark-timber cabinet.
 - `general-store-ui.png`: a superseded multi-action shop composition retained only as visual-history reference. Its recruitment, pairing, and factory controls no longer describe the current rules; only its workshop material language remains relevant to the separate bird-reward and flock-overview screens.
+- `effect-trigger-syntax-storyboard-v1.png`: a superseded trigger-equation exploration retained as visual history. Its timing comparison remains useful, but its large composed badges do not represent the preferred clean egg-face syntax.
+- `effect-trigger-syntax-icon-board-v1.png`: a superseded trigger-equation exploration retained as visual history. Its trigger silhouettes remain useful, but its separate trigger and instruction plaques are too large and its broken main On Hatch egg must not be read as the intended resting state.
+- `egg-symbology-roster-concept-v1.png`: a superseded fixed-zone exploration retained as visual history. It correctly grounds the symbols in the current roster, but separates Yolk payout from other effects that resolve at the same crack moment and leaves little room for effects to develop.
+- `egg-symbology-roster-concept-v2.png`: a superseded two-lane exploration retained as visual history. It establishes the shared crack payload successfully, but places Tap sigils below toughness and leaves an unnecessary Tap-lane mark on plain eggs.
+- `egg-symbology-roster-concept-v3.png`: a superseded temporal-hierarchy exploration retained as visual history. Its top/middle/base ordering is sound, but the spoon-notch and cracked-shell category marks repeat information already communicated by position.
+- `egg-symbology-roster-concept-v4.png`: the current design-hypothesis direction for egg-face syntax. The large central toughness number is the sole divider: optional Tap effects appear directly above it, while Yolk and any additional On Crack instructions form a frameless payload row below it. Timing is communicated by position alone.
 
 ## Direction being tested
 
