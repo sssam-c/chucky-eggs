@@ -1,9 +1,13 @@
 extends Control
 
 const PlaceholderStyle = preload("res://src/ui/species_placeholder_style.gd")
+const SpeciesIconRenderer = preload("res://src/ui/species_icon_renderer.gd")
 const TOOLTIP_CARD_SCENE = preload("res://src/ui/egg_tooltip_card.tscn")
 const HOVER_POPOVER_SCENE = preload("res://src/ui/egg_hover_popover.tscn")
 const MAGNIFIER_CURSOR = preload("res://assets/ui/cursors/egg_inspect.svg")
+const SHELL_COLOR := Color("f3efe5")
+const NEUTRAL_ICON_COLOR := Color("3b3028")
+const PINK_CIRCUIT_COLOR := Color("cf4f8b")
 
 static var _magnifier_cursor_registered := false
 
@@ -44,7 +48,11 @@ func clear_egg() -> void:
 
 
 func placeholder_color() -> Color:
-	return PlaceholderStyle.colour(egg_kind())
+	return shell_color()
+
+
+func shell_color() -> Color:
+	return SHELL_COLOR
 
 
 func _draw() -> void:
@@ -158,6 +166,14 @@ func effect_icon_local_position() -> Vector2:
 
 func toughness_local_position() -> Vector2:
 	return _shell_center()
+
+
+func species_icon_local_position() -> Vector2:
+	return toughness_local_position()
+
+
+func species_icon_scale() -> float:
+	return minf(35.0 * _mark_scale(), _shell_radii().x * 0.72)
 
 
 func tap_effect_icon_local_position() -> Vector2:
@@ -276,8 +292,49 @@ func egg_kind() -> String:
 	return String(_egg.get("kind", ""))
 
 
+func species_icon_shape() -> String:
+	return PlaceholderStyle.shape(egg_kind())
+
+
+func affected_circuit_id() -> String:
+	return "pink" if egg_kind() == "spoonbill" else ""
+
+
+func species_icon_color() -> Color:
+	return PINK_CIRCUIT_COLOR if affected_circuit_id() == "pink" else NEUTRAL_ICON_COLOR
+
+
+func species_watermark_color() -> Color:
+	var color := species_icon_color()
+	color.a = 0.34 if affected_circuit_id() == "pink" else 0.28
+	return color
+
+
+func effect_icon_color() -> Color:
+	return PINK_CIRCUIT_COLOR if affected_circuit_id() == "pink" else NEUTRAL_ICON_COLOR
+
+
+func yolk_drop_local_rect() -> Rect2:
+	var half_size := Vector2(12.0, 15.0) * _mark_scale()
+	return Rect2(score_icon_local_position() - half_size, half_size * 2.0)
+
+
+func yolk_value_local_rect() -> Rect2:
+	var half_size := Vector2(9.0, 8.0) * _mark_scale()
+	return Rect2(score_icon_local_position() - half_size, half_size * 2.0)
+
+
 func _draw_information_marks() -> void:
 	var mark_scale := _mark_scale()
+	SpeciesIconRenderer.draw(
+		self,
+		egg_kind(),
+		species_icon_local_position(),
+		species_icon_scale(),
+		species_watermark_color(),
+		Color.TRANSPARENT,
+		0.0
+	)
 	_draw_score_seal(score_icon_local_position(), mark_scale)
 	var emblem := effect_emblem()
 	if emblem == "echo":
@@ -308,16 +365,22 @@ func _draw_effect_emblem(emblem: String, center: Vector2, mark_scale: float) -> 
 
 func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 	var is_foul := score_seal_value() < 0
-	var drop_center := center - Vector2(8.0, 0.0) * mark_scale
+	var drop_center := center
 	var drop_points := PackedVector2Array([
-		drop_center + Vector2(0.0, -12.0) * mark_scale,
-		drop_center + Vector2(6.5, -3.5) * mark_scale,
-		drop_center + Vector2(8.0, 3.0) * mark_scale,
-		drop_center + Vector2(5.0, 9.0) * mark_scale,
-		drop_center + Vector2(0.0, 11.0) * mark_scale,
-		drop_center + Vector2(-5.0, 9.0) * mark_scale,
-		drop_center + Vector2(-8.0, 3.0) * mark_scale,
-		drop_center + Vector2(-6.5, -3.5) * mark_scale,
+		drop_center + Vector2(0.0, -15.0) * mark_scale,
+		drop_center + Vector2(4.0, -10.0) * mark_scale,
+		drop_center + Vector2(8.0, -4.0) * mark_scale,
+		drop_center + Vector2(11.0, 2.0) * mark_scale,
+		drop_center + Vector2(11.0, 7.0) * mark_scale,
+		drop_center + Vector2(8.0, 12.0) * mark_scale,
+		drop_center + Vector2(4.0, 14.0) * mark_scale,
+		drop_center + Vector2(0.0, 15.0) * mark_scale,
+		drop_center + Vector2(-4.0, 14.0) * mark_scale,
+		drop_center + Vector2(-8.0, 12.0) * mark_scale,
+		drop_center + Vector2(-11.0, 7.0) * mark_scale,
+		drop_center + Vector2(-11.0, 2.0) * mark_scale,
+		drop_center + Vector2(-8.0, -4.0) * mark_scale,
+		drop_center + Vector2(-4.0, -10.0) * mark_scale,
 	])
 	draw_colored_polygon(
 		drop_points, Color("a7d66d") if is_foul else Color("f1bd55")
@@ -339,21 +402,22 @@ func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 		true
 	)
 	var font_size := 16 if not _preview else 11
-	var text_width := 25.0 * mark_scale
+	var value_rect := yolk_value_local_rect()
 	draw_string(
 		ThemeDB.fallback_font,
-		center + Vector2(1.0, 5.5 * mark_scale),
+		Vector2(value_rect.position.x, center.y + 5.5 * mark_scale),
 		str(score_seal_value()),
 		HORIZONTAL_ALIGNMENT_CENTER,
-		text_width,
+		value_rect.size.x,
 		font_size,
 		Color("142314") if is_foul else Color("3a1b12")
 	)
 
 
 func _draw_echo_adjacency_marks(centers: Array[Vector2], mark_scale: float) -> void:
-	var ink := Color("143a3e")
-	var shine := Color(0.71, 0.96, 0.92, 0.72)
+	var ink := effect_icon_color()
+	var shine := ink.lightened(0.48)
+	shine.a = 0.72
 	if centers.size() != 2:
 		return
 	for center_index in range(centers.size()):
@@ -384,7 +448,7 @@ func _draw_echo_adjacency_marks(centers: Array[Vector2], mark_scale: float) -> v
 
 
 func _draw_left_emblem(center: Vector2, mark_scale: float) -> void:
-	var ink := Color("293714")
+	var ink := effect_icon_color()
 	var line_width := 3.2 * mark_scale
 	draw_line(
 		center + Vector2(8.0, 0.0) * mark_scale,
@@ -404,15 +468,15 @@ func _draw_left_emblem(center: Vector2, mark_scale: float) -> void:
 		-PI + 0.05,
 		-PI + 1.55,
 		8,
-		Color(0.83, 0.95, 0.48, 0.72),
+		Color(ink, 0.38),
 		1.4 * mark_scale,
 		true
 	)
 
 
 func _draw_spark_emblem(center: Vector2, mark_scale: float) -> void:
-	var ink := Color("5a2053")
-	var glow := Color(1.0, 0.66, 0.91, 0.78)
+	var glow := effect_icon_color()
+	var ink := glow.darkened(0.48)
 	var points := PackedVector2Array([
 		center + Vector2(0, -13) * mark_scale,
 		center + Vector2(3, -3) * mark_scale,
@@ -430,9 +494,9 @@ func _draw_spark_emblem(center: Vector2, mark_scale: float) -> void:
 
 
 func _draw_appetiser_emblem(center: Vector2, mark_scale: float) -> void:
-	var ink := Color("402451")
+	var ink := effect_icon_color()
 	var width := 3.0 * mark_scale
-	draw_circle(center, 11.0 * mark_scale, Color(0.83, 0.68, 0.91, 0.72))
+	draw_circle(center, 11.0 * mark_scale, Color(ink, 0.18))
 	draw_line(
 		center + Vector2(-6, 0) * mark_scale,
 		center + Vector2(6, 0) * mark_scale,
@@ -446,7 +510,7 @@ func _draw_appetiser_emblem(center: Vector2, mark_scale: float) -> void:
 
 
 func _draw_sulphurous_emblem(center: Vector2, mark_scale: float) -> void:
-	var ink := Color("58251b")
+	var ink := effect_icon_color()
 	for offset_x in [-7.0, 0.0, 7.0]:
 		draw_arc(
 			center + Vector2(offset_x, 2) * mark_scale,
@@ -461,7 +525,7 @@ func _draw_sulphurous_emblem(center: Vector2, mark_scale: float) -> void:
 
 
 func _draw_shockwave_emblem(center: Vector2, mark_scale: float) -> void:
-	var ink := Color("4b3a18")
+	var ink := effect_icon_color()
 	draw_circle(center, 3.0 * mark_scale, ink)
 	for radius in [7.0, 12.0]:
 		draw_arc(
@@ -472,20 +536,20 @@ func _draw_shockwave_emblem(center: Vector2, mark_scale: float) -> void:
 
 func _draw_play_emblem(center: Vector2, mark_scale: float, reversed: bool) -> void:
 	var direction := -1.0 if reversed else 1.0
-	var ink := Color("172b35") if not reversed else Color("4c2d18")
+	var ink := effect_icon_color()
 	var points := PackedVector2Array([
 		center + Vector2(-7.0 * direction, -10.0) * mark_scale,
 		center + Vector2(10.0 * direction, 0.0) * mark_scale,
 		center + Vector2(-7.0 * direction, 10.0) * mark_scale,
 	])
-	draw_colored_polygon(points, Color(0.88, 0.95, 0.90, 0.78))
+	draw_colored_polygon(points, Color(ink, 0.16))
 	var outline := points.duplicate()
 	outline.append(points[0])
 	draw_polyline(outline, ink, 2.4 * mark_scale, true)
 
 
 func _draw_jammed_cog_emblem(center: Vector2, mark_scale: float) -> void:
-	var ink := Color("243a27")
+	var ink := effect_icon_color()
 	for tooth_index in range(8):
 		var angle := TAU * float(tooth_index) / 8.0
 		draw_line(
@@ -493,12 +557,12 @@ func _draw_jammed_cog_emblem(center: Vector2, mark_scale: float) -> void:
 			center + Vector2.from_angle(angle) * 13.0 * mark_scale,
 			ink, 3.0 * mark_scale, true
 		)
-	draw_circle(center, 9.0 * mark_scale, Color(0.77, 0.91, 0.66, 0.82))
+	draw_circle(center, 9.0 * mark_scale, Color(ink, 0.16))
 	draw_arc(center, 9.0 * mark_scale, 0.0, TAU, 20, ink, 2.2 * mark_scale, true)
 	draw_line(
 		center + Vector2(-9.0, 9.0) * mark_scale,
 		center + Vector2(9.0, -9.0) * mark_scale,
-		Color("6b241f"), 3.0 * mark_scale, true
+		ink, 3.0 * mark_scale, true
 	)
 
 

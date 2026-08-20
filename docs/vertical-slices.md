@@ -33,6 +33,7 @@ Accepted for prototype implementation on 2026-08-20 after informal play establis
 ### Open hypotheses
 
 - Seeded orders will create replay variety without producing obviously trivial, automatic, or hostile openings.
+- Shared white shells, species silhouettes layered behind toughness, contained Yolk values, and circuit colour reserved for colour-gated marks will make eggs quicker to parse without implying nonexistent colour rules.
 - Players will adapt their early taps to the visible board and hopper rather than treating each seed as cosmetic.
 - Reward choices will be situational rather than collapsing into one universally preferred species.
 - The chosen thirteenth egg will visibly change at least one Round 2 plan.
@@ -42,6 +43,7 @@ Accepted for prototype implementation on 2026-08-20 after informal play establis
 ### Implementation conveniences, not permanent design commitments
 
 - The initial prototype can advance to a new deterministic seed rather than requiring a typed seed browser or platform randomness.
+- White placeholder shells and code-native bird silhouettes establish the current information syntax; they are not final egg or character art.
 - Reward offers may use all five current identities with uniform frequency while their strategic value is observed.
 - The +2 Round 2 Hunger increase is a first tuning probe, not a general difficulty formula.
 - Generated orders may initially be drawn from a validated seed set if unrestricted shuffles produce poor openings.

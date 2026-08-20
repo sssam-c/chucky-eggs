@@ -51,14 +51,15 @@ class EffectInjectingShuffler:
 		return eggs
 
 
-func test_each_species_uses_matching_placeholder_colour_and_distinct_bird_shape() -> void:
+func test_each_species_uses_a_white_shell_and_centred_bird_watermark() -> void:
 	var portrait := BirdPortrait.new()
 	var egg_visual := EggVisual.new()
+	egg_visual.size = Vector2(132.0, 148.0)
 	add_child_autofree(portrait)
 	add_child_autofree(egg_visual)
 
-	if not portrait.has_method("placeholder_color") or not egg_visual.has_method("placeholder_color"):
-		fail_test("Species placeholders must expose their shared colour.")
+	if not portrait.has_method("placeholder_shape") or not egg_visual.has_method("shell_color"):
+		fail_test("Eggs must expose their shell and species-icon presentation.")
 		return
 
 	var species_colours: Array[Color] = []
@@ -66,7 +67,15 @@ func test_each_species_uses_matching_placeholder_colour_and_distinct_bird_shape(
 	for kind in ProducerFlock.PRODUCER_KINDS:
 		portrait.set_bird_kind(kind)
 		egg_visual.set_egg({"kind": kind, "toughness": 3, "max_toughness": 3, "points": 1})
-		assert_eq(portrait.placeholder_color(), egg_visual.placeholder_color())
+		assert_eq(egg_visual.shell_color(), Color("f3efe5"))
+		assert_eq(egg_visual.placeholder_color(), egg_visual.shell_color())
+		assert_eq(egg_visual.species_icon_shape(), portrait.placeholder_shape())
+		assert_almost_eq(
+			egg_visual.species_icon_local_position().y,
+			egg_visual.toughness_local_position().y,
+			0.01
+		)
+		assert_gt(egg_visual.species_icon_scale(), 30.0)
 		assert_false(species_colours.has(portrait.placeholder_color()))
 		assert_false(bird_shapes.has(portrait.placeholder_shape()))
 		species_colours.append(portrait.placeholder_color())
@@ -75,6 +84,43 @@ func test_each_species_uses_matching_placeholder_colour_and_distinct_bird_shape(
 	assert_false(portrait.has_method("artwork_texture"))
 	assert_false(egg_visual.has_method("artwork_texture"))
 	assert_false(egg_visual.has_method("placeholder_mark"))
+
+
+func test_only_colour_gated_egg_icons_use_their_circuit_colour() -> void:
+	var egg_visual := EggVisual.new()
+	add_child_autofree(egg_visual)
+	var neutral_ink := Color("3b3028")
+	var pink_circuit := Color("cf4f8b")
+
+	for kind: String in ["chicken", "cuckoo", "plover", "quail", "maleo", "ostrich"]:
+		egg_visual.set_egg({
+			"kind": kind, "toughness": 3, "max_toughness": 3, "points": 1,
+		})
+		assert_eq(egg_visual.affected_circuit_id(), "")
+		assert_eq(egg_visual.species_icon_color(), neutral_ink)
+		assert_eq(egg_visual.effect_icon_color(), neutral_ink)
+
+	egg_visual.set_egg({
+		"kind": "spoonbill", "toughness": 5, "max_toughness": 5, "points": 4,
+	})
+	assert_eq(egg_visual.affected_circuit_id(), "pink")
+	assert_eq(egg_visual.species_icon_color(), pink_circuit)
+	assert_eq(egg_visual.effect_icon_color(), pink_circuit)
+	assert_lt(egg_visual.species_watermark_color().a, 0.4)
+
+
+func test_yolk_value_is_contained_inside_the_yolk_drop() -> void:
+	var egg_visual := EggVisual.new()
+	egg_visual.size = Vector2(132.0, 148.0)
+	add_child_autofree(egg_visual)
+	egg_visual.set_egg({
+		"kind": "chicken", "toughness": 3, "max_toughness": 3, "points": 3,
+	})
+
+	var drop_rect: Rect2 = egg_visual.yolk_drop_local_rect()
+	var value_rect: Rect2 = egg_visual.yolk_value_local_rect()
+	assert_eq(drop_rect.get_center(), egg_visual.score_icon_local_position())
+	assert_true(drop_rect.encloses(value_rect))
 
 
 func test_egg_face_uses_toughness_as_the_temporal_information_divider() -> void:
