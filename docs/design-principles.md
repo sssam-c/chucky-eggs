@@ -22,7 +22,7 @@ Grandma's announced increase is enemy intent. Her response should create a round
 
 Reward a board of prepared eggs instead of charging the player to move between spoons. Every paid input must remain one physical tap; spatial commitment comes from weakening several eggs and arranging one strike that opens them together before Grandma responds.
 
-The combo multiplier is the round's explosive payoff. Count only eggs opened by one tap, add their printed Yolk, and multiply once by that count. This makes the jackpot causally identical to the visible cascade and removes persistent score bookkeeping. Materialise those facts as one liquid Yolk ball where the eggs break: contributions merge into it, its number changes once through the multiplier, and the same object leaves for Grandma. Single breaks use that route briefly; misses do nothing; reserve the named callout and multiplier surge for multi-break taps. Watch for an authored route that becomes automatic, for Cuckoo becoming the only practical combo enabler, or for the flat multiplier making single breaks irrelevant.
+The combo multiplier is the round's explosive payoff. Count only eggs opened by one tap, add their printed Yolk, and multiply once by that count. This makes the jackpot causally identical to the visible cascade and removes persistent score bookkeeping. Materialise those facts as one liquid Yolk ball where the eggs break: contributions merge into it, its number changes once through the multiplier, and the same object leaves for Grandma. Make value physical as well as numeric—a 1 should look tiny, a 4 substantial, and an 8 massive—while capping the curve so future totals remain usable. Single breaks use that route briefly; misses do nothing; reserve the named callout and multiplier surge for multi-break taps. Watch for an authored route that becomes automatic, for Cuckoo becoming the only practical combo enabler, or for the flat multiplier making single breaks irrelevant.
 
 ## Grandma owns Hunger
 
@@ -35,6 +35,8 @@ Yolk lowers Hunger; Grandma's response raises it. Use one physicalised chain for
 Show the information needed to make a positional plan: exact remaining toughness, Yolk, spoon colour, applicable effects, occupied cups, and the next three hopper eggs. Visible cracks and animation reinforce those facts but do not replace them.
 
 The current game favours competence over universal uncertainty. If lottery sensation is introduced, confine it to a specific egg or reward so the player can still reason about the surrounding combo. Do not hide every egg's toughness while positioning and tap investment are the main strategic skills.
+
+Shell failure is the tactile payoff for invested taps. Let the final crack visibly build pressure, rupture, and throw fragments before replacing the egg with abstract value. Add readability time through anticipation, deformation, travel, and impact rather than inert post-action holds.
 
 ## Refill is a routing decision
 
@@ -54,6 +56,14 @@ Escalating Hunger prevents endless setup, but it also punishes a player who is a
 
 Do not add progression, economies, or a large species roster to compensate for a weak tap decision. First establish that players sometimes reject the best immediate hatch to construct a stronger later position.
 
+## Seeds vary puzzles without hiding them
+
+A run seed may change round order and reward offers, but it must not obscure egg facts or near-term routing information. Show the seed, preserve the three-egg hopper preview, and make retries reproduce the same setup. Treat generated arrangements as puzzles to validate, not as automatically acceptable merely because they are deterministic.
+
+## Progression changes the next plan
+
+The first progression reward adds one known egg to the next round's flock. Its value is the positional plan it enables, not an abstract power rating. Keep the reward choice separate from taps, make the harder round explicit before it begins, and prefer sidegrades that invite different routes over upgrades that are always correct.
+
 ## Decisions before decoration
 
-Keep the current authored round reproducible while its strategic texture is tested. Add randomness, content, and progression only when they answer a demonstrated problem. Production art can replace the existing placeholders without changing the scene's causal hierarchy: hopper on the left; eggs, cups, neutral spoons, controls, and transient Yolk at the centre; Grandma and persistent round status on the right. Until bespoke art is justified, use native shapes, panels, planks, light pools, and other inexpensive environmental cues to make negative space feel intentional.
+Keep each seeded round reproducible while its strategic texture is tested. Add new identities and permanent progression only when the two-round reward loop demonstrates a need. Production art can replace the existing placeholders without changing the scene's causal hierarchy: hopper on the left; eggs, cups, neutral spoons, controls, and transient Yolk at the centre; Grandma and persistent round status on the right. Until bespoke art is justified, use native shapes, panels, light pools, and other inexpensive environmental cues to make negative space feel intentional.

@@ -2,7 +2,64 @@
 
 This file describes current implementation and learning scope. It does not override current rules.
 
-## Current foundational slice — Five-tap Hunger rounds
+## Current slice — Seeded two-round flock choice
+
+### Question
+
+Does a seeded opening followed by one flock choice and a harder second round make players adapt, feel ownership of the flock, and want to continue the run?
+
+### Status
+
+Accepted for prototype implementation on 2026-08-20 after informal play established that the foundational five-tap round contains real texture and meaningful decisions. This slice extends that baseline without adding new egg identities or an economy.
+
+### End-to-end player path
+
+- Begin Round 1 with 10 Hunger, five taps, a visible run seed, and the fixed twelve-egg flock shuffled deterministically into the cups and hopper.
+- Play the complete accepted five-tap Hunger round with exact egg facts and a three-egg hopper preview.
+- On success, choose one of three different, seed-derived current-species eggs.
+- Add the chosen egg to the flock, show that Round 2 begins with 12 Hunger, and deterministically shuffle the thirteen eggs from the same run seed.
+- Play Round 2 under otherwise unchanged rules. Success completes the run; failure offers a same-seed retry.
+- Restarting the run preserves its seed. Starting a new seed changes the Round 1 order and its deterministic downstream offer and Round 2 order.
+
+### Settled baseline
+
+- All five-cup damage, Cuckoo, Plover, Spoonbill, hatch, combo, refill, five-tap phase, Hunger escalation, success-precedence, and presentation rules from the foundational slice.
+- The Round 1 flock multiset remains three Chickens, three Cuckoos, two Sparrows, two Plovers, and two Spoonbills.
+- One visible run seed deterministically owns Round 1 order, three unique reward offers, and Round 2 order.
+- Winning Round 1 grants exactly one current-species egg, increasing the flock from twelve to thirteen.
+- Round 1 begins at 10 Hunger; Round 2 provisionally begins at 12. Both retain five taps, a first response of +1, and +1 response growth.
+- Retry preserves the seed and selected reward. New seed begins a different deterministic run.
+
+### Open hypotheses
+
+- Seeded orders will create replay variety without producing obviously trivial, automatic, or hostile openings.
+- Players will adapt their early taps to the visible board and hopper rather than treating each seed as cosmetic.
+- Reward choices will be situational rather than collapsing into one universally preferred species.
+- The chosen thirteenth egg will visibly change at least one Round 2 plan.
+- Twelve starting Hunger will make Round 2 harder without making a poor early phase feel unrecoverable.
+- Completing Round 2 will leave players wanting another reward and round.
+
+### Implementation conveniences, not permanent design commitments
+
+- The initial prototype can advance to a new deterministic seed rather than requiring a typed seed browser or platform randomness.
+- Reward offers may use all five current identities with uniform frequency while their strategic value is observed.
+- The +2 Round 2 Hunger increase is a first tuning probe, not a general difficulty formula.
+- Generated orders may initially be drawn from a validated seed set if unrestricted shuffles produce poor openings.
+
+### Explicitly deferred
+
+- New egg identities, rarity, random egg stats, hidden quality, shops, cash, removals, upgrades, and permanent unlocks.
+- A third round, endless play, save persistence, daily challenges, online seed sharing, and a full seed-entry interface.
+- Changes to taps per phase, Grandma's escalation curve, combo arithmetic, egg tuning, or presentation timing.
+
+### Exit evidence
+
+- Game-layer specs prove equal seeds reproduce complete orders and offers, different seeds can vary them, reward selection is legal only after Round 1 success, exactly one offered egg is added, Round 2 begins at 12 Hunger with thirteen eggs, and same-seed retry preserves the chosen flock.
+- UI specs prove the seed and round are visible, reward input is exclusive and exactly once, spoons remain unavailable during the transition, Round 2 difficulty is announced, and retry/new-seed actions preserve or change the seed as labelled.
+- Muted running-game checks at 1280×720 and 1024×576 verify reward-card layout, keyboard focus, seed/round readability, the Round 2 transition, and the existing tap-presentation barrier.
+- Play at least three seeds. Record whether the opening changes a plan, whether two reward choices appear plausible, how the chosen egg changes Round 2, whether 12 Hunger creates productive pressure, and whether the player wants a third round.
+
+## Foundational baseline — Five-tap Hunger rounds
 
 ### Question
 
@@ -30,7 +87,7 @@ Accepted as the authoritative game baseline on 2026-08-19. `res://src/ui/hopper_
 - Opened cups refill only after the cascade and receive hopper eggs in hatch order.
 - Five taps per phase, 10 starting Hunger, a first response of +1, and +1 growth after every response.
 - A tap-local break combo that multiplies the combined printed Yolk by the number of eggs opened in that tap's complete cascade.
-- Grandma's sidebar owns persistent taps, Hunger, next response, and phase feedback. Every scoring tap briefly creates one numbered liquid Yolk ball above the eggs; hatch contributions merge into it, a multi-break result surges through its callout and multiplier there, and the same ball travels directly to Grandma before Hunger changes. There is no sidebar score card, persistent streak state, or permanent centre-stage score object.
+- Grandma's sidebar owns persistent taps, Hunger, next response, and phase feedback. Every hatch compresses, fractures, and bursts into shell fragments before its value emerges. Every scoring tap briefly creates one numbered liquid Yolk ball above the eggs; contribution and total sizes scale steeply with exact Yolk value, hatch contributions merge into it, a multi-break result grows through its callout and multiplier there, and the same ball travels directly to Grandma before Hunger changes. There is no sidebar score card, persistent streak state, or permanent centre-stage score object.
 - One request-to-resolver path and resolver-authored event order; presentation owns only playback and its cancellation barrier.
 
 ### Open hypotheses
@@ -40,7 +97,7 @@ Accepted as the authoritative game baseline on 2026-08-19. `res://src/ui/hopper_
 - Players will distribute setup damage across positions, then choose one strike that converts several prepared eggs into a multiplied payoff.
 - Same-tap “Double Yolker!” and higher callouts, attached to a shared liquid Yolk ball in the playfield, will make the multiplied payoff feel causally legible and exceptional rather than like remote score bookkeeping.
 - Renewable five-tap phases will feel like tactical rounds, while Grandma's escalating response provides pressure without becoming an arbitrary countdown.
-- Large eggs, shape-coded buttons, neutral spoons, cups, hopper travel, and Grandma's consolidated sidebar will make the complete causal chain understandable without explanation.
+- Large eggs, staged shell rupture, value-scaled Yolk, shape-coded buttons, neutral spoons, cups, hopper travel, and Grandma's consolidated sidebar will make the complete causal chain understandable without explanation.
 - The current exact information can support competence while later egg-specific uncertainty supplies lottery sensation without obscuring every plan.
 
 ### Implementation conveniences, not permanent design commitments

@@ -4,24 +4,27 @@ This file is the canonical player-facing rule truth. Keep it current and concise
 
 ## Game promise
 
-Invest five tactile spoon taps across a table of interacting eggs. Prepare several eggs to break in one tap and multiply their combined Yolk, while open cups route visible hopper eggs into new colours and neighbourhoods.
+Invest five tactile spoon taps across a table of interacting eggs. Prepare several eggs to break in one tap and multiply their combined Yolk, route visible hopper eggs into new colours and neighbourhoods, then add one egg to adapt that flock for a harder second round.
 
 ## Objective and end states
 
-- Grandma begins with 10 Hunger. Hatch eggs to reduce Hunger to zero.
+- A run contains two rounds. Grandma begins Round 1 with 10 Hunger and Round 2 with 12 Hunger. Hatch eggs to reduce Hunger to zero in each round.
 - A successful round ends immediately after a complete tap cascade reduces Hunger to zero. Grandma does not take another Hunger phase.
-- The game fails if every egg has been opened while Grandma still has Hunger remaining.
-- Restart restores the authored egg order, 10 Hunger, five taps, and the first Hunger phase.
+- Winning Round 1 opens one egg-reward choice. Winning Round 2 completes the run.
+- A round fails if every egg has been opened while Grandma still has Hunger remaining.
+- Retrying reproduces the same run seed, round order, reward offers, and chosen reward. Starting a new seed begins a different deterministic run.
 
 ## Setup and visible state
 
-- Five ordered cups sit on Grandma's table. At the start, the first five eggs occupy those cups and every later egg waits in the hopper.
-- The authored current egg order is Chicken, Cuckoo, Sparrow, Plover, Chicken, Spoonbill, Cuckoo, Sparrow, Chicken, Spoonbill, Plover, Cuckoo.
+- Five ordered cups sit on Grandma's table. At the start of each round, the first five eggs occupy those cups and every later egg waits in the hopper.
+- Round 1 shuffles a fixed twelve-egg flock from a visible, replayable run seed: three Chickens, three Cuckoos, two Sparrows, two Plovers, and two Spoonbills.
+- Round 2 derives another deterministic order from the same run seed after adding the chosen reward egg to that flock.
 - The hopper shows its total waiting count and previews its next three eggs in order.
 - Each cup has one neutral spoon operated by the large colour-and-shape button beneath it. From left to right, the fixed button identities are Red Diamond, Blue Circle, Pink Star, Green Triangle, and Gold Square.
 - The interface always shows each egg's remaining toughness, Yolk value, applicable effect emblem, current position, available taps, Grandma's current Hunger, and her announced next Hunger increase.
 - Grandma's portrait, available taps, Hunger, next increase, and Hunger-phase feedback occupy one persistent right-hand sidebar.
-- Every scoring tap briefly creates one numbered liquid Yolk ball above the eggs. Contributions merge into it from their hatch positions, then that same ball travels directly to Grandma and changes Hunger on impact.
+- The interface shows the current round and run seed. A new-seed action changes the deterministic run; a retry action preserves it.
+- Every scoring tap briefly creates one numbered liquid Yolk ball above the eggs. Its physical size reflects its exact Yolk value, ranging from tiny low-value drops to massive combo totals. Contributions merge into it from their hatch positions, then that same ball travels directly to Grandma and changes Hunger on impact.
 - When one tap breaks two or more eggs, the playfield briefly shows one Double Yolker, Triple Yolker, or higher callout and multiplier surge. A single break uses the same short delivery without a combo callout. No score object remains between taps.
 
 ## Eggs
@@ -45,6 +48,14 @@ Invest five tactile spoon taps across a table of interacting eggs. Prepare sever
 - The first Hunger phase adds 1. Each later phase adds 1 more than the previous phase: +2, then +3, and so on.
 - After Grandma's response, a new Tap phase begins with five taps and displays its new announced increase.
 
+## Between rounds
+
+- Winning Round 1 presents three different egg rewards drawn deterministically from the five current egg identities.
+- The player chooses exactly one offered egg. That egg is added to the fixed flock, increasing Round 2 from twelve eggs to thirteen.
+- The chosen egg, its complete known rules, and Round 2's 12 starting Hunger are shown before Round 2 begins.
+- Reward selection spends no tap and changes no completed Round 1 result.
+- There is no reward after Round 2.
+
 ## Tap resolution
 
 Resolve one selected button in this order:
@@ -64,7 +75,7 @@ For a scoring tap, each opened egg's printed Yolk visibly merges into one number
 
 ## Current scope
 
-- The authoritative game is one authored tabletop round. It has no conveyor movement, bin, Belt Condition, Patience, circuits that strike several starting targets, flock generation, shop, cash, multiple days, egg quality, or permanent progression.
+- The authoritative game is one seeded two-round tabletop run with one between-round egg addition. It has no conveyor movement, bin, Belt Condition, Patience, circuits that strike several starting targets, shop, cash, new egg identities, egg quality, or permanent progression.
 - The former conveyor implementation is retained as historical code and test coverage, not as current player-facing rule truth.
 
 ## Keywords

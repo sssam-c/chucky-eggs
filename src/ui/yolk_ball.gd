@@ -56,6 +56,10 @@ func _refresh_amount() -> void:
 	if _amount_label == null:
 		return
 	_amount_label.text = str(_amount)
+	if not _compact:
+		_amount_label.add_theme_font_size_override(
+			"font_size", mini(42, 28 + _amount)
+		)
 	accessibility_name = "%d Yolk" % _amount
 
 

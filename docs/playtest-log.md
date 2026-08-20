@@ -185,3 +185,39 @@ The current 8-point opening is a forgiving tutorial and is consistent with the p
 **Interpretation:** The short duration is no longer the main readability problem. The player's gaze remains on the cups and breaking eggs, while the score appears in a peripheral status rail. Keeping the result in that rail spatially disconnects cause from value even when the arithmetic is concise.
 
 **Proposed response:** Materialise each scoring tap as one transient central Yolk ball. Animate resolver-authored hatch contributions into it, keep one crisp total on its face, reserve the surge and callout for multi-breaks, and make that same object the delivery to Grandma. Preserve a static reduced-motion equivalent and remove the obsolete sidebar score card.
+
+## 2026-08-19 — Central Yolk needs more weight and value contrast
+
+**Question:** Does the transient central Yolk ball make scoring sufficiently satisfying and readable?
+
+**Context:** Informal developer playtest of the implemented hatch-to-ball-to-Grandma flow with a shimmering numbered liquid ball and same-tap multiplier surge.
+
+**Observed:** The Yolk reveal and score still felt somewhat too speedy. Egg cracking could be more satisfying, and Yolk sizes were requested to reflect score strongly, ranging from tiny to massive.
+
+**Interpretation:** Central placement repaired the causal path, but similar-sized awards give a 1 and an 8 too much of the same visual weight. The existing hatch's short scale-and-fade also removes the physical object before its failure can become a payoff. The desired extra duration belongs inside fracture, emergence, absorption, growth, and impact rather than after them.
+
+**Proposed response:** Add a staged code-native shell rupture, map exact Yolk to a steep capped size curve, reveal each differently sized contribution before merging, and lengthen active motion modestly through multiplier growth and delivery. Verify tiny, ordinary, and combo values at both supported viewports before further timing changes.
+
+## 2026-08-20 — Foundational round has tactical texture
+
+**Question:** Does the five-tap Hunger round contain real decisions before content and progression are added?
+
+**Context:** Player report after playtesting the current foundational round. The number of sessions, routes, and exact build were not supplied.
+
+**Observed:** The player reported that the round “does have texture and real decisions in play.” No concrete tap sequence or decision example was recorded with the report.
+
+**Interpretation:** This is sufficient directional evidence to stop treating progression as compensation for a weak tap decision, but it does not close the more specific questions about hopper-preview use, setup taps, or dominant authored routes.
+
+**Proposed response:** Prototype one seeded two-round run with a single current-species egg reward and a harder second round. Continue collecting concrete examples of rejected immediate hatches, planned combos, and preview-driven choices.
+
+## 2026-08-20 — Seeded two-round greedy-policy probe
+
+**Question:** Do unrestricted seeded orders make the second round meaningfully harder, and do they expose obviously suspicious variance before human testing?
+
+**Context:** Automated application-layer probe across seeds 20260800–20260899. One intentionally weak deterministic policy repeatedly tapped the occupied egg with the lowest remaining toughness. On a Round 1 win it chose one of the three offered eggs by `seed mod 3`, then applied the same policy to Round 2. This was not an exact solver or a human playtest.
+
+**Observed:** The policy won 53 of 100 Round 1s and 8 of those 53 Round 2s.
+
+**Interpretation:** Round 2 is materially harder for a policy that ignores adjacency, spoon colour, hopper order, and setup. The failures do not establish that any seed is unwinnable; they show that seed quality and the provisional 12 Hunger tuning cannot be validated by a naive policy.
+
+**Proposed response:** Human-test at least three seeds and use a stronger tactical or exact search before curating seeds or changing Round 2 Hunger. Preserve unrestricted deterministic shuffles as prototype scope until evidence identifies hostile arrangements.

@@ -193,12 +193,31 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	if _reduced_motion:
 		slot.clear_visual()
 		return true
+	slot.prepare_hatch_burst()
 	var content: Control = slot.motion_content()
 	content.pivot_offset = content.size * 0.5
+	var rest_scale: Vector2 = content.scale
+	var hatch_burst: Control = slot.hatch_burst_control()
+	var shell: Control = slot.hatch_shell_control()
+	var toughness: Control = slot.toughness_control()
+	var tension := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tension.tween_property(content, "scale", rest_scale * Vector2(0.90, 1.08), 0.08)
+	tension.parallel().tween_property(content, "rotation", -0.045, 0.08)
+	tension.parallel().tween_property(hatch_burst, "burst_amount", 0.16, 0.08)
+	if not await _run_tween(tension, playback_generation):
+		return false
+	var fracture := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	fracture.tween_property(content, "scale", rest_scale * Vector2(1.08, 0.96), 0.09)
+	fracture.parallel().tween_property(content, "rotation", 0.055, 0.09)
+	fracture.parallel().tween_property(hatch_burst, "burst_amount", 0.46, 0.09)
+	if not await _run_tween(fracture, playback_generation):
+		return false
 	var burst := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	burst.tween_property(content, "scale", Vector2(1.48, 1.24), 0.10)
-	burst.parallel().tween_property(content, "rotation", 0.10, 0.10)
-	burst.parallel().tween_property(content, "modulate:a", 0.0, 0.10)
+	burst.tween_property(content, "scale", rest_scale * Vector2(1.48, 1.22), 0.13)
+	burst.parallel().tween_property(content, "rotation", 0.10, 0.13)
+	burst.parallel().tween_property(shell, "modulate:a", 0.0, 0.13)
+	burst.parallel().tween_property(toughness, "modulate:a", 0.0, 0.10)
+	burst.parallel().tween_property(hatch_burst, "burst_amount", 1.0, 0.13)
 	if not await _run_tween(burst, playback_generation):
 		return false
 	slot.clear_visual()
@@ -215,20 +234,23 @@ func _present_yolk_delivery(event: Dictionary, playback_generation: int) -> bool
 	_yolk_combo_display.begin_pool(combo_count)
 	if not await _present_yolk_merges(base_yolks, playback_generation):
 		return false
+	var pre_multiplier_scale: Vector2 = _yolk_combo_display.ball_control().scale
 	_yolk_combo_display.show_multiplier(combo_count, total_yolk)
 	if is_combo:
 		combo_announced.emit(combo_count, _yolk_combo_display.callout_text(), total_yolk)
 		if playback_generation != _generation:
 			return false
-		if not await _present_multiplier_surge(playback_generation):
+		if not await _present_multiplier_surge(pre_multiplier_scale, playback_generation):
 			return false
+	elif not _reduced_motion and not await _pause(0.10, playback_generation):
+		return false
 	var origin: Vector2 = _yolk_combo_display.ball_global_position()
 	var destination: Vector2 = _grandma_hunger_panel.delivery_global_position()
 	yolk_delivery_started.emit(total_yolk, origin, destination)
 	if playback_generation != _generation:
 		return false
 	if _reduced_motion:
-		if not await _pause(0.08 if is_combo else 0.04, playback_generation):
+		if not await _pause(0.12 if is_combo else 0.08, playback_generation):
 			return false
 		_yolk_combo_display.finish_delivery()
 		_grandma_hunger_panel.show_hunger_subtraction(
@@ -242,11 +264,16 @@ func _present_yolk_delivery(event: Dictionary, playback_generation: int) -> bool
 		return true
 	var ball: Control = _yolk_combo_display.begin_delivery()
 	var ball_size := ball.size
+	var score_scale: Vector2 = ball.scale
 	var deliver := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	deliver.tween_property(ball, "global_position", destination - ball_size * 0.5, 0.20)
-	deliver.parallel().tween_property(ball, "scale", Vector2(0.76, 0.88), 0.20)
-	deliver.parallel().tween_property(ball, "rotation", 0.08, 0.10)
-	deliver.tween_property(ball, "scale", Vector2(1.05, 0.68), 0.045)
+	deliver.tween_property(ball, "global_position", destination - ball_size * 0.5, 0.25)
+	deliver.parallel().tween_property(
+		ball, "scale", score_scale * Vector2(0.68, 0.74), 0.25
+	)
+	deliver.parallel().tween_property(ball, "rotation", 0.08, 0.13)
+	deliver.tween_property(
+		ball, "scale", score_scale * Vector2(0.88, 0.54), 0.06
+	)
 	if not await _run_tween(deliver, playback_generation):
 		return false
 	_yolk_combo_display.finish_delivery()
@@ -287,21 +314,30 @@ func _present_yolk_merges(base_yolks: Array, playback_generation: int) -> bool:
 		if playback_generation != _generation:
 			return false
 		if not _reduced_motion:
+			drop.scale = Vector2.ONE * 0.22
+			drop.modulate.a = 0.0
+			var reveal := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			reveal.tween_property(drop, "scale", Vector2.ONE, 0.09)
+			reveal.parallel().tween_property(drop, "modulate:a", 1.0, 0.07)
+			if not await _run_tween(reveal, playback_generation):
+				return false
 			var drop_destination := destination - drop.size * 0.5
 			var merge := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-			merge.tween_property(drop, "global_position", drop_destination, 0.12)
-			merge.parallel().tween_property(drop, "scale", Vector2(0.62, 0.78), 0.12)
-			merge.parallel().tween_property(drop, "modulate:a", 0.78, 0.12)
+			merge.tween_property(drop, "global_position", drop_destination, 0.18)
+			merge.parallel().tween_property(drop, "scale", Vector2(0.62, 0.78), 0.18)
+			merge.parallel().tween_property(drop, "modulate:a", 0.78, 0.18)
 			if not await _run_tween(merge, playback_generation):
 				return false
 		drop.queue_free()
 		subtotal += base_yolk
+		var ball: Control = _yolk_combo_display.ball_control()
+		var prior_scale: Vector2 = ball.scale
 		_yolk_combo_display.merge_yolk(subtotal)
 		if not _reduced_motion:
-			var ball: Control = _yolk_combo_display.ball_control()
 			var settled_scale: Vector2 = ball.scale
-			ball.scale = settled_scale * Vector2(1.14, 0.88)
+			ball.scale = prior_scale * Vector2(0.96, 1.05)
 			var absorb := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			absorb.tween_property(ball, "scale", settled_scale * Vector2(1.10, 0.91), 0.08)
 			absorb.tween_property(ball, "scale", settled_scale, 0.075)
 			if not await _run_tween(absorb, playback_generation):
 				return false
@@ -309,20 +345,23 @@ func _present_yolk_merges(base_yolks: Array, playback_generation: int) -> bool:
 	return true
 
 
-func _present_multiplier_surge(playback_generation: int) -> bool:
+func _present_multiplier_surge(
+	starting_scale: Vector2, playback_generation: int
+) -> bool:
 	if _reduced_motion:
-		return await _pause(0.08, playback_generation)
+		return await _pause(0.12, playback_generation)
 	var ball: Control = _yolk_combo_display.ball_control()
 	var settled_scale: Vector2 = ball.scale
 	ball.pivot_offset = ball.size * 0.5
+	ball.scale = starting_scale
 	var surge := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	surge.tween_property(ball, "scale", settled_scale * Vector2(1.28, 1.16), 0.10)
-	surge.parallel().tween_property(ball, "rotation", -0.07, 0.10)
-	surge.tween_property(ball, "scale", settled_scale, 0.09)
-	surge.parallel().tween_property(ball, "rotation", 0.0, 0.09)
+	surge.tween_property(ball, "scale", settled_scale * Vector2(1.18, 1.10), 0.17)
+	surge.parallel().tween_property(ball, "rotation", -0.07, 0.17)
+	surge.tween_property(ball, "scale", settled_scale, 0.13)
+	surge.parallel().tween_property(ball, "rotation", 0.0, 0.13)
 	if not await _run_tween(surge, playback_generation):
 		return false
-	return await _pause(0.10, playback_generation)
+	return await _pause(0.14, playback_generation)
 
 
 func _present_swap(event: Dictionary, _playback_generation: int) -> bool:

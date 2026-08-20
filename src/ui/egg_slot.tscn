@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/ui/egg_slot.gd" id="1_slot"]
 [ext_resource type="Script" path="res://src/ui/egg_visual.gd" id="2_visual"]
+[ext_resource type="Script" path="res://src/ui/egg_break_burst.gd" id="3_burst"]
 
 [node name="EggSlot" type="Button"]
 custom_minimum_size = Vector2(170, 170)
@@ -40,6 +41,26 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_visual")
+
+[node name="HatchBurst" type="Control" parent="EggContent"]
+unique_name_in_owner = true
+visible = false
+z_index = 2
+custom_minimum_size = Vector2(132, 148)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -66.0
+offset_top = -83.0
+offset_right = 66.0
+offset_bottom = 65.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_burst")
 
 [node name="Toughness" type="Label" parent="EggContent"]
 unique_name_in_owner = true

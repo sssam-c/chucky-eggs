@@ -28,7 +28,14 @@ const APPEARANCES := [
 @onready var _result_panel: PanelContainer = %ResultPanel
 @onready var _result_label: Label = %ResultLabel
 @onready var _restart_button: Button = %Restart
+@onready var _new_seed_button: Button = %NewSeed
 @onready var _result_restart_button: Button = %ResultRestart
+@onready var _round_label: Label = %Round
+@onready var _seed_label: Label = %Seed
+@onready var _round_announcement: Label = %RoundAnnouncement
+@onready var _reward_overlay: Control = %RewardOverlay
+@onready var _reward_summary: Label = %RewardSummary
+@onready var _reward_choices: Array[Button] = [%Choice1, %Choice2, %Choice3]
 @onready var _presenter: Node = %TapPresenter
 
 var _session = HopperTapSession.new()
@@ -56,7 +63,12 @@ func _ready() -> void:
 		_spoons[slot_index].slot_index = slot_index
 		_spoons[slot_index].set_neutral_appearance()
 	_restart_button.pressed.connect(restart)
-	_result_restart_button.pressed.connect(restart)
+	_new_seed_button.pressed.connect(new_seed)
+	_result_restart_button.pressed.connect(_on_result_action)
+	for choice_index in range(_reward_choices.size()):
+		_reward_choices[choice_index].pressed.connect(
+			_on_reward_chosen.bind(choice_index)
+		)
 	_presenter.event_presented.connect(
 		func(event_type: String) -> void: presentation_event.emit(event_type)
 	)
@@ -92,11 +104,54 @@ func is_input_locked() -> bool:
 
 
 func restart() -> void:
+	_replace_session_view()
+	_session.restart()
+	_finish_session_replacement()
+
+
+func new_seed() -> void:
+	_replace_session_view()
+	_session.start_new_run()
+	_finish_session_replacement()
+
+
+func _replace_session_view() -> void:
 	_request_generation += 1
 	_presenter.cancel_playback()
-	_session.restart()
 	_input_locked = false
 	_result_panel.visible = false
+	_reward_overlay.visible = false
+
+
+func _finish_session_replacement() -> void:
+	_render()
+	_spoon_buttons[0].grab_focus.call_deferred()
+
+
+func _on_result_action() -> void:
+	var state: Dictionary = _session.state()
+	if not bool(state.run_succeeded) and int(state.round_number) == 2:
+		_replace_session_view()
+		_session.retry_round()
+		_finish_session_replacement()
+	elif bool(state.run_succeeded):
+		new_seed()
+	else:
+		restart()
+
+
+func _on_reward_chosen(choice_index: int) -> void:
+	if _input_locked:
+		return
+	_input_locked = true
+	for choice: Button in _reward_choices:
+		choice.disabled = true
+	var events: Array[Dictionary] = _session.choose_reward(choice_index)
+	if events.is_empty() or String(events[0].type) == "reward_rejected":
+		_input_locked = false
+		_render()
+		return
+	_input_locked = false
 	_render()
 	_spoon_buttons[0].grab_focus.call_deferred()
 
@@ -134,8 +189,15 @@ func _render() -> void:
 	var state: Dictionary = _session.state()
 	_grandma_hunger_panel.render_hunger(
 		int(state.hunger), int(state.next_hunger_increase),
-		HopperTapSession.STARTING_HUNGER
+		int(state.round_starting_hunger)
 	)
+	_round_label.text = "ROUND %d / %d" % [
+		int(state.round_number), int(state.round_count),
+	]
+	_seed_label.text = "SEED %d" % int(state.run_seed)
+	_round_announcement.text = "ROUND %d  •  %d HUNGER  •  %d EGGS" % [
+		int(state.round_number), int(state.round_starting_hunger), int(state.round_egg_count),
+	]
 	_tap_pips_label.text = _tap_pips(int(state.taps_remaining), int(state.taps_per_phase))
 	_yolk_combo_display.reset_transient()
 	_hopper_count_label.text = "%d WAITING" % int(state.hopper_egg_count)
@@ -150,15 +212,46 @@ func _render() -> void:
 	for preview_index in range(_pipe_slots.size()):
 		var egg: Dictionary = state.pipe[preview_index] if preview_index < state.pipe.size() else {}
 		_pipe_slots[preview_index].render_egg(egg, false, true)
-	_set_spoons_available(not bool(state.ended) and not _input_locked)
-	_result_panel.visible = bool(state.ended)
-	if state.ended:
-		_result_label.text = (
-			"GRANDMA IS SATISFIED!\nHUNGER 0"
-			if state.succeeded
-			else "NO EGGS LEFT\nHUNGER %d" % int(state.hunger)
-		)
+	_set_spoons_available(
+		not bool(state.ended)
+		and not bool(state.awaiting_reward)
+		and not bool(state.run_ended)
+		and not _input_locked
+	)
+	_render_reward(state)
+	_result_panel.visible = bool(state.run_ended)
+	if state.run_ended:
+		if state.run_succeeded:
+			_result_label.text = "TWO-ROUND RUN COMPLETE\nSEED %d" % int(state.run_seed)
+			_result_restart_button.text = "START NEW SEED"
+		else:
+			_result_label.text = "ROUND %d FAILED\nHUNGER %d" % [
+				int(state.round_number), int(state.hunger),
+			]
+			_result_restart_button.text = (
+				"RETRY ROUND 2" if int(state.round_number) == 2 else "RETRY SEED"
+			)
 		_result_restart_button.grab_focus.call_deferred()
+
+
+func _render_reward(state: Dictionary) -> void:
+	var was_visible := _reward_overlay.visible
+	_reward_overlay.visible = bool(state.awaiting_reward)
+	if not _reward_overlay.visible:
+		return
+	_reward_summary.text = (
+		"ROUND 1 COMPLETE  •  ADD ONE EGG\n"
+		+ "ROUND 2 STARTS WITH %d HUNGER" % HopperTapSession.ROUND_TWO_HUNGER
+	)
+	for choice_index in range(_reward_choices.size()):
+		var choice: Button = _reward_choices[choice_index]
+		choice.visible = choice_index < state.reward_offers.size()
+		if not choice.visible:
+			continue
+		choice.render_offer(String(state.reward_offers[choice_index]))
+		choice.disabled = _input_locked
+	if not was_visible:
+		_reward_choices[0].grab_focus.call_deferred()
 
 
 func _tap_pips(remaining: int, total: int) -> String:

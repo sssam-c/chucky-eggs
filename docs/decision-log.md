@@ -794,6 +794,26 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D078 and D079 only where they place temporary combo arithmetic in Grandma's score card and deliver a separate compact parcel. Grandma continues to own persistent Taps, Hunger, next response, phase feedback, and the final consequence; D079's same-tap multiplier, lack of cross-tap state, exceptional combo callout, short playback, locking, and resolver ownership remain accepted.
 
+## D081 — Give Yolk value physical scale and let hatches rupture
+
+**Status:** accepted
+
+**Decision:** Map every visible Yolk contribution, subtotal, and completed combo total to a steep bounded size curve: 1 Yolk is tiny, ordinary values are progressively substantial, and an 8-Yolk combo is massive, with a cap for extreme future totals. Preserve the exact number on each liquid object. Before an egg disappears, give its resolver-authored hatch a three-part rupture—compression, visible fracture, then a coloured flash and shell-fragment burst. Slow collection and scoring modestly by extending those deformations, each Yolk's emergence and merge, the multiplier growth, and the final travel; do not restore a detached results card or long static explanatory holds.
+
+**Reason:** The first central-ball pass fixed score location but still compressed shell failure, Yolk revelation, value comparison, multiplication, and delivery into a similar visual weight and a narrow time window. Making amount physically legible lets the player feel the difference before reading the number, while a staged rupture gives tapping a stronger material payoff. Carrying the extra time through changing motion preserves responsiveness better than pausing after the action.
+
+**Supersedes:** D079's requirement for short feedback only where that implied uniformly small award parcels, and D080 only where every Yolk ball used nearly the same physical size and hatch playback remained a simple fade. Their same-tap arithmetic, transient central ownership, direct delivery, resolver authority, cancellation, and absence of permanent score state remain accepted.
+
+## D082 — Prototype one seeded flock choice across two rounds
+
+**Status:** accepted
+
+**Decision:** Extend the authoritative tabletop game into a two-round run. Shuffle the fixed twelve-egg flock deterministically from a visible run seed for Round 1 at 10 Hunger. After a successful Round 1, present three different seed-derived offers from the five current egg identities; the player chooses exactly one egg to add. Shuffle that thirteen-egg flock deterministically into Round 2 at a provisional 12 Hunger while preserving five taps, Grandma's +1 then +2 escalation, every egg rule, same-tap combo scoring, exact visible information, and resolver-authored sequencing. A retry reproduces the same seed, offers, selected reward, and round order; a new seed changes the deterministic run. Completing Round 2 completes the prototype run.
+
+**Reason:** Informal play established that the foundational round has genuine tactical texture, so progression no longer needs to compensate for a weak tap decision. One seeded replay, one roster choice, and one harder consequence form the smallest complete run-shaped learning loop. Reusing current identities isolates whether deterministic variety and flock ownership change planning before novelty, economies, or permanent unlocks obscure the result. Raising only starting Hunger makes the second-round challenge legible and leaves the accepted pressure curve intact.
+
+**Supersedes:** D075 only where it fixes one authored order, one round, and defers all flock progression. D075's tabletop rules and all later combo and presentation decisions remain accepted. New egg identities, shops, cash, removals, quality, and permanent progression remain deferred.
+
 <!--
 Copy for the next entry:
 

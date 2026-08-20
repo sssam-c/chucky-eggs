@@ -7,6 +7,7 @@ const PREVIEW_CONTENT_SCALE := Vector2(0.82, 0.82)
 
 @onready var _content: Control = %EggContent
 @onready var _egg_visual: Control = %EggVisual
+@onready var _hatch_burst: Control = %HatchBurst
 @onready var _toughness_label: Label = %Toughness
 
 var _egg: Dictionary = {}
@@ -119,6 +120,22 @@ func clear_visual() -> void:
 	render_egg({}, false, _preview)
 
 
+func prepare_hatch_burst() -> void:
+	_hatch_burst.configure(_egg_visual.placeholder_color())
+
+
+func hatch_burst_control() -> Control:
+	return _hatch_burst
+
+
+func hatch_shell_control() -> Control:
+	return _egg_visual
+
+
+func toughness_control() -> Control:
+	return _toughness_label
+
+
 func current_egg() -> Dictionary:
 	return _egg.duplicate(true)
 
@@ -183,6 +200,9 @@ func reset_motion() -> void:
 	)
 	_content.modulate = Color.WHITE
 	_content.z_index = 0
+	_egg_visual.modulate = Color.WHITE
+	_toughness_label.modulate = Color.WHITE
+	_hatch_burst.reset()
 
 
 func _effect_description(egg: Dictionary) -> String:

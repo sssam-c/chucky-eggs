@@ -13,6 +13,7 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 		var spoon = main.get_node("Stage/Spoons/Spoon%d" % slot_number)
 		var spoon_button = main.get_node("Stage/SpoonControls/SpoonButton%d" % slot_number)
 		assert_true(slot.is_egg_cup_mode())
+		assert_not_null(slot.get_node_or_null("EggContent/HatchBurst"))
 		assert_gt(slot.stage_content_scale(), 1.0)
 		assert_gte(slot.size.x, 150.0)
 		assert_eq(spoon_button.control_form(), "button")
@@ -152,7 +153,9 @@ func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup
 		deliveries[0].destination,
 		main.get_node("GrandmaSidebar").delivery_global_position()
 	)
-	assert_eq(deliveries[0].origin, main.get_node("Stage/YolkComboDisplay").ball_global_position())
+	assert_true(deliveries[0].origin.is_equal_approx(
+		main.get_node("Stage/YolkComboDisplay").ball_global_position()
+	))
 	assert_gt(deliveries[0].destination.x, deliveries[0].origin.x)
 	assert_eq(hunger_changes, [{"before": 10, "amount": 1, "after": 9}])
 	assert_false(main.get_node("Stage/YolkComboDisplay").visible)
@@ -324,6 +327,88 @@ func test_restart_restores_the_authored_opening() -> void:
 	assert_eq(main.game_state().pipe[0].kind, "spoonbill")
 	assert_eq(main.get_node("GrandmaSidebar").hunger_value(), 10)
 	assert_eq(main.get_node("GrandmaSidebar").next_increase(), 1)
+
+
+func test_run_seed_and_round_are_visible_with_distinct_retry_and_new_seed_actions() -> void:
+	var main := await _add_game()
+	var state: Dictionary = main.game_state()
+
+	assert_eq(main.get_node("RunStatus/Round").text, "ROUND 1 / 2")
+	assert_eq(main.get_node("RunStatus/Seed").text, "SEED %d" % int(state.run_seed))
+	assert_eq(main.get_node("Restart").text, "RETRY SEED")
+	assert_eq(main.get_node("NewSeed").text, "NEW SEED")
+	assert_false(main.get_node("RewardOverlay").visible)
+
+
+func test_round_one_success_offers_three_eggs_and_choice_starts_harder_round_two() -> void:
+	var main := await _add_game()
+	main.set_reduced_motion(true)
+	await _win_ui_round(main)
+	var reward_state: Dictionary = main.game_state()
+
+	assert_true(reward_state.awaiting_reward)
+	assert_true(main.get_node("RewardOverlay").visible)
+	assert_eq(main.get_node("RewardOverlay/Card/Choices").get_child_count(), 3)
+	for choice_index in range(3):
+		var choice: Button = main.get_node(
+			"RewardOverlay/Card/Choices/Choice%d" % (choice_index + 1)
+		)
+		assert_eq(choice.egg_kind, reward_state.reward_offers[choice_index])
+		assert_false(choice.disabled)
+	for spoon_number in range(1, 6):
+		assert_true(main.get_node(
+			"Stage/SpoonControls/SpoonButton%d" % spoon_number
+		).disabled)
+
+	main.get_node("RewardOverlay/Card/Choices/Choice2").pressed.emit()
+	await get_tree().process_frame
+	var round_two: Dictionary = main.game_state()
+
+	assert_eq(round_two.round_number, 2)
+	assert_eq(round_two.hunger, 12)
+	assert_eq(round_two.round_egg_count, 13)
+	assert_eq(round_two.chosen_reward, reward_state.reward_offers[1])
+	assert_false(main.get_node("RewardOverlay").visible)
+	assert_eq(main.get_node("RunStatus/Round").text, "ROUND 2 / 2")
+	assert_string_contains(main.get_node("RoundAnnouncement").text, "12 HUNGER")
+
+
+func test_retry_preserves_seed_while_new_seed_changes_it() -> void:
+	var main := await _add_game()
+	var initial: Dictionary = main.game_state()
+	var initial_order: Array = initial.round_order.duplicate()
+
+	main.get_node("Restart").pressed.emit()
+	var retried: Dictionary = main.game_state()
+	assert_eq(retried.run_seed, initial.run_seed)
+	assert_eq(retried.round_order, initial_order)
+
+	main.get_node("NewSeed").pressed.emit()
+	var changed: Dictionary = main.game_state()
+	assert_eq(changed.run_seed, int(initial.run_seed) + 1)
+	assert_ne(changed.round_order, initial_order)
+	assert_eq(main.get_node("RunStatus/Seed").text, "SEED %d" % int(changed.run_seed))
+
+
+func _win_ui_round(main: Control) -> void:
+	for tap_index in range(80):
+		var state: Dictionary = main.game_state()
+		if state.ended:
+			assert_true(state.succeeded, "Greedy UI route should complete the round")
+			return
+		var chosen_slot := -1
+		var lowest_toughness := 999
+		for slot_index in range(state.slots.size()):
+			var egg: Dictionary = state.slots[slot_index]
+			if not egg.is_empty() and int(egg.toughness) < lowest_toughness:
+				chosen_slot = slot_index
+				lowest_toughness = int(egg.toughness)
+		main.get_node(
+			"Stage/SpoonControls/SpoonButton%d" % (chosen_slot + 1)
+		).pressed.emit()
+		await main.playback_completed
+		await get_tree().process_frame
+	fail_test("Greedy UI route did not complete the round")
 
 
 func _add_game() -> Control:

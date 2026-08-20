@@ -24,6 +24,8 @@ func begin_pool(combo_count: int) -> void:
 	visible = true
 	_yolk_ball.visible = true
 	_yolk_ball.set_amount(0)
+	_yolk_ball.scale = Vector2.ONE * visual_scale_for_yolk(0)
+	_yolk_ball.modulate.a = 0.58
 	_yolk_ball.set_reduced_motion(_reduced_motion)
 	accessibility_name = "Yolk from %d broken egg%s" % [
 		maxi(1, combo_count), "s" if combo_count != 1 else "",
@@ -36,7 +38,7 @@ func create_yolk_drop(origin_global: Vector2, base_yolk: int) -> Control:
 	drop.set_compact(true)
 	drop.set_amount(base_yolk)
 	drop.set_reduced_motion(_reduced_motion)
-	drop.size = Vector2(48.0, 44.0)
+	drop.size = Vector2(112.0, 100.0) * visual_scale_for_yolk(base_yolk)
 	drop.custom_minimum_size = drop.size
 	drop.pivot_offset = drop.size * 0.5
 	drop.global_position = origin_global - drop.size * 0.5
@@ -45,12 +47,13 @@ func create_yolk_drop(origin_global: Vector2, base_yolk: int) -> Control:
 
 func merge_yolk(subtotal: int) -> void:
 	_yolk_ball.set_amount(subtotal)
-	var growth := clampf(log(float(maxi(1, subtotal)) + 1.0) * 0.11, 0.0, 0.34)
-	_yolk_ball.scale = Vector2.ONE * (1.0 + growth)
+	_yolk_ball.modulate.a = 1.0
+	_yolk_ball.scale = Vector2.ONE * visual_scale_for_yolk(subtotal)
 
 
 func show_multiplier(combo_count: int, total_yolk: int) -> void:
 	_yolk_ball.set_amount(total_yolk)
+	_yolk_ball.scale = Vector2.ONE * visual_scale_for_yolk(total_yolk)
 	if combo_count >= 2:
 		_callout_label.text = combo_callout(combo_count)
 		_multiplier_label.text = "×%d" % combo_count
@@ -86,6 +89,10 @@ func ball_global_position() -> Vector2:
 
 func ball_amount() -> int:
 	return _yolk_ball.amount()
+
+
+func ball_visual_scale() -> float:
+	return _yolk_ball.scale.x
 
 
 func amount_text() -> String:
@@ -143,3 +150,7 @@ static func combo_callout(combo_count: int) -> String:
 			return "QUINTUPLE YOLKER!"
 		_:
 			return "%d× YOLKER!" % maxi(2, combo_count)
+
+
+static func visual_scale_for_yolk(yolk: int) -> float:
+	return clampf(0.22 + float(maxi(0, yolk)) * 0.19, 0.22, 2.0)
