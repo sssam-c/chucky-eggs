@@ -109,18 +109,22 @@ func test_only_colour_gated_egg_icons_use_their_circuit_colour() -> void:
 	assert_lt(egg_visual.species_watermark_color().a, 0.4)
 
 
-func test_yolk_value_is_contained_inside_the_yolk_drop() -> void:
+func test_yolk_value_is_centered_inside_a_blob_with_two_digit_capacity() -> void:
 	var egg_visual := EggVisual.new()
 	egg_visual.size = Vector2(132.0, 148.0)
 	add_child_autofree(egg_visual)
 	egg_visual.set_egg({
-		"kind": "chicken", "toughness": 3, "max_toughness": 3, "points": 3,
+		"kind": "chicken", "toughness": 3, "max_toughness": 3, "points": 12,
 	})
 
-	var drop_rect: Rect2 = egg_visual.yolk_drop_local_rect()
+	var blob_rect: Rect2 = egg_visual.yolk_blob_local_rect()
 	var value_rect: Rect2 = egg_visual.yolk_value_local_rect()
-	assert_eq(drop_rect.get_center(), egg_visual.score_icon_local_position())
-	assert_true(drop_rect.encloses(value_rect))
+	assert_eq(blob_rect.get_center(), egg_visual.score_icon_local_position())
+	assert_eq(value_rect.get_center(), blob_rect.get_center())
+	assert_true(blob_rect.encloses(value_rect))
+	assert_gte(blob_rect.size.x, 30.0)
+	assert_gte(value_rect.size.x, 25.0)
+	assert_eq(egg_visual.score_seal_value(), 12)
 
 
 func test_egg_face_uses_toughness_as_the_temporal_information_divider() -> void:

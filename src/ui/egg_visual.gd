@@ -316,13 +316,13 @@ func effect_icon_color() -> Color:
 	return PINK_CIRCUIT_COLOR if affected_circuit_id() == "pink" else NEUTRAL_ICON_COLOR
 
 
-func yolk_drop_local_rect() -> Rect2:
-	var half_size := Vector2(12.0, 15.0) * _mark_scale()
+func yolk_blob_local_rect() -> Rect2:
+	var half_size := Vector2(15.5, 15.5) * _mark_scale()
 	return Rect2(score_icon_local_position() - half_size, half_size * 2.0)
 
 
 func yolk_value_local_rect() -> Rect2:
-	var half_size := Vector2(9.0, 8.0) * _mark_scale()
+	var half_size := Vector2(12.5, 8.5) * _mark_scale()
 	return Rect2(score_icon_local_position() - half_size, half_size * 2.0)
 
 
@@ -369,37 +369,19 @@ func _draw_effect_emblem(emblem: String, center: Vector2, mark_scale: float) -> 
 
 func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 	var is_foul := score_seal_value() < 0
-	var drop_center := center
-	var drop_points := PackedVector2Array([
-		drop_center + Vector2(0.0, -15.0) * mark_scale,
-		drop_center + Vector2(4.0, -10.0) * mark_scale,
-		drop_center + Vector2(8.0, -4.0) * mark_scale,
-		drop_center + Vector2(11.0, 2.0) * mark_scale,
-		drop_center + Vector2(11.0, 7.0) * mark_scale,
-		drop_center + Vector2(8.0, 12.0) * mark_scale,
-		drop_center + Vector2(4.0, 14.0) * mark_scale,
-		drop_center + Vector2(0.0, 15.0) * mark_scale,
-		drop_center + Vector2(-4.0, 14.0) * mark_scale,
-		drop_center + Vector2(-8.0, 12.0) * mark_scale,
-		drop_center + Vector2(-11.0, 7.0) * mark_scale,
-		drop_center + Vector2(-11.0, 2.0) * mark_scale,
-		drop_center + Vector2(-8.0, -4.0) * mark_scale,
-		drop_center + Vector2(-4.0, -10.0) * mark_scale,
-	])
-	draw_colored_polygon(
-		drop_points, Color("a7d66d") if is_foul else Color("f1bd55")
-	)
-	var outline := drop_points.duplicate()
-	outline.append(drop_points[0])
-	draw_polyline(
-		outline, Color("304e2a") if is_foul else Color("70401e"),
-		1.8 * mark_scale, true
+	var blob_radius := 15.5 * mark_scale
+	var fill := Color("a7d66d") if is_foul else Color("f1bd55")
+	var outline := Color("304e2a") if is_foul else Color("70401e")
+	draw_circle(center, blob_radius, fill)
+	draw_arc(
+		center, blob_radius, 0.0, TAU, 24,
+		outline, 1.8 * mark_scale, true
 	)
 	draw_arc(
-		drop_center - Vector2(1.5, 0.5) * mark_scale,
-		4.2 * mark_scale,
-		-2.75,
-		-1.25,
+		center - Vector2(1.5, 0.5) * mark_scale,
+		6.0 * mark_scale,
+		-2.70,
+		-1.35,
 		8,
 		Color(1.0, 0.93, 0.64, 0.72),
 		1.2 * mark_scale,
@@ -407,9 +389,13 @@ func _draw_score_seal(center: Vector2, mark_scale: float) -> void:
 	)
 	var font_size := 16 if not _preview else 11
 	var value_rect := yolk_value_local_rect()
+	var font := ThemeDB.fallback_font
+	var baseline_y := center.y + (
+		font.get_ascent(font_size) - font.get_descent(font_size)
+	) * 0.5
 	draw_string(
-		ThemeDB.fallback_font,
-		Vector2(value_rect.position.x, center.y + 5.5 * mark_scale),
+		font,
+		Vector2(value_rect.position.x, baseline_y),
 		str(score_seal_value()),
 		HORIZONTAL_ALIGNMENT_CENTER,
 		value_rect.size.x,
