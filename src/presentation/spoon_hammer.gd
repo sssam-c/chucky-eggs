@@ -37,6 +37,12 @@ var strike_amount := 0.0:
 		_sync_bowl_layer()
 		queue_redraw()
 
+var impact_emphasis := 0.0:
+	set(value):
+		impact_emphasis = clampf(value, 0.0, 1.0)
+		if is_instance_valid(_bowl_layer):
+			_bowl_layer.queue_redraw()
+
 var _bowl_size_scale := 1.0
 var _circuit_marked := true
 var _single_contact_target := DEFAULT_SINGLE_CONTACT
@@ -54,6 +60,7 @@ func set_strike_amount(amount: float) -> void:
 
 func reset_pose() -> void:
 	strike_amount = 0.0
+	impact_emphasis = 0.0
 
 
 func pivot_global_position() -> Vector2:
@@ -181,6 +188,7 @@ func bowl_visuals() -> Array[Dictionary]:
 		"center": _single_bowl_position(strike_amount),
 		"radii": radii * _bowl_size_scale,
 		"tipped_amount": frame.tipped_amount,
+		"impact_emphasis": impact_emphasis,
 		"draw_neck": true,
 		"neck_scale": 1.0,
 		"collar_direction": frame.near_collar_direction,

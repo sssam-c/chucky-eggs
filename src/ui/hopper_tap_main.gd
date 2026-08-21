@@ -96,6 +96,7 @@ func _ready() -> void:
 		_pipe_slots,
 		_spoon_buttons,
 		_spoons,
+		$Stage,
 		_hopper_drop_point,
 		_yolk_combo_display,
 		_grandma_hunger_panel,

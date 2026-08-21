@@ -13,6 +13,7 @@ const CrunchAudio = preload("res://src/presentation/crunch_audio.gd")
 
 @onready var _lever_player: AudioStreamPlayer = $Audio/Lever
 @onready var _impact_player: AudioStreamPlayer = $Audio/Impact
+@onready var _shell_hit_player: AudioStreamPlayer = $Audio/ShellHit
 @onready var _echo_player: AudioStreamPlayer = $Audio/Echo
 @onready var _hatch_player: AudioStreamPlayer = $Audio/Hatch
 @onready var _hunger_player: AudioStreamPlayer = $Audio/Score
@@ -22,6 +23,8 @@ var _slots: Array[Button] = []
 var _pipe_slots: Array[Button] = []
 var _spoon_buttons: Array[Button] = []
 var _spoons: Array[Control] = []
+var _stage: Control
+var _stage_origin := Vector2.ZERO
 var _hopper_drop_point: Control
 var _yolk_combo_display: Control
 var _grandma_hunger_panel: Control
@@ -37,6 +40,7 @@ var _pending_yolk_origins: Array[Vector2] = []
 func _ready() -> void:
 	_lever_player.stream = CrunchAudio.lever()
 	_impact_player.stream = CrunchAudio.impact()
+	_shell_hit_player.stream = CrunchAudio.shell_hit()
 	_echo_player.stream = CrunchAudio.echo()
 	_hatch_player.stream = CrunchAudio.hatch()
 	_hunger_player.stream = CrunchAudio.score()
@@ -48,6 +52,7 @@ func configure(
 	pipe_slots: Array[Button],
 	spoon_buttons: Array[Button],
 	spoons: Array[Control],
+	stage: Control,
 	hopper_drop_point: Control,
 	yolk_combo_display: Control,
 	grandma_hunger_panel: Control,
@@ -57,6 +62,8 @@ func configure(
 	_pipe_slots = pipe_slots
 	_spoon_buttons = spoon_buttons
 	_spoons = spoons
+	_stage = stage
+	_stage_origin = stage.position
 	_hopper_drop_point = hopper_drop_point
 	_yolk_combo_display = yolk_combo_display
 	_grandma_hunger_panel = grandma_hunger_panel
@@ -88,7 +95,7 @@ func cancel_playback() -> void:
 	if _active_tween != null and _active_tween.is_valid():
 		_active_tween.kill()
 	for player: AudioStreamPlayer in [
-		_lever_player, _impact_player, _echo_player,
+		_lever_player, _impact_player, _shell_hit_player, _echo_player,
 		_hatch_player, _hunger_player, _pipe_player,
 	]:
 		player.stop()
@@ -107,7 +114,7 @@ func set_muted(muted: bool) -> void:
 	_muted = muted
 	if muted:
 		for player: AudioStreamPlayer in [
-			_lever_player, _impact_player, _echo_player,
+			_lever_player, _impact_player, _shell_hit_player, _echo_player,
 			_hatch_player, _hunger_player, _pipe_player,
 		]:
 			player.stop()
@@ -151,8 +158,6 @@ func _present_spoon(slot_index: int, playback_generation: int) -> bool:
 	if _reduced_motion:
 		spoon_button.set_press_amount(1.0)
 		spoon.set_strike_amount(1.0)
-		spoon_button.reset_pose()
-		spoon.reset_pose()
 		return true
 	var anticipation := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	anticipation.tween_property(spoon_button, "press_amount", 0.35, 0.045)
@@ -162,27 +167,47 @@ func _present_spoon(slot_index: int, playback_generation: int) -> bool:
 	var strike := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	strike.tween_property(spoon_button, "press_amount", 1.0, 0.105)
 	strike.parallel().tween_property(spoon, "strike_amount", 1.0, 0.105)
-	if not await _run_tween(strike, playback_generation):
-		return false
-	var recovery := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	recovery.tween_property(spoon_button, "press_amount", 0.0, 0.09)
-	recovery.parallel().tween_property(spoon, "strike_amount", 0.0, 0.09)
-	return await _run_tween(recovery, playback_generation)
+	return await _run_tween(strike, playback_generation)
 
 
 func _present_damage(event: Dictionary, playback_generation: int) -> bool:
-	var slot: Button = _slots[int(event.slot_index)]
+	var slot_index := int(event.slot_index)
+	var slot: Button = _slots[slot_index]
+	var is_direct_hit := String(event.cause) == "spoon"
 	slot.apply_damage(int(event.remaining_toughness))
-	_play(_echo_player if String(event.cause) == "cuckoo_echo" else _impact_player)
+	_play(_shell_hit_player if is_direct_hit else _echo_player)
+	var spoon_button: Button = _spoon_buttons[slot_index]
+	var spoon: Control = _spoons[slot_index]
+	if is_direct_hit:
+		spoon.impact_emphasis = 1.0
 	if _reduced_motion:
+		if is_direct_hit:
+			spoon_button.reset_pose()
+			spoon.reset_pose()
 		return true
 	var content: Control = slot.motion_content()
 	content.pivot_offset = content.size * 0.5
+	var rest_scale: Vector2 = content.scale
+	var damage_strength := 1.35 if int(event.damage_amount) > 1 else 1.0
 	var bounce := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	bounce.tween_property(content, "scale", Vector2(1.15, 0.76), 0.045)
+	bounce.tween_property(
+		content, "scale", rest_scale * Vector2(1.15, 0.76), 0.045
+	)
 	bounce.parallel().tween_property(content, "rotation", -0.045, 0.045)
-	bounce.tween_property(content, "scale", Vector2.ONE, 0.075)
+	if is_direct_hit:
+		bounce.parallel().tween_property(
+			_stage,
+			"position",
+			_stage_origin + Vector2(-1.5, 3.0) * damage_strength,
+			0.045
+		)
+		bounce.parallel().tween_property(spoon_button, "press_amount", 0.0, 0.09)
+		bounce.parallel().tween_property(spoon, "strike_amount", 0.0, 0.09)
+		bounce.parallel().tween_property(spoon, "impact_emphasis", 0.0, 0.09)
+	bounce.tween_property(content, "scale", rest_scale, 0.075)
 	bounce.parallel().tween_property(content, "rotation", 0.0, 0.075)
+	if is_direct_hit:
+		bounce.parallel().tween_property(_stage, "position", _stage_origin, 0.075)
 	return await _run_tween(bounce, playback_generation)
 
 
@@ -470,6 +495,8 @@ func _render_pipe(eggs: Array) -> void:
 
 func _reset_mechanisms() -> void:
 	_pending_yolk_origins.clear()
+	if _stage != null:
+		_stage.position = _stage_origin
 	if _grandma_hunger_panel != null:
 		_grandma_hunger_panel.reset_feedback()
 	if _yolk_combo_display != null:

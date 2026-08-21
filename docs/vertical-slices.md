@@ -24,6 +24,7 @@ Accepted for prototype implementation on 2026-08-20 after informal play establis
 ### Settled baseline
 
 - All five-cup damage, Cuckoo, Plover, Spoonbill, hatch, combo, refill, five-tap phase, Hunger escalation, success-precedence, and presentation rules from the foundational slice.
+- Direct spoon impacts hold their contact frame until the resolved egg damage appears, then combine a dry shell crack, visible fracture, egg deformation, spoon rebound, impact marks, and a restrained central-stage jolt. Echo damage remains local, and Reduced Motion removes the positional jolt.
 - The Round 1 flock multiset remains three Chickens, three Cuckoos, two Sparrows, two Plovers, and two Spoonbills.
 - One visible run seed deterministically owns Round 1 order, three unique reward offers, and Round 2 order.
 - Winning Round 1 grants exactly one current-species egg, increasing the flock from twelve to thirteen.
@@ -55,7 +56,7 @@ Accepted for prototype implementation on 2026-08-20 after informal play establis
 
 - Additional new egg identities, rarity, random egg stats, hidden quality, shops, cash, removals, upgrades, and permanent unlocks.
 - A third round, endless play, save persistence, daily challenges, online seed sharing, and a full seed-entry interface.
-- Changes to taps per phase, Grandma's escalation curve, combo arithmetic, egg tuning, or presentation timing.
+- Changes to taps per phase, Grandma's escalation curve, combo arithmetic, or egg tuning.
 
 ### Exit evidence
 

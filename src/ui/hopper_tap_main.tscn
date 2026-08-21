@@ -725,6 +725,7 @@ script = ExtResource("5_presenter")
 [node name="Audio" type="Node" parent="TapPresenter"]
 [node name="Lever" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
 [node name="Impact" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
+[node name="ShellHit" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
 [node name="Echo" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
 [node name="Hatch" type="AudioStreamPlayer" parent="TapPresenter/Audio"]
 [node name="Score" type="AudioStreamPlayer" parent="TapPresenter/Audio"]

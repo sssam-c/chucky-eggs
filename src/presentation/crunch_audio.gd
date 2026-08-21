@@ -27,6 +27,19 @@ static func impact() -> AudioStreamWAV:
 	)
 
 
+static func shell_hit() -> AudioStreamWAV:
+	return _build_stream(0.14, 307, func(t: float, sample_index: int) -> float:
+		# A close, dry shell fracture: one hard snap followed by irregular brittle
+		# chips. Keep the low body quiet so the spoon does not read as a metal thud.
+		var snap := _noise(sample_index, 307) * exp(-78.0 * t) * 0.82
+		var first_chip := _noise(sample_index, 331) * _pulse(t, 0.017, 0.018) * 0.62
+		var second_chip := _noise(sample_index, 353) * _pulse(t, 0.043, 0.024) * 0.38
+		var shell_ring := sin(TAU * 2380.0 * t) * exp(-42.0 * t) * 0.16
+		var fine_grit := _noise(sample_index, 379) * _pulse(t, 0.055, 0.055) * 0.14
+		return (snap + first_chip + second_chip + shell_ring + fine_grit) * 0.74
+	)
+
+
 static func echo() -> AudioStreamWAV:
 	return _build_stream(0.20, 101, func(t: float, sample_index: int) -> float:
 		var sympathetic_ring := sin(TAU * 1180.0 * t) * exp(-15.0 * t) * 0.26

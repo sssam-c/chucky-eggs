@@ -77,6 +77,78 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 	assert_eq(main.get_node("Stage/SpoonControls/SpoonButton5").circuit_symbol, "square")
 
 
+func test_spoon_contact_is_held_until_resolved_damage_feedback() -> void:
+	var main := await _add_game()
+	main.set_reduced_motion(true)
+	var spoon: Control = main.get_node("Stage/Spoons/Spoon1")
+	var strike_at_event: Dictionary = {}
+	main.presentation_event.connect(func(event_type: String) -> void:
+		if event_type in ["spoon_fired", "egg_damaged"]:
+			strike_at_event[event_type] = spoon.strike_amount
+	)
+
+	main.get_node("Stage/SpoonControls/SpoonButton1").pressed.emit()
+	await main.playback_completed
+	await get_tree().process_frame
+
+	assert_eq(strike_at_event.get("spoon_fired", -1.0), 1.0)
+	assert_eq(strike_at_event.get("egg_damaged", -1.0), 0.0)
+	assert_eq(spoon.strike_amount, 0.0)
+
+
+func test_direct_egg_hit_jolts_the_stage_and_restart_restores_it() -> void:
+	var main := await _add_game()
+	var stage: Control = main.get_node("Stage")
+	var hopper: Control = main.get_node("Hopper")
+	var grandma: Control = main.get_node("GrandmaSidebar")
+	var spoon: Control = main.get_node("Stage/Spoons/Spoon1")
+	var stage_origin := stage.position
+	var hopper_origin := hopper.position
+	var grandma_origin := grandma.position
+	var saw_jolt := false
+
+	main.get_node("Stage/SpoonControls/SpoonButton1").pressed.emit()
+	for _frame_index in range(240):
+		await get_tree().process_frame
+		if not stage.position.is_equal_approx(stage_origin):
+			saw_jolt = true
+			assert_gt(spoon.impact_emphasis, 0.0)
+			assert_eq(hopper.position, hopper_origin)
+			assert_eq(grandma.position, grandma_origin)
+			main.restart()
+			break
+
+	assert_true(saw_jolt)
+	assert_eq(stage.position, stage_origin)
+	assert_eq(spoon.strike_amount, 0.0)
+	assert_eq(spoon.impact_emphasis, 0.0)
+	assert_false(main.is_input_locked())
+
+
+func test_reduced_motion_keeps_direct_egg_hit_stage_still() -> void:
+	var main := await _add_game()
+	main.set_reduced_motion(true)
+	var stage: Control = main.get_node("Stage")
+	var stage_origin := stage.position
+
+	main.get_node("Stage/SpoonControls/SpoonButton1").pressed.emit()
+	await main.playback_completed
+	await get_tree().process_frame
+
+	assert_eq(stage.position, stage_origin)
+
+
+func test_egg_hit_uses_a_dedicated_non_empty_shell_crack_stream() -> void:
+	var main := await _add_game()
+	var audio_root: Node = main.get_node("TapPresenter/Audio")
+	var shell_hit: AudioStreamPlayer = audio_root.get_node("ShellHit")
+	var generic_impact: AudioStreamPlayer = audio_root.get_node("Impact")
+
+	assert_not_null(shell_hit.stream)
+	assert_gt(shell_hit.stream.data.size(), 1000)
+	assert_ne(shell_hit.stream.data, generic_impact.stream.data)
+
+
 func test_pink_spoon_opens_sparrow_and_drops_spoonbill_from_hopper_into_pink_cup() -> void:
 	var main := await _add_game()
 	main.set_reduced_motion(true)
