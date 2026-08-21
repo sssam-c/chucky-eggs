@@ -17,6 +17,8 @@ const PLOVER_TOUGHNESS := 6
 const PLOVER_POINTS := 4
 const SPOONBILL_TOUGHNESS := 5
 const SPOONBILL_POINTS := 4
+const WOODPECKER_TOUGHNESS := 4
+const WOODPECKER_POINTS := 2
 const QUAIL_TOUGHNESS := 2
 const QUAIL_POINTS := 1
 const MALEO_TOUGHNESS := 6
@@ -633,6 +635,13 @@ static func egg_definition(kind: String) -> Dictionary:
 			return {"kind": kind, "toughness": PLOVER_TOUGHNESS, "points": PLOVER_POINTS, "effect": "screen_left"}
 		"spoonbill":
 			return {"kind": kind, "toughness": SPOONBILL_TOUGHNESS, "points": SPOONBILL_POINTS, "effect": "pink_weakness"}
+		"woodpecker":
+			return {
+				"kind": kind,
+				"toughness": WOODPECKER_TOUGHNESS,
+				"points": WOODPECKER_POINTS,
+				"effect": "break_tap_right",
+			}
 		"quail":
 			return {
 				"kind": kind, "toughness": QUAIL_TOUGHNESS, "points": QUAIL_POINTS,

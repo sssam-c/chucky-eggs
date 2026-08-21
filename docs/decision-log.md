@@ -814,6 +814,16 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D075 only where it fixes one authored order, one round, and defers all flock progression. D075's tabletop rules and all later combo and presentation decisions remain accepted. New egg identities, shops, cash, removals, quality, and permanent progression remain deferred.
 
+## D083 — Add Woodpecker as the first reward-only break effect
+
+**Status:** accepted
+
+**Decision:** Add Woodpecker to the between-round reward pool but not the fixed Round 1 flock. Its egg has 4 toughness and 2 Yolk. When it opens, it fires the occupied spoon immediately to its right once for free. Resolve that spoon's own colour, direct damage, Cuckoo copies, Spoonbill weakness, Plover movement, openings, and further Woodpecker effects normally and sequentially against the resulting live state. Attribute each induced fire to the Woodpecker and prior fire that caused it, keep every resulting opening in the initiating paid tap's combo, defer all hopper refill until the chain ends, and spend only the initiating player tap. At the right edge or beside an empty cup, the effect fires nothing. Present the effect at the egg's base beside its contained Yolk, with no separate trigger badge, using a spoon-plus-right-arrow mark and an On Break tooltip heading.
+
+**Reason:** A rightward break trigger extends the established positional grammar—cup, spoon colour, adjacency, and visible future routing—without adding another board subsystem. Reward-only availability prevents it from distorting the learned Round 1 baseline, while 4 toughness, 2 Yolk, one direction, and empty/edge failure constrain an effect that can otherwise manufacture actions and multiply its own cascade. Explicit sequential attribution preserves causal playback and makes recursive chains deterministic and testable.
+
+**Supersedes:** D075's statement that the current eggs have no hatch effects and D082's five-identity reward pool and deferral of every new identity. D082's fixed twelve-egg Round 1 flock, one reward, thirteen-egg Round 2, seed ownership, 12 Hunger, and all unrelated tabletop rules remain accepted.
+
 <!--
 Copy for the next entry:
 

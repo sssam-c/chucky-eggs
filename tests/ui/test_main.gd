@@ -155,6 +155,22 @@ func test_egg_face_uses_toughness_as_the_temporal_information_divider() -> void:
 		0.01
 	)
 
+	egg_visual.set_egg({
+		"kind": "woodpecker", "toughness": 4, "max_toughness": 4, "points": 2,
+	})
+	await get_tree().process_frame
+	assert_eq(egg_visual.effect_emblem(), "tap_right")
+	assert_eq(egg_visual.effect_layout_region(), "crack")
+	assert_gt(
+		egg_visual.crack_effect_icon_local_position().y,
+		egg_visual.toughness_local_position().y
+	)
+	assert_ne(egg_visual.species_icon_shape(), "round_comb")
+	var woodpecker_card: Control = egg_visual.make_tooltip_card()
+	add_child_autofree(woodpecker_card)
+	assert_eq(woodpecker_card.visible_effect_sections(), ["ON BREAK EFFECTS"])
+	assert_string_contains(woodpecker_card.card_text(), "fires the spoon immediately to its right")
+
 
 func test_cuckoo_echo_uses_lateral_marks_outside_both_temporal_lanes() -> void:
 	var egg_visual := EggVisual.new()

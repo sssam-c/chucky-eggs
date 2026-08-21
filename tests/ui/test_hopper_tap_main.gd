@@ -1,6 +1,7 @@
 extends GutTest
 
 const MainScene = preload("res://src/ui/hopper_tap_main.tscn")
+const HopperTapSession = preload("res://src/game/hopper_tap_session.gd")
 
 
 func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> void:
@@ -338,6 +339,83 @@ func test_run_seed_and_round_are_visible_with_distinct_retry_and_new_seed_action
 	assert_eq(main.get_node("Restart").text, "RETRY SEED")
 	assert_eq(main.get_node("NewSeed").text, "NEW SEED")
 	assert_false(main.get_node("RewardOverlay").visible)
+
+
+func test_debug_picker_can_start_an_exact_woodpecker_round() -> void:
+	var main := await _add_game()
+	var picker: Control = main.get_node("DevEggPicker")
+	var dev_button: Button = main.get_node("DevEggs")
+
+	assert_true(InputMap.has_action("dev_choose_eggs"))
+	assert_true(dev_button.visible)
+	assert_eq(dev_button.text, "DEV EGGS  F4")
+	dev_button.pressed.emit()
+	assert_true(picker.visible)
+	assert_true(picker.allowed_egg_kinds().has("woodpecker"))
+	assert_eq(picker.get_node("Panel/Margin/Layout/Title").text, "DEV ROUND SETUP")
+	assert_eq(
+		picker.get_node("Panel/Margin/Layout/Setup/ConditionLabel").text,
+		"STARTING HUNGER"
+	)
+
+	var dev_eggs: Array[String] = [
+		"chicken", "woodpecker", "spoonbill", "cuckoo", "woodpecker", "sparrow",
+	]
+	picker.set_egg_order(dev_eggs)
+	picker.set_setup_value(17)
+	picker.submit_selection()
+	await get_tree().process_frame
+	var state: Dictionary = main.game_state()
+
+	assert_false(picker.visible)
+	assert_true(state.dev_mode)
+	assert_eq(state.hunger, 17)
+	assert_eq(state.round_order, dev_eggs)
+	assert_eq(state.slots.map(func(egg: Dictionary) -> String: return String(egg.kind)),
+		dev_eggs.slice(0, 5))
+	assert_eq(state.pipe[0].kind, "sparrow")
+	assert_eq(main.get_node("RunStatus/Round").text, "DEV ROUND")
+	assert_eq(main.get_node("RunStatus/Seed").text, "EXACT EGG ORDER")
+	assert_string_contains(main.get_node("RoundAnnouncement").text, "17 HUNGER")
+
+	main.get_node("Restart").pressed.emit()
+	assert_true(main.game_state().dev_mode)
+	assert_eq(main.game_state().round_order, dev_eggs)
+	assert_eq(main.game_state().hunger, 17)
+
+
+func test_current_dev_picker_fits_supported_viewports() -> void:
+	for viewport_size: Vector2i in [Vector2i(1280, 720), Vector2i(1024, 576)]:
+		var viewport := SubViewport.new()
+		viewport.size = viewport_size
+		add_child_autofree(viewport)
+		var main: Control = MainScene.instantiate()
+		viewport.add_child(main)
+		await get_tree().process_frame
+		assert_true(main.open_dev_egg_picker())
+		await get_tree().process_frame
+		var picker: Control = main.get_node("DevEggPicker")
+		var viewport_rect := Rect2(Vector2.ZERO, Vector2(viewport_size))
+		assert_true(viewport_rect.encloses(picker.get_node("Panel").get_rect()))
+		assert_eq(
+			picker.get_node("Panel/Margin/Layout/Body/Species/SpeciesButtons").get_child_count(),
+			HopperTapSession.REWARD_POOL.size()
+		)
+
+
+func test_woodpecker_reward_card_shows_break_tap_right_profile() -> void:
+	var main := await _add_game()
+	var choice: Button = main.get_node("RewardOverlay/Card/Choices/Choice1")
+
+	choice.render_offer("woodpecker")
+	main.get_node("RewardOverlay").visible = true
+	await get_tree().process_frame
+
+	assert_eq(choice.egg_kind, "woodpecker")
+	assert_string_contains(choice.card_text(), "4 TOUGHNESS")
+	assert_string_contains(choice.card_text(), "2 YOLK")
+	assert_string_contains(choice.card_text(), "On break, fires the spoon immediately to its right.")
+	assert_eq(choice.get_node("Egg").effect_emblem(), "tap_right")
 
 
 func test_round_one_success_offers_three_eggs_and_choice_starts_harder_round_two() -> void:

@@ -201,6 +201,43 @@ theme_override_font_sizes/font_size = 14
 text = "Retreat — after surviving a direct hit, moves one bay left."
 autowrap_mode = 2
 
+[node name="OnBreakSection" type="PanelContainer" parent="Margin/Stack"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("EffectPanel")
+
+[node name="Margin" type="MarginContainer" parent="Margin/Stack/OnBreakSection"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 11
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 11
+theme_override_constants/margin_bottom = 9
+
+[node name="Stack" type="VBoxContainer" parent="Margin/Stack/OnBreakSection/Margin"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 3
+
+[node name="Heading" type="Label" parent="Margin/Stack/OnBreakSection/Margin/Stack"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.88, 0.66, 0.28, 1)
+theme_override_font_sizes/font_size = 12
+text = "ON BREAK EFFECTS"
+
+[node name="OnBreakBody" type="Label" parent="Margin/Stack/OnBreakSection/Margin/Stack"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(304, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.92, 0.89, 0.82, 1)
+theme_override_font_sizes/font_size = 14
+text = "Tap right — fires the spoon immediately to its right for free."
+autowrap_mode = 2
+
 [node name="OtherSection" type="PanelContainer" parent="Margin/Stack"]
 unique_name_in_owner = true
 visible = false

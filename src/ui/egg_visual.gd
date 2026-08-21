@@ -262,6 +262,8 @@ func effect_emblem() -> String:
 			return "screen_left"
 		"spoonbill":
 			return "spark"
+		"woodpecker":
+			return "tap_right"
 		"quail":
 			return "appetiser"
 		"maleo":
@@ -283,7 +285,7 @@ func effect_layout_region() -> String:
 			return "adjacency"
 		"screen_left", "spark", "oily", "nostalgic", "gloopy":
 			return "tap"
-		"appetiser", "sulphurous", "shockwave":
+		"tap_right", "appetiser", "sulphurous", "shockwave":
 			return "crack"
 	return ""
 
@@ -349,6 +351,8 @@ func _draw_effect_emblem(emblem: String, center: Vector2, mark_scale: float) -> 
 			_draw_left_emblem(center, mark_scale)
 		"spark":
 			_draw_spark_emblem(center, mark_scale)
+		"tap_right":
+			_draw_tap_right_emblem(center, mark_scale)
 		"appetiser":
 			_draw_appetiser_emblem(center, mark_scale * 0.84)
 		"sulphurous":
@@ -491,6 +495,27 @@ func _draw_spark_emblem(center: Vector2, mark_scale: float) -> void:
 	draw_colored_polygon(points, glow)
 	draw_polyline(points, ink, 2.5 * mark_scale, true)
 	draw_circle(center, 2.5 * mark_scale, Color("fff0cf"))
+
+
+func _draw_tap_right_emblem(center: Vector2, mark_scale: float) -> void:
+	var ink := effect_icon_color()
+	var line_width := 2.6 * mark_scale
+	# Spoon bowl + shaft distinguishes a triggered tap from a movement arrow.
+	draw_circle(
+		center + Vector2(-8.0, 0.0) * mark_scale,
+		4.2 * mark_scale,
+		ink
+	)
+	draw_line(
+		center + Vector2(-4.0, 0.0) * mark_scale,
+		center + Vector2(9.0, 0.0) * mark_scale,
+		ink, line_width, true
+	)
+	draw_polyline(PackedVector2Array([
+		center + Vector2(4.0, -5.5) * mark_scale,
+		center + Vector2(11.0, 0.0) * mark_scale,
+		center + Vector2(4.0, 5.5) * mark_scale,
+	]), ink, line_width, true)
 
 
 func _draw_appetiser_emblem(center: Vector2, mark_scale: float) -> void:

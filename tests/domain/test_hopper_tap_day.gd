@@ -179,6 +179,112 @@ func test_one_tap_multiplies_the_complete_break_cascade_by_its_egg_count() -> vo
 	assert_eq(day.snapshot().hunger, 95)
 
 
+func test_woodpecker_break_fires_the_right_spoon_for_free_and_joins_the_combo() -> void:
+	var day = HopperTapDay.new([
+		"woodpecker", "sparrow", "chicken", "chicken", "chicken",
+	], 99, 10)
+	for setup_tap in range(3):
+		day.resolve_spoon(0)
+
+	var events: Array[Dictionary] = day.resolve_spoon(0)
+	var fires: Array[Dictionary] = _events_of_type(events, "spoon_fired")
+	var hatches: Array[Dictionary] = _events_of_type(events, "egg_hatched")
+	var delivery: Dictionary = _events_of_type(events, "yolk_delivered")[0]
+
+	assert_eq(_event_types(events), [
+		"spoon_fired", "egg_damaged", "egg_hatched",
+		"spoon_fired", "egg_damaged", "egg_hatched",
+		"yolk_delivered", "tap_spent",
+	])
+	assert_eq(fires.size(), 2)
+	assert_eq(fires[0].cause, "paid_tap")
+	assert_eq(fires[0].slot_index, 0)
+	assert_eq(fires[1].cause, "woodpecker_break")
+	assert_eq(fires[1].slot_index, 1)
+	assert_eq(fires[1].source_slot_index, 0)
+	assert_eq(fires[1].source_egg_instance_id, hatches[0].egg_instance_id)
+	assert_eq(hatches.map(func(event: Dictionary) -> String: return String(event.kind)), [
+		"woodpecker", "sparrow",
+	])
+	assert_eq(hatches.map(func(event: Dictionary) -> int: return int(event.combo_count)), [2, 2])
+	assert_eq(delivery.base_yolks, [2, 1])
+	assert_eq(delivery.combo_multiplier, 2)
+	assert_eq(delivery.total_yolk, 6)
+	assert_eq(_events_of_type(events, "tap_spent").size(), 1)
+	assert_eq(day.snapshot().taps_remaining, 6)
+	assert_eq(day.snapshot().hunger, 93)
+
+
+func test_woodpecker_breaks_chain_right_sequentially_before_refill() -> void:
+	var day = HopperTapDay.new([
+		"woodpecker", "woodpecker", "sparrow", "chicken", "chicken",
+		"spoonbill", "plover", "cuckoo",
+	], 99, 20)
+	for setup_tap in range(3):
+		day.resolve_spoon(1)
+		day.resolve_spoon(0)
+
+	var events: Array[Dictionary] = day.resolve_spoon(0)
+	var fires: Array[Dictionary] = _events_of_type(events, "spoon_fired")
+	var hatches: Array[Dictionary] = _events_of_type(events, "egg_hatched")
+	var entries: Array[Dictionary] = _events_of_type(events, "egg_entered")
+
+	assert_eq(fires.map(func(event: Dictionary) -> int: return int(event.slot_index)), [0, 1, 2])
+	assert_eq(fires.map(func(event: Dictionary) -> String: return String(event.cause)), [
+		"paid_tap", "woodpecker_break", "woodpecker_break",
+	])
+	assert_eq(hatches.map(func(event: Dictionary) -> int: return int(event.slot_index)), [0, 1, 2])
+	assert_eq(hatches.map(func(event: Dictionary) -> String: return String(event.kind)), [
+		"woodpecker", "woodpecker", "sparrow",
+	])
+	assert_eq(_events_of_type(events, "yolk_delivered")[0].total_yolk, 15)
+	assert_eq(entries.map(func(event: Dictionary) -> int: return int(event.slot_index)), [0, 1, 2])
+	assert_eq(entries.map(func(event: Dictionary) -> String: return String(event.egg.kind)), [
+		"spoonbill", "plover", "cuckoo",
+	])
+	assert_gt(_event_types(events).find("egg_entered"), _event_types(events).rfind("spoon_fired"))
+	assert_eq(_events_of_type(events, "tap_spent").size(), 1)
+
+
+func test_woodpecker_at_the_right_edge_has_no_tap_target() -> void:
+	var day = HopperTapDay.new([
+		"chicken", "chicken", "chicken", "chicken", "woodpecker",
+	], 99, 10)
+	for setup_tap in range(3):
+		day.resolve_spoon(4)
+
+	var events: Array[Dictionary] = day.resolve_spoon(4)
+
+	assert_eq(_events_of_type(events, "spoon_fired").size(), 1)
+	assert_eq(_events_of_type(events, "egg_hatched")[0].kind, "woodpecker")
+	assert_eq(_events_of_type(events, "yolk_delivered")[0].total_yolk, 2)
+	assert_eq(_events_of_type(events, "tap_spent").size(), 1)
+
+
+func test_woodpecker_uses_the_right_spoons_colour_and_cuckoo_reactions() -> void:
+	var day = HopperTapDay.new([
+		"chicken", "woodpecker", "spoonbill", "cuckoo", "chicken",
+	], 99, 10)
+	for setup_tap in range(3):
+		day.resolve_spoon(1)
+
+	var events: Array[Dictionary] = day.resolve_spoon(1)
+	var fires: Array[Dictionary] = _events_of_type(events, "spoon_fired")
+	var damages: Array[Dictionary] = _events_of_type(events, "egg_damaged")
+
+	assert_eq(fires.map(func(event: Dictionary) -> String: return String(event.spoon_color)), [
+		"blue", "pink",
+	])
+	assert_eq(damages.map(func(event: Dictionary) -> String: return String(event.kind)), [
+		"woodpecker", "spoonbill", "cuckoo",
+	])
+	assert_eq(damages.map(func(event: Dictionary) -> int: return int(event.damage_amount)), [
+		1, 2, 2,
+	])
+	assert_eq(day.snapshot().slots[2].toughness, 3)
+	assert_eq(day.snapshot().slots[3].toughness, 2)
+
+
 func test_hunger_phase_carries_no_combo_state_between_taps() -> void:
 	var day = HopperTapDay.new([
 		"chicken", "sparrow", "chicken", "chicken", "chicken",

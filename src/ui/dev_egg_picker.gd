@@ -9,29 +9,24 @@ const ProducerFlock = preload("res://src/domain/producer_flock.gd")
 const MAX_STARTING_BELT_CONDITION := 99
 
 @onready var _species_buttons: GridContainer = %SpeciesButtons
+@onready var _title: Label = $Panel/Margin/Layout/Title
+@onready var _instructions: Label = $Panel/Margin/Layout/Instructions
 @onready var _egg_order_list: ItemList = %EggOrder
 @onready var _move_up: Button = %MoveUp
 @onready var _move_down: Button = %MoveDown
 @onready var _remove: Button = %Remove
 @onready var _condition: SpinBox = %Condition
+@onready var _condition_label: Label = $Panel/Margin/Layout/Setup/ConditionLabel
 @onready var _total: Label = %Total
 @onready var _cancel: Button = %Cancel
 @onready var _start: Button = %Start
 
 var _egg_order: Array[String] = []
+var _allowed_egg_kinds: Array[String] = ProducerFlock.KNOWN_KINDS.duplicate()
 
 
 func _ready() -> void:
-	for kind: String in ProducerFlock.KNOWN_KINDS:
-		var display_name := kind.capitalize()
-		var add_button := Button.new()
-		add_button.name = "Add%s" % kind.capitalize()
-		add_button.text = "+  %s" % display_name.to_upper()
-		add_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		add_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		add_button.accessibility_name = "Add %s egg" % display_name
-		add_button.pressed.connect(add_egg.bind(kind))
-		_species_buttons.add_child(add_button)
+	_rebuild_species_buttons()
 
 	_move_up.pressed.connect(_move_selected.bind(-1))
 	_move_down.pressed.connect(_move_selected.bind(1))
@@ -43,6 +38,48 @@ func _ready() -> void:
 	_condition.max_value = float(MAX_STARTING_BELT_CONDITION)
 	_condition.value = float(ChickenDay.DEFAULT_BELT_CONDITION)
 	_refresh_order()
+
+
+func configure_mode(
+	allowed_kinds: Array[String],
+	title_text: String,
+	instruction_text: String,
+	value_label_text: String,
+	value_accessibility_name: String,
+	start_button_text: String,
+	default_value: int
+) -> void:
+	_allowed_egg_kinds = allowed_kinds.duplicate()
+	_title.text = title_text
+	_instructions.text = instruction_text
+	_condition_label.text = value_label_text
+	_condition.accessibility_name = value_accessibility_name
+	_start.text = start_button_text
+	set_setup_value(default_value)
+	_rebuild_species_buttons()
+	var retained_order := _egg_order.duplicate()
+	set_egg_order(retained_order)
+
+
+func allowed_egg_kinds() -> Array[String]:
+	return _allowed_egg_kinds.duplicate()
+
+
+func _rebuild_species_buttons() -> void:
+	if not is_instance_valid(_species_buttons):
+		return
+	for child: Node in _species_buttons.get_children():
+		child.free()
+	for kind: String in _allowed_egg_kinds:
+		var display_name := kind.capitalize()
+		var add_button := Button.new()
+		add_button.name = "Add%s" % kind.capitalize()
+		add_button.text = "+  %s" % display_name.to_upper()
+		add_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		add_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		add_button.accessibility_name = "Add %s egg" % display_name
+		add_button.pressed.connect(add_egg.bind(kind))
+		_species_buttons.add_child(add_button)
 
 
 func open_with(
@@ -62,7 +99,7 @@ func set_egg_order(egg_kinds: Array) -> void:
 	_egg_order.clear()
 	for kind_value in egg_kinds:
 		var kind := String(kind_value)
-		if kind in ProducerFlock.KNOWN_KINDS:
+		if kind in _allowed_egg_kinds:
 			_egg_order.append(kind)
 	_refresh_order(0)
 
@@ -72,7 +109,7 @@ func egg_order() -> Array[String]:
 
 
 func add_egg(kind: String) -> void:
-	if kind not in ProducerFlock.KNOWN_KINDS:
+	if kind not in _allowed_egg_kinds:
 		return
 	_egg_order.append(kind)
 	_refresh_order(_egg_order.size() - 1)
@@ -96,10 +133,18 @@ func remove_egg(index: int) -> void:
 
 
 func set_starting_belt_condition(value: int) -> void:
-	_condition.value = clampi(value, 1, MAX_STARTING_BELT_CONDITION)
+	set_setup_value(value)
 
 
 func starting_belt_condition() -> int:
+	return setup_value()
+
+
+func set_setup_value(value: int) -> void:
+	_condition.value = clampi(value, 1, MAX_STARTING_BELT_CONDITION)
+
+
+func setup_value() -> int:
 	return int(_condition.value)
 
 

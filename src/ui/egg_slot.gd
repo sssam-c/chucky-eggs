@@ -215,6 +215,8 @@ func _effect_description(egg: Dictionary) -> String:
 			descriptions.append("a surviving direct hit retreats it one bay to the left")
 		"spoonbill":
 			descriptions.append("its spark weakness takes 2 damage from Pink's direct strike")
+		"woodpecker":
+			descriptions.append("on break, fires the spoon immediately to its right")
 	for description: Variant in egg.get("all_other_effects", []):
 		descriptions.append(String(description))
 	return "; ".join(descriptions) if not descriptions.is_empty() else "no extra effect"

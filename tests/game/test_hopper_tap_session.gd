@@ -1,6 +1,7 @@
 extends GutTest
 
 const HopperTapSession = preload("res://src/game/hopper_tap_session.gd")
+const ChickenDay = preload("res://src/domain/chicken_day.gd")
 
 
 class IdentityShuffler:
@@ -101,6 +102,16 @@ func test_reward_is_rejected_before_round_one_success() -> void:
 	assert_eq(session.state().round_number, 1)
 
 
+func test_woodpecker_is_reward_only_with_four_toughness_and_two_yolk() -> void:
+	assert_false(HopperTapSession.AUTHORED_EGGS.has("woodpecker"))
+	assert_false(HopperTapSession.SEEDED_BASE_EGGS.has("woodpecker"))
+	assert_true(HopperTapSession.REWARD_POOL.has("woodpecker"))
+	var definition: Dictionary = ChickenDay.egg_definition("woodpecker")
+	assert_eq(definition.toughness, 4)
+	assert_eq(definition.points, 2)
+	assert_eq(definition.effect, "break_tap_right")
+
+
 func test_round_one_reward_adds_one_egg_and_starts_harder_round_two() -> void:
 	var session = HopperTapSession.new(
 		HopperTapSession.DEFAULT_RUN_SEED, IdentityShuffler.new()
@@ -142,6 +153,35 @@ func test_retry_round_two_preserves_seed_reward_and_order() -> void:
 	assert_eq(after.round_number, 2)
 	assert_eq(after.hunger, 12)
 	assert_eq(_egg_kinds(after), _egg_kinds(before))
+
+
+func test_dev_session_starts_and_restarts_an_exact_ordered_round() -> void:
+	var dev_eggs: Array[String] = [
+		"chicken", "woodpecker", "spoonbill", "cuckoo", "woodpecker", "sparrow",
+	]
+	var session = HopperTapSession.create_dev_session(dev_eggs, 17)
+	var state: Dictionary = session.state()
+
+	assert_true(state.dev_mode)
+	assert_eq(state.dev_starting_eggs, dev_eggs)
+	assert_eq(state.dev_starting_hunger, 17)
+	assert_eq(state.round_number, 2)
+	assert_eq(state.hunger, 17)
+	assert_eq(state.round_starting_hunger, 17)
+	assert_eq(state.round_order, dev_eggs)
+	assert_eq(_egg_kinds(state), dev_eggs)
+
+	session.submit_spoon(0)
+	session.restart()
+	state = session.state()
+	assert_true(state.dev_mode)
+	assert_eq(state.hunger, 17)
+	assert_eq(state.round_order, dev_eggs)
+	assert_eq(_egg_kinds(state), dev_eggs)
+
+	session.start_new_run(4812)
+	assert_false(session.state().dev_mode)
+	assert_eq(session.state().run_seed, 4812)
 
 
 func _win_current_round(session) -> void:

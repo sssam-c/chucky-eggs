@@ -54,6 +54,8 @@ func _effect_text(kind: String) -> String:
 			return "RETREAT  •  SURVIVING DIRECT HITS MOVE IT LEFT"
 		"spoonbill":
 			return "SPARK WEAKNESS  •  PINK DIRECT HITS DEAL 2"
+		"woodpecker":
+			return "ON BREAK  •  FIRES THE SPOON IMMEDIATELY TO ITS RIGHT"
 		"quail":
 			return "APPETISER  •  DOUBLES THE NEXT EGG'S IMMEDIATE YOLK"
 		"maleo":

@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://src/ui/hopper_tap_main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_slot.tscn" id="2_egg"]
@@ -10,6 +10,7 @@
 [ext_resource type="Script" path="res://src/ui/workshop_backdrop.gd" id="8_backdrop"]
 [ext_resource type="PackedScene" path="res://src/ui/yolk_combo_display.tscn" id="9_yolk"]
 [ext_resource type="PackedScene" path="res://src/ui/egg_reward_button.tscn" id="10_reward"]
+[ext_resource type="PackedScene" path="res://src/ui/dev_egg_picker.tscn" id="11_dev_picker"]
 
 [sub_resource type="StyleBoxFlat" id="HopperPanel"]
 bg_color = Color(0.055, 0.043, 0.035, 0.98)
@@ -703,6 +704,19 @@ offset_top = 18.0
 offset_right = 860.0
 offset_bottom = 60.0
 text = "NEW SEED"
+
+[node name="DevEggs" type="Button" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 1018.0
+offset_top = 18.0
+offset_right = 1268.0
+offset_bottom = 60.0
+text = "DEV EGGS  F4"
+
+[node name="DevEggPicker" parent="." instance=ExtResource("11_dev_picker")]
+unique_name_in_owner = true
 
 [node name="TapPresenter" type="Node" parent="."]
 unique_name_in_owner = true

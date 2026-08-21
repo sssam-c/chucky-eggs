@@ -46,5 +46,7 @@ func _effect_description(effect: String) -> String:
 			return "After surviving a direct tap, swaps one cup left."
 		"pink_weakness":
 			return "A direct Pink tap deals 2 damage."
+		"break_tap_right":
+			return "On break, fires the spoon immediately to its right."
 		_:
 			return "No additional effect."

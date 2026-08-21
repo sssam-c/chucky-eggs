@@ -10,7 +10,7 @@ The core action is pressing a large colour-and-shape button, seeing its neutral 
 
 Every cup simultaneously determines spoon colour, neighbours, and the destination of a future hopper egg. Prefer egg rules that change the value of those relationships over rules that merely increase a number. A strategically healthy tap may trade immediate Yolk for a better adjacency, colour match, or refill.
 
-Keep one compact rule per egg identity where possible. Chicken and Sparrow establish the baseline; Cuckoo rewards neighbouring taps, Spoonbill values Pink, and Plover changes position. New eggs should interact with at least one existing positional axis without requiring a separate subsystem.
+Keep one compact rule per egg identity where possible. Chicken and Sparrow establish the baseline; Cuckoo rewards neighbouring taps, Spoonbill values Pink, Plover changes position, and reward-only Woodpecker turns a break into one rightward spoon fire. New eggs should interact with at least one existing positional axis without requiring a separate subsystem.
 
 ## Five taps make one tactical round
 
@@ -50,7 +50,7 @@ The movement must communicate a resolver-authored destination. Animation never c
 
 The domain owns direct damage, Cuckoo copies, hatch order, Plover movement, Yolk, refills, paid taps, Hunger phases, and end states. UI submits one spoon request. Presentation plays the ordered facts, locks further input until completion, and cancels cleanly on restart or replacement.
 
-Free reactions create efficiency but never spend hidden taps. Each egg opens at most once, each vacancy receives at most one hopper egg, and success after a complete cascade takes precedence over Grandma's response.
+Free reactions create efficiency but never spend hidden taps. Because Woodpecker can convert one break into a full spoon tap and chain into further Woodpeckers, keep it directional, reward-only, and modest in printed Yolk while testing whether it dominates every reward choice. Resolve each induced spoon fire as an explicitly attributed event against the resulting live board; do not batch away the order. Each egg opens at most once, each vacancy receives at most one hopper egg, and success after a complete cascade takes precedence over Grandma's response.
 
 ## Pressure must create drama, not inevitability
 
@@ -64,7 +64,7 @@ A run seed may change round order and reward offers, but it must not obscure egg
 
 ## Progression changes the next plan
 
-The first progression reward adds one known egg to the next round's flock. Its value is the positional plan it enables, not an abstract power rating. Keep the reward choice separate from taps, make the harder round explicit before it begins, and prefer sidegrades that invite different routes over upgrades that are always correct.
+The first progression reward adds one known egg to the next round's flock. Its value is the positional plan it enables, not an abstract power rating. Keep the reward choice separate from taps, make the harder round explicit before it begins, and prefer sidegrades that invite different routes over upgrades that are always correct. Woodpecker is the first deliberate stress test: its rightward chain should create arrangement-specific plans, not become an automatic pick for free action economy.
 
 ## Decisions before decoration
 

@@ -6,6 +6,10 @@ signal playback_completed
 
 const HopperTapSession = preload("res://src/game/hopper_tap_session.gd")
 
+const DEV_DEFAULT_EGGS: Array[String] = [
+	"chicken", "woodpecker", "spoonbill", "cuckoo", "woodpecker", "sparrow",
+]
+
 const APPEARANCES := [
 	{"color": Color("c43b36"), "symbol": "diamond"},
 	{"color": Color("287cbd"), "symbol": "circle"},
@@ -36,6 +40,8 @@ const APPEARANCES := [
 @onready var _reward_overlay: Control = %RewardOverlay
 @onready var _reward_summary: Label = %RewardSummary
 @onready var _reward_choices: Array[Button] = [%Choice1, %Choice2, %Choice3]
+@onready var _dev_eggs_button: Button = %DevEggs
+@onready var _dev_egg_picker: Control = %DevEggPicker
 @onready var _presenter: Node = %TapPresenter
 
 var _session = HopperTapSession.new()
@@ -45,6 +51,19 @@ var _request_generation := 0
 
 func _ready() -> void:
 	var state: Dictionary = _session.state()
+	_dev_eggs_button.visible = OS.is_debug_build()
+	_dev_eggs_button.pressed.connect(open_dev_egg_picker)
+	_dev_egg_picker.configure_mode(
+		HopperTapSession.REWARD_POOL,
+		"DEV ROUND SETUP",
+		"Add eggs, then arrange their exact cup and hopper order. Egg 01 starts in Cup 1.",
+		"STARTING HUNGER",
+		"Starting Hunger",
+		"START DEV ROUND",
+		HopperTapSession.ROUND_TWO_HUNGER
+	)
+	_dev_egg_picker.selection_submitted.connect(_on_dev_eggs_selected)
+	_dev_egg_picker.dismissed.connect(_on_dev_egg_picker_dismissed)
 	for slot_index in range(_slots.size()):
 		var spoon: Dictionary = state.spoons[slot_index]
 		var appearance: Dictionary = APPEARANCES[slot_index]
@@ -87,6 +106,15 @@ func _ready() -> void:
 	_spoon_buttons[0].grab_focus.call_deferred()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if (
+		OS.is_debug_build()
+		and event.is_action_pressed("dev_choose_eggs", false)
+		and open_dev_egg_picker()
+	):
+		get_viewport().set_input_as_handled()
+
+
 func game_state() -> Dictionary:
 	return _session.state()
 
@@ -121,6 +149,7 @@ func _replace_session_view() -> void:
 	_input_locked = false
 	_result_panel.visible = false
 	_reward_overlay.visible = false
+	_dev_egg_picker.hide()
 
 
 func _finish_session_replacement() -> void:
@@ -128,9 +157,67 @@ func _finish_session_replacement() -> void:
 	_spoon_buttons[0].grab_focus.call_deferred()
 
 
+func open_dev_egg_picker() -> bool:
+	if not OS.is_debug_build() or _input_locked or _dev_egg_picker.visible:
+		return false
+	var state: Dictionary = _session.state()
+	var egg_kinds: Array[String] = (
+		state.dev_starting_eggs.duplicate()
+		if bool(state.dev_mode)
+		else DEV_DEFAULT_EGGS.duplicate()
+	)
+	var starting_hunger := (
+		int(state.dev_starting_hunger)
+		if bool(state.dev_mode)
+		else HopperTapSession.ROUND_TWO_HUNGER
+	)
+	_set_spoons_available(false)
+	_dev_egg_picker.open_with(egg_kinds, starting_hunger)
+	return true
+
+
+func start_dev_round_with_eggs(
+	egg_kinds: Array[String], starting_hunger: int
+) -> bool:
+	if not OS.is_debug_build() or egg_kinds.is_empty() or starting_hunger < 1:
+		return false
+	for kind: String in egg_kinds:
+		if kind not in HopperTapSession.REWARD_POOL:
+			return false
+	_replace_session_view()
+	_session = HopperTapSession.create_dev_session(egg_kinds, starting_hunger)
+	_finish_session_replacement()
+	return true
+
+
+func is_dev_mode() -> bool:
+	return bool(_session.state().dev_mode)
+
+
+func dev_starting_egg_kinds() -> Array[String]:
+	return _session.state().dev_starting_eggs.duplicate()
+
+
+func dev_starting_hunger() -> int:
+	return int(_session.state().dev_starting_hunger)
+
+
+func _on_dev_eggs_selected(egg_kinds: Array[String], starting_hunger: int) -> void:
+	start_dev_round_with_eggs(egg_kinds, starting_hunger)
+
+
+func _on_dev_egg_picker_dismissed() -> void:
+	_render()
+	_spoon_buttons[0].grab_focus.call_deferred()
+
+
 func _on_result_action() -> void:
 	var state: Dictionary = _session.state()
-	if not bool(state.run_succeeded) and int(state.round_number) == 2:
+	if bool(state.dev_mode):
+		_replace_session_view()
+		_session.restart()
+		_finish_session_replacement()
+	elif not bool(state.run_succeeded) and int(state.round_number) == 2:
 		_replace_session_view()
 		_session.retry_round()
 		_finish_session_replacement()
@@ -191,13 +278,23 @@ func _render() -> void:
 		int(state.hunger), int(state.next_hunger_increase),
 		int(state.round_starting_hunger)
 	)
-	_round_label.text = "ROUND %d / %d" % [
-		int(state.round_number), int(state.round_count),
-	]
-	_seed_label.text = "SEED %d" % int(state.run_seed)
-	_round_announcement.text = "ROUND %d  •  %d HUNGER  •  %d EGGS" % [
-		int(state.round_number), int(state.round_starting_hunger), int(state.round_egg_count),
-	]
+	if bool(state.dev_mode):
+		_round_label.text = "DEV ROUND"
+		_seed_label.text = "EXACT EGG ORDER"
+		_round_announcement.text = "DEV ROUND  •  %d HUNGER  •  %d EGGS" % [
+			int(state.round_starting_hunger), int(state.round_egg_count),
+		]
+		_restart_button.text = "RETRY DEV"
+	else:
+		_round_label.text = "ROUND %d / %d" % [
+			int(state.round_number), int(state.round_count),
+		]
+		_seed_label.text = "SEED %d" % int(state.run_seed)
+		_round_announcement.text = "ROUND %d  •  %d HUNGER  •  %d EGGS" % [
+			int(state.round_number), int(state.round_starting_hunger),
+			int(state.round_egg_count),
+		]
+		_restart_button.text = "RETRY SEED"
 	_tap_pips_label.text = _tap_pips(int(state.taps_remaining), int(state.taps_per_phase))
 	_yolk_combo_display.reset_transient()
 	_hopper_count_label.text = "%d WAITING" % int(state.hopper_egg_count)
@@ -221,7 +318,13 @@ func _render() -> void:
 	_render_reward(state)
 	_result_panel.visible = bool(state.run_ended)
 	if state.run_ended:
-		if state.run_succeeded:
+		if state.dev_mode:
+			_result_label.text = (
+				"DEV ROUND COMPLETE" if state.run_succeeded
+				else "DEV ROUND FAILED\nHUNGER %d" % int(state.hunger)
+			)
+			_result_restart_button.text = "RETRY DEV ROUND"
+		elif state.run_succeeded:
 			_result_label.text = "TWO-ROUND RUN COMPLETE\nSEED %d" % int(state.run_seed)
 			_result_restart_button.text = "START NEW SEED"
 		else:

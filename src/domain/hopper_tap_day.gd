@@ -29,6 +29,7 @@ var _succeeded := false
 var _next_egg_instance_id := 1
 var _resolved_egg_ids: Dictionary = {}
 var _vacancy_slots_in_hatch_order: Array[int] = []
+var _next_spoon_fire_id := 1
 
 
 func _init(
@@ -82,20 +83,15 @@ func resolve_spoon(slot_index: int) -> Array[Dictionary]:
 	if _slots[slot_index].is_empty():
 		return [{"type": "spoon_rejected", "reason": "empty_slot"}]
 
-	var spoon: Dictionary = SPOONS[slot_index]
-	var events: Array[Dictionary] = [{
-		"type": "spoon_fired",
-		"spoon_id": String(spoon.id),
-		"spoon_color": String(spoon.color),
-		"slot_index": slot_index,
-	}]
+	var events: Array[Dictionary] = []
 	_resolved_egg_ids.clear()
 	_vacancy_slots_in_hatch_order.clear()
-
-	var damage_amount := _direct_damage_amount(slot_index, String(spoon.color))
-	_apply_damage(slot_index, damage_amount, "spoon", slot_index, String(spoon.color), events)
-	_apply_cuckoo_echoes(slot_index, damage_amount, String(spoon.color), events)
-	var hatch_result: Dictionary = _resolve_hatches(events)
+	_next_spoon_fire_id = 1
+	var hatched_eggs: Array[Dictionary] = []
+	_resolve_spoon_fire(
+		slot_index, "paid_tap", {}, 0, events, hatched_eggs
+	)
+	var hatch_result: Dictionary = _finalize_hatches(events, hatched_eggs)
 	var total_yolk := int(hatch_result.total_yolk)
 	if total_yolk > 0:
 		var hunger_before := _hunger
@@ -110,7 +106,6 @@ func resolve_spoon(slot_index: int) -> Array[Dictionary]:
 			"hunger_before": hunger_before,
 			"hunger": _hunger,
 		})
-	_retreat_surviving_direct_plover(slot_index, events)
 	_refill_vacancies(events)
 
 	_taps_remaining = maxi(_taps_remaining - 1, 0)
@@ -130,6 +125,58 @@ func resolve_spoon(slot_index: int) -> Array[Dictionary]:
 	return events
 
 
+func _resolve_spoon_fire(
+	slot_index: int,
+	cause: String,
+	source_hatch: Dictionary,
+	parent_fire_id: int,
+	events: Array[Dictionary],
+	all_hatched_eggs: Array[Dictionary]
+) -> void:
+	assert(not _slots[slot_index].is_empty(), "A spoon can only fire into an occupied cup.")
+	var spoon: Dictionary = SPOONS[slot_index]
+	var fire_id := _next_spoon_fire_id
+	_next_spoon_fire_id += 1
+	var fire_event := {
+		"type": "spoon_fired",
+		"fire_id": fire_id,
+		"parent_fire_id": parent_fire_id,
+		"cause": cause,
+		"spoon_id": String(spoon.id),
+		"spoon_color": String(spoon.color),
+		"slot_index": slot_index,
+	}
+	if not source_hatch.is_empty():
+		fire_event["source_egg_instance_id"] = int(source_hatch.egg_instance_id)
+		fire_event["source_slot_index"] = int(source_hatch.slot_index)
+	events.append(fire_event)
+
+	var spoon_color := String(spoon.color)
+	var damage_amount := _direct_damage_amount(slot_index, spoon_color)
+	_apply_damage(
+		slot_index, damage_amount, "spoon", slot_index, spoon_color, fire_id, events
+	)
+	_apply_cuckoo_echoes(slot_index, damage_amount, spoon_color, fire_id, events)
+	var newly_hatched: Array[Dictionary] = _resolve_hatches(events, fire_id)
+	all_hatched_eggs.append_array(newly_hatched)
+	_retreat_surviving_direct_plover(slot_index, events)
+
+	for hatched_egg: Dictionary in newly_hatched:
+		if String(hatched_egg.kind) != "woodpecker":
+			continue
+		var right_slot_index := int(hatched_egg.slot_index) + 1
+		if right_slot_index >= SLOT_COUNT or _slots[right_slot_index].is_empty():
+			continue
+		_resolve_spoon_fire(
+			right_slot_index,
+			"woodpecker_break",
+			hatched_egg,
+			fire_id,
+			events,
+			all_hatched_eggs
+		)
+
+
 func _direct_damage_amount(slot_index: int, spoon_color: String) -> int:
 	if spoon_color == "pink" and String(_slots[slot_index].kind) == "spoonbill":
 		return 2
@@ -140,6 +187,7 @@ func _apply_cuckoo_echoes(
 	direct_slot_index: int,
 	damage_amount: int,
 	spoon_color: String,
+	fire_id: int,
 	events: Array[Dictionary]
 ) -> void:
 	for adjacent_slot_index in [direct_slot_index - 1, direct_slot_index + 1]:
@@ -155,6 +203,7 @@ func _apply_cuckoo_echoes(
 			"cuckoo_echo",
 			direct_slot_index,
 			spoon_color,
+			fire_id,
 			events
 		)
 
@@ -165,6 +214,7 @@ func _apply_damage(
 	cause: String,
 	source_slot_index: int,
 	spoon_color: String,
+	fire_id: int,
 	events: Array[Dictionary]
 ) -> void:
 	var egg: Dictionary = _slots[slot_index]
@@ -172,6 +222,7 @@ func _apply_damage(
 	_slots[slot_index] = egg
 	events.append({
 		"type": "egg_damaged",
+		"fire_id": fire_id,
 		"slot_index": slot_index,
 		"kind": String(egg.kind),
 		"cause": cause,
@@ -182,9 +233,8 @@ func _apply_damage(
 	})
 
 
-func _resolve_hatches(events: Array[Dictionary]) -> Dictionary:
+func _resolve_hatches(events: Array[Dictionary], fire_id: int) -> Array[Dictionary]:
 	var hatched_eggs: Array[Dictionary] = []
-	var base_yolks: Array[int] = []
 	for slot_index in range(SLOT_COUNT):
 		if _slots[slot_index].is_empty() or int(_slots[slot_index].toughness) > 0:
 			continue
@@ -196,32 +246,44 @@ func _resolve_hatches(events: Array[Dictionary]) -> Dictionary:
 		_slots[slot_index] = {}
 		_vacancy_slots_in_hatch_order.append(slot_index)
 		var base_yolk := int(egg.points)
-		base_yolks.append(base_yolk)
-		hatched_eggs.append({
+		var hatched_egg := {
 			"egg_instance_id": egg_instance_id,
 			"slot_index": slot_index,
 			"kind": String(egg.kind),
 			"base_yolk": base_yolk,
-		})
-
-	var combo_count := hatched_eggs.size()
-	var combo_multiplier := maxi(combo_count, 1)
-	var base_yolk_total := 0
-	for base_yolk: int in base_yolks:
-		base_yolk_total += base_yolk
-	for hatched_egg: Dictionary in hatched_eggs:
-		var yolk := int(hatched_egg.base_yolk) * combo_multiplier
+			"caused_by_fire_id": fire_id,
+		}
+		hatched_eggs.append(hatched_egg)
 		events.append({
 			"type": "egg_hatched",
-			"egg_instance_id": int(hatched_egg.egg_instance_id),
-			"slot_index": int(hatched_egg.slot_index),
-			"kind": String(hatched_egg.kind),
-			"base_yolk": int(hatched_egg.base_yolk),
-			"points_awarded": yolk,
-			"yolk": yolk,
-			"combo_count": combo_count,
-			"combo_multiplier": combo_multiplier,
+			"egg_instance_id": egg_instance_id,
+			"slot_index": slot_index,
+			"kind": String(egg.kind),
+			"base_yolk": base_yolk,
+			"caused_by_fire_id": fire_id,
 		})
+	return hatched_eggs
+
+
+func _finalize_hatches(
+	events: Array[Dictionary], hatched_eggs: Array[Dictionary]
+) -> Dictionary:
+	var combo_count := hatched_eggs.size()
+	var combo_multiplier := maxi(combo_count, 1)
+	var base_yolks: Array[int] = []
+	var base_yolk_total := 0
+	for hatched_egg: Dictionary in hatched_eggs:
+		var base_yolk := int(hatched_egg.base_yolk)
+		base_yolks.append(base_yolk)
+		base_yolk_total += base_yolk
+	for event_index in range(events.size()):
+		if String(events[event_index].type) != "egg_hatched":
+			continue
+		var yolk := int(events[event_index].base_yolk) * combo_multiplier
+		events[event_index]["points_awarded"] = yolk
+		events[event_index]["yolk"] = yolk
+		events[event_index]["combo_count"] = combo_count
+		events[event_index]["combo_multiplier"] = combo_multiplier
 	return {
 		"base_yolks": base_yolks,
 		"base_yolk_total": base_yolk_total,

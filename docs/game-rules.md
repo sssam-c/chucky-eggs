@@ -34,14 +34,15 @@ Invest five tactile spoon taps across a table of interacting eggs. Prepare sever
 - A **Sparrow** has 1 toughness, provides 1 Yolk, and has no additional effect.
 - A **Plover** has 6 toughness and provides 4 Yolk. After surviving a direct tap, it swaps with the egg or vacancy immediately to its left when one exists.
 - A **Spoonbill** has 5 toughness and provides 4 Yolk. A direct Pink tap deals 2 damage to it instead of 1.
-- Current eggs have no intrinsic Double Yolker rolls, hidden quality, or additional hatch effects. “Double Yolker” and higher callouts describe how many eggs one tap broke, not a hidden property of an egg.
+- A **Woodpecker** has 4 toughness and provides 2 Yolk. It is available only as a between-round reward. When it opens, it fires the spoon immediately to its right once for free if that cup is occupied. That spoon uses its own colour and resolves a complete tap, including Cuckoo copies, Spoonbill weakness, Plover movement, further openings, and further Woodpecker taps. A Woodpecker at the right edge, or with an empty cup immediately to its right, fires nothing.
+- Current eggs have no intrinsic Double Yolker rolls or hidden quality. “Double Yolker” and higher callouts describe how many eggs one paid tap's complete cascade broke, not a hidden property of an egg.
 
 ## Tap phases
 
 - Each Tap phase begins with five paid taps.
 - Pressing the button beneath an occupied cup spends exactly one tap after its complete damage, hatch, movement, and refill cascade.
 - The button beneath an empty cup cannot be selected.
-- Free Cuckoo reactions and other resolver-authored consequences never spend another tap.
+- Free Cuckoo reactions, Woodpecker taps, and other resolver-authored consequences never spend another tap.
 - Every tap begins with a combo count of zero. Count every egg opened by that tap's complete cascade, add their printed Yolk, then multiply the combined Yolk by the number opened. One opened egg therefore has a ×1 multiplier.
 - Breaks on separate taps never contribute to the same combo. A paid tap that opens no eggs has no combo result or reset ceremony.
 - If Hunger remains above zero after the fifth tap, Grandma's Hunger phase adds the amount announced throughout that Tap phase.
@@ -50,7 +51,7 @@ Invest five tactile spoon taps across a table of interacting eggs. Prepare sever
 
 ## Between rounds
 
-- Winning Round 1 presents three different egg rewards drawn deterministically from the five current egg identities.
+- Winning Round 1 presents three different egg rewards drawn deterministically from the six current reward identities, including Woodpecker.
 - The player chooses exactly one offered egg. That egg is added to the fixed flock, increasing Round 2 from twelve eggs to thirteen.
 - The chosen egg, its complete known rules, and Round 2's 12 starting Hunger are shown before Round 2 begins.
 - Reward selection spends no tap and changes no completed Round 1 result.
@@ -62,11 +63,11 @@ Resolve one selected button in this order:
 
 1. Fire that cup's spoon and deal its direct damage to the egg in that cup.
 2. Damage each adjacent Cuckoo by the same amount as the direct tap.
-3. After the complete damage batch, open every zero-toughness egg from left to right. Count those eggs and add their printed Yolk.
-4. Multiply that combined Yolk by the number opened, deliver the one complete result to Grandma, and reduce Hunger by that amount, never below zero. If no egg opened, deliver nothing.
-5. If the directly tapped egg is a surviving Plover, swap it one cup to the left when possible.
-6. Keep opened cups vacant until the complete cascade is resolved. Then fill vacancies from the hopper in hatch order; simultaneous vacancies therefore refill from left to right.
-7. Spend one paid tap.
+3. After the complete damage batch, open every zero-toughness egg from left to right. If the directly tapped egg is a surviving Plover, swap it one cup to the left when possible.
+4. For each Woodpecker in that opened batch from left to right, fire the occupied spoon immediately to its right. Resolve each free fire sequentially through the same damage, Cuckoo, opening, Plover, and Woodpecker rules until no follow-up fire remains. Keep every opening in the original paid tap's cascade.
+5. Add the printed Yolk of every egg opened by the complete cascade, multiply by the number opened, deliver the one complete result to Grandma, and reduce Hunger by that amount, never below zero. If no egg opened, deliver nothing.
+6. Keep opened cups vacant until every free fire is resolved. Then fill vacancies from the hopper in hatch order; simultaneous vacancies therefore refill from left to right.
+7. Spend one paid tap. Free fires spend none.
 8. End successfully at zero Hunger, fail if no eggs remain, or resolve Grandma's response after the fifth paid tap.
 
 All damage, hatches, movement, refill destinations, phase changes, and end states are resolver-authored facts. Animation and interface timing do not choose or reorder them.
@@ -75,13 +76,14 @@ For a scoring tap, each opened egg's printed Yolk visibly merges into one number
 
 ## Current scope
 
-- The authoritative game is one seeded two-round tabletop run with one between-round egg addition. It has no conveyor movement, bin, Belt Condition, Patience, circuits that strike several starting targets, shop, cash, new egg identities, egg quality, or permanent progression.
+- The authoritative game is one seeded two-round tabletop run with one between-round egg addition and one reward-only hatch-effect identity, Woodpecker. It has no conveyor movement, bin, Belt Condition, Patience, circuits that strike several starting targets, shop, cash, additional new egg identities, egg quality, or permanent progression.
 - The former conveyor implementation is retained as historical code and test coverage, not as current player-facing rule truth.
 
 ## Keywords
 
 - **Adjacent:** The cup immediately to an egg's left or right.
 - **Direct tap:** Damage from the spoon the player selected, excluding copied Cuckoo damage.
+- **Free tap:** A resolver-authored spoon fire caused by an egg effect. It resolves the spoon and egg rules normally but spends no player tap.
 - **Break combo:** Every egg opened by one paid tap's complete cascade. Add their printed Yolk and multiply it by the number opened.
 - **Hunger:** Grandma's remaining need. Yolk lowers it; her response raises it.
 - **Tap phase:** Five paid player taps followed, when necessary, by one announced Grandma response.

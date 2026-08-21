@@ -165,6 +165,31 @@ static func draw(
 					center + Vector2(leg_x - 0.03, 0.66) * scale_value,
 					color, maxf(1.5, scale_value * 0.06), true
 				)
+		"woodpecker":
+			# An upright, braced silhouette with a straight chisel bill reads as a
+			# woodpecker even when it is used as a low-contrast egg watermark.
+			_draw_ellipse(
+				canvas, center + Vector2(-0.10, 0.08) * scale_value,
+				Vector2(0.32, 0.52) * scale_value,
+				color, outline_color, outline_width
+			)
+			var woodpecker_head := center + Vector2(0.16, -0.42) * scale_value
+			canvas.draw_circle(woodpecker_head, scale_value * 0.21, color)
+			_draw_shape(canvas, PackedVector2Array([
+				woodpecker_head + Vector2(0.14, -0.07) * scale_value,
+				woodpecker_head + Vector2(0.86, -0.01) * scale_value,
+				woodpecker_head + Vector2(0.14, 0.08) * scale_value,
+			]), color, outline_color, outline_width)
+			_draw_shape(canvas, PackedVector2Array([
+				center + Vector2(-0.24, 0.40) * scale_value,
+				center + Vector2(-0.34, 0.90) * scale_value,
+				center + Vector2(-0.04, 0.48) * scale_value,
+			]), color, outline_color, outline_width)
+			_draw_shape(canvas, PackedVector2Array([
+				center + Vector2(-0.08, 0.43) * scale_value,
+				center + Vector2(0.02, 0.84) * scale_value,
+				center + Vector2(0.12, 0.38) * scale_value,
+			]), color, outline_color, outline_width)
 		"topknot":
 			_draw_ellipse(
 				canvas, body_center, Vector2(0.48, 0.39) * scale_value,

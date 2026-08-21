@@ -10,6 +10,8 @@ const PlaceholderStyle = preload("res://src/ui/species_placeholder_style.gd")
 @onready var _chance_value: Label = %ChanceValue
 @onready var _on_hit_section: PanelContainer = %OnHitSection
 @onready var _on_hit_body: Label = %OnHitBody
+@onready var _on_break_section: PanelContainer = %OnBreakSection
+@onready var _on_break_body: Label = %OnBreakBody
 @onready var _other_section: PanelContainer = %OtherSection
 @onready var _other_body: Label = %OtherBody
 @onready var _all_other_section: PanelContainer = %AllOtherSection
@@ -36,7 +38,9 @@ func card_text() -> String:
 		"CHANCE OF DOUBLE YOLKER\n%s" % _double_yolker_chance_text(),
 	]
 	var effects := _effect_sections()
-	for heading in ["ON HIT EFFECTS", "OTHER EFFECTS", "ALL OTHER EFFECTS"]:
+	for heading in [
+		"ON HIT EFFECTS", "ON BREAK EFFECTS", "OTHER EFFECTS", "ALL OTHER EFFECTS",
+	]:
 		var body := String(effects.get(heading, ""))
 		if not body.is_empty():
 			blocks.append("%s\n%s" % [heading, body])
@@ -46,7 +50,9 @@ func card_text() -> String:
 func visible_effect_sections() -> Array[String]:
 	var visible_sections: Array[String] = []
 	var effects := _effect_sections()
-	for heading in ["ON HIT EFFECTS", "OTHER EFFECTS", "ALL OTHER EFFECTS"]:
+	for heading in [
+		"ON HIT EFFECTS", "ON BREAK EFFECTS", "OTHER EFFECTS", "ALL OTHER EFFECTS",
+	]:
 		if not String(effects.get(heading, "")).is_empty():
 			visible_sections.append(heading)
 	return visible_sections
@@ -55,6 +61,7 @@ func visible_effect_sections() -> Array[String]:
 func effect_bodies_use_word_wrap() -> bool:
 	return (
 		_on_hit_body.autowrap_mode != TextServer.AUTOWRAP_OFF
+		and _on_break_body.autowrap_mode != TextServer.AUTOWRAP_OFF
 		and _other_body.autowrap_mode != TextServer.AUTOWRAP_OFF
 		and _all_other_body.autowrap_mode != TextServer.AUTOWRAP_OFF
 	)
@@ -67,6 +74,9 @@ func _render() -> void:
 
 	var effects := _effect_sections()
 	_configure_section(_on_hit_section, _on_hit_body, String(effects["ON HIT EFFECTS"]))
+	_configure_section(
+		_on_break_section, _on_break_body, String(effects["ON BREAK EFFECTS"])
+	)
 	_configure_section(_other_section, _other_body, String(effects["OTHER EFFECTS"]))
 	_configure_section(
 		_all_other_section,
@@ -98,6 +108,7 @@ func _configure_section(section: PanelContainer, body_label: Label, body: String
 func _effect_sections() -> Dictionary:
 	var sections := {
 		"ON HIT EFFECTS": "",
+		"ON BREAK EFFECTS": "",
 		"OTHER EFFECTS": "",
 		"ALL OTHER EFFECTS": "",
 	}
@@ -113,6 +124,10 @@ func _effect_sections() -> Dictionary:
 		"spoonbill":
 			sections["ON HIT EFFECTS"] = (
 				"Pink weakness — a direct Pink strike deals 2 damage."
+			)
+		"woodpecker":
+			sections["ON BREAK EFFECTS"] = (
+				"Tap right — fires the spoon immediately to its right for free."
 			)
 		"oily":
 			sections["ON HIT EFFECTS"] = (
