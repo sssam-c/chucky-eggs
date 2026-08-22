@@ -7,6 +7,7 @@ extends Control
 @onready var _hunger_value_label: Label = %HungerValue
 @onready var _hunger_change_label: Label = %HungerChange
 @onready var _next_increase_label: Label = %NextIncrease
+@onready var _impact_glow: Control = %ImpactGlow
 @onready var _phase_panel: Control = %PhasePanel
 @onready var _phase_label: Label = %PhaseLabel
 
@@ -74,6 +75,25 @@ func hide_hunger_subtraction() -> void:
 	_next_increase_label.visible = true
 
 
+func show_delivery_target() -> void:
+	_impact_glow.visible = true
+	_impact_glow.modulate.a = 0.28
+
+
+func set_delivery_target_strength(strength: float) -> void:
+	_impact_glow.visible = strength > 0.001
+	_impact_glow.modulate.a = clampf(strength, 0.0, 1.0)
+
+
+func hide_delivery_target() -> void:
+	_impact_glow.visible = false
+	_impact_glow.modulate = Color.WHITE
+
+
+func impact_glow_control() -> Control:
+	return _impact_glow
+
+
 func hunger_change_text() -> String:
 	return _hunger_change_label.text
 
@@ -106,7 +126,9 @@ func is_phase_visible() -> bool:
 
 func reset_feedback() -> void:
 	_hunger_value_label.scale = Vector2.ONE
+	_hunger_value_label.modulate = Color.WHITE
 	hide_hunger_subtraction()
+	hide_delivery_target()
 	hide_phase()
 
 

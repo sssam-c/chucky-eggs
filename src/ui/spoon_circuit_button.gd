@@ -19,6 +19,8 @@ var _target_descriptions: Array[String] = []
 var _hover_preview := false
 var _focus_preview := false
 var _preview_active := false
+var _locked_identity_visible := false
+var _playback_emphasized := false
 
 
 func _ready() -> void:
@@ -32,8 +34,14 @@ func _ready() -> void:
 	queue_redraw()
 
 
-func set_available(available: bool) -> void:
+func set_available(
+	available: bool,
+	preserve_identity_when_disabled := false,
+	playback_emphasized := false
+) -> void:
 	_available = available
+	_locked_identity_visible = not available and preserve_identity_when_disabled
+	_playback_emphasized = _locked_identity_visible and playback_emphasized
 	if not available:
 		_hover_preview = false
 		_focus_preview = false
@@ -43,6 +51,22 @@ func set_available(available: bool) -> void:
 	focus_mode = Control.FOCUS_ALL if available else Control.FOCUS_NONE
 	_refresh_accessibility()
 	queue_redraw()
+
+
+func is_locked_identity_visible() -> bool:
+	return _locked_identity_visible
+
+
+func is_playback_emphasized() -> bool:
+	return _playback_emphasized
+
+
+func _display_color(empty_darkening: float) -> Color:
+	if _available:
+		return circuit_color
+	if _locked_identity_visible:
+		return circuit_color.darkened(0.08 if _playback_emphasized else 0.28)
+	return circuit_color.darkened(empty_darkening)
 
 
 func set_target_descriptions(descriptions: Array[String]) -> void:
@@ -124,7 +148,7 @@ func _draw() -> void:
 	var highlighted := (is_hovered() or has_focus()) and _available
 	var pivot := _lever_pivot()
 	var handle := lever_handle_center()
-	var live_color := circuit_color if _available else circuit_color.darkened(0.48)
+	var live_color := _display_color(0.48)
 	var outline := Color("ffe3a1") if highlighted else live_color.darkened(0.42)
 	var glow_strength := 0.20 + press_amount * 0.42 if _available else 0.05
 
@@ -171,7 +195,7 @@ func _draw() -> void:
 
 func _draw_spoon_hit_area() -> void:
 	var highlighted := (is_hovered() or has_focus()) and _available
-	var live_color := circuit_color if _available else circuit_color.darkened(0.52)
+	var live_color := _display_color(0.52)
 	var bounds := Rect2(Vector2(28.0, 8.0), size - Vector2(56.0, 28.0))
 	if highlighted:
 		draw_style_box(
@@ -186,7 +210,7 @@ func _draw_spoon_hit_area() -> void:
 
 func _draw_shape_button() -> void:
 	var highlighted := (is_hovered() or has_focus()) and _available
-	var live_color := circuit_color if _available else circuit_color.darkened(0.58)
+	var live_color := _display_color(0.58)
 	var pressed_offset := roundf(press_amount * 7.0)
 	var outer_rect := Rect2(5.0, 5.0 + pressed_offset, size.x - 10.0, size.y - 14.0)
 	var shadow_rect := Rect2(
@@ -210,8 +234,12 @@ func _button_shadow_style() -> StyleBoxFlat:
 
 func _button_outer_style(_color: Color, highlighted: bool) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("24150e")
-	style.border_color = Color("d18a35") if highlighted else Color("79502a")
+	style.bg_color = Color("24150e") if (_available or _locked_identity_visible) else Color("17110f")
+	style.border_color = (
+		Color("ffe1a0") if _playback_emphasized
+		else Color("d18a35") if highlighted
+		else Color("79502a")
+	)
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(9)
 	return style
@@ -219,7 +247,10 @@ func _button_outer_style(_color: Color, highlighted: bool) -> StyleBoxFlat:
 
 func _button_face_style(color: Color, highlighted: bool) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("2b1911") if _available else Color("181311")
+	style.bg_color = (
+		Color("2b1911") if (_available or _locked_identity_visible)
+		else Color("181311")
+	)
 	style.border_color = color.lightened(0.36) if highlighted else color.darkened(0.12)
 	style.set_border_width_all(3)
 	style.set_corner_radius_all(6)

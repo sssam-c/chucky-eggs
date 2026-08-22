@@ -189,7 +189,7 @@ func bowl_visuals() -> Array[Dictionary]:
 		"radii": radii * _bowl_size_scale,
 		"tipped_amount": frame.tipped_amount,
 		"impact_emphasis": impact_emphasis,
-		"draw_neck": true,
+		"draw_neck": false,
 		"neck_scale": 1.0,
 		"collar_direction": frame.near_collar_direction,
 	}]

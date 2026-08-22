@@ -263,13 +263,19 @@ func _submit_spoon(slot_index: int) -> void:
 	_input_locked = true
 	_request_generation += 1
 	var request_generation := _request_generation
-	_set_spoons_available(false)
+	_set_spoons_available(false, slot_index, true)
 	playback_started.emit()
 	var completed: bool = await _presenter.play_events(events)
 	if not completed or request_generation != _request_generation:
 		return
 	_input_locked = false
 	_render()
+	if (
+		slot_index >= 0
+		and slot_index < _spoon_buttons.size()
+		and not _spoon_buttons[slot_index].disabled
+	):
+		_spoon_buttons[slot_index].grab_focus.call_deferred()
 	playback_completed.emit()
 
 
@@ -282,19 +288,14 @@ func _render() -> void:
 	if bool(state.dev_mode):
 		_round_label.text = "DEV ROUND"
 		_seed_label.text = "EXACT EGG ORDER"
-		_round_announcement.text = "DEV ROUND  •  %d HUNGER  •  %d EGGS" % [
-			int(state.round_starting_hunger), int(state.round_egg_count),
-		]
+		_round_announcement.text = "EXACT ORDER  •  %d EGGS" % int(state.round_egg_count)
 		_restart_button.text = "RETRY DEV"
 	else:
 		_round_label.text = "ROUND %d / %d" % [
 			int(state.round_number), int(state.round_count),
 		]
 		_seed_label.text = "SEED %d" % int(state.run_seed)
-		_round_announcement.text = "ROUND %d  •  %d HUNGER  •  %d EGGS" % [
-			int(state.round_number), int(state.round_starting_hunger),
-			int(state.round_egg_count),
-		]
+		_round_announcement.text = "%d EGGS IN FLOCK" % int(state.round_egg_count)
 		_restart_button.text = "RETRY SEED"
 	_tap_pips_label.text = _tap_pips(int(state.taps_remaining), int(state.taps_per_phase))
 	_yolk_combo_display.reset_transient()
@@ -365,11 +366,19 @@ func _tap_pips(remaining: int, total: int) -> String:
 	return "TAPS  %s" % " ".join(pips)
 
 
-func _set_spoons_available(enabled: bool) -> void:
+func _set_spoons_available(
+	enabled: bool,
+	active_slot_index := -1,
+	preserve_locked_identity := false
+) -> void:
 	var state: Dictionary = _session.state()
 	for slot_index in range(_spoon_buttons.size()):
 		var occupied: bool = not state.slots[slot_index].is_empty()
-		_spoon_buttons[slot_index].set_available(enabled and occupied)
+		_spoon_buttons[slot_index].set_available(
+			enabled and occupied,
+			preserve_locked_identity and occupied,
+			active_slot_index == slot_index
+		)
 
 
 func _configure_hammer_contacts() -> void:

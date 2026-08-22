@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://src/ui/grandma_hunger_panel.gd" id="1_panel"]
 [ext_resource type="Script" path="res://src/ui/grandma_portrait.gd" id="2_portrait"]
@@ -56,6 +56,20 @@ corner_radius_top_left = 7
 corner_radius_top_right = 7
 corner_radius_bottom_right = 7
 corner_radius_bottom_left = 7
+
+[sub_resource type="StyleBoxFlat" id="ImpactGlow"]
+bg_color = Color(1, 0.56, 0.12, 0.06)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(1, 0.74, 0.18, 0.96)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+shadow_color = Color(1, 0.34, 0.03, 0.46)
+shadow_size = 10
 
 [node name="GrandmaHungerPanel" type="Control"]
 custom_minimum_size = Vector2(250, 622)
@@ -194,6 +208,19 @@ theme_override_font_sizes/font_size = 20
 text = "8 − 8 → 0"
 horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="ImpactGlow" type="Panel" parent="HungerCard"]
+unique_name_in_owner = true
+visible = false
+z_index = 4
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("ImpactGlow")
 
 [node name="PhasePanel" type="PanelContainer" parent="."]
 unique_name_in_owner = true

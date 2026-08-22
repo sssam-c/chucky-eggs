@@ -9,6 +9,7 @@ const PREVIEW_CONTENT_SCALE := Vector2(0.82, 0.82)
 @onready var _egg_visual: Control = %EggVisual
 @onready var _hatch_burst: Control = %HatchBurst
 @onready var _toughness_label: Label = %Toughness
+@onready var _damage_delta_label: Label = %DamageDelta
 
 var _egg: Dictionary = {}
 var _preview := false
@@ -17,10 +18,12 @@ var _bare_belt_mode := false
 var _circuit_id := ""
 var _circuit_color := Color("bd7742")
 var _stage_content_scale := 1.0
+var _damage_delta_origin := Vector2.ZERO
 
 
 func _ready() -> void:
 	_content_origin = _content.position
+	_damage_delta_origin = _damage_delta_label.position
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_NONE
 	queue_redraw()
@@ -116,6 +119,35 @@ func apply_damage(remaining_toughness: int) -> void:
 	_egg_visual.set_egg(_egg, _preview)
 
 
+func show_damage_feedback(amount: int, indirect: bool) -> void:
+	_damage_delta_label.text = "−%d" % maxi(0, amount)
+	_damage_delta_label.add_theme_color_override(
+		"font_color", Color("6fd7ff") if indirect else Color("ff9e3d")
+	)
+	_damage_delta_label.accessibility_name = "%s damage" % maxi(0, amount)
+	_damage_delta_label.accessibility_description = (
+		"Cuckoo echo damage" if indirect else "Direct spoon damage"
+	)
+	_damage_delta_label.visible = true
+	reset_damage_feedback_pose()
+
+
+func hide_damage_feedback() -> void:
+	_damage_delta_label.visible = false
+	_damage_delta_label.accessibility_name = ""
+	_damage_delta_label.accessibility_description = ""
+
+
+func damage_feedback_control() -> Control:
+	return _damage_delta_label
+
+
+func reset_damage_feedback_pose() -> void:
+	_damage_delta_label.position = _damage_delta_origin
+	_damage_delta_label.scale = Vector2.ONE
+	_damage_delta_label.modulate = Color.WHITE
+
+
 func clear_visual() -> void:
 	render_egg({}, false, _preview)
 
@@ -202,6 +234,9 @@ func reset_motion() -> void:
 	_content.z_index = 0
 	_egg_visual.modulate = Color.WHITE
 	_toughness_label.modulate = Color.WHITE
+	_egg_visual.reset_feedback_emphasis()
+	hide_damage_feedback()
+	reset_damage_feedback_pose()
 	_hatch_burst.reset()
 
 

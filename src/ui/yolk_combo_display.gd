@@ -10,6 +10,13 @@ const YolkBallScene = preload("res://src/ui/yolk_ball.tscn")
 
 var _ball_home_position := Vector2.ZERO
 var _reduced_motion := false
+var _merge_routes: Array[PackedVector2Array] = []
+var _delivery_route := PackedVector2Array()
+
+var route_trace_alpha := 0.0:
+	set(value):
+		route_trace_alpha = clampf(value, 0.0, 1.0)
+		queue_redraw()
 
 
 func _ready() -> void:
@@ -42,6 +49,11 @@ func create_yolk_drop(origin_global: Vector2, base_yolk: int) -> Control:
 	drop.custom_minimum_size = drop.size
 	drop.pivot_offset = drop.size * 0.5
 	drop.global_position = origin_global - drop.size * 0.5
+	if not _reduced_motion:
+		_merge_routes.append(_curved_route(
+			_to_local(origin_global), _to_local(ball_global_position()), 24.0
+		))
+		route_trace_alpha = 0.82
 	return drop
 
 
@@ -73,6 +85,26 @@ func begin_delivery() -> Control:
 	_callout_label.visible = false
 	_multiplier_label.visible = false
 	return _yolk_ball
+
+
+func show_delivery_route(destination_global: Vector2) -> void:
+	_merge_routes.clear()
+	_delivery_route = _curved_route(
+		_to_local(ball_global_position()), _to_local(destination_global), 36.0
+	)
+	route_trace_alpha = 0.92
+
+
+func clear_route_trace() -> void:
+	_merge_routes.clear()
+	_delivery_route = PackedVector2Array()
+	route_trace_alpha = 0.0
+
+
+func has_route_trace() -> bool:
+	return route_trace_alpha > 0.001 and (
+		not _merge_routes.is_empty() or not _delivery_route.is_empty()
+	)
 
 
 func finish_delivery() -> void:
@@ -133,6 +165,7 @@ func reset_transient() -> void:
 	_yolk_ball.set_amount(0)
 	accessibility_name = ""
 	accessibility_description = ""
+	clear_route_trace()
 	if _token_layer != null:
 		for token: Node in _token_layer.get_children():
 			token.queue_free()
@@ -154,3 +187,36 @@ static func combo_callout(combo_count: int) -> String:
 
 static func visual_scale_for_yolk(yolk: int) -> float:
 	return clampf(0.22 + float(maxi(0, yolk)) * 0.19, 0.22, 2.0)
+
+
+func _draw() -> void:
+	if route_trace_alpha <= 0.001:
+		return
+	var shadow := Color(0.18, 0.055, 0.005, 0.52 * route_trace_alpha)
+	var yolk := Color(1.0, 0.66, 0.06, 0.76 * route_trace_alpha)
+	for route: PackedVector2Array in _merge_routes:
+		if route.size() < 2:
+			continue
+		draw_polyline(route, shadow, 8.0, true)
+		draw_polyline(route, yolk, 3.0, true)
+	if _delivery_route.size() >= 2:
+		draw_polyline(_delivery_route, shadow, 10.0, true)
+		draw_polyline(_delivery_route, yolk, 4.0, true)
+
+
+func _to_local(global_point: Vector2) -> Vector2:
+	return get_global_transform().affine_inverse() * global_point
+
+
+func _curved_route(start: Vector2, finish: Vector2, lift: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var control := (start + finish) * 0.5 - Vector2(0.0, lift)
+	for point_index in range(25):
+		var weight := float(point_index) / 24.0
+		var inverse := 1.0 - weight
+		points.append(
+			inverse * inverse * start
+			+ 2.0 * inverse * weight * control
+			+ weight * weight * finish
+		)
+	return points

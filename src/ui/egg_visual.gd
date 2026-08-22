@@ -15,6 +15,16 @@ var _egg: Dictionary = {}
 var _preview := false
 var _hover_popover: Control
 
+var impact_emphasis := 0.0:
+	set(value):
+		impact_emphasis = clampf(value, 0.0, 1.0)
+		queue_redraw()
+
+var echo_emphasis := 0.0:
+	set(value):
+		echo_emphasis = clampf(value, 0.0, 1.0)
+		queue_redraw()
+
 
 func _ready() -> void:
 	_register_magnifier_cursor()
@@ -95,6 +105,22 @@ func _draw() -> void:
 
 	# Keep decision-critical marks above shell decoration and accumulated cracks.
 	_draw_information_marks()
+	if impact_emphasis > 0.001:
+		draw_arc(
+			center,
+			maxf(radius_x, radius_y * 0.78) + 5.0 * impact_emphasis,
+			0.0,
+			TAU,
+			32,
+			Color(1.0, 0.68, 0.22, 0.78 * impact_emphasis),
+			3.0 + 2.0 * impact_emphasis,
+			true
+		)
+
+
+func reset_feedback_emphasis() -> void:
+	impact_emphasis = 0.0
+	echo_emphasis = 0.0
 
 
 func _sync_hover_card() -> void:
@@ -411,7 +437,10 @@ func _draw_echo_adjacency_marks(centers: Array[Vector2], mark_scale: float) -> v
 	if centers.size() != 2:
 		return
 	for center_index in range(centers.size()):
-		var center := centers[center_index]
+		var inward_direction := 1.0 if center_index == 0 else -1.0
+		var center := centers[center_index] + Vector2(
+			inward_direction * 7.0 * echo_emphasis, 0.0
+		)
 		var facing_angle := PI if center_index == 0 else 0.0
 		draw_circle(center, 2.2 * mark_scale, ink)
 		for radius in [5.5, 9.5]:
@@ -422,7 +451,7 @@ func _draw_echo_adjacency_marks(centers: Array[Vector2], mark_scale: float) -> v
 				facing_angle + 0.72,
 				10,
 				ink,
-				2.3 * mark_scale,
+				(2.3 + 2.0 * echo_emphasis) * mark_scale,
 				true
 			)
 		draw_arc(
@@ -435,6 +464,17 @@ func _draw_echo_adjacency_marks(centers: Array[Vector2], mark_scale: float) -> v
 			0.9 * mark_scale,
 			true
 		)
+		if echo_emphasis > 0.001:
+			draw_arc(
+				center,
+				14.0 * mark_scale,
+				facing_angle - 0.78,
+				facing_angle + 0.78,
+				12,
+				Color(0.44, 0.85, 1.0, 0.82 * echo_emphasis),
+				2.8 * mark_scale,
+				true
+			)
 
 
 func _draw_left_emblem(center: Vector2, mark_scale: float) -> void:

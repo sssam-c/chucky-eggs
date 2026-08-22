@@ -15,6 +15,7 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 		var spoon_button = main.get_node("Stage/SpoonControls/SpoonButton%d" % slot_number)
 		assert_true(slot.is_egg_cup_mode())
 		assert_not_null(slot.get_node_or_null("EggContent/HatchBurst"))
+		assert_not_null(slot.get_node_or_null("EggContent/DamageDelta"))
 		assert_gt(slot.stage_content_scale(), 1.0)
 		assert_gte(slot.size.x, 150.0)
 		assert_eq(spoon_button.control_form(), "button")
@@ -23,6 +24,7 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 		assert_gte(spoon_button.size.y, 70.0)
 		assert_gt(spoon_button.get_global_rect().position.y, slot.get_global_rect().get_center().y)
 		assert_false(spoon.is_circuit_marked())
+		assert_false(spoon.bowl_visuals()[0].draw_neck)
 	for preview_number in range(1, 4):
 		assert_not_null(main.get_node_or_null("Hopper/Preview/Next%d" % preview_number))
 	assert_not_null(main.get_node_or_null("Stage/Table"))
@@ -51,6 +53,7 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 	assert_not_null(grandma.get_node_or_null("HungerCard/HungerValue"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/HungerChange"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/NextIncrease"))
+	assert_not_null(grandma.get_node_or_null("HungerCard/ImpactGlow"))
 	assert_gt(grandma.get_global_rect().get_center().x, stage.get_global_rect().get_center().x)
 	assert_false(grandma.get_global_rect().intersects(stage.get_global_rect()))
 	assert_null(main.get_node_or_null("Hunger"))
@@ -247,6 +250,67 @@ func test_second_input_is_ignored_while_a_tap_cascade_is_playing() -> void:
 	assert_eq(main.game_state().taps_remaining, 4)
 
 
+func test_completed_tap_restores_focus_to_the_submitted_spoon() -> void:
+	var main := await _add_game()
+	main.set_reduced_motion(true)
+	var spoon_button: Button = main.get_node("Stage/SpoonControls/SpoonButton2")
+	spoon_button.grab_focus()
+
+	spoon_button.pressed.emit()
+	await main.playback_completed
+	await get_tree().process_frame
+
+	assert_true(spoon_button.has_focus())
+
+
+func test_playback_lock_preserves_circuit_identity_and_marks_the_active_button() -> void:
+	var main := await _add_game()
+	var red_button: Button = main.get_node("Stage/SpoonControls/SpoonButton1")
+	var blue_button: Button = main.get_node("Stage/SpoonControls/SpoonButton2")
+
+	red_button.pressed.emit()
+	await get_tree().process_frame
+
+	assert_true(main.is_input_locked())
+	assert_true(red_button.is_locked_identity_visible())
+	assert_true(red_button.is_playback_emphasized())
+	assert_true(blue_button.is_locked_identity_visible())
+	assert_false(blue_button.is_playback_emphasized())
+
+	main.restart()
+	await get_tree().process_frame
+	assert_false(red_button.is_playback_emphasized())
+
+
+func test_damage_feedback_distinguishes_direct_and_cuckoo_echo_hits() -> void:
+	var main := await _add_game()
+	main.set_reduced_motion(true)
+	var feedback: Array[Dictionary] = []
+	main.get_node("TapPresenter").damage_feedback_started.connect(
+		func(slot_index: int, amount: int, indirect: bool) -> void:
+			feedback.append({
+				"slot_index": slot_index,
+				"amount": amount,
+				"indirect": indirect,
+			})
+	)
+
+	# Prepare the opening Cuckoo, then hit its adjacent Chicken.
+	for _setup_tap in range(3):
+		main.get_node("Stage/SpoonControls/SpoonButton2").pressed.emit()
+		await main.playback_completed
+		await get_tree().process_frame
+	feedback.clear()
+	main.get_node("Stage/SpoonControls/SpoonButton1").pressed.emit()
+	await main.playback_completed
+	await get_tree().process_frame
+
+	assert_eq(feedback, [
+		{"slot_index": 0, "amount": 1, "indirect": false},
+		{"slot_index": 1, "amount": 1, "indirect": true},
+	])
+
+
 func test_zero_break_tap_has_no_combo_reset_interruption() -> void:
 	var main := await _add_game()
 	main.set_reduced_motion(true)
@@ -410,6 +474,8 @@ func test_run_seed_and_round_are_visible_with_distinct_retry_and_new_seed_action
 	assert_eq(main.get_node("RunStatus/Seed").text, "SEED %d" % int(state.run_seed))
 	assert_eq(main.get_node("Restart").text, "RETRY SEED")
 	assert_eq(main.get_node("NewSeed").text, "NEW SEED")
+	assert_eq(main.get_node("RoundAnnouncement").text, "12 EGGS IN FLOCK")
+	assert_false("HUNGER" in main.get_node("RoundAnnouncement").text)
 	assert_false(main.get_node("RewardOverlay").visible)
 
 
@@ -448,7 +514,7 @@ func test_debug_picker_can_start_an_exact_woodpecker_round() -> void:
 	assert_eq(state.pipe[0].kind, "sparrow")
 	assert_eq(main.get_node("RunStatus/Round").text, "DEV ROUND")
 	assert_eq(main.get_node("RunStatus/Seed").text, "EXACT EGG ORDER")
-	assert_string_contains(main.get_node("RoundAnnouncement").text, "17 HUNGER")
+	assert_eq(main.get_node("RoundAnnouncement").text, "EXACT ORDER  •  6 EGGS")
 
 	main.get_node("Restart").pressed.emit()
 	assert_true(main.game_state().dev_mode)
@@ -520,7 +586,7 @@ func test_round_one_success_offers_three_eggs_and_choice_starts_harder_round_two
 	assert_eq(round_two.chosen_reward, reward_state.reward_offers[1])
 	assert_false(main.get_node("RewardOverlay").visible)
 	assert_eq(main.get_node("RunStatus/Round").text, "ROUND 2 / 2")
-	assert_string_contains(main.get_node("RoundAnnouncement").text, "12 HUNGER")
+	assert_eq(main.get_node("RoundAnnouncement").text, "13 EGGS IN FLOCK")
 
 
 func test_retry_preserves_seed_while_new_seed_changes_it() -> void:

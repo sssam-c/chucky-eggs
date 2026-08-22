@@ -48,6 +48,23 @@ func test_finishing_delivery_hides_and_resets_the_transient_ball() -> void:
 	assert_eq(display.callout_text(), "")
 	assert_false(display.visible)
 	assert_false(display.is_shimmer_active())
+	assert_false(display.has_route_trace())
+
+
+func test_yolk_routes_are_transient_and_follow_merge_then_delivery_destinations() -> void:
+	var display: Control = YolkComboScene.instantiate()
+	add_child_autofree(display)
+	await get_tree().process_frame
+	display.begin_pool(2)
+
+	display.create_yolk_drop(Vector2(10.0, 120.0), 3)
+	assert_true(display.has_route_trace())
+
+	display.show_delivery_route(Vector2(520.0, 100.0))
+	assert_true(display.has_route_trace())
+
+	display.reset_transient()
+	assert_false(display.has_route_trace())
 
 
 func test_single_break_uses_the_numbered_ball_without_a_combo_callout() -> void:

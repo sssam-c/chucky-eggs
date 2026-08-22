@@ -8,6 +8,7 @@ signal yolk_merge_started(base_yolk: int, origin: Vector2, destination: Vector2)
 signal combo_announced(combo_count: int, callout: String, total_yolk: int)
 signal yolk_delivery_started(total_yolk: int, origin: Vector2, destination: Vector2)
 signal hunger_subtraction_presented(hunger_before: int, amount: int, hunger_after: int)
+signal damage_feedback_started(slot_index: int, amount: int, indirect: bool)
 
 const CrunchAudio = preload("res://src/presentation/crunch_audio.gd")
 
@@ -139,9 +140,7 @@ func _present_event(event: Dictionary, playback_generation: int) -> bool:
 		"egg_entered":
 			return await _present_entry(event, playback_generation)
 		"tap_spent":
-			_tap_pips_label.text = _tap_pips(
-				int(event.taps_remaining), int(event.taps_per_phase)
-			)
+			return await _present_tap_spent(event, playback_generation)
 		"tap_phase_ended":
 			return await _present_hunger_phase_start(event, playback_generation)
 		"hunger_increased":
@@ -160,55 +159,83 @@ func _present_spoon(slot_index: int, playback_generation: int) -> bool:
 		spoon.set_strike_amount(1.0)
 		return true
 	var anticipation := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	anticipation.tween_property(spoon_button, "press_amount", 0.35, 0.045)
-	anticipation.parallel().tween_property(spoon, "strike_amount", -0.10, 0.045)
+	anticipation.tween_property(spoon_button, "press_amount", 0.38, 0.055)
+	anticipation.parallel().tween_property(spoon, "strike_amount", -0.12, 0.055)
 	if not await _run_tween(anticipation, playback_generation):
 		return false
 	var strike := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	strike.tween_property(spoon_button, "press_amount", 1.0, 0.105)
-	strike.parallel().tween_property(spoon, "strike_amount", 1.0, 0.105)
-	return await _run_tween(strike, playback_generation)
+	strike.tween_property(spoon_button, "press_amount", 1.0, 0.095)
+	strike.parallel().tween_property(spoon, "strike_amount", 1.0, 0.095)
+	if not await _run_tween(strike, playback_generation):
+		return false
+	return await _pause(0.025, playback_generation)
 
 
 func _present_damage(event: Dictionary, playback_generation: int) -> bool:
 	var slot_index := int(event.slot_index)
 	var slot: Button = _slots[slot_index]
 	var is_direct_hit := String(event.cause) == "spoon"
+	var damage_amount := int(event.damage_amount)
 	slot.apply_damage(int(event.remaining_toughness))
+	slot.show_damage_feedback(damage_amount, not is_direct_hit)
+	damage_feedback_started.emit(slot_index, damage_amount, not is_direct_hit)
 	_play(_shell_hit_player if is_direct_hit else _echo_player)
 	var spoon_button: Button = _spoon_buttons[slot_index]
 	var spoon: Control = _spoons[slot_index]
 	if is_direct_hit:
 		spoon.impact_emphasis = 1.0
 	if _reduced_motion:
+		var reduced_shell: Control = slot.hatch_shell_control()
+		reduced_shell.impact_emphasis = 1.0
+		reduced_shell.echo_emphasis = 1.0 if not is_direct_hit else 0.0
 		if is_direct_hit:
 			spoon_button.reset_pose()
 			spoon.reset_pose()
 		return true
 	var content: Control = slot.motion_content()
+	var shell: Control = slot.hatch_shell_control()
+	var damage_label: Control = slot.damage_feedback_control()
 	content.pivot_offset = content.size * 0.5
 	var rest_scale: Vector2 = content.scale
-	var damage_strength := 1.35 if int(event.damage_amount) > 1 else 1.0
+	var damage_strength := 1.35 if damage_amount > 1 else 1.0
+	shell.impact_emphasis = 1.0 if is_direct_hit else 0.35
+	shell.echo_emphasis = 1.0 if not is_direct_hit else 0.0
+	damage_label.pivot_offset = damage_label.size * 0.5
+	damage_label.scale = Vector2.ONE * 0.72
+	damage_label.modulate.a = 0.0
 	var bounce := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	bounce.tween_property(
-		content, "scale", rest_scale * Vector2(1.15, 0.76), 0.045
+		content, "scale", rest_scale * Vector2(1.18, 0.72), 0.045
 	)
-	bounce.parallel().tween_property(content, "rotation", -0.045, 0.045)
+	bounce.parallel().tween_property(content, "rotation", -0.055, 0.045)
+	bounce.parallel().tween_property(damage_label, "scale", Vector2(1.08, 1.08), 0.055)
+	bounce.parallel().tween_property(damage_label, "modulate:a", 1.0, 0.04)
 	if is_direct_hit:
 		bounce.parallel().tween_property(
 			_stage,
 			"position",
-			_stage_origin + Vector2(-1.5, 3.0) * damage_strength,
+			_stage_origin + Vector2(-3.5, 6.0) * damage_strength,
 			0.045
 		)
-		bounce.parallel().tween_property(spoon_button, "press_amount", 0.0, 0.09)
-		bounce.parallel().tween_property(spoon, "strike_amount", 0.0, 0.09)
-		bounce.parallel().tween_property(spoon, "impact_emphasis", 0.0, 0.09)
+		bounce.parallel().tween_property(spoon_button, "press_amount", 0.0, 0.075)
+		bounce.parallel().tween_property(spoon, "strike_amount", 0.0, 0.075)
+		bounce.parallel().tween_property(spoon, "impact_emphasis", 0.0, 0.075)
 	bounce.tween_property(content, "scale", rest_scale, 0.075)
 	bounce.parallel().tween_property(content, "rotation", 0.0, 0.075)
+	bounce.parallel().tween_property(shell, "impact_emphasis", 0.0, 0.08)
+	bounce.parallel().tween_property(shell, "echo_emphasis", 0.0, 0.09)
 	if is_direct_hit:
 		bounce.parallel().tween_property(_stage, "position", _stage_origin, 0.075)
-	return await _run_tween(bounce, playback_generation)
+	if not await _run_tween(bounce, playback_generation):
+		return false
+	var dismiss := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	dismiss.tween_property(damage_label, "position:y", damage_label.position.y - 12.0, 0.06)
+	dismiss.parallel().tween_property(damage_label, "modulate:a", 0.0, 0.06)
+	if not await _run_tween(dismiss, playback_generation):
+		return false
+	slot.hide_damage_feedback()
+	slot.reset_damage_feedback_pose()
+	return true
 
 
 func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
@@ -226,23 +253,23 @@ func _present_hatch(event: Dictionary, playback_generation: int) -> bool:
 	var shell: Control = slot.hatch_shell_control()
 	var toughness: Control = slot.toughness_control()
 	var tension := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tension.tween_property(content, "scale", rest_scale * Vector2(0.90, 1.08), 0.08)
-	tension.parallel().tween_property(content, "rotation", -0.045, 0.08)
-	tension.parallel().tween_property(hatch_burst, "burst_amount", 0.16, 0.08)
+	tension.tween_property(content, "scale", rest_scale * Vector2(0.90, 1.08), 0.06)
+	tension.parallel().tween_property(content, "rotation", -0.045, 0.06)
+	tension.parallel().tween_property(hatch_burst, "burst_amount", 0.16, 0.06)
 	if not await _run_tween(tension, playback_generation):
 		return false
 	var fracture := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	fracture.tween_property(content, "scale", rest_scale * Vector2(1.08, 0.96), 0.09)
-	fracture.parallel().tween_property(content, "rotation", 0.055, 0.09)
-	fracture.parallel().tween_property(hatch_burst, "burst_amount", 0.46, 0.09)
+	fracture.tween_property(content, "scale", rest_scale * Vector2(1.08, 0.96), 0.07)
+	fracture.parallel().tween_property(content, "rotation", 0.055, 0.07)
+	fracture.parallel().tween_property(hatch_burst, "burst_amount", 0.46, 0.07)
 	if not await _run_tween(fracture, playback_generation):
 		return false
 	var burst := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	burst.tween_property(content, "scale", rest_scale * Vector2(1.48, 1.22), 0.13)
-	burst.parallel().tween_property(content, "rotation", 0.10, 0.13)
-	burst.parallel().tween_property(shell, "modulate:a", 0.0, 0.13)
-	burst.parallel().tween_property(toughness, "modulate:a", 0.0, 0.10)
-	burst.parallel().tween_property(hatch_burst, "burst_amount", 1.0, 0.13)
+	burst.tween_property(content, "scale", rest_scale * Vector2(1.48, 1.22), 0.10)
+	burst.parallel().tween_property(content, "rotation", 0.10, 0.10)
+	burst.parallel().tween_property(shell, "modulate:a", 0.0, 0.10)
+	burst.parallel().tween_property(toughness, "modulate:a", 0.0, 0.08)
+	burst.parallel().tween_property(hatch_burst, "burst_amount", 1.0, 0.10)
 	if not await _run_tween(burst, playback_generation):
 		return false
 	slot.clear_visual()
@@ -267,37 +294,45 @@ func _present_yolk_delivery(event: Dictionary, playback_generation: int) -> bool
 			return false
 		if not await _present_multiplier_surge(pre_multiplier_scale, playback_generation):
 			return false
-	elif not _reduced_motion and not await _pause(0.10, playback_generation):
+	elif not _reduced_motion and not await _pause(0.06, playback_generation):
 		return false
 	var origin: Vector2 = _yolk_combo_display.ball_global_position()
 	var destination: Vector2 = _grandma_hunger_panel.delivery_global_position()
+	if not _reduced_motion:
+		_yolk_combo_display.show_delivery_route(destination)
+	_grandma_hunger_panel.show_delivery_target()
 	yolk_delivery_started.emit(total_yolk, origin, destination)
 	if playback_generation != _generation:
 		return false
 	if _reduced_motion:
-		if not await _pause(0.12 if is_combo else 0.08, playback_generation):
+		if not await _pause(0.08 if is_combo else 0.05, playback_generation):
 			return false
 		_yolk_combo_display.finish_delivery()
 		_grandma_hunger_panel.show_hunger_subtraction(
 			hunger_before, total_yolk, hunger_after
 		)
+		_grandma_hunger_panel.set_delivery_target_strength(1.0)
 		hunger_subtraction_presented.emit(hunger_before, total_yolk, hunger_after)
 		_commit_hunger(event)
-		if not await _pause(0.10 if is_combo else 0.06, playback_generation):
+		if not await _pause(0.18 if is_combo else 0.12, playback_generation):
 			return false
 		_grandma_hunger_panel.hide_hunger_subtraction()
+		_grandma_hunger_panel.hide_delivery_target()
 		return true
 	var ball: Control = _yolk_combo_display.begin_delivery()
 	var ball_size := ball.size
 	var score_scale: Vector2 = ball.scale
 	var deliver := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-	deliver.tween_property(ball, "global_position", destination - ball_size * 0.5, 0.25)
+	deliver.tween_property(ball, "global_position", destination - ball_size * 0.5, 0.22)
 	deliver.parallel().tween_property(
-		ball, "scale", score_scale * Vector2(0.68, 0.74), 0.25
+		ball, "scale", score_scale * Vector2(0.68, 0.74), 0.22
 	)
 	deliver.parallel().tween_property(ball, "rotation", 0.08, 0.13)
+	deliver.parallel().tween_property(
+		_yolk_combo_display, "route_trace_alpha", 0.18, 0.22
+	)
 	deliver.tween_property(
-		ball, "scale", score_scale * Vector2(0.88, 0.54), 0.06
+		ball, "scale", score_scale * Vector2(0.88, 0.54), 0.05
 	)
 	if not await _run_tween(deliver, playback_generation):
 		return false
@@ -305,10 +340,13 @@ func _present_yolk_delivery(event: Dictionary, playback_generation: int) -> bool
 	_grandma_hunger_panel.show_hunger_subtraction(hunger_before, total_yolk, hunger_after)
 	hunger_subtraction_presented.emit(hunger_before, total_yolk, hunger_after)
 	var change_feedback: Control = _grandma_hunger_panel.hunger_change_control()
+	var impact_glow: Control = _grandma_hunger_panel.impact_glow_control()
+	_grandma_hunger_panel.set_delivery_target_strength(1.0)
 	change_feedback.pivot_offset = change_feedback.size * 0.5
 	change_feedback.scale = Vector2(0.90, 0.90)
 	var reveal := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	reveal.tween_property(change_feedback, "scale", Vector2(1.08, 1.08), 0.06)
+	reveal.tween_property(change_feedback, "scale", Vector2(1.12, 1.12), 0.06)
+	reveal.parallel().tween_property(impact_glow, "modulate:a", 0.66, 0.06)
 	reveal.tween_property(change_feedback, "scale", Vector2.ONE, 0.05)
 	if not await _run_tween(reveal, playback_generation):
 		return false
@@ -316,13 +354,24 @@ func _present_yolk_delivery(event: Dictionary, playback_generation: int) -> bool
 	var hunger_feedback: Control = _grandma_hunger_panel.feedback_control()
 	hunger_feedback.pivot_offset = hunger_feedback.size * 0.5
 	var hunger_pulse := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	hunger_pulse.tween_property(hunger_feedback, "scale", Vector2(1.12, 1.12), 0.07)
+	hunger_pulse.tween_property(hunger_feedback, "scale", Vector2(1.22, 1.22), 0.07)
+	hunger_pulse.parallel().tween_property(
+		hunger_feedback, "modulate", Color("fff0a0"), 0.06
+	)
 	hunger_pulse.tween_property(hunger_feedback, "scale", Vector2.ONE, 0.08)
+	hunger_pulse.parallel().tween_property(
+		hunger_feedback, "modulate", Color.WHITE, 0.08
+	)
 	if not await _run_tween(hunger_pulse, playback_generation):
 		return false
-	if not await _pause(0.15 if is_combo else 0.08, playback_generation):
+	if not await _pause(0.14 if is_combo else 0.08, playback_generation):
+		return false
+	var fade_target := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	fade_target.tween_property(impact_glow, "modulate:a", 0.0, 0.08)
+	if not await _run_tween(fade_target, playback_generation):
 		return false
 	_grandma_hunger_panel.hide_hunger_subtraction()
+	_grandma_hunger_panel.hide_delivery_target()
 	return true
 
 
@@ -342,15 +391,15 @@ func _present_yolk_merges(base_yolks: Array, playback_generation: int) -> bool:
 			drop.scale = Vector2.ONE * 0.22
 			drop.modulate.a = 0.0
 			var reveal := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			reveal.tween_property(drop, "scale", Vector2.ONE, 0.09)
-			reveal.parallel().tween_property(drop, "modulate:a", 1.0, 0.07)
+			reveal.tween_property(drop, "scale", Vector2.ONE, 0.07)
+			reveal.parallel().tween_property(drop, "modulate:a", 1.0, 0.055)
 			if not await _run_tween(reveal, playback_generation):
 				return false
 			var drop_destination := destination - drop.size * 0.5
 			var merge := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-			merge.tween_property(drop, "global_position", drop_destination, 0.18)
-			merge.parallel().tween_property(drop, "scale", Vector2(0.62, 0.78), 0.18)
-			merge.parallel().tween_property(drop, "modulate:a", 0.78, 0.18)
+			merge.tween_property(drop, "global_position", drop_destination, 0.14)
+			merge.parallel().tween_property(drop, "scale", Vector2(0.62, 0.78), 0.14)
+			merge.parallel().tween_property(drop, "modulate:a", 0.78, 0.14)
 			if not await _run_tween(merge, playback_generation):
 				return false
 		drop.queue_free()
@@ -362,8 +411,8 @@ func _present_yolk_merges(base_yolks: Array, playback_generation: int) -> bool:
 			var settled_scale: Vector2 = ball.scale
 			ball.scale = prior_scale * Vector2(0.96, 1.05)
 			var absorb := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-			absorb.tween_property(ball, "scale", settled_scale * Vector2(1.10, 0.91), 0.08)
-			absorb.tween_property(ball, "scale", settled_scale, 0.075)
+			absorb.tween_property(ball, "scale", settled_scale * Vector2(1.10, 0.91), 0.06)
+			absorb.tween_property(ball, "scale", settled_scale, 0.055)
 			if not await _run_tween(absorb, playback_generation):
 				return false
 	_pending_yolk_origins.clear()
@@ -374,19 +423,26 @@ func _present_multiplier_surge(
 	starting_scale: Vector2, playback_generation: int
 ) -> bool:
 	if _reduced_motion:
-		return await _pause(0.12, playback_generation)
+		return await _pause(0.16, playback_generation)
 	var ball: Control = _yolk_combo_display.ball_control()
 	var settled_scale: Vector2 = ball.scale
 	ball.pivot_offset = ball.size * 0.5
 	ball.scale = starting_scale
 	var surge := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	surge.tween_property(ball, "scale", settled_scale * Vector2(1.18, 1.10), 0.17)
-	surge.parallel().tween_property(ball, "rotation", -0.07, 0.17)
-	surge.tween_property(ball, "scale", settled_scale, 0.13)
-	surge.parallel().tween_property(ball, "rotation", 0.0, 0.13)
+	surge.tween_property(ball, "scale", settled_scale * Vector2(1.18, 1.10), 0.15)
+	surge.parallel().tween_property(ball, "rotation", -0.07, 0.15)
+	surge.tween_property(ball, "scale", settled_scale, 0.11)
+	surge.parallel().tween_property(ball, "rotation", 0.0, 0.11)
 	if not await _run_tween(surge, playback_generation):
 		return false
-	return await _pause(0.14, playback_generation)
+	return await _pause(0.16, playback_generation)
+
+
+func _present_tap_spent(event: Dictionary, _playback_generation: int) -> bool:
+	_tap_pips_label.text = _tap_pips(
+		int(event.taps_remaining), int(event.taps_per_phase)
+	)
+	return true
 
 
 func _present_swap(event: Dictionary, _playback_generation: int) -> bool:
@@ -418,14 +474,14 @@ func _present_entry(event: Dictionary, playback_generation: int) -> bool:
 	content.z_index = 12
 	var hover_position := destination_position - Vector2(0.0, 92.0)
 	var route := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	route.tween_property(content, "position", hover_position, 0.20)
-	route.parallel().tween_property(content, "scale", destination_scale * 0.90, 0.20)
-	route.parallel().tween_property(content, "modulate:a", 1.0, 0.12)
+	route.tween_property(content, "position", hover_position, 0.15)
+	route.parallel().tween_property(content, "scale", destination_scale * 0.90, 0.15)
+	route.parallel().tween_property(content, "modulate:a", 1.0, 0.10)
 	if not await _run_tween(route, playback_generation):
 		return false
 	var drop := create_tween().set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-	drop.tween_property(content, "position", destination_position, 0.18)
-	drop.parallel().tween_property(content, "scale", destination_scale, 0.15)
+	drop.tween_property(content, "position", destination_position, 0.13)
+	drop.parallel().tween_property(content, "scale", destination_scale, 0.12)
 	if not await _run_tween(drop, playback_generation):
 		return false
 	content.z_index = 0
@@ -501,6 +557,9 @@ func _reset_mechanisms() -> void:
 		_grandma_hunger_panel.reset_feedback()
 	if _yolk_combo_display != null:
 		_yolk_combo_display.reset_transient()
+	if _tap_pips_label != null:
+		_tap_pips_label.scale = Vector2.ONE
+		_tap_pips_label.modulate = Color.WHITE
 	for spoon_button: Button in _spoon_buttons:
 		spoon_button.reset_pose()
 	for spoon: Control in _spoons:
