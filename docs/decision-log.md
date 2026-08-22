@@ -824,6 +824,16 @@ This log is append-only. Later decisions may supersede earlier entries but never
 
 **Supersedes:** D075's statement that the current eggs have no hatch effects and D082's five-identity reward pool and deferral of every new identity. D082's fixed twelve-egg Round 1 flock, one reward, thirteen-egg Round 2, seed ownership, 12 Hunger, and all unrelated tabletop rules remain accepted.
 
+## D084 — Resolve every effect-created tap through Tap, Break, and Replace
+
+**Status:** accepted
+
+**Decision:** Treat each tap instruction as one resolver-owned **Tap → Break → Replace** sequence. Targets joined by **AND** share one simultaneous Tap stage against the same starting board. After its complete damage batch, resolve simultaneous breaks and their break effects from left to right. Each break effect's complete nested Tap → Break → Replace sequence finishes before the next break effect begins, so replacements created by that nested instruction become live board state for later effects. The initiating paid tap still owns one combined break combo, one Yolk delivery, and one paid-tap cost across every nested instruction. Deliver that combined Yolk before replacing vacancies created by the paid instruction itself; effect-created instructions replace their own vacancies before returning. No current egg gains a multi-target tap instruction as part of this decision.
+
+**Reason:** Player-selected placement would introduce a second interaction mode and make forced single-vacancy refills awkward. Resolver-authored replacement preserves one automatic system while letting the visible hopper order and effect sequence create predictable positional strategy. Making every induced tap complete the same three stages avoids a special post-chain refill rule, and left-to-right ordering supplies one stable tie-break for simultaneous targets, breaks, effects, and replacements.
+
+**Supersedes:** D083's requirement to defer every hopper refill until the complete Woodpecker chain ends, and D075's complete-cascade refill rule only for vacancies created by an effect-induced nested tap. Their sequential resolver ownership, shared paid-tap combo, one paid-tap cost, ordinary paid-tap scoring order, and all unrelated tabletop rules remain accepted.
+
 <!--
 Copy for the next entry:
 

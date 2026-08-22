@@ -42,7 +42,7 @@ Shell failure is the tactile payoff for invested taps. Let the final crack visib
 
 ## Refill is a routing decision
 
-An opened cup remains visibly empty until its complete damage and hatch cascade ends. Then the next hopper egg travels from the hopper into that exact vacancy. Several openings refill in hatch order, which is left-to-right for the current simultaneous damage batch.
+An opened cup remains visibly empty through the break effects belonging to that tap instruction. Then the next hopper egg travels from the hopper into that exact vacancy. Several openings created by one instruction refill from left to right. An effect-created tap completes its own Tap → Break → Replace sequence before the parent break queue continues, so its replacement may change the live board seen by a later break effect.
 
 The movement must communicate a resolver-authored destination. Animation never chooses a cup, changes queue order, or makes an egg available before the presentation barrier completes.
 
@@ -50,7 +50,7 @@ The movement must communicate a resolver-authored destination. Animation never c
 
 The domain owns direct damage, Cuckoo copies, hatch order, Plover movement, Yolk, refills, paid taps, Hunger phases, and end states. UI submits one spoon request. Presentation plays the ordered facts, locks further input until completion, and cancels cleanly on restart or replacement.
 
-Free reactions create efficiency but never spend hidden taps. Because Woodpecker can convert one break into a full spoon tap and chain into further Woodpeckers, keep it directional, reward-only, and modest in printed Yolk while testing whether it dominates every reward choice. Resolve each induced spoon fire as an explicitly attributed event against the resulting live board; do not batch away the order. Each egg opens at most once, each vacancy receives at most one hopper egg, and success after a complete cascade takes precedence over Grandma's response.
+Free reactions create efficiency but never spend hidden taps. Because Woodpecker can convert one break into a full spoon tap and chain into further Woodpeckers, keep it directional, reward-only, and modest in printed Yolk while testing whether it dominates every reward choice. Resolve each induced tap as an explicitly attributed Tap → Break → Replace sequence against the resulting live board. Resolve simultaneous breaks from left to right, completing each nested sequence before the next break effect; do not batch away that order. Each egg opens at most once, each vacancy receives at most one hopper egg, and success after a complete paid-tap cascade takes precedence over Grandma's response.
 
 ## Pressure must create drama, not inevitability
 

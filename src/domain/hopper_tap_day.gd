@@ -28,7 +28,6 @@ var _ended := false
 var _succeeded := false
 var _next_egg_instance_id := 1
 var _resolved_egg_ids: Dictionary = {}
-var _vacancy_slots_in_hatch_order: Array[int] = []
 var _next_spoon_fire_id := 1
 
 
@@ -85,11 +84,11 @@ func resolve_spoon(slot_index: int) -> Array[Dictionary]:
 
 	var events: Array[Dictionary] = []
 	_resolved_egg_ids.clear()
-	_vacancy_slots_in_hatch_order.clear()
 	_next_spoon_fire_id = 1
 	var hatched_eggs: Array[Dictionary] = []
-	_resolve_spoon_fire(
-		slot_index, "paid_tap", {}, 0, events, hatched_eggs
+	var vacancy_frames: Array[Array] = []
+	var paid_tap_vacancies: Array[int] = _resolve_spoon_fire(
+		slot_index, "paid_tap", {}, 0, events, hatched_eggs, vacancy_frames
 	)
 	var hatch_result: Dictionary = _finalize_hatches(events, hatched_eggs)
 	var total_yolk := int(hatch_result.total_yolk)
@@ -106,8 +105,7 @@ func resolve_spoon(slot_index: int) -> Array[Dictionary]:
 			"hunger_before": hunger_before,
 			"hunger": _hunger,
 		})
-	_refill_vacancies(events)
-
+	_refill_vacancies(paid_tap_vacancies, events)
 	_taps_remaining = maxi(_taps_remaining - 1, 0)
 	events.append({
 		"type": "tap_spent",
@@ -131,8 +129,9 @@ func _resolve_spoon_fire(
 	source_hatch: Dictionary,
 	parent_fire_id: int,
 	events: Array[Dictionary],
-	all_hatched_eggs: Array[Dictionary]
-) -> void:
+	all_hatched_eggs: Array[Dictionary],
+	vacancy_frames: Array[Array]
+) -> Array[int]:
 	assert(not _slots[slot_index].is_empty(), "A spoon can only fire into an occupied cup.")
 	var spoon: Dictionary = SPOONS[slot_index]
 	var fire_id := _next_spoon_fire_id
@@ -159,7 +158,11 @@ func _resolve_spoon_fire(
 	_apply_cuckoo_echoes(slot_index, damage_amount, spoon_color, fire_id, events)
 	var newly_hatched: Array[Dictionary] = _resolve_hatches(events, fire_id)
 	all_hatched_eggs.append_array(newly_hatched)
-	_retreat_surviving_direct_plover(slot_index, events)
+	var vacancy_slots: Array[int] = []
+	for hatched_egg: Dictionary in newly_hatched:
+		vacancy_slots.append(int(hatched_egg.slot_index))
+	vacancy_frames.append(vacancy_slots)
+	_retreat_surviving_direct_plover(slot_index, vacancy_frames, events)
 
 	for hatched_egg: Dictionary in newly_hatched:
 		if String(hatched_egg.kind) != "woodpecker":
@@ -173,8 +176,13 @@ func _resolve_spoon_fire(
 			hatched_egg,
 			fire_id,
 			events,
-			all_hatched_eggs
+			all_hatched_eggs,
+			vacancy_frames
 		)
+	if cause != "paid_tap":
+		_refill_vacancies(vacancy_slots, events)
+	vacancy_frames.pop_back()
+	return vacancy_slots
 
 
 func _direct_damage_amount(slot_index: int, spoon_color: String) -> int:
@@ -244,7 +252,6 @@ func _resolve_hatches(events: Array[Dictionary], fire_id: int) -> Array[Dictiona
 			continue
 		_resolved_egg_ids[egg_instance_id] = true
 		_slots[slot_index] = {}
-		_vacancy_slots_in_hatch_order.append(slot_index)
 		var base_yolk := int(egg.points)
 		var hatched_egg := {
 			"egg_instance_id": egg_instance_id,
@@ -295,6 +302,7 @@ func _finalize_hatches(
 
 func _retreat_surviving_direct_plover(
 	direct_slot_index: int,
+	vacancy_frames: Array[Array],
 	events: Array[Dictionary]
 ) -> void:
 	if direct_slot_index <= 0 or _slots[direct_slot_index].is_empty():
@@ -307,9 +315,13 @@ func _retreat_surviving_direct_plover(
 	_slots[direct_slot_index] = _slots[destination_slot_index]
 	_slots[destination_slot_index] = plover
 	if destination_was_vacant:
-		var vacancy_index := _vacancy_slots_in_hatch_order.find(destination_slot_index)
-		if vacancy_index >= 0:
-			_vacancy_slots_in_hatch_order[vacancy_index] = direct_slot_index
+		for frame_index in range(vacancy_frames.size() - 1, -1, -1):
+			var vacancy_slots: Array = vacancy_frames[frame_index]
+			var vacancy_index := vacancy_slots.find(destination_slot_index)
+			if vacancy_index < 0:
+				continue
+			vacancy_slots[vacancy_index] = direct_slot_index
+			break
 	events.append({
 		"type": "eggs_swapped",
 		"kind": "plover",
@@ -319,8 +331,10 @@ func _retreat_surviving_direct_plover(
 	})
 
 
-func _refill_vacancies(events: Array[Dictionary]) -> void:
-	for slot_index: int in _vacancy_slots_in_hatch_order:
+func _refill_vacancies(
+	vacancy_slots: Array[int], events: Array[Dictionary]
+) -> void:
+	for slot_index: int in vacancy_slots:
 		if _hopper.is_empty():
 			break
 		assert(_slots[slot_index].is_empty(), "A hopper egg can only enter a vacant bay.")

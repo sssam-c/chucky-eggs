@@ -28,7 +28,7 @@ Accepted for prototype implementation on 2026-08-20 after informal play establis
 - The Round 1 flock multiset remains three Chickens, three Cuckoos, two Sparrows, two Plovers, and two Spoonbills.
 - One visible run seed deterministically owns Round 1 order, three unique reward offers, and Round 2 order.
 - Winning Round 1 grants exactly one current-species egg, increasing the flock from twelve to thirteen.
-- Woodpecker is reward-only: 4 toughness, 2 Yolk, and on break it fires the occupied spoon immediately to its right once for free. The induced tap uses that spoon's colour and complete egg rules, can chain through further Woodpeckers, remains part of the original tap's combo, spends no additional tap, and resolves before refill.
+- Woodpecker is reward-only: 4 toughness, 2 Yolk, and on break it fires the occupied spoon immediately to its right once for free. The induced tap uses that spoon's colour and complete egg rules, completes its own Tap → Break → Replace sequence before returning to the parent break queue, can chain through further Woodpeckers, remains part of the original paid tap's combo, and spends no additional tap.
 - Round 1 begins at 10 Hunger; Round 2 provisionally begins at 12. Both retain five taps, a first response of +1, and +1 response growth.
 - Retry preserves the seed and selected reward. New seed begins a different deterministic run.
 
@@ -39,6 +39,7 @@ Accepted for prototype implementation on 2026-08-20 after informal play establis
 - Players will adapt their early taps to the visible board and hopper rather than treating each seed as cosmetic.
 - Reward choices will be situational rather than collapsing into one universally preferred species.
 - Woodpecker's free-tap efficiency will remain arrangement-dependent rather than making it the dominant reward whenever offered.
+- Nested replacement will make the visible hopper order strategically relevant during a Woodpecker cascade without making the sequence too difficult to predict.
 - The chosen thirteenth egg will visibly change at least one Round 2 plan.
 - Twelve starting Hunger will make Round 2 harder without making a poor early phase feel unrecoverable.
 - Completing Round 2 will leave players wanting another reward and round.
@@ -57,11 +58,12 @@ Accepted for prototype implementation on 2026-08-20 after informal play establis
 - Additional new egg identities, rarity, random egg stats, hidden quality, shops, cash, removals, upgrades, and permanent unlocks.
 - A third round, endless play, save persistence, daily challenges, online seed sharing, and a full seed-entry interface.
 - Changes to taps per phase, Grandma's escalation curve, combo arithmetic, or egg tuning.
+- An egg with a simultaneous **Tap Left AND Right** effect; the resolver ordering is accepted now, but that content and its balance question remain deferred.
 
 ### Exit evidence
 
 - Game-layer specs prove equal seeds reproduce complete orders and offers, different seeds can vary them, reward selection is legal only after Round 1 success, exactly one offered egg is added, Round 2 begins at 12 Hunger with thirteen eggs, same-seed retry preserves the chosen flock, and Woodpecker remains absent from Round 1 while eligible for rewards.
-- Domain specs prove Woodpecker's complete right-spoon tap, colour and Cuckoo interactions, sequential recursive attribution, one paid-tap cost, shared combo, edge/empty fizzle, and post-chain refill.
+- Domain specs prove Woodpecker's complete right-spoon tap, colour and Cuckoo interactions, sequential recursive attribution, nested Tap → Break → Replace ordering, left-to-right same-instruction refill, Plover vacancy migration, one paid-tap cost, shared combo, and edge/empty fizzle.
 - UI specs prove the seed and round are visible, reward input is exclusive and exactly once, Woodpecker's reward card and on-break mark expose its complete known profile, spoons remain unavailable during the transition, Round 2 difficulty is announced, and retry/new-seed actions preserve or change the seed as labelled.
 - Muted running-game checks at 1280×720 and 1024×576 verify reward-card layout, keyboard focus, seed/round readability, the Round 2 transition, and the existing tap-presentation barrier.
 - Play at least three seeds. Record whether the opening changes a plan, whether two reward choices appear plausible, how the chosen egg changes Round 2, whether 12 Hunger creates productive pressure, and whether the player wants a third round.

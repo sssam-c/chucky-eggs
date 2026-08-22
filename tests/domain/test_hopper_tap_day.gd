@@ -215,7 +215,7 @@ func test_woodpecker_break_fires_the_right_spoon_for_free_and_joins_the_combo() 
 	assert_eq(day.snapshot().hunger, 93)
 
 
-func test_woodpecker_breaks_chain_right_sequentially_before_refill() -> void:
+func test_each_woodpecker_tap_replaces_its_break_before_returning_to_its_parent() -> void:
 	var day = HopperTapDay.new([
 		"woodpecker", "woodpecker", "sparrow", "chicken", "chicken",
 		"spoonbill", "plover", "cuckoo",
@@ -238,12 +238,41 @@ func test_woodpecker_breaks_chain_right_sequentially_before_refill() -> void:
 		"woodpecker", "woodpecker", "sparrow",
 	])
 	assert_eq(_events_of_type(events, "yolk_delivered")[0].total_yolk, 15)
-	assert_eq(entries.map(func(event: Dictionary) -> int: return int(event.slot_index)), [0, 1, 2])
+	assert_eq(entries.map(func(event: Dictionary) -> int: return int(event.slot_index)), [2, 1, 0])
 	assert_eq(entries.map(func(event: Dictionary) -> String: return String(event.egg.kind)), [
 		"spoonbill", "plover", "cuckoo",
 	])
-	assert_gt(_event_types(events).find("egg_entered"), _event_types(events).rfind("spoon_fired"))
+	assert_eq(_event_types(events), [
+		"spoon_fired", "egg_damaged", "egg_hatched",
+		"spoon_fired", "egg_damaged", "egg_hatched",
+		"spoon_fired", "egg_damaged", "egg_hatched",
+		"egg_entered", "egg_entered", "yolk_delivered",
+		"egg_entered", "tap_spent",
+	])
 	assert_eq(_events_of_type(events, "tap_spent").size(), 1)
+
+
+func test_nested_plover_move_preserves_the_parent_taps_replacement() -> void:
+	var day = HopperTapDay.new([
+		"woodpecker", "plover", "chicken", "chicken", "chicken", "sparrow",
+	], 99, 10)
+	for setup_tap in range(3):
+		day.resolve_spoon(0)
+
+	var events: Array[Dictionary] = day.resolve_spoon(0)
+	var entries: Array[Dictionary] = _events_of_type(events, "egg_entered")
+	var state: Dictionary = day.snapshot()
+
+	assert_eq(_event_types(events), [
+		"spoon_fired", "egg_damaged", "egg_hatched",
+		"spoon_fired", "egg_damaged", "eggs_swapped",
+		"yolk_delivered", "egg_entered", "tap_spent",
+	])
+	assert_eq(entries.size(), 1)
+	assert_eq(entries[0].slot_index, 1)
+	assert_eq(entries[0].egg.kind, "sparrow")
+	assert_eq(state.slots[0].kind, "plover")
+	assert_eq(state.slots[1].kind, "sparrow")
 
 
 func test_woodpecker_at_the_right_edge_has_no_tap_target() -> void:
