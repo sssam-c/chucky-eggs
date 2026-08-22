@@ -9,6 +9,7 @@ signal combo_announced(combo_count: int, callout: String, total_yolk: int)
 signal yolk_delivery_started(total_yolk: int, origin: Vector2, destination: Vector2)
 signal hunger_subtraction_presented(hunger_before: int, amount: int, hunger_after: int)
 signal damage_feedback_started(slot_index: int, amount: int, indirect: bool)
+signal egg_swap_started(from_slot_index: int, to_slot_index: int)
 
 const CrunchAudio = preload("res://src/presentation/crunch_audio.gd")
 
@@ -445,11 +446,61 @@ func _present_tap_spent(event: Dictionary, _playback_generation: int) -> bool:
 	return true
 
 
-func _present_swap(event: Dictionary, _playback_generation: int) -> bool:
-	var resolved_slots: Array = event.slots
+func _present_swap(event: Dictionary, playback_generation: int) -> bool:
+	var from_slot_index := int(event.from_slot_index)
+	var to_slot_index := int(event.to_slot_index)
+	egg_swap_started.emit(from_slot_index, to_slot_index)
+	if playback_generation != _generation:
+		return false
+	if _reduced_motion:
+		_render_slots(event.slots)
+		return true
+
+	var from_slot: Button = _slots[from_slot_index]
+	var to_slot: Button = _slots[to_slot_index]
+	var plover_content: Control = from_slot.motion_content()
+	var displaced_content: Control = to_slot.motion_content()
+	var has_displaced_egg: bool = not to_slot.current_egg().is_empty()
+	var route_step: Vector2 = to_slot.position - from_slot.position
+	var sidestep := Vector2(0.0, -26.0)
+	var plover_origin := plover_content.position
+	var displaced_origin := displaced_content.position
+	plover_content.z_index = 8
+	plover_content.pivot_offset = plover_content.size * 0.5
+	displaced_content.z_index = 6
+	displaced_content.pivot_offset = displaced_content.size * 0.5
+
+	var retreat := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	retreat.tween_property(
+		plover_content, "position", plover_origin + route_step * 0.48 + sidestep, 0.09
+	)
+	retreat.parallel().tween_property(plover_content, "rotation", -0.09, 0.09)
+	if has_displaced_egg:
+		retreat.parallel().tween_property(
+			displaced_content,
+			"position",
+			displaced_origin - route_step * 0.52 - sidestep * 0.3,
+			0.09
+		)
+		retreat.parallel().tween_property(displaced_content, "rotation", 0.07, 0.09)
+	retreat.tween_property(
+		plover_content, "position", plover_origin + route_step, 0.10
+	).set_trans(Tween.TRANS_BACK)
+	retreat.parallel().tween_property(plover_content, "rotation", 0.0, 0.10)
+	if has_displaced_egg:
+		retreat.parallel().tween_property(
+			displaced_content, "position", displaced_origin - route_step, 0.10
+		)
+		retreat.parallel().tween_property(displaced_content, "rotation", 0.0, 0.10)
+	if not await _run_tween(retreat, playback_generation):
+		return false
+	_render_slots(event.slots)
+	return true
+
+
+func _render_slots(resolved_slots: Array) -> void:
 	for slot_index in range(mini(_slots.size(), resolved_slots.size())):
 		_slots[slot_index].render_egg(resolved_slots[slot_index], false)
-	return true
 
 
 func _present_entry(event: Dictionary, playback_generation: int) -> bool:
@@ -540,7 +591,7 @@ func _tap_pips(remaining: int, total: int) -> String:
 	var pips: Array[String] = []
 	for tap_index in range(total):
 		pips.append("●" if tap_index < remaining else "○")
-	return "TAPS  %s" % " ".join(pips)
+	return "TAPS %d/%d  %s" % [remaining, total, " ".join(pips)]
 
 
 func _render_pipe(eggs: Array) -> void:

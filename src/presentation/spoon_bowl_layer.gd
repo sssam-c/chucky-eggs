@@ -13,6 +13,15 @@ func _draw() -> void:
 	for handle: Dictionary in spoon.foreground_handle_visuals():
 		var visibility: float = handle.visibility
 		var width_scale: float = handle.get("width_scale", 1.0)
+		var preview_emphasis: float = handle.get("preview_emphasis", 0.0)
+		if preview_emphasis > 0.001:
+			draw_line(
+				handle.from,
+				handle.to,
+				Color(handle.get("preview_color", Color("d18a35")), 0.34 * preview_emphasis),
+				18.0 * width_scale,
+				true
+			)
 		# Every falling asset draws its shaft and bowls in one pass. The authored
 		# contact asset alone omits this foreground shaft so egg occlusion can put
 		# the same handle back on the wall plane without exposing a gap in flight.
@@ -27,6 +36,14 @@ func _draw() -> void:
 		)
 	for visual: Dictionary in spoon.bowl_visuals():
 		_draw_bowl(visual.center, visual.radii, visual.tipped_amount)
+		var preview_emphasis: float = visual.get("preview_emphasis", 0.0)
+		if preview_emphasis > 0.001:
+			_draw_preview_outline(
+				visual.center,
+				visual.radii,
+				visual.get("preview_color", Color("d18a35")),
+				preview_emphasis
+			)
 		if visual.get("draw_neck", false):
 			_draw_bowl_neck(
 				visual.center,
@@ -37,6 +54,14 @@ func _draw() -> void:
 		var impact_emphasis: float = visual.get("impact_emphasis", 0.0)
 		if impact_emphasis > 0.001:
 			_draw_impact_marks(visual.center, visual.radii, impact_emphasis)
+
+
+func _draw_preview_outline(
+	center: Vector2, radii: Vector2, color: Color, emphasis: float
+) -> void:
+	var outline := _ellipse_points(center, radii + Vector2(4.0, 5.0))
+	outline.append(outline[0])
+	draw_polyline(outline, Color(color.lightened(0.28), 0.82 * emphasis), 3.0, true)
 
 
 func _draw_impact_marks(center: Vector2, radii: Vector2, emphasis: float) -> void:

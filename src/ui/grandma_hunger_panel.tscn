@@ -138,7 +138,7 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.58, 0.82, 1, 1)
 theme_override_font_sizes/font_size = 17
-text = "TAPS  ● ● ● ● ●"
+text = "TAPS 5/5  ● ● ● ● ●"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -154,26 +154,38 @@ theme_override_styles/panel = SubResource("HungerCardPanel")
 
 [node name="HungerTitle" type="Label" parent="HungerCard"]
 layout_mode = 0
-offset_top = 8.0
+offset_top = 5.0
 offset_right = 226.0
-offset_bottom = 34.0
+offset_bottom = 28.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.72, 0.32, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 17
 text = "HUNGER"
+horizontal_alignment = 1
+
+[node name="HungerGoal" type="Label" parent="HungerCard"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 25.0
+offset_right = 226.0
+offset_bottom = 44.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.78, 0.70, 0.58, 1)
+theme_override_font_sizes/font_size = 12
+text = "FEED TO 0"
 horizontal_alignment = 1
 
 [node name="HungerValue" type="Label" parent="HungerCard"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_top = 30.0
+offset_top = 40.0
 offset_right = 226.0
 offset_bottom = 101.0
 mouse_filter = 2
 theme_override_colors/font_color = Color(1, 0.88, 0.32, 1)
 theme_override_colors/font_shadow_color = Color(0.18, 0.07, 0.02, 1)
 theme_override_constants/shadow_outline_size = 3
-theme_override_font_sizes/font_size = 50
+theme_override_font_sizes/font_size = 46
 text = "10"
 horizontal_alignment = 1
 vertical_alignment = 1

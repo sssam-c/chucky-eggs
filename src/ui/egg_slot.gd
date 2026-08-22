@@ -19,6 +19,7 @@ var _circuit_id := ""
 var _circuit_color := Color("bd7742")
 var _stage_content_scale := 1.0
 var _damage_delta_origin := Vector2.ZERO
+var _target_preview_active := false
 
 
 func _ready() -> void:
@@ -109,6 +110,17 @@ func circuit_id() -> String:
 
 func circuit_color() -> Color:
 	return _circuit_color
+
+
+func set_target_preview(active: bool) -> void:
+	if _target_preview_active == active:
+		return
+	_target_preview_active = active
+	queue_redraw()
+
+
+func is_target_preview_active() -> bool:
+	return _target_preview_active
 
 
 func apply_damage(remaining_toughness: int) -> void:
@@ -282,6 +294,12 @@ func _draw() -> void:
 
 func _draw_egg_cup(center: Vector2) -> void:
 	var cup_top := center - Vector2(0.0, 13.0)
+	if _target_preview_active:
+		_draw_oval(
+			cup_top,
+			Vector2(68.0, 23.0),
+			Color(_circuit_color.lightened(0.24), 0.16)
+		)
 	_draw_oval(center + Vector2(3.0, 27.0), Vector2(62.0, 15.0), Color(0.0, 0.0, 0.0, 0.34))
 	var body := PackedVector2Array([
 		cup_top + Vector2(-58.0, 2.0),
@@ -295,11 +313,30 @@ func _draw_egg_cup(center: Vector2) -> void:
 	draw_polyline(body_outline, Color("6f4d34"), 4.0, true)
 	_draw_oval(cup_top, Vector2(61.0, 18.0), Color("6f4d34"))
 	_draw_oval(cup_top - Vector2(0.0, 2.0), Vector2(54.0, 13.0), Color("2a1c16"))
+	if _target_preview_active:
+		_draw_oval_outline(
+			cup_top,
+			Vector2(63.0, 20.0),
+			Color(_circuit_color.lightened(0.34), 0.92),
+			3.0
+		)
 
 
 func _draw_oval(center: Vector2, radii: Vector2, color: Color) -> void:
+	draw_colored_polygon(_oval_points(center, radii), color)
+
+
+func _draw_oval_outline(
+	center: Vector2, radii: Vector2, color: Color, width: float
+) -> void:
+	var points := _oval_points(center, radii)
+	points.append(points[0])
+	draw_polyline(points, color, width, true)
+
+
+func _oval_points(center: Vector2, radii: Vector2) -> PackedVector2Array:
 	var points := PackedVector2Array()
 	for point_index in range(32):
 		var angle := TAU * float(point_index) / 32.0
 		points.append(center + Vector2(cos(angle) * radii.x, sin(angle) * radii.y))
-	draw_colored_polygon(points, color)
+	return points

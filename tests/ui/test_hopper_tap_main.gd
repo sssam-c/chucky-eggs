@@ -35,6 +35,9 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 	assert_not_null(main.get_node_or_null("Stage/StationBackplates"))
 	assert_not_null(main.get_node_or_null("Stage/Table/Apron"))
 	assert_not_null(main.get_node_or_null("Hopper/Chute"))
+	assert_not_null(main.get_node_or_null("Hopper/HopperDropPoint/SpoutBody"))
+	assert_not_null(main.get_node_or_null("Hopper/HopperDropPoint/SpoutChannel"))
+	assert_null(main.get_node_or_null("Hopper/HopperDropPoint/Direction"))
 	assert_null(main.get_node_or_null("Stage/YolkStreakDisplay"))
 	var yolk_display: Control = main.get_node("Stage/YolkComboDisplay")
 	assert_not_null(yolk_display.get_node_or_null("YolkBall"))
@@ -51,6 +54,7 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 	assert_null(grandma.get_node_or_null("YolkStreakDisplay"))
 	assert_null(grandma.get_node_or_null("YolkComboDisplay"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/HungerValue"))
+	assert_eq(grandma.get_node("HungerCard/HungerGoal").text, "FEED TO 0")
 	assert_not_null(grandma.get_node_or_null("HungerCard/HungerChange"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/NextIncrease"))
 	assert_not_null(grandma.get_node_or_null("HungerCard/ImpactGlow"))
@@ -71,6 +75,7 @@ func test_game_exposes_five_individual_spoons_and_three_hopper_previews() -> voi
 	assert_eq(grandma.get_node("HungerCard/NextIncrease").text, "NEXT RESPONSE +1")
 	assert_almost_eq(grandma.hunger_ratio(), 0.0, 0.00001)
 	assert_true(grandma.is_idle_motion_active())
+	assert_string_contains(grandma.get_node("TapCard/TapPips").text, "TAPS 5/5")
 	assert_string_contains(grandma.get_node("TapCard/TapPips").text, "● ● ● ● ●")
 	assert_eq(main.get_node("Stage/SpoonControls/SpoonButton3").circuit_color, Color("cf4f8b"))
 	assert_eq(main.get_node("Stage/SpoonControls/SpoonButton3").circuit_symbol, "spark")
@@ -248,6 +253,9 @@ func test_second_input_is_ignored_while_a_tap_cascade_is_playing() -> void:
 	await get_tree().process_frame
 
 	assert_eq(main.game_state().taps_remaining, 4)
+	var taps_label: Label = main.get_node("GrandmaSidebar/TapCard/TapPips")
+	assert_string_contains(taps_label.text, "TAPS 4/5")
+	assert_lte(taps_label.get_minimum_size().x, taps_label.size.x)
 
 
 func test_completed_tap_restores_focus_to_the_submitted_spoon() -> void:
@@ -261,6 +269,26 @@ func test_completed_tap_restores_focus_to_the_submitted_spoon() -> void:
 	await get_tree().process_frame
 
 	assert_true(spoon_button.has_focus())
+	assert_false(main.get_node("Stage/Spoons/Spoon2").is_preview_emphasized())
+	assert_false(main.get_node("Stage/Bays/Slot2").is_target_preview_active())
+
+
+func test_focused_spoon_button_previews_its_spoon_and_egg_bay_only() -> void:
+	var main := await _add_game()
+	var red_slot = main.get_node("Stage/Bays/Slot1")
+	var blue_slot = main.get_node("Stage/Bays/Slot2")
+	var red_spoon = main.get_node("Stage/Spoons/Spoon1")
+	var blue_spoon = main.get_node("Stage/Spoons/Spoon2")
+	var blue_button: Button = main.get_node("Stage/SpoonControls/SpoonButton2")
+
+	blue_button.grab_focus()
+	await get_tree().process_frame
+
+	assert_true(blue_button.is_preview_active())
+	assert_true(blue_slot.is_target_preview_active())
+	assert_true(blue_spoon.is_preview_emphasized())
+	assert_false(red_slot.is_target_preview_active())
+	assert_false(red_spoon.is_preview_emphasized())
 
 
 func test_playback_lock_preserves_circuit_identity_and_marks_the_active_button() -> void:
@@ -309,6 +337,39 @@ func test_damage_feedback_distinguishes_direct_and_cuckoo_echo_hits() -> void:
 		{"slot_index": 0, "amount": 1, "indirect": false},
 		{"slot_index": 1, "amount": 1, "indirect": true},
 	])
+
+
+func test_surviving_plover_retreat_animates_before_committing_resolved_slots() -> void:
+	var main := await _add_game()
+	var dev_eggs: Array[String] = [
+		"chicken", "plover", "chicken", "chicken", "chicken",
+	]
+	assert_true(main.start_dev_round_with_eggs(dev_eggs, 10))
+	await get_tree().process_frame
+	var presenter: Node = main.get_node("TapPresenter")
+	var source_slot = main.get_node("Stage/Bays/Slot2")
+	var source_content: Control = source_slot.motion_content()
+	var source_origin := source_content.position
+	var swaps: Array[Vector2i] = []
+	presenter.egg_swap_started.connect(
+		func(from_slot_index: int, to_slot_index: int) -> void:
+			swaps.append(Vector2i(from_slot_index, to_slot_index))
+	)
+
+	main.get_node("Stage/SpoonControls/SpoonButton2").pressed.emit()
+	await presenter.egg_swap_started
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	assert_eq(swaps, [Vector2i(1, 0)])
+	assert_eq(source_slot.egg_kind(), "plover")
+	assert_ne(source_content.position, source_origin)
+
+	await main.playback_completed
+	await get_tree().process_frame
+	assert_eq(main.get_node("Stage/Bays/Slot1").egg_kind(), "plover")
+	assert_eq(main.get_node("Stage/Bays/Slot2").egg_kind(), "chicken")
+	assert_eq(source_content.position, source_origin)
 
 
 func test_zero_break_tap_has_no_combo_reset_interruption() -> void:
@@ -474,6 +535,10 @@ func test_run_seed_and_round_are_visible_with_distinct_retry_and_new_seed_action
 	assert_eq(main.get_node("RunStatus/Seed").text, "SEED %d" % int(state.run_seed))
 	assert_eq(main.get_node("Restart").text, "RETRY SEED")
 	assert_eq(main.get_node("NewSeed").text, "NEW SEED")
+	assert_true(main.get_node("Restart").flat)
+	assert_true(main.get_node("NewSeed").flat)
+	assert_eq(main.get_node("Restart").get_theme_font_size("font_size"), 13)
+	assert_eq(main.get_node("NewSeed").get_theme_font_size("font_size"), 13)
 	assert_eq(main.get_node("RoundAnnouncement").text, "12 EGGS IN FLOCK")
 	assert_false("HUNGER" in main.get_node("RoundAnnouncement").text)
 	assert_false(main.get_node("RewardOverlay").visible)

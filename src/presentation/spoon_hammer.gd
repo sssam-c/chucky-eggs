@@ -46,6 +46,8 @@ var impact_emphasis := 0.0:
 var _bowl_size_scale := 1.0
 var _circuit_marked := true
 var _single_contact_target := DEFAULT_SINGLE_CONTACT
+var _preview_emphasis := false
+var _preview_color := Color("d18a35")
 
 
 func _ready() -> void:
@@ -106,6 +108,17 @@ func set_neutral_appearance() -> void:
 
 func is_circuit_marked() -> bool:
 	return _circuit_marked
+
+
+func set_preview_emphasis(active: bool, color: Color) -> void:
+	_preview_emphasis = active
+	_preview_color = color
+	_sync_bowl_layer()
+	queue_redraw()
+
+
+func is_preview_emphasized() -> bool:
+	return _preview_emphasis
 
 
 func configure_wall_spoon(contact_target: Vector2) -> void:
@@ -172,6 +185,8 @@ func foreground_handle_visuals() -> Array[Dictionary]:
 		"spoon_identity": "single",
 		"visibility": visibility,
 		"width_scale": 1.0,
+		"preview_emphasis": 1.0 if _preview_emphasis else 0.0,
+		"preview_color": _preview_color,
 	}]
 
 
@@ -189,6 +204,8 @@ func bowl_visuals() -> Array[Dictionary]:
 		"radii": radii * _bowl_size_scale,
 		"tipped_amount": frame.tipped_amount,
 		"impact_emphasis": impact_emphasis,
+		"preview_emphasis": 1.0 if _preview_emphasis else 0.0,
+		"preview_color": _preview_color,
 		"draw_neck": false,
 		"neck_scale": 1.0,
 		"collar_direction": frame.near_collar_direction,
@@ -211,7 +228,11 @@ func _draw_wall_spoon() -> void:
 	# out toward the player, like a small drawbridge.
 	draw_rect(Rect2(hinge - Vector2(27.0, 20.0), Vector2(54.0, 42.0)), Color("111316"), true)
 	draw_rect(Rect2(hinge - Vector2(27.0, 20.0), Vector2(54.0, 42.0)), Color("895326"), false, 4.0)
-	var mount_accent := circuit_color.darkened(0.12) if _circuit_marked else Color("6f4b2b")
+	var mount_accent := (
+		_preview_color.lightened(0.28)
+		if _preview_emphasis
+		else circuit_color.darkened(0.12) if _circuit_marked else Color("6f4b2b")
+	)
 	draw_line(hinge + Vector2(-22.0, 15.0), hinge + Vector2(22.0, 15.0), mount_accent, 4.0, true)
 
 	# The authored fall draws handle and bowl together. At final contact the bowl

@@ -19,6 +19,7 @@ var _target_descriptions: Array[String] = []
 var _hover_preview := false
 var _focus_preview := false
 var _preview_active := false
+var _focus_preview_suppressed := false
 var _locked_identity_visible := false
 var _playback_emphasized := false
 
@@ -45,6 +46,7 @@ func set_available(
 	if not available:
 		_hover_preview = false
 		_focus_preview = false
+		_focus_preview_suppressed = false
 		_refresh_preview_state()
 	disabled = not available
 	mouse_filter = Control.MOUSE_FILTER_STOP if available else Control.MOUSE_FILTER_IGNORE
@@ -95,6 +97,11 @@ func mapping_text() -> String:
 
 func is_preview_active() -> bool:
 	return _preview_active
+
+
+func suppress_focus_preview_until_focus_changes() -> void:
+	_focus_preview_suppressed = true
+	_refresh_preview_state()
 
 
 func lever_handle_center() -> Vector2:
@@ -383,11 +390,14 @@ func _on_focus_entered() -> void:
 
 func _on_focus_exited() -> void:
 	_focus_preview = false
+	_focus_preview_suppressed = false
 	_refresh_preview_state()
 
 
 func _refresh_preview_state() -> void:
-	var active := _available and (_hover_preview or _focus_preview)
+	var active := _available and (
+		_hover_preview or (_focus_preview and not _focus_preview_suppressed)
+	)
 	if active == _preview_active:
 		return
 	_preview_active = active

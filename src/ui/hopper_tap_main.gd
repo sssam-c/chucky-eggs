@@ -79,6 +79,9 @@ func _ready() -> void:
 		_spoon_buttons[slot_index].circuit_symbol = String(appearance.symbol)
 		_spoon_buttons[slot_index].control_style = "button"
 		_spoon_buttons[slot_index].circuit_requested.connect(_on_spoon_requested)
+		_spoon_buttons[slot_index].preview_changed.connect(
+			_on_spoon_preview_changed.bind(slot_index)
+		)
 		_spoons[slot_index].slot_index = slot_index
 		_spoons[slot_index].set_neutral_appearance()
 	_restart_button.pressed.connect(restart)
@@ -254,6 +257,16 @@ func _on_spoon_requested(spoon_id: String) -> void:
 			return
 
 
+func _on_spoon_preview_changed(
+	_circuit_id: String, active: bool, slot_index: int
+) -> void:
+	if slot_index < 0 or slot_index >= _slots.size() or slot_index >= _spoons.size():
+		return
+	var preview_color: Color = APPEARANCES[slot_index].color
+	_slots[slot_index].set_target_preview(active)
+	_spoons[slot_index].set_preview_emphasis(active, preview_color)
+
+
 func _submit_spoon(slot_index: int) -> void:
 	if _input_locked:
 		return
@@ -275,6 +288,7 @@ func _submit_spoon(slot_index: int) -> void:
 		and slot_index < _spoon_buttons.size()
 		and not _spoon_buttons[slot_index].disabled
 	):
+		_spoon_buttons[slot_index].suppress_focus_preview_until_focus_changes()
 		_spoon_buttons[slot_index].grab_focus.call_deferred()
 	playback_completed.emit()
 
@@ -363,7 +377,7 @@ func _tap_pips(remaining: int, total: int) -> String:
 	var pips: Array[String] = []
 	for tap_index in range(total):
 		pips.append("●" if tap_index < remaining else "○")
-	return "TAPS  %s" % " ".join(pips)
+	return "TAPS %d/%d  %s" % [remaining, total, " ".join(pips)]
 
 
 func _set_spoons_available(
